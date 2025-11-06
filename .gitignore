@@ -1,0 +1,61 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.env
+*.venv
+venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+*.sqlite3
+
+# Django
+*.log
+local_settings.py
+media/
+staticfiles/
+
+# Node/React
+node_modules/
+yc-web/node_modules/
+yc-web/dist/
+yc-web/.next/
+yc-web/.cache/
+yc-web/.eslintcache
+yc-web/.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Docker
+*.pid
+docker-compose.override.yml
+
+# IDEs/editors
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Misc
+*.bak
+*.tmp
+*.orig
+
+# Test/coverage
+coverage/
+*.cover
+*.pyc
+*.pyo
+*.pyd
+
+# System files
+Thumbs.db
+Desktop.ini
+
+# Optional: add more as needed for your workflow

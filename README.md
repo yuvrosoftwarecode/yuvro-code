@@ -1,0 +1,310 @@
+# YC Full-Stack Application
+
+A modern full-stack web application built with Django REST Framework backend, React frontend, PostgreSQL database, and Docker Compose orchestration.
+
+## 📋 Prerequisites
+
+- [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/)
+- Make (usually pre-installed on most systems)
+
+## 🛠️ Quick Start
+
+1. **Clone and setup:**
+   ```bash
+   git clone <repository-url>
+   cd yuvro-code
+   make setup
+   ```
+
+2. **Start development environment:**
+   ```bash
+   make dev
+   ```
+
+3. **Access the application:**
+   - Frontend: http://localhost:3000
+   - Backend API: http://localhost:8001
+   - API Documentation: http://localhost:8001/api/
+
+## 📁 Project Structure
+
+```
+yuvro-code/
+├── yc-backend-api/          # Django REST Framework backend
+│   ├── authentication/      # Authentication app
+│   ├── yc-backend-api/            # Django project settings
+│   ├── Dockerfile          # Backend container config
+│   └── requirements.txt    # Python dependencies
+├── yc-web/                 # React frontend
+│   ├── src/               # Source code
+│   ├── public/            # Static assets
+│   ├── Dockerfile         # Frontend container config
+│   └── package.json       # Node.js dependencies
+├── .github/workflows/     # CI/CD pipelines
+├── docker-compose.yml     # Development orchestration
+├── docker-compose.prod.yml # Production orchestration
+├── Makefile               # Command shortcuts
+└── README.md              # This file
+```
+
+## 🔧 Development Commands
+
+### Using Make (Recommended)
+
+```bash
+# Show all available commands
+make help
+
+# Development
+make dev                   # Start all services
+make dev-detached          # Start in background
+make stop                  # Stop all services
+make restart               # Restart services
+make logs SERVICE=name     # View logs (optional service name)
+
+# Database operations
+make db-makemigrations     # Create migrations
+make db-migrate            # Run migrations
+make db-createsuperuser    # create super user 
+make db-shell              # Access database shell
+make db-reset              # Reset database
+
+# Testing
+make test-all              # Run all tests
+make backend-test          # Backend tests only
+make frontend-test         # Frontend tests only
+
+# Code quality
+make format-all            # Format all code
+make lint-all              # Lint all code
+make check-all             # Run all checks
+
+# Individual service commands
+make backend-shell         # Django shell
+make frontend-shell        # Node.js shell
+
+# Package installation
+make backend-install PKG=package-name    # Install backend package
+make frontend-install PKG=package-name   # Install frontend package
+```
+
+
+## 🏗️ API Documentation
+
+### Authentication Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/auth/register/` | User registration |
+| POST | `/api/auth/login/` | Email/password login |
+| POST | `/api/auth/refresh/` | JWT token refresh |
+| POST | `/api/auth/google/` | Google OAuth login |
+| POST | `/api/auth/logout/` | Logout (blacklist token) |
+
+### User Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/auth/user/` | Get current user profile |
+| PUT | `/api/auth/user/` | Update user profile |
+| GET | `/api/health/` | Health check |
+
+
+## 🧪 Testing
+
+### Running Tests
+
+```bash
+# All tests
+make test-all
+
+# Backend only
+make backend-test
+
+# Frontend only  
+make frontend-test
+
+# With coverage
+docker compose exec backend coverage run --source='.' manage.py test
+docker compose exec backend coverage report
+```
+
+### Test Structure
+
+- **Backend**: Django TestCase for models, views, and API endpoints
+- **Frontend**: React Testing Library for components and integration tests
+- **CI/CD**: Automated testing on pull requests
+
+## 🚀 Production Deployment
+
+### Production Build
+
+```bash
+# Build and start production services
+make prod-build
+make prod-up
+
+# Or with Docker Compose
+docker compose -f docker-compose.prod.yml up --build -d
+```
+
+## 🔍 Troubleshooting
+
+### Common Issues
+
+**Port conflicts:**
+```bash
+# Check what's using the ports
+lsof -i :3000  # Frontend
+lsof -i :8001  # Backend
+lsof -i :5432  # Database
+```
+
+**Database connection issues:**
+```bash
+# Reset database
+make db-reset
+
+# Check database logs
+make logs SERVICE=db
+```
+
+**Permission issues:**
+```bash
+# Fix file permissions
+sudo chown -R $USER:$USER .
+```
+
+### Development Tips
+
+1. **Hot Reloading**: Code changes automatically reload in development
+2. **Database Persistence**: Data persists between container restarts
+3. **Logs**: Use `make logs SERVICE=name` to debug issues
+4. **Shell Access**: Use `make backend-shell` or `make frontend-shell`
+
+## 🤝 Contributing
+
+- Clone the repository with ssh url
+- git checkout main
+- git pull origin main
+- Create a feature branch: `git checkout -b feature-name`
+- git rebase main (optiona if main has new changes after creating feature branch)
+- make dev
+- Do code changes changes 
+- make backend-format-fix
+- Commit changes: `git commit -m "<feat>(<scope>): <short summary>"`
+- Push to branch: `git push origin feature-name`
+- Create a Pull Request
+
+### Code Standards
+
+- **Backend**: Black formatting, Flake8 linting, Django best practices
+- **Frontend**: Prettier formatting, ESLint linting, TypeScript strict mode
+- **Testing**: Maintain test coverage above 80%
+- **Commits**: See the "Conventional Commits" section below for guidelines and examples
+# Conventional Commits
+
+We follow the Conventional Commits specification: https://www.conventionalcommits.org/en/v1.0.0/
+
+Summary:
+
+- Format: `<type>(<scope>): <short summary>`
+- Optional body and footer, separated by a blank line
+- Use `BREAKING CHANGE: <description>` in the footer or append `!` after the type/scope to indicate breaking changes
+
+Common types and examples
+```
+feat(auth): add Google OAuth login
+   - Adds support for signing in with Google and links new users to existing accounts
+
+fix(api): correct user serialization in GET /api/auth/user/
+   - Fixes bug where is_active flag wasn't returned
+
+docs(readme): update database setup instructions
+   - Clarifies steps for local Postgres credentials
+
+style(ui): adjust button padding
+   - Whitespace, formatting, and small UI tweaks with no logic changes
+
+refactor(auth): extract token helpers into utils/token.py
+   - Code restructuring without changing external behavior
+
+perf(api): reduce DB queries on dashboard endpoint
+   - Improves response time by introducing select_related
+
+test(auth): add tests for refresh token flow
+   - Adds unit & integration tests; no production behavior changed
+
+build(docker): update Node base image to 20
+   - Changes build system, affects CI and production images
+
+ci(github): add pipeline step for frontend linting
+   - Changes CI configuration only
+
+chore(deps): bump django from 4.2 to 4.2.3
+   - Routine tasks and maintenance (dependencies, scripts)
+
+revert: Revert "feat(auth): add Google OAuth login"
+   - Reverts a previous commit
+
+feat!: drop support for Python 3.8
+   - BREAKING CHANGE: minimum Python version is now 3.9
+
+feat(auth)!: change password hashing algorithm
+   - BREAKING CHANGE: existing passwords must be rehashed on next login
+```
+
+Notes and tips
+
+- Scope is optional but recommended (e.g., `feat(api): ...`, `fix(ui): ...`).
+- Keep the subject line short (<= 72 characters) and use the body for details.
+- Use the footer for metadata like `BREAKING CHANGE` or issue references (e.g., `Closes #123`).
+- Revert commits should reference the original commit being reverted.
+
+For full specification and more examples, see the official site: https://www.conventionalcommits.org/en/v1.0.0/
+
+# GitHub issues & projects
+
+You can reference GitHub issues and projects from your commit messages. Using the right keywords in the footer (for example `Closes`, `Fixes`) will let GitHub automatically close issues when the commit is merged. For cross-repository references use the full `owner/repo#issue-number` form.
+
+Examples (issues)
+```
+feat(auth): add Google OAuth login
+
+Adds support for signing in with Google and links new users to existing accounts.
+
+Closes #42
+```
+
+```
+fix(api): correct user serialization in GET /api/auth/user/
+
+Fixes bug where is_active flag wasn't returned for some users.
+
+Fixes mentorxindia/yuvro-code#101
+```
+
+```
+refactor(db): split user model helpers
+
+Restructure helpers into `yc-backend-api/auth/utils.py`.
+
+```
+
+# Show all commands
+make help
+
+# Development
+make dev
+make stop
+make logs SERVICE=backend
+
+# Package installation
+make backend-install PKG=requests
+make frontend-install PKG=axios
+
+# Testing and formatting
+make test-all
+make format-all
+make check-all
+

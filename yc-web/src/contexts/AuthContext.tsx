@@ -83,11 +83,28 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
   }
 };
 
-const initialState: AuthState = {
-  user: null,
-  token: null,
-  isLoading: false,
-  isAuthenticated: false,
+// Initialize state from localStorage
+const getInitialState = (): AuthState => {
+  const savedAuth = localStorage.getItem('auth');
+  if (savedAuth) {
+    try {
+      const parsed = JSON.parse(savedAuth);
+      return {
+        user: parsed.user,
+        token: parsed.token,
+        isLoading: false,
+        isAuthenticated: !!parsed.token,
+      };
+    } catch (error) {
+      console.error('Error parsing auth from localStorage:', error);
+    }
+  }
+  return {
+    user: null,
+    token: null,
+    isLoading: false,
+    isAuthenticated: false,
+  };
 };
 
 interface AuthProviderProps {
@@ -95,24 +112,32 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [state, dispatch] = useReducer(authReducer, initialState);
+  const [state, dispatch] = useReducer(authReducer, getInitialState());
 
-  // Load token from localStorage on app start
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      dispatch({ type: 'SET_LOADING', payload: true });
-      apiClient
-        .getCurrentUser()
-        .then((user) => {
+    if (state.isAuthenticated) {
+      localStorage.setItem('auth', JSON.stringify({
+        user: state.user,
+        token: state.token
+      }));
+    } else {
+      localStorage.removeItem('auth');
+    }
+  }, [state.isAuthenticated, state.user, state.token]);
+
+  useEffect(() => {
+    const savedAuth = localStorage.getItem('auth');
+    if (savedAuth) {
+      try {
+        const { token, user } = JSON.parse(savedAuth);
+        if (token && user) {
+          apiClient.setAuthToken(token);
           dispatch({ type: 'LOGIN_SUCCESS', payload: { user, token } });
-        })
-        .catch(() => {
-          // Token is invalid, remove it
-          localStorage.removeItem('token');
-          localStorage.removeItem('refreshToken');
-          dispatch({ type: 'LOGIN_FAILURE' });
-        });
+        }
+      } catch (error) {
+        console.error('Error parsing auth from localStorage:', error);
+        localStorage.removeItem('auth');
+      }
     }
   }, []);
 
@@ -133,8 +158,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const loginWithGoogle = async (): Promise<void> => {
     dispatch({ type: 'LOGIN_START' });
     try {
-      // This will be implemented with Google OAuth SDK
-      // For now, we'll throw an error to indicate it's not ready
       throw new ApiError('Google OAuth not implemented yet', 501);
     } catch (error) {
       dispatch({ type: 'LOGIN_FAILURE' });

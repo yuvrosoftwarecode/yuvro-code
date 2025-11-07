@@ -13,7 +13,7 @@ const Navigation: React.FC = () => {
   const profileRef = useRef<HTMLDivElement>(null);
 
   const mainTabs = [
-    { label: 'Learn/Certify', path: '/learn-certify' },
+    { label: 'Learn & Certify', path: '/dashboard' }, // Changed to match dashboard route
     { label: 'Code Practice', path: '/code-practice' },
     { label: 'Skill Test', path: '/skill-test' },
     { label: 'Mock Interview', path: '/mock-interview' },
@@ -29,14 +29,14 @@ const Navigation: React.FC = () => {
 
   const handleLogout = () => logout();
 
+  // Default route handling
   useEffect(() => {
     if (location.pathname === '/') {
-      navigate('/learn-certify', { replace: true });
+      navigate('/dashboard', { replace: true });
     }
   }, [location.pathname, navigate]);
 
-  const currentPath =
-    location.pathname === '/' ? '/learn-certify' : location.pathname;
+  const currentPath = location.pathname;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -52,13 +52,13 @@ const Navigation: React.FC = () => {
 
   return (
     <nav className="bg-white shadow sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full mx-auto px-2 sm:px-3 lg:px-4">
         <div className="flex justify-between items-center h-16">
           {/* Left: Logo + Tabs */}
           <div className="flex items-center space-x-6">
             {/* Logo */}
             <Link to="/" className="flex items-center space-x-2">
-              <span className="text-xl font-bold text-indigo-600">Yuvro</span>
+              <span className="text-3xl font-bold text-foreground-700">Yuvro</span>
             </Link>
 
             {/* Tabs */}
@@ -69,10 +69,10 @@ const Navigation: React.FC = () => {
                   <Link
                     key={tab.path}
                     to={tab.path}
-                    className={`px-4 py-2 rounded-md text-sm font-medium border-2 ${
+                    className={`inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground-700 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2 ${
                       isActive
-                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' // active tab with border and shadow
-                        : 'text-gray-800 hover:text-indigo-600 border-transparent' // inactive tab with transparent border
+                        ? 'bg-black text-white ring-1 ring-black' // Active: black rectangle
+                        : 'text-gray-700'                         // Inactive: dark gray text only
                     }`}
                   >
                     {tab.label}
@@ -124,7 +124,7 @@ const Navigation: React.FC = () => {
             {/* Notification Bell */}
             <button
               type="button"
-              className="p-2 rounded-full text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 focus:outline-none relative"
+              className="p-2 rounded-full text-black-500 hover:bg-indigo-50 focus:outline-none relative"
               aria-label="View notifications"
             >
               <svg
@@ -155,7 +155,7 @@ const Navigation: React.FC = () => {
                 onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
                 className="flex items-center focus:outline-none"
               >
-                <div className="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center text-white font-medium">
+                <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center text-white font-medium">
                   {(user?.username || user?.email || 'U').charAt(0).toUpperCase()}
                 </div>
               </button>
@@ -192,19 +192,19 @@ const Navigation: React.FC = () => {
               {mainTabs.map((tab) => {
               const isActive = currentPath === tab.path;
               return (
-                <Link
-                  key={tab.path}
-                  to={tab.path}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`block w-full px-3 py-2 rounded-md text-base font-medium text-center border-2 ${
-                    isActive
-                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-md'
-                      : 'text-gray-800 hover:text-indigo-600 border-transparent'
-                  }`}
-                >
-                  {tab.label}
-                </Link>
-              );
+                  <Link
+                    key={tab.path}
+                    to={tab.path}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`block w-full inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-base font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground-700 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-3 py-2 ${
+                        isActive
+                          ? 'bg-foreground-700 text-white'
+                          : 'text-foreground-600 hover:text-foreground-700'
+                      }`}
+                  >
+                    {tab.label}
+                  </Link>
+                );
             })}
           </div>
         </div>

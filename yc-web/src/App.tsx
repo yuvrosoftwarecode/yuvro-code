@@ -11,6 +11,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
+import CodePractice from './pages/CodePractice';
 import NotFound from './pages/NotFound';
 
 function App() {
@@ -38,6 +39,15 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Profile />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/code-practice"
+              element={
+                <ProtectedRoute>
+                  <CodePractice />
                 </ProtectedRoute>
               }
             />

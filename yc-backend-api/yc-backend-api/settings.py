@@ -35,6 +35,8 @@ INSTALLED_APPS = [
     "allauth.socialaccount.providers.google",
     # Local apps
     "authentication",
+    "course",
+    "ai_assistant",
 ]
 
 MIDDLEWARE = [

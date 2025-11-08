@@ -1,0 +1,250 @@
+[
+  {
+    "model": "course.course",
+    "pk": "550e8400-e29b-41d4-a716-446655440001",
+    "fields": {
+      "short_code": "DS101",
+      "name": "Data Structures and Algorithms Fundamentals",
+      "category": "fundamentals",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "course.course",
+    "pk": "550e8400-e29b-41d4-a716-446655440002",
+    "fields": {
+      "short_code": "PY101",
+      "name": "Python Programming Complete Course",
+      "category": "programming_languages",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "course.topic",
+    "pk": "550e8400-e29b-41d4-a716-446655440011",
+    "fields": {
+      "course": "550e8400-e29b-41d4-a716-446655440001",
+      "name": "Introduction to Data Structures",
+      "order_index": 0,
+      "created_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "course.topic",
+    "pk": "550e8400-e29b-41d4-a716-446655440012",
+    "fields": {
+      "course": "550e8400-e29b-41d4-a716-446655440001",
+      "name": "Linear Data Structures",
+      "order_index": 1
+    }
+  },
+  {
+    "model": "course.topic",
+    "pk": "550e8400-e29b-41d4-a716-446655440021",
+    "fields": {
+      "course": "550e8400-e29b-41d4-a716-446655440002",
+      "name": "Python Basics",
+      "order_index": 0
+    }
+  },
+  {
+    "model": "course.topic",
+    "pk": "550e8400-e29b-41d4-a716-446655440022",
+    "fields": {
+      "course": "550e8400-e29b-41d4-a716-446655440002",
+      "name": "Object-Oriented Programming",
+      "order_index": 1
+    }
+  },
+  {
+    "model": "course.subtopic",
+    "pk": "550e8400-e29b-41d4-a716-446655440111",
+    "fields": {
+      "topic": "550e8400-e29b-41d4-a716-446655440011",
+      "name": "What are Data Structures?",
+      "content": "Data structures are ways of organizing and storing data so that they can be accessed and worked with efficiently.",
+      "order_index": 0
+    }
+  },
+  {
+    "model": "course.subtopic",
+    "pk": "550e8400-e29b-41d4-a716-446655440112",
+    "fields": {
+      "topic": "550e8400-e29b-41d4-a716-446655440011",
+      "name": "Time and Space Complexity",
+      "content": "Understanding Big O notation and how to analyze the efficiency of algorithms.",
+      "order_index": 1
+    }
+  },
+  {
+    "model": "course.subtopic",
+    "pk": "550e8400-e29b-41d4-a716-446655440121",
+    "fields": {
+      "topic": "550e8400-e29b-41d4-a716-446655440012",
+      "name": "Arrays and Lists",
+      "content": "Arrays are collections of elements stored at contiguous memory locations.",
+      "order_index": 0
+    }
+  },
+  {
+    "model": "course.subtopic",
+    "pk": "550e8400-e29b-41d4-a716-446655440122",
+    "fields": {
+      "topic": "550e8400-e29b-41d4-a716-446655440012",
+      "name": "Stacks and Queues",
+      "content": "Stacks follow LIFO principle, while queues follow FIFO principle.",
+      "order_index": 1
+    }
+  },
+  {
+    "model": "course.subtopic",
+    "pk": "550e8400-e29b-41d4-a716-446655440211",
+    "fields": {
+      "topic": "550e8400-e29b-41d4-a716-446655440021",
+      "name": "Python Syntax and Variables",
+      "content": "Learn the basic syntax of Python and how to declare variables.",
+      "order_index": 0
+    }
+  },
+  {
+    "model": "course.subtopic",
+    "pk": "550e8400-e29b-41d4-a716-446655440212",
+    "fields": {
+      "topic": "550e8400-e29b-41d4-a716-446655440021",
+      "name": "Control Flow and Loops",
+      "content": "Understanding if statements, for loops, and while loops in Python.",
+      "order_index": 1
+    }
+  },
+  {
+    "model": "course.subtopic",
+    "pk": "550e8400-e29b-41d4-a716-446655440221",
+    "fields": {
+      "topic": "550e8400-e29b-41d4-a716-446655440022",
+      "name": "Classes and Objects",
+      "content": "Learn how to create classes and instantiate objects in Python.",
+      "order_index": 0
+    }
+  },
+  {
+    "model": "course.subtopic",
+    "pk": "550e8400-e29b-41d4-a716-446655440222",
+    "fields": {
+      "topic": "550e8400-e29b-41d4-a716-446655440022",
+      "name": "Inheritance and Polymorphism",
+      "content": "Understanding inheritance and polymorphism in Python OOP.",
+      "order_index": 1
+    }
+  },
+  {
+    "model": "course.video",
+    "pk": "550e8400-e29b-41d4-a716-446655441111",
+    "fields": {
+      "sub_topic": "550e8400-e29b-41d4-a716-446655440111",
+      "title": "Introduction to Data Structures - Complete Overview",
+      "video_link": "https://www.youtube.com/watch?v=bum_19loj9A",
+      "ai_context": "This video provides a comprehensive introduction to data structures."
+    }
+  },
+  {
+    "model": "course.video",
+    "pk": "550e8400-e29b-41d4-a716-446655441112",
+    "fields": {
+      "sub_topic": "550e8400-e29b-41d4-a716-446655440112",
+      "title": "Big O Notation Explained",
+      "video_link": "https://www.youtube.com/watch?v=D6xkbGLQesk",
+      "ai_context": "Explains time and space complexity analysis using Big O notation."
+    }
+  },
+  {
+    "model": "course.video",
+    "pk": "550e8400-e29b-41d4-a716-446655441211",
+    "fields": {
+      "sub_topic": "550e8400-e29b-41d4-a716-446655440211",
+      "title": "Python Variables and Data Types",
+      "video_link": "https://www.youtube.com/watch?v=kqtD5dpn9C8",
+      "ai_context": "Covers Python's basic syntax and variable declaration."
+    }
+  },
+  {
+    "model": "course.codingproblem",
+    "pk": "550e8400-e29b-41d4-a716-446655442111",
+    "fields": {
+      "sub_topic": "550e8400-e29b-41d4-a716-446655440121",
+      "title": "Two Sum Problem",
+      "description": "Given an array of integers and a target, return indices of two numbers that add up to target.",
+      "input": "nums = [2,7,11,15], target = 9",
+      "test_cases": [
+        {
+          "input": {"nums": [2, 7, 11, 15], "target": 9},
+          "expected_output": [0, 1],
+          "description": "Basic case with solution at beginning"
+        }
+      ]
+    }
+  },
+  {
+    "model": "course.codingproblem",
+    "pk": "550e8400-e29b-41d4-a716-446655442211",
+    "fields": {
+      "sub_topic": "550e8400-e29b-41d4-a716-446655440211",
+      "title": "FizzBuzz",
+      "description": "Print numbers 1 to n, but print 'Fizz' for multiples of 3, 'Buzz' for multiples of 5, and 'FizzBuzz' for multiples of both.",
+      "input": "n = 15",
+      "test_cases": [
+        {
+          "input": {"n": 15},
+          "expected_output": ["1", "2", "Fizz", "4", "Buzz", "Fizz", "7", "8", "Fizz", "Buzz", "11", "Fizz", "13", "14", "FizzBuzz"],
+          "description": "Standard FizzBuzz up to 15"
+        }
+      ]
+    }
+  },
+  {
+    "model": "course.quiz",
+    "pk": "550e8400-e29b-41d4-a716-446655443111",
+    "fields": {
+      "sub_topic": "550e8400-e29b-41d4-a716-446655440111",
+      "question": "What is the main purpose of data structures?",
+      "options": [
+        "To make code look prettier",
+        "To organize and store data efficiently",
+        "To increase file size",
+        "To slow down programs"
+      ],
+      "correct_answer_index": 1
+    }
+  },
+  {
+    "model": "course.quiz",
+    "pk": "550e8400-e29b-41d4-a716-446655443112",
+    "fields": {
+      "sub_topic": "550e8400-e29b-41d4-a716-446655440112",
+      "question": "What does O(n) represent in Big O notation?",
+      "options": [
+        "Constant time complexity",
+        "Linear time complexity",
+        "Quadratic time complexity",
+        "Logarithmic time complexity"
+      ],
+      "correct_answer_index": 1
+    }
+  },
+  {
+    "model": "course.quiz",
+    "pk": "550e8400-e29b-41d4-a716-446655443211",
+    "fields": {
+      "sub_topic": "550e8400-e29b-41d4-a716-446655440211",
+      "question": "Which of the following is NOT a valid Python variable name?",
+      "options": [
+        "my_variable",
+        "_private_var",
+        "2nd_variable",
+        "variable2"
+      ],
+      "correct_answer_index": 2
+    }
+  }
+]

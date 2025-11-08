@@ -12,17 +12,19 @@ class UserAdmin(BaseUserAdmin):
         "username",
         "first_name",
         "last_name",
+        "role",
         "is_staff",
         "is_active",
         "date_joined",
     )
-    list_filter = ("is_staff", "is_active", "date_joined")
+    list_filter = ("role", "is_staff", "is_active", "date_joined")
     search_fields = ("email", "username", "first_name", "last_name")
     ordering = ("-date_joined",)
 
     fieldsets = (
         (None, {"fields": ("email", "username", "password")}),
         ("Personal info", {"fields": ("first_name", "last_name")}),
+        ("Role", {"fields": ("role",)}),
         (
             "Permissions",
             {
@@ -43,7 +45,7 @@ class UserAdmin(BaseUserAdmin):
             None,
             {
                 "classes": ("wide",),
-                "fields": ("email", "username", "password1", "password2"),
+                "fields": ("email", "username", "role", "password1", "password2"),
             },
         ),
     )

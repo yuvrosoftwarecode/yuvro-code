@@ -2,17 +2,25 @@ from rest_framework import status, generics, permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.views import TokenRefreshView
+from rest_framework_simplejwt.views import TokenRefreshView, TokenObtainPairView
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 from django.contrib.auth import login
 from .models import User, Profile
 from .serializers import (
+    CustomTokenObtainPairSerializer,
     UserRegistrationSerializer,
     UserLoginSerializer,
     UserSerializer,
     UserUpdateSerializer,
     ProfileSerializer,
 )
+
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    """
+    Custom token obtain view that uses our custom serializer with role information.
+    """
+    serializer_class = CustomTokenObtainPairSerializer
 
 
 class UserRegistrationView(generics.CreateAPIView):
@@ -27,8 +35,9 @@ class UserRegistrationView(generics.CreateAPIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
 
-        # Generate JWT tokens
-        refresh = RefreshToken.for_user(user)
+        # Generate JWT tokens with custom claims
+        token_serializer = CustomTokenObtainPairSerializer()
+        refresh = token_serializer.get_token(user)
 
         return Response(
             {
@@ -50,8 +59,9 @@ def login_view(request):
     user = serializer.validated_data["user"]
     login(request, user)
 
-    # Generate JWT tokens
-    refresh = RefreshToken.for_user(user)
+    # Generate JWT tokens with custom claims
+    token_serializer = CustomTokenObtainPairSerializer()
+    refresh = token_serializer.get_token(user)
 
     return Response(
         {

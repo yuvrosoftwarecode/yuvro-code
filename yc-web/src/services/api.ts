@@ -24,9 +24,22 @@ export interface RegisterRequest {
 
 class ApiClient {
   private baseURL: string;
+  private token: string | null = null;
 
   constructor(baseURL: string) {
     this.baseURL = baseURL;
+  }
+
+  setAuthToken(token: string) {
+    this.token = token;
+  }
+
+  getAuthToken() {
+    return this.token;
+  }
+
+  clearAuthToken() {
+    this.token = null;
   }
 
   private async request<T>(
@@ -124,12 +137,20 @@ class ApiClient {
   }
 
   // Authentication methods
+  private getHeaders(): HeadersInit {
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+    };
+    if (this.token) {
+      headers['Authorization'] = `Bearer ${this.token}`;
+    }
+    return headers;
+  }
+
   async login(email: string, password: string): Promise<LoginResponse> {
     const response = await fetch(`${this.baseURL}/auth/login/`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: this.getHeaders(),
       body: JSON.stringify({ email, password }),
     });
 

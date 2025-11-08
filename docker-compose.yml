@@ -45,9 +45,13 @@ services:
       - "3000:3000"
     environment:
       - VITE_API_URL=http://localhost:8001/api
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
     volumes:
-      - ./yc-web:/app
+      - ./yc-web:/app:cached
       - /app/node_modules
+    stdin_open: true
+    tty: true
     depends_on:
       - backend
     command: npm run dev -- --host 0.0.0.0

@@ -1,1 +1,62 @@
 @import "tailwindcss";
+
+/* Overlay fade keyframes */
+@keyframes overlayShow {
+  from { opacity: 0 }
+  to { opacity: 1 }
+}
+@keyframes overlayHide {
+  from { opacity: 1 }
+  to { opacity: 0 }
+}
+
+/* Content pop + fade keyframes */
+@keyframes contentShow {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+@keyframes contentHide {
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.98);
+  }
+}
+
+/* Smooth, slightly longer animations and improved easing. Use animation-fill-mode to avoid flicker. */
+.animate-overlayShow {
+  animation: overlayShow 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  will-change: opacity;
+}
+.animate-overlayHide {
+  animation: overlayHide 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  will-change: opacity;
+}
+.animate-contentShow {
+  animation: contentShow 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  will-change: transform, opacity;
+}
+.animate-contentHide {
+  animation: contentHide 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  will-change: transform, opacity;
+}
+
+/* Respect user motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .animate-overlayShow,
+  .animate-overlayHide,
+  .animate-contentShow,
+  .animate-contentHide {
+    animation: none !important;
+    transition: none !important;
+  }
+}

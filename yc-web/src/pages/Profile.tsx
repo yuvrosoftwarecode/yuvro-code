@@ -28,7 +28,7 @@ const Profile = () => {
   // Fetch live backend profile
   const fetchProfile = async () => {
     try {
-      const authToken = token || localStorage.getItem('token');
+      const authToken = token || (JSON.parse(localStorage.getItem('auth') || '{}').token);
       if (!authToken) return;
       const response = await fetch(`${API_URL}/auth/profile/detail/`, {
         headers: {
@@ -54,7 +54,7 @@ const Profile = () => {
   // Save profile to backend (partial update)
   const saveProfile = async (payload: Partial<ProfileData>) => {
     try {
-      const authToken = token || localStorage.getItem('token');
+      const authToken = token || (JSON.parse(localStorage.getItem('auth') || '{}').token);
       if (!authToken) {
         console.warn('No access token found');
         return;
@@ -90,13 +90,15 @@ const Profile = () => {
   };
 
   useEffect(() => {
-    fetchProfile();
-  }, []);
+    if (token) {
+      fetchProfile();
+    }
+  }, [token]); // Re-run when token changes
 
   // Update backend profile
   const updateProfile = async (updatedFields: Partial<typeof profileData>) => {
     try {
-      const authToken = token || localStorage.getItem('token');
+      const authToken = token || (JSON.parse(localStorage.getItem('auth') || '{}').token);
       if (!authToken) return;
       const res = await fetch(`${API_URL}/auth/profile/detail/`, {
         method: 'PUT',

@@ -45,7 +45,12 @@ class User(AbstractUser):
     def can_manage_users(self):
         """Check if user can manage users (admin only)."""
         return self.role == 'admin'
-
+    
+    # Override save method to ensure role consistency
+    def save(self, *args, **kwargs):
+        if self.is_superuser:
+            self.role = 'admin'
+        super().save(*args, **kwargs)
 
 class Profile(models.Model):
     """

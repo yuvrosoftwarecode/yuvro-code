@@ -14,6 +14,15 @@ from .serializers import (
     UserUpdateSerializer,
     ProfileSerializer,
 )
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.core.mail import send_mail
+from django.conf import settings
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
+
+
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -140,3 +149,61 @@ def user_info_view(request):
     """Get current user information."""
     serializer = UserSerializer(request.user)
     return Response(serializer.data)
+
+class ForgotPasswordView(generics.GenericAPIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        email = request.data.get("email")
+        if not email:
+            return Response({"error": "Email is required"}, status=400)
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            # Do not reveal whether the email exists
+            return Response({"message": "If this email exists, a reset link will be sent."})
+
+        token = PasswordResetTokenGenerator().make_token(user)
+        uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
+
+        reset_link = f"{settings.FRONTEND_URL}/reset-password/{uidb64}/{token}"
+
+        send_mail(
+            subject="Password Reset Request",
+            message=f"Click the link to reset your password: {reset_link}",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[user.email],
+            fail_silently=False,
+        )
+
+        return Response({"message": "If this email exists, a reset link will be sent."})
+
+
+class ResetPasswordView(generics.GenericAPIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request, uidb64, token):
+        password = request.data.get("password")
+        if not password:
+            return Response({"error": "Password is required"}, status=400)
+
+        try:
+            uid = force_str(urlsafe_base64_decode(uidb64))
+            user = User.objects.get(pk=uid)
+        except:
+            return Response({"error": "Invalid reset link"}, status=400)
+
+        if not PasswordResetTokenGenerator().check_token(user, token):
+            return Response({"error": "Reset link has expired or is invalid"}, status=400)
+
+        # ENFORCE PASSWORD STRENGTH (this was part of your task request)
+        try:
+            validate_password(password, user)
+        except ValidationError as e:
+            return Response({"error": e.messages}, status=400)
+
+        user.set_password(password)
+        user.save()
+
+        return Response({"message": "Password reset successful. You may now login."})

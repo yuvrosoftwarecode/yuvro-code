@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import { createContext, useContext, useReducer, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { apiClient, ApiError } from '../services/api';
 
@@ -6,9 +6,10 @@ export interface User {
   id: number;
   email: string;
   username: string;
+  role?: string;
   profile?: {
-    bio: string;
-    avatar: string;
+    bio?: string;
+    avatar?: string;
   };
 }
 
@@ -38,8 +39,6 @@ interface AuthContextType extends AuthState {
   logout: () => void;
   updateUser: (user: User) => void;
 }
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const authReducer = (state: AuthState, action: AuthAction): AuthState => {
   switch (action.type) {
@@ -107,6 +106,8 @@ const getInitialState = (): AuthState => {
   };
 };
 
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
 interface AuthProviderProps {
   children: ReactNode;
 }
@@ -120,6 +121,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         user: state.user,
         token: state.token
       }));
+      if (state.token) apiClient.setAuthToken(state.token);
     } else {
       localStorage.removeItem('auth');
     }
@@ -141,6 +143,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, []);
 
+  // -- Login --
   const login = async (email: string, password: string): Promise<void> => {
     dispatch({ type: 'LOGIN_START' });
     try {
@@ -149,6 +152,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         type: 'LOGIN_SUCCESS',
         payload: { user: response.user, token: response.access },
       });
+      localStorage.setItem('refreshToken', response.refresh);
     } catch (error) {
       dispatch({ type: 'LOGIN_FAILURE' });
       throw error;
@@ -182,6 +186,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         type: 'LOGIN_SUCCESS',
         payload: { user: response.user, token: response.access },
       });
+      localStorage.setItem('refreshToken', response.refresh);
     } catch (error) {
       dispatch({ type: 'LOGIN_FAILURE' });
       throw error;
@@ -190,6 +195,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = (): void => {
     apiClient.logoutUser().finally(() => {
+      localStorage.removeItem('refreshToken');
       dispatch({ type: 'LOGOUT' });
     });
   };
@@ -212,8 +218,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 };

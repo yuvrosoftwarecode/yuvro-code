@@ -15,13 +15,11 @@ from .serializers import (
     ProfileSerializer,
 )
 
-
 class CustomTokenObtainPairView(TokenObtainPairView):
     """
     Custom token obtain view that uses our custom serializer with role information.
     """
     serializer_class = CustomTokenObtainPairSerializer
-
 
 class UserRegistrationView(generics.CreateAPIView):
     """User registration endpoint."""
@@ -70,7 +68,6 @@ def login_view(request):
             "access": str(refresh.access_token),
         }
     )
-
 
 @api_view(["POST"])
 @permission_classes([permissions.IsAuthenticated])
@@ -132,7 +129,16 @@ class ProfileDetailView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         profile, created = Profile.objects.get_or_create(user=self.request.user)
         return profile
-
+    
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(serializer.data)
+    
+    def put(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
 
 @api_view(["GET"])
 @permission_classes([permissions.IsAuthenticated])

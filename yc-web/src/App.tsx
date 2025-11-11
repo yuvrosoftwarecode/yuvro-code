@@ -13,6 +13,8 @@ import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import CodePractice from './pages/CodePractice';
 import NotFound from './pages/NotFound';
+import ResetPassword from './pages/ResetPassword';
+import ForgotPassword from './pages/ForgotPassword';
 
 function App() {
   return (
@@ -24,6 +26,9 @@ function App() {
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:uidb64/:token" element={<ResetPassword />} />
+
 
             {/* Protected routes */}
             <Route

@@ -44,7 +44,7 @@ class ProfileSerializer(serializers.ModelSerializer):
     """
     Serializer for Profile model.
     """
-    user = UserSerializer(read_only=True)
+    user = UserSerializer(read_only=False, required=False)
     
     class Meta:
         model = Profile
@@ -54,7 +54,14 @@ class ProfileSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
 
-
+    def update(self, instance, validated_data):
+        user_data = validated_data.pop('user', None)
+        if user_data:
+            user_serializer = UserSerializer(instance.user, data=user_data, partial=True)
+            if user_serializer.is_valid(raise_exception=True):
+                user_serializer.save()
+        return super().update(instance, validated_data)
+    
 class UserLoginSerializer(serializers.Serializer):
     """
     Serializer for user login.

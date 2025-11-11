@@ -138,7 +138,7 @@ class ProfileDetailView(generics.RetrieveUpdateAPIView):
         return Response(serializer.data)
     
     def put(self, request, *args, **kwargs):
-        return self.update(request, *args, **kwargs)
+        return self.partial_update(request, *args, **kwargs)
 
 @api_view(["GET"])
 @permission_classes([permissions.IsAuthenticated])

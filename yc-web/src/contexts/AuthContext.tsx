@@ -145,19 +145,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // -- Login --
   const login = async (email: string, password: string): Promise<void> => {
-    dispatch({ type: 'LOGIN_START' });
-    try {
-      const response = await apiClient.login(email, password);
-      dispatch({
-        type: 'LOGIN_SUCCESS',
-        payload: { user: response.user, token: response.access },
-      });
-      localStorage.setItem('refreshToken', response.refresh);
-    } catch (error) {
-      dispatch({ type: 'LOGIN_FAILURE' });
-      throw error;
-    }
-  };
+  dispatch({ type: 'LOGIN_START' });
+  try {
+    const response = await apiClient.login(email, password);
+    localStorage.setItem("user", JSON.stringify(response.user));
+    localStorage.setItem("access", response.access);
+    localStorage.setItem("refresh", response.refresh);
+
+    dispatch({
+      type: 'LOGIN_SUCCESS',
+      payload: { user: response.user, token: response.access },
+    });
+  } catch (error) {
+    dispatch({ type: 'LOGIN_FAILURE' });
+    throw error;
+  }
+};
+
 
   const loginWithGoogle = async (): Promise<void> => {
     dispatch({ type: 'LOGIN_START' });

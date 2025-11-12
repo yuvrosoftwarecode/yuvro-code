@@ -15,6 +15,10 @@ import CodePractice from './pages/CodePractice';
 import NotFound from './pages/NotFound';
 import ResetPassword from './pages/ResetPassword';
 import ForgotPassword from './pages/ForgotPassword';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import ContentAdminDashboard from './pages/cadmin/ContentAdminDashboard';
+import StudentDashboard from './pages/student/StudentDashboard';
+
 
 function App() {
   return (
@@ -23,7 +27,7 @@ function App() {
         <div className="App">
           <Routes>
             {/* Public routes */}
-            <Route path="/" element={<Landing />} />
+            <Route path="/" element={<Landing />} />  
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -32,30 +36,50 @@ function App() {
 
             {/* Protected routes */}
             <Route
-              path="/dashboard"
+              path="/student/profile"
               element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/profile"
-              element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={["student"]}>
                   <Profile />
                 </ProtectedRoute>
               }
             />
 
             <Route
-              path="/code-practice"
+              path="/student/code-practice"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={["student"]}>
                   <CodePractice />
                 </ProtectedRoute>
               }
             />
+
+            <Route
+              path="/admin/dashboard"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/cadmin/dashboard"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "admin_content"]}>
+                  <ContentAdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/student/dashboard"
+              element={
+                <ProtectedRoute allowedRoles={["student"]}>
+                  <StudentDashboard />
+                </ProtectedRoute>
+              }
+            />
+
 
             {/* 404 route */}
             <Route path="/404" element={<NotFound />} />

@@ -13,18 +13,18 @@ const Navigation: React.FC = () => {
   const profileRef = useRef<HTMLDivElement>(null);
 
   const mainTabs = [
-    { label: 'Learn & Certify', path: '/dashboard' }, // Changed to match dashboard route
-    { label: 'Code Practice', path: '/code-practice' },
-    { label: 'Skill Test', path: '/skill-test' },
-    { label: 'Mock Interview', path: '/mock-interview' },
-    { label: 'Jobs', path: '/jobs' },
-    { label: 'Contest', path: '/contest' },
+    { label: 'Dashboard', path: '/student/dashboard' }, // Changed to match dashboard route
+    { label: 'Learn & Certify', path: '/student/learn-certify' }, // Changed to match dashboard route
+    { label: 'Code Practice', path: '/student/code-practice' },
+    { label: 'Skill Test', path: '/student/skill-test' },
+    { label: 'Mock Interview', path: '/student/mock-interview' },
+    { label: 'Jobs', path: '/student/jobs' },
+    { label: 'Contest', path: '/student/contest' },
   ];
 
   const profileMenu = [
-    { label: 'Dashboard', path: '/dashboard' },
-    { label: 'Certifications', path: '/certifications' },
-    { label: 'Profile', path: '/profile' },
+    { label: 'Certifications', path: '/student/certifications' },
+    { label: 'Profile', path: '/student/profile' },
   ];
 
   const handleLogout = () => logout();

@@ -22,7 +22,14 @@ const Login: React.FC = () => {
 
     try {
       await login(email, password);
-      navigate(from, { replace: true });
+
+      const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+
+      if (storedUser.role === "admin") navigate("/admin/dashboard");
+      else if (storedUser.role === "admin_content") navigate("/cadmin/dashboard");
+      else navigate("/student/dashboard");
+
+
     } catch (err) {
       if (err instanceof ApiError) setError(err.message);
       else setError('An unexpected error occurred');

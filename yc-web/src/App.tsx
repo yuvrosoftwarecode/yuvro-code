@@ -19,7 +19,7 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import ContentAdminDashboard from './pages/cadmin/ContentAdminDashboard';
 import StudentDashboard from './pages/student/StudentDashboard';
 import LearnAndCertify from './pages/student/LearnAndCertify';
-// import CourseDetail from './components/student/CourseDetail';
+import CourseDetail from './components/student/CourseDetail';
 
 
 function App() {
@@ -56,14 +56,14 @@ function App() {
               }
             />
 
-            {/* <Route
+            <Route
               path="/student/learn/:courseId"
               element={
                 <ProtectedRoute allowedRoles={["student"]}>
                   <CourseDetail />
                 </ProtectedRoute>
               }
-            /> */}
+            />
 
             <Route
               path="/student/code-practice"

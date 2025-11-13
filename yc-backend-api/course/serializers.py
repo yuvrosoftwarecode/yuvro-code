@@ -8,7 +8,7 @@ class SubtopicSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = Subtopic
-        fields = ['id', 'topic', 'name', 'content', 'video_url', 'order_index', 'created_at']
+        fields = ['id', 'topic', 'name', 'content', 'order_index', 'created_at']
         read_only_fields = ['id', 'created_at']
 
     def validate_video_url(self, value):
@@ -46,7 +46,7 @@ class CourseSerializer(serializers.ModelSerializer):
     """
     Serializer for Course model with optional nested topics.
     """
-    topics = TopicBasicSerializer(many=True, read_only=True)
+    topics = TopicSerializer(many=True, read_only=True)
 
     class Meta:
         model = Course

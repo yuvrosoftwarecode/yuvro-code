@@ -1,9 +1,19 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { redirectToDashboard } from '../utils/redirectToDashboard';
 
 const NotFound: React.FC = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleDashboardClick = () => {
+    if (!isAuthenticated) {
+      navigate('/');
+    } else {
+      redirectToDashboard(user, navigate);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
@@ -17,12 +27,12 @@ const NotFound: React.FC = () => {
             Sorry, we couldn't find the page you're looking for.
           </p>
           <div className="mt-6">
-            <Link
-              to={isAuthenticated ? '/dashboard' : '/'}
+            <button
+              onClick={handleDashboardClick}
               className="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
               {isAuthenticated ? 'Go to Dashboard' : 'Go to Home'}
-            </Link>
+            </button>
           </div>
         </div>
       </div>

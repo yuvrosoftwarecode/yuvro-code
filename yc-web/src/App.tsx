@@ -18,6 +18,8 @@ import ForgotPassword from './pages/ForgotPassword';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import ContentAdminDashboard from './pages/cadmin/ContentAdminDashboard';
 import StudentDashboard from './pages/student/StudentDashboard';
+import LearnAndCertify from './pages/student/LearnAndCertify';
+// import CourseDetail from './components/student/CourseDetail';
 
 
 function App() {
@@ -35,6 +37,7 @@ function App() {
 
 
             {/* Protected routes */}
+            {/* Student Routes */}
             <Route
               path="/student/profile"
               element={
@@ -43,6 +46,24 @@ function App() {
                 </ProtectedRoute>
               }
             />
+
+            <Route
+              path="/student/learn-certify"
+              element={
+                <ProtectedRoute allowedRoles={["student"]}>
+                  <LearnAndCertify />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* <Route
+              path="/student/learn/:courseId"
+              element={
+                <ProtectedRoute allowedRoles={["student"]}>
+                  <CourseDetail />
+                </ProtectedRoute>
+              }
+            /> */}
 
             <Route
               path="/student/code-practice"

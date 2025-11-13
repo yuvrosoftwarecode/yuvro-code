@@ -1,9 +1,16 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { redirectToDashboard } from '../utils/redirectToDashboard';
 
 const Landing: React.FC = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleDashboardClick = () => {
+    if (!isAuthenticated) navigate('/login');
+    else redirectToDashboard(user, navigate);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -12,14 +19,15 @@ const Landing: React.FC = () => {
           <div className="flex justify-start lg:w-0 lg:flex-1">
             <span className="text-2xl font-bold text-indigo-600">YC App</span>
           </div>
+
           <div className="hidden md:flex items-center justify-end md:flex-1 lg:w-0">
             {isAuthenticated ? (
-              <Link
-                to="/dashboard"
+              <button
+                onClick={handleDashboardClick}
                 className="ml-8 whitespace-nowrap inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700"
               >
                 Go to Dashboard
-              </Link>
+              </button>
             ) : (
               <>
                 <Link

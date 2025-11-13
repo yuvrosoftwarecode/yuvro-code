@@ -60,3 +60,7 @@
     transition: none !important;
   }
 }
+/* Fix: Select dropdown appears behind dialogs */
+[data-radix-popper-content-wrapper] {
+  z-index: 999999 !important;
+}

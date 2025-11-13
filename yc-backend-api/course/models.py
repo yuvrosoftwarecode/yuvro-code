@@ -2,6 +2,9 @@ import uuid
 from django.db import models
 from django.core.validators import MinValueValidator
 from django.conf import settings
+from django.contrib.auth import get_user_model
+User = get_user_model()
+
 
 
 class Course(models.Model):
@@ -19,9 +22,17 @@ class Course(models.Model):
     short_code = models.CharField(max_length=20, blank=True, null=True, unique=True)
     name = models.TextField()
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
+    assigned_admin = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="assigned_courses"
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
+    
     class Meta:
         ordering = ['category', '-created_at']
 
@@ -32,9 +43,6 @@ class Course(models.Model):
 
 
 class Topic(models.Model):
-    """
-    Topic model representing a major section within a course.
-    """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='topics')
     name = models.CharField(max_length=255)
@@ -43,23 +51,35 @@ class Topic(models.Model):
 
     class Meta:
         ordering = ['order_index']
-        unique_together = ['course', 'order_index']
+        # ❌ REMOVE UNIQUE CONSTRAINT (we handle it manually)
+        # unique_together = ['course', 'order_index']
 
     def save(self, *args, **kwargs):
+        # **Auto assign if no index**
         if self.order_index is None:
-            # Auto-assign next available order_index
-            last_topic = Topic.objects.filter(course=self.course).order_by('-order_index').first()
-            self.order_index = (last_topic.order_index + 1) if last_topic else 0
-        super().save(*args, **kwargs)
+            last = Topic.objects.filter(course=self.course).order_by('-order_index').first()
+            self.order_index = (last.order_index + 1) if last else 0
 
-    def __str__(self):
-        return f"{self.course.name} - {self.name}"
+        else:
+            # **Check if another topic already has this index**
+            conflict = Topic.objects.filter(
+                course=self.course,
+                order_index=self.order_index
+            ).exclude(id=self.id)
+
+            if conflict.exists():
+                # SHIFT all indexes >= current
+                Topic.objects.filter(
+                    course=self.course,
+                    order_index__gte=self.order_index
+                ).exclude(id=self.id).update(
+                    order_index=models.F("order_index") + 1
+                )
+
+        super().save(*args, **kwargs)
 
 
 class Subtopic(models.Model):
-    """
-    Subtopic model representing detailed content within a topic.
-    """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     topic = models.ForeignKey(Topic, on_delete=models.CASCADE, related_name='subtopics')
     name = models.CharField(max_length=255)
@@ -69,17 +89,32 @@ class Subtopic(models.Model):
 
     class Meta:
         ordering = ['order_index']
-        unique_together = ['topic', 'order_index']
+        # ❌ REMOVE UNIQUE TOGETHER (we handle ordering ourselves)
+        # unique_together = ['topic', 'order_index']
 
     def save(self, *args, **kwargs):
+        # Auto assign if empty
         if self.order_index is None:
-            # Auto-assign next available order_index
-            last_subtopic = Subtopic.objects.filter(topic=self.topic).order_by('-order_index').first()
-            self.order_index = (last_subtopic.order_index + 1) if last_subtopic else 0
+            last = Subtopic.objects.filter(topic=self.topic).order_by('-order_index').first()
+            self.order_index = (last.order_index + 1) if last else 0
+
+        else:
+            # Detect conflict
+            conflict = Subtopic.objects.filter(
+                topic=self.topic,
+                order_index=self.order_index
+            ).exclude(id=self.id)
+
+            if conflict.exists():
+                Subtopic.objects.filter(
+                    topic=self.topic,
+                    order_index__gte=self.order_index
+                ).exclude(id=self.id).update(
+                    order_index=models.F("order_index") + 1
+                )
+
         super().save(*args, **kwargs)
 
-    def __str__(self):
-        return f"{self.topic.name} - {self.name}"
 
 
 class Video(models.Model):

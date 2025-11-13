@@ -21,6 +21,8 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
+from rest_framework.permissions import IsAdminUser
+
 
 
 
@@ -213,3 +215,12 @@ class ResetPasswordView(generics.GenericAPIView):
         user.save()
 
         return Response({"message": "Password reset successful. You may now login."})
+
+# User = get_user_model()
+
+
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def admin_users(request):
+    admins = User.objects.filter(is_staff=True).values('id', 'email', 'username')
+    return Response(list(admins))

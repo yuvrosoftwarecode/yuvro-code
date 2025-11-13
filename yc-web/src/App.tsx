@@ -20,6 +20,11 @@ import ContentAdminDashboard from './pages/cadmin/ContentAdminDashboard';
 import StudentDashboard from './pages/student/StudentDashboard';
 import LearnAndCertify from './pages/student/LearnAndCertify';
 import CourseDetail from './components/student/CourseDetail';
+import AdminCourses from './pages/admin/AdminCourses';
+import AdminCourseEdit from "./pages/admin/AdminCourseEdit";
+import { Toaster } from "@/components/ui/sonner";
+
+
 
 
 function App() {
@@ -84,6 +89,24 @@ function App() {
             />
 
             <Route
+              path="/admin/courses"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <AdminCourses />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+  path="/admin/courses/:id"
+  element={
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <AdminCourseEdit />
+    </ProtectedRoute>
+  }
+/>
+
+            <Route
               path="/cadmin/dashboard"
               element={
                 <ProtectedRoute allowedRoles={["admin", "admin_content"]}>
@@ -106,8 +129,10 @@ function App() {
             <Route path="/404" element={<NotFound />} />
             <Route path="*" element={<Navigate to="/404" replace />} />
           </Routes>
+      <Toaster position="top-right" />
         </div>
       </Router>
+
     </AuthProvider>
   );
 }

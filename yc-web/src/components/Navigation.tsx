@@ -100,7 +100,9 @@ const Navigation: React.FC = () => {
             {/* Tabs */}
             <div className="hidden md:flex space-x-3 ml-3">
               {mainTabs.map((tab) => {
-                const isActive = currentPath === tab.path;
+               const isActive =
+                  currentPath === tab.path || currentPath.startsWith(tab.path + "/");
+
                 return (
                   <Link
                     key={tab.path}
@@ -205,7 +207,9 @@ const Navigation: React.FC = () => {
         <div className="md:hidden bg-white border-t border-gray-200 shadow-inner">
           <div className="px-4 py-3 space-y-2">
             {mainTabs.map((tab) => {
-              const isActive = currentPath === tab.path;
+              const isActive =
+  currentPath === tab.path || currentPath.startsWith(tab.path + "/");
+
               return (
                 <Link
                   key={tab.path}

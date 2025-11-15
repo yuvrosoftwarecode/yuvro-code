@@ -1,15 +1,13 @@
 services:
   db:
     image: postgres:15
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB:-yc_app}
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    env_file:
+      - ./yc-backend-api/.env.prod
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -19,12 +17,8 @@ services:
       context: ./yc-backend-api
       dockerfile: Dockerfile
       target: production
-    environment:
-      - DEBUG=0
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-yc_app}
-      - SECRET_KEY=${SECRET_KEY}
-      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost}
-      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost}
+    env_file:
+      - ./yc-backend-api/.env.prod
     depends_on:
       db:
         condition: service_healthy
@@ -39,6 +33,10 @@ services:
       context: ./yc-web
       dockerfile: Dockerfile
       target: production
+      args:
+        - VITE_API_URL=${VITE_API_URL}
+    env_file:
+      - ./yc-web/.env.prod
     ports:
       - "80:80"
     depends_on:

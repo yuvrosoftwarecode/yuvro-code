@@ -26,9 +26,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
   if (allowedRoles.length > 0 && user && !allowedRoles.includes(user.role)) {
     switch (user.role) {
       case "admin":
+      case "instructor":
+      case "recruiter":
         return <Navigate to="/admin/dashboard" replace />;
-      case "admin_content":
-        return <Navigate to="/cadmin/dashboard" replace />;
       default:
         return <Navigate to="/student/dashboard" replace />;
     }

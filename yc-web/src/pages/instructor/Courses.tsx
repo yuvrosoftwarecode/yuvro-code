@@ -47,7 +47,7 @@ const CATEGORY_LABELS: Record<Course["category"], string> = {
   ai_tools: "AI Tools",
 };
 
-const AdminCourses: React.FC = () => {
+const Courses: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -414,4 +414,4 @@ const AdminCourses: React.FC = () => {
   );
 };
 
-export default AdminCourses;
+export default Courses;

@@ -27,21 +27,23 @@ const Navigation: React.FC = () => {
     ],
     admin: [
       { label: 'Dashboard', path: '/admin/dashboard' },
+      { label: 'User Management', path: '/admin/users' },
       { label: 'Courses', path: '/admin/courses' },
-      { label: 'Batches', path: '/admin/batches' },
-      { label: 'Students', path: '/admin/students' },
+      { label: 'Learn/Certify', path: '/admin/learn' },
       { label: 'Practice Questions', path: '/admin/practice-questions' },
-      { label: 'Test Questions', path: '/admin/test-questions' }, 
-      { label: 'Add Admin/Content Admin', path: '/admin/add-admin-content-admin' }, 
-
+      { label: 'Skill Test', path: '/admin/test-questions' },
+      { label: 'Jobs', path: '/admin/jobs' },
     ],
-    admin_content: [
-      { label: 'Dashboard', path: '/cadmin/dashboard' },
-      { label: 'Courses', path: '/cadmin/courses' },
-      { label: 'Batches', path: '/cadmin/batches' },
-      { label: 'Students', path: '/cadmin/students' },
-      { label: 'Practice Questions', path: '/cadmin/practice-questions' },
-      { label: 'Test Questions', path: '/cadmin/test-questions' }, 
+    instructor: [
+      { label: 'Dashboard', path: '/admin/dashboard' },
+      { label: 'Courses', path: '/admin/courses' },
+      { label: 'Learn/Certify', path: '/admin/learn' },
+      { label: 'Practice Questions', path: '/admin/practice-questions' },
+      { label: 'Skill Test', path: '/admin/test-questions' },
+    ],
+    recruiter: [
+      { label: 'Dashboard', path: '/admin/dashboard' },
+      { label: 'Jobs', path: '/admin/jobs' },
     ],
   };
 
@@ -51,12 +53,16 @@ const Navigation: React.FC = () => {
       { label: 'Profile', path: '/student/profile' },
     ],
     admin: [
-      { label: 'Admin Settings', path: '/admin/settings' },
+      { label: 'Settings', path: '/admin/settings' },
       { label: 'Profile', path: '/admin/profile' },
     ],
-    content_admin: [
-      { label: 'Upload History', path: '/content/uploads' },
-      { label: 'Profile', path: '/content/profile' },
+    instructor: [
+      { label: 'Settings', path: '/admin/settings' },
+      { label: 'Profile', path: '/admin/profile' },
+    ],
+    recruiter: [
+      { label: 'Settings', path: '/admin/settings' },
+      { label: 'Profile', path: '/admin/profile' },
     ],
   };
 
@@ -100,18 +106,17 @@ const Navigation: React.FC = () => {
             {/* Tabs */}
             <div className="hidden md:flex space-x-3 ml-3">
               {mainTabs.map((tab) => {
-               const isActive =
+                const isActive =
                   currentPath === tab.path || currentPath.startsWith(tab.path + "/");
 
                 return (
                   <Link
                     key={tab.path}
                     to={tab.path}
-                    className={`inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground-700 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2 ${
-                      isActive
+                    className={`inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground-700 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2 ${isActive
                         ? 'bg-black text-white ring-1 ring-black'
                         : 'text-gray-700 hover:text-black'
-                    }`}
+                      }`}
                   >
                     {tab.label}
                   </Link>
@@ -208,18 +213,17 @@ const Navigation: React.FC = () => {
           <div className="px-4 py-3 space-y-2">
             {mainTabs.map((tab) => {
               const isActive =
-  currentPath === tab.path || currentPath.startsWith(tab.path + "/");
+                currentPath === tab.path || currentPath.startsWith(tab.path + "/");
 
               return (
                 <Link
                   key={tab.path}
                   to={tab.path}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`block w-full inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-base font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground-700 focus-visible:ring-offset-2 h-10 px-3 py-2 ${
-                    isActive
+                  className={`block w-full inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-base font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground-700 focus-visible:ring-offset-2 h-10 px-3 py-2 ${isActive
                       ? 'bg-black text-white'
                       : 'text-gray-700 hover:text-black'
-                  }`}
+                    }`}
                 >
                   {tab.label}
                 </Link>

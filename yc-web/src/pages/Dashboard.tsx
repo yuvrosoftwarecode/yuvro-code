@@ -71,7 +71,7 @@ const Dashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
-      
+
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
@@ -215,7 +215,7 @@ const Dashboard: React.FC = () => {
                     <p className="text-sm text-gray-500">{user?.email}</p>
                   </div>
                 </div>
-                
+
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">Profile Completion</span>
@@ -224,7 +224,7 @@ const Dashboard: React.FC = () => {
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div className="bg-indigo-600 h-2 rounded-full" style={{ width: '85%' }}></div>
                   </div>
-                  
+
                   <div className="pt-4 border-t border-gray-200">
                     <button className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-4 rounded-lg text-sm font-medium">
                       Complete Profile

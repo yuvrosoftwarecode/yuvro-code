@@ -1,5 +1,5 @@
 import React from 'react';
-import Navigation from '../components/Navigation';
+import Navigation from '../../components/Navigation';
 const CodePractice: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">

@@ -9,8 +9,10 @@ import { cn } from '@/lib/utils';
 interface CodeEditorProps {
   initialCode?: string;
   language?: string;
+  testCases?: any[];
   onCodeChange?: (code: string) => void;
-  onRun?: (code: string, language: string) => void;
+  onLanguageChange?: (language: string) => void;
+  onRun?: (code: string, language: string) => void | Promise<void>;
   className?: string;
   placeholder?: string;
   readOnly?: boolean;
@@ -23,38 +25,16 @@ interface CodeEditorProps {
 }
 
 const SUPPORTED_LANGUAGES = [
-  { value: 'javascript', label: 'JavaScript', extension: 'js' },
-  { value: 'typescript', label: 'TypeScript', extension: 'ts' },
   { value: 'python', label: 'Python', extension: 'py' },
   { value: 'java', label: 'Java', extension: 'java' },
   { value: 'cpp', label: 'C++', extension: 'cpp' },
-  { value: 'c', label: 'C', extension: 'c' },
-  { value: 'html', label: 'HTML', extension: 'html' },
-  { value: 'css', label: 'CSS', extension: 'css' },
-  { value: 'sql', label: 'SQL', extension: 'sql' }
+  { value: 'c', label: 'C', extension: 'c' }
 ];
 
 const DEFAULT_CODE_TEMPLATES = {
-  javascript: `// JavaScript Code
-function solution() {
-  // Your code here
-  return result;
-}
-
-console.log(solution());`,
-  typescript: `// TypeScript Code
-function solution(): any {
-  // Your code here
-  return result;
-}
-
-console.log(solution());`,
-  python: `# Python Code
-def solution():
+  python: `def solution():
     # Your code here
-    return result
-
-print(solution())`,
+    return result`,
   java: `// Java Code
 public class Solution {
     public static void main(String[] args) {
@@ -81,29 +61,15 @@ int main() {
 int main() {
     // Your code here
     return 0;
-}`,
-  html: `<!DOCTYPE html>
-<html>
-<head>
-    <title>Solution</title>
-</head>
-<body>
-    <!-- Your HTML here -->
-</body>
-</html>`,
-  css: `/* CSS Code */
-.solution {
-    /* Your styles here */
-}`,
-  sql: `-- SQL Query
-SELECT * FROM table_name
-WHERE condition;`
+}`
 };
 
 export const CodeEditor: React.FC<CodeEditorProps> = ({
   initialCode,
-  language = 'javascript',
+  language = 'python',
+  testCases = [],
   onCodeChange,
+  onLanguageChange,
   onRun,
   className,
   placeholder = 'Start typing your code...',
@@ -144,6 +110,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
   // Handle language change
   const handleLanguageChange = (newLanguage: string) => {
     setSelectedLanguage(newLanguage);
+    onLanguageChange?.(newLanguage);
     const template = DEFAULT_CODE_TEMPLATES[newLanguage as keyof typeof DEFAULT_CODE_TEMPLATES];
     if (template && code === DEFAULT_CODE_TEMPLATES[selectedLanguage as keyof typeof DEFAULT_CODE_TEMPLATES]) {
       const newCode = template;

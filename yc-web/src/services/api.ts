@@ -158,25 +158,46 @@ class ApiClient {
 
   // --- Authentication Endpoints ---
   async login(email: string, password: string): Promise<LoginResponse> {
-    const response = await fetch(`${this.baseURL}/auth/login/`, {
-      method: 'POST',
-      headers: this.getHeaders(),
-      body: JSON.stringify({ email, password }),
-    });
+    console.log('Attempting login with email:', email);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new ApiError(errorData.detail || 'Login failed', response.status, errorData);
+    try {
+      const response = await fetch(`${this.baseURL}/auth/login/`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify({ email, password }),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      console.log('Login response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Login error response:', errorData);
+        throw new ApiError(errorData.detail || 'Login failed', response.status, errorData);
+      }
+
+      const data = await response.json();
+      console.log('Login successful, user:', data.user?.email);
+
+      // Store tokens
+      localStorage.setItem('token', data.access);
+      localStorage.setItem('refreshToken', data.refresh);
+
+      this.setAuthToken(data.access);
+      return data;
+    } catch (error: any) {
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        console.error('Login request timed out');
+        throw new ApiError('Login request timed out. Backend may be unresponsive.', 408);
+      }
+      console.error('Login error:', error);
+      throw error;
     }
-
-    const data = await response.json();
-
-    // Store tokens
-    localStorage.setItem('token', data.access);
-    localStorage.setItem('refreshToken', data.refresh);
-
-    this.setAuthToken(data.access);
-    return data;
   }
 
   async register(data: RegisterRequest): Promise<LoginResponse> {

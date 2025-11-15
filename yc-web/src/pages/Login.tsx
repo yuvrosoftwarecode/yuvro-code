@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { ApiError } from '../services/api';
+import { ApiError, apiClient } from '../services/api';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -9,11 +9,27 @@ const Login: React.FC = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [backendStatus, setBackendStatus] = useState<'checking' | 'online' | 'offline'>('checking');
 
   const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as any)?.from?.pathname || '/dashboard';
+
+  // Check backend connectivity on mount
+  useEffect(() => {
+    const checkBackend = async () => {
+      try {
+        await apiClient.healthCheck();
+        setBackendStatus('online');
+      } catch (err) {
+        console.error('Backend health check failed:', err);
+        setBackendStatus('offline');
+      }
+    };
+
+    checkBackend();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,11 +74,25 @@ const Login: React.FC = () => {
           <div className="text-center mb-6">
             <h1 className="text-2xl font-semibold text-gray-900">Yuvro</h1>
             <p className="text-sm text-gray-500 mt-1">Sign in to your account</p>
+            
+            {/* Backend Status */}
+            <div className="mt-3 flex items-center justify-center gap-2">
+              <div className={`w-2 h-2 rounded-full ${backendStatus === 'online' ? 'bg-green-500' : backendStatus === 'offline' ? 'bg-red-500' : 'bg-yellow-500'}`}></div>
+              <p className="text-xs text-gray-500">
+                Backend: {backendStatus === 'checking' ? 'Checking...' : backendStatus === 'online' ? 'Connected' : 'Offline'}
+              </p>
+            </div>
           </div>
 
           {error && (
             <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md py-2 px-3 text-center">
               {error}
+            </div>
+          )}
+
+          {backendStatus === 'offline' && (
+            <div className="mb-4 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md py-2 px-3 text-center">
+              Backend server is not responding. Please ensure the Django server is running at http://127.0.0.1:8001
             </div>
           )}
 

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Course, Topic, Subtopic
+from .models import Course, Topic, Subtopic, CodingProblem
 
 
 class SubtopicSerializer(serializers.ModelSerializer):
@@ -8,16 +8,8 @@ class SubtopicSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = Subtopic
-        fields = ['id', 'topic', 'name', 'content', 'video_url', 'order_index', 'created_at']
+        fields = ['id', 'topic', 'name', 'content', 'order_index', 'created_at']
         read_only_fields = ['id', 'created_at']
-
-    def validate_video_url(self, value):
-        """
-        Validate video URL format if provided.
-        """
-        if value and not value.startswith(('http://', 'https://')):
-            raise serializers.ValidationError("Video URL must start with http:// or https://")
-        return value
 
 
 class TopicSerializer(serializers.ModelSerializer):
@@ -83,4 +75,22 @@ class CourseBasicSerializer(serializers.ModelSerializer):
     class Meta:
         model = Course
         fields = ['id', 'short_code', 'name', 'category', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at']
+        
+class CodingProblemSerializer(serializers.ModelSerializer):
+    """
+    Serializer for CodingProblem model.
+    """
+    class Meta:
+        model = CodingProblem
+        fields = [
+            'id',
+            'sub_topic',
+            'title',
+            'description',
+            'input',
+            'test_cases',
+            'created_at',
+            'updated_at',
+        ]
         read_only_fields = ['id', 'created_at', 'updated_at']

@@ -11,9 +11,14 @@ This authentication system provides three user roles with different permission l
 - Can take quizzes and solve coding problems
 - Cannot create or modify course content
 
-### 2. Content Administrator (`admin_content`)
+### 2. Instructor (`instructor`)
 - Can do everything a student can do
 - Can create, update, and delete courses, topics, and subtopics
+
+### 3. Recruiter (`recruiter`)
+- Can view student profiles and progress
+- Can access recruitment-related features
+- Cannot create or modify course content
 - Can manage videos, coding problems, and quizzes
 - Cannot manage other users or system settings
 
@@ -27,7 +32,7 @@ This authentication system provides three user roles with different permission l
 ## JWT Token Claims
 
 JWT tokens include the following custom claims:
-- `role`: User's role (student, admin_content, admin)
+- `role`: User's role (student, instructor, recruiter, admin)
 - `username`: User's username
 - `email`: User's email address
 - `first_name`: User's first name
@@ -54,8 +59,8 @@ The system includes custom permission classes:
 ### `IsAdminUser`
 Allows access only to users with `admin` role.
 
-### `IsContentAdminOrAdmin`
-Allows access to users with `admin_content` or `admin` roles.
+### `IsInstructorOrAdmin`
+Allows access to users with `instructor` or `admin` roles.
 
 ### `IsStudentUser`
 Allows access only to users with `student` role.
@@ -155,7 +160,7 @@ from authentication.models import User
 
 # Change user role
 user = User.objects.get(email='user@example.com')
-user.role = 'admin_content'
+user.role = 'instructor'
 user.save()
 
 # Check permissions

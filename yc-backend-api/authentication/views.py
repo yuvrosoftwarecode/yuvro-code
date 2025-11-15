@@ -24,13 +24,13 @@ from django.core.exceptions import ValidationError
 from rest_framework.permissions import IsAdminUser
 
 
-
-
 class CustomTokenObtainPairView(TokenObtainPairView):
     """
     Custom token obtain view that uses our custom serializer with role information.
     """
+
     serializer_class = CustomTokenObtainPairSerializer
+
 
 class UserRegistrationView(generics.CreateAPIView):
     """User registration endpoint."""
@@ -79,6 +79,7 @@ def login_view(request):
             "access": str(refresh.access_token),
         }
     )
+
 
 @api_view(["POST"])
 @permission_classes([permissions.IsAuthenticated])
@@ -140,16 +141,17 @@ class ProfileDetailView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         profile, created = Profile.objects.get_or_create(user=self.request.user)
         return profile
-    
+
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         return Response(serializer.data)
-    
+
     def put(self, request, *args, **kwargs):
         return self.update(request, *args, **kwargs)
+
 
 @api_view(["GET"])
 @permission_classes([permissions.IsAuthenticated])
@@ -157,6 +159,7 @@ def user_info_view(request):
     """Get current user information."""
     serializer = UserSerializer(request.user)
     return Response(serializer.data)
+
 
 class ForgotPasswordView(generics.GenericAPIView):
     permission_classes = [permissions.AllowAny]
@@ -170,7 +173,9 @@ class ForgotPasswordView(generics.GenericAPIView):
             user = User.objects.get(email=email)
         except User.DoesNotExist:
             # Do not reveal whether the email exists
-            return Response({"message": "If this email exists, a reset link will be sent."})
+            return Response(
+                {"message": "If this email exists, a reset link will be sent."}
+            )
 
         token = PasswordResetTokenGenerator().make_token(user)
         uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
@@ -203,7 +208,9 @@ class ResetPasswordView(generics.GenericAPIView):
             return Response({"error": "Invalid reset link"}, status=400)
 
         if not PasswordResetTokenGenerator().check_token(user, token):
-            return Response({"error": "Reset link has expired or is invalid"}, status=400)
+            return Response(
+                {"error": "Reset link has expired or is invalid"}, status=400
+            )
 
         # ENFORCE PASSWORD STRENGTH (this was part of your task request)
         try:
@@ -216,11 +223,12 @@ class ResetPasswordView(generics.GenericAPIView):
 
         return Response({"message": "Password reset successful. You may now login."})
 
+
 # User = get_user_model()
 
 
-@api_view(['GET'])
+@api_view(["GET"])
 @permission_classes([IsAdminUser])
 def admin_users(request):
-    admins = User.objects.filter(is_staff=True).values('id', 'email', 'username')
+    admins = User.objects.filter(is_staff=True).values("id", "email", "username")
     return Response(list(admins))

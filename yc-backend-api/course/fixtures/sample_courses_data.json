@@ -1,0 +1,191 @@
+{
+  "courses": [
+    {
+      "short_code": "DS101",
+      "name": "Data Structures and Algorithms Fundamentals",
+      "category": "fundamentals",
+      "topics": [
+        {
+          "name": "Introduction to Data Structures",
+          "order_index": 0,
+          "subtopics": [
+            {
+              "name": "What are Data Structures?",
+              "content": "Data structures are ways of organizing and storing data so that they can be accessed and worked with efficiently.",
+              "order_index": 0,
+              "videos": [
+                {
+                  "title": "Introduction to Data Structures - Complete Overview",
+                  "video_link": "https://www.youtube.com/watch?v=bum_19loj9A",
+                  "ai_context": "This video provides a comprehensive introduction to data structures."
+                }
+              ],
+              "quizzes": [
+                {
+                  "question": "What is the main purpose of data structures?",
+                  "options": [
+                    "To make code look prettier",
+                    "To organize and store data efficiently",
+                    "To increase file size",
+                    "To slow down programs"
+                  ],
+                  "correct_answer_index": 1
+                }
+              ]
+            },
+            {
+              "name": "Time and Space Complexity",
+              "content": "Understanding Big O notation and how to analyze the efficiency of algorithms.",
+              "order_index": 1,
+              "videos": [
+                {
+                  "title": "Big O Notation Explained",
+                  "video_link": "https://www.youtube.com/watch?v=D6xkbGLQesk",
+                  "ai_context": "Explains time and space complexity analysis using Big O notation."
+                }
+              ],
+              "quizzes": [
+                {
+                  "question": "What does O(n) represent in Big O notation?",
+                  "options": [
+                    "Constant time complexity",
+                    "Linear time complexity",
+                    "Quadratic time complexity",
+                    "Logarithmic time complexity"
+                  ],
+                  "correct_answer_index": 1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Linear Data Structures",
+          "order_index": 1,
+          "subtopics": [
+            {
+              "name": "Arrays and Lists",
+              "content": "Arrays are collections of elements stored at contiguous memory locations.",
+              "order_index": 0,
+              "coding_problems": [
+                {
+                  "title": "Two Sum Problem",
+                  "description": "Given an array of integers and a target, return indices of two numbers that add up to target.",
+                  "input": "nums = [2,7,11,15], target = 9",
+                  "test_cases": [
+                    {
+                      "input": {"nums": [2, 7, 11, 15], "target": 9},
+                      "expected_output": [0, 1],
+                      "description": "Basic case with solution at beginning"
+                    }
+                  ]
+                }
+              ],
+              "quizzes": [
+                {
+                  "question": "What is the time complexity of accessing an element in an array by index?",
+                  "options": [
+                    "O(1)",
+                    "O(n)",
+                    "O(log n)",
+                    "O(n²)"
+                  ],
+                  "correct_answer_index": 0
+                }
+              ]
+            },
+            {
+              "name": "Stacks and Queues",
+              "content": "Stacks follow LIFO principle, while queues follow FIFO principle.",
+              "order_index": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "short_code": "PY101",
+      "name": "Python Programming Complete Course",
+      "category": "programming_languages",
+      "topics": [
+        {
+          "name": "Python Basics",
+          "order_index": 0,
+          "subtopics": [
+            {
+              "name": "Python Syntax and Variables",
+              "content": "Learn the basic syntax of Python and how to declare variables.",
+              "order_index": 0,
+              "videos": [
+                {
+                  "title": "Python Variables and Data Types",
+                  "video_link": "https://www.youtube.com/watch?v=kqtD5dpn9C8",
+                  "ai_context": "Covers Python's basic syntax and variable declaration."
+                }
+              ],
+              "coding_problems": [
+                {
+                  "title": "FizzBuzz",
+                  "description": "Print numbers 1 to n, but print 'Fizz' for multiples of 3, 'Buzz' for multiples of 5, and 'FizzBuzz' for multiples of both.",
+                  "input": "n = 15",
+                  "test_cases": [
+                    {
+                      "input": {"n": 15},
+                      "expected_output": ["1", "2", "Fizz", "4", "Buzz", "Fizz", "7", "8", "Fizz", "Buzz", "11", "Fizz", "13", "14", "FizzBuzz"],
+                      "description": "Standard FizzBuzz up to 15"
+                    }
+                  ]
+                }
+              ],
+              "quizzes": [
+                {
+                  "question": "Which of the following is NOT a valid Python variable name?",
+                  "options": [
+                    "my_variable",
+                    "_private_var",
+                    "2nd_variable",
+                    "variable2"
+                  ],
+                  "correct_answer_index": 2
+                }
+              ]
+            },
+            {
+              "name": "Control Flow and Loops",
+              "content": "Understanding if statements, for loops, and while loops in Python.",
+              "order_index": 1
+            }
+          ]
+        },
+        {
+          "name": "Object-Oriented Programming",
+          "order_index": 1,
+          "subtopics": [
+            {
+              "name": "Classes and Objects",
+              "content": "Learn how to create classes and instantiate objects in Python.",
+              "order_index": 0,
+              "quizzes": [
+                {
+                  "question": "What keyword is used to create a class in Python?",
+                  "options": [
+                    "class",
+                    "def",
+                    "create",
+                    "new"
+                  ],
+                  "correct_answer_index": 0
+                }
+              ]
+            },
+            {
+              "name": "Inheritance and Polymorphism",
+              "content": "Understanding inheritance and polymorphism in Python OOP.",
+              "order_index": 1
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

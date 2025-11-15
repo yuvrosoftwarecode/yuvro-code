@@ -1,0 +1,82 @@
+{
+  "users": [
+    {
+      "email": "admin@yuvro.com",
+      "username": "admin",
+      "first_name": "Admin",
+      "last_name": "User",
+      "role": "admin",
+      "password": "admin123",
+      "is_staff": true,
+      "is_superuser": true,
+      "profile": {
+        "bio": "System Administrator with full access to all features."
+      }
+    },
+    {
+      "email": "instructor_ds@yuvro.com",
+      "username": "instructor_ds",
+      "first_name": "Data Structures",
+      "last_name": "Instructor",
+      "role": "instructor",
+      "password": "instructor123",
+      "is_staff": false,
+      "is_superuser": false,
+      "profile": {
+        "bio": "Data Structures and Algorithms instructor with expertise in computer science fundamentals."
+      }
+    },
+    {
+      "email": "instructor_python@yuvro.com",
+      "username": "instructor_python",
+      "first_name": "Python",
+      "last_name": "Instructor",
+      "role": "instructor",
+      "password": "instructor123",
+      "is_staff": false,
+      "is_superuser": false,
+      "profile": {
+        "bio": "Python programming instructor specializing in web development and software engineering."
+      }
+    },
+    {
+      "email": "recruiter@yuvro.com",
+      "username": "recruiter",
+      "first_name": "Tech",
+      "last_name": "Recruiter",
+      "role": "recruiter",
+      "password": "recruiter123",
+      "is_staff": false,
+      "is_superuser": false,
+      "profile": {
+        "bio": "Technical recruiter specializing in software engineering and data science positions."
+      }
+    },
+    {
+      "email": "student1@gmail.com",
+      "username": "student1",
+      "first_name": "Shilpa",
+      "last_name": "Dora",
+      "role": "student",
+      "password": "student123",
+      "is_staff": false,
+      "is_superuser": false,
+      "profile": {
+        "bio": "Computer Science student interested in web development and programming."
+      }
+    },
+    {
+      "email": "student2@gmail.com",
+      "username": "student2",
+      "first_name": "Rohith",
+      "last_name": "Krishna",
+      "role": "student",
+      "password": "student123",
+      "is_staff": false,
+      "is_superuser": false,
+      "profile": {
+        "bio": "Software Engineering student exploring data structures and algorithms."
+      }
+    }
+  ]
+}

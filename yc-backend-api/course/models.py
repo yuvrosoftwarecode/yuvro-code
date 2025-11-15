@@ -3,21 +3,22 @@ from django.db import models
 from django.core.validators import MinValueValidator
 from django.conf import settings
 from django.contrib.auth import get_user_model
-User = get_user_model()
 
+User = get_user_model()
 
 
 class Course(models.Model):
     """
     Course model representing a complete learning course.
     """
+
     CATEGORY_CHOICES = [
-        ('fundamentals', 'Fundamentals'),
-        ('programming_languages', 'Programming Languages'),
-        ('databases', 'Databases'),
-        ('ai_tools', 'AI Tools'),
+        ("fundamentals", "Fundamentals"),
+        ("programming_languages", "Programming Languages"),
+        ("databases", "Databases"),
+        ("ai_tools", "AI Tools"),
     ]
-    
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     short_code = models.CharField(max_length=20, blank=True, null=True, unique=True)
     name = models.TextField()
@@ -27,14 +28,14 @@ class Course(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="assigned_courses"
+        related_name="assigned_courses",
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
-        ordering = ['category', '-created_at']
+        ordering = ["category", "-created_at"]
 
     def __str__(self):
         if self.short_code:
@@ -44,85 +45,87 @@ class Course(models.Model):
 
 class Topic(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='topics')
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="topics")
     name = models.CharField(max_length=255)
     order_index = models.PositiveIntegerField(validators=[MinValueValidator(0)])
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ['order_index']
+        ordering = ["order_index"]
         # ❌ REMOVE UNIQUE CONSTRAINT (we handle it manually)
         # unique_together = ['course', 'order_index']
 
     def save(self, *args, **kwargs):
         # **Auto assign if no index**
         if self.order_index is None:
-            last = Topic.objects.filter(course=self.course).order_by('-order_index').first()
+            last = (
+                Topic.objects.filter(course=self.course)
+                .order_by("-order_index")
+                .first()
+            )
             self.order_index = (last.order_index + 1) if last else 0
 
         else:
             # **Check if another topic already has this index**
             conflict = Topic.objects.filter(
-                course=self.course,
-                order_index=self.order_index
+                course=self.course, order_index=self.order_index
             ).exclude(id=self.id)
 
             if conflict.exists():
                 # SHIFT all indexes >= current
                 Topic.objects.filter(
-                    course=self.course,
-                    order_index__gte=self.order_index
-                ).exclude(id=self.id).update(
-                    order_index=models.F("order_index") + 1
-                )
+                    course=self.course, order_index__gte=self.order_index
+                ).exclude(id=self.id).update(order_index=models.F("order_index") + 1)
 
         super().save(*args, **kwargs)
 
 
 class Subtopic(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    topic = models.ForeignKey(Topic, on_delete=models.CASCADE, related_name='subtopics')
+    topic = models.ForeignKey(Topic, on_delete=models.CASCADE, related_name="subtopics")
     name = models.CharField(max_length=255)
     content = models.TextField(blank=True, null=True)
     order_index = models.PositiveIntegerField(validators=[MinValueValidator(0)])
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ['order_index']
+        ordering = ["order_index"]
         # ❌ REMOVE UNIQUE TOGETHER (we handle ordering ourselves)
         # unique_together = ['topic', 'order_index']
 
     def save(self, *args, **kwargs):
         # Auto assign if empty
         if self.order_index is None:
-            last = Subtopic.objects.filter(topic=self.topic).order_by('-order_index').first()
+            last = (
+                Subtopic.objects.filter(topic=self.topic)
+                .order_by("-order_index")
+                .first()
+            )
             self.order_index = (last.order_index + 1) if last else 0
 
         else:
             # Detect conflict
             conflict = Subtopic.objects.filter(
-                topic=self.topic,
-                order_index=self.order_index
+                topic=self.topic, order_index=self.order_index
             ).exclude(id=self.id)
 
             if conflict.exists():
                 Subtopic.objects.filter(
-                    topic=self.topic,
-                    order_index__gte=self.order_index
-                ).exclude(id=self.id).update(
-                    order_index=models.F("order_index") + 1
-                )
+                    topic=self.topic, order_index__gte=self.order_index
+                ).exclude(id=self.id).update(order_index=models.F("order_index") + 1)
 
         super().save(*args, **kwargs)
-
 
 
 class Video(models.Model):
     """
     Video model representing video content associated with a subtopic.
     """
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    sub_topic = models.ForeignKey(Subtopic, on_delete=models.CASCADE, related_name='videos')
+    sub_topic = models.ForeignKey(
+        Subtopic, on_delete=models.CASCADE, related_name="videos"
+    )
     title = models.CharField(max_length=255)
     video_link = models.URLField()
     ai_context = models.TextField(blank=True, null=True)
@@ -130,7 +133,7 @@ class Video(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['created_at']
+        ordering = ["created_at"]
 
     def __str__(self):
         return f"{self.sub_topic.name} - {self.title}"
@@ -140,8 +143,11 @@ class CodingProblem(models.Model):
     """
     CodingProblem model representing coding exercises for programming practice.
     """
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    sub_topic = models.ForeignKey(Subtopic, on_delete=models.CASCADE, related_name='coding_problems')
+    sub_topic = models.ForeignKey(
+        Subtopic, on_delete=models.CASCADE, related_name="coding_problems"
+    )
     title = models.CharField(max_length=255)
     description = models.TextField()
     input = models.TextField()
@@ -150,7 +156,7 @@ class CodingProblem(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['created_at']
+        ordering = ["created_at"]
 
     def __str__(self):
         return f"{self.sub_topic.name} - {self.title}"
@@ -160,8 +166,11 @@ class Quiz(models.Model):
     """
     Quiz model representing multiple choice questions for knowledge assessment.
     """
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    sub_topic = models.ForeignKey(Subtopic, on_delete=models.CASCADE, related_name='quizzes')
+    sub_topic = models.ForeignKey(
+        Subtopic, on_delete=models.CASCADE, related_name="quizzes"
+    )
     question = models.TextField()
     options = models.JSONField()
     correct_answer_index = models.PositiveIntegerField()
@@ -169,19 +178,22 @@ class Quiz(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['created_at']
+        ordering = ["created_at"]
 
     def clean(self):
         """
         Validate that correct_answer_index is within the range of options.
         """
         from django.core.exceptions import ValidationError
+
         if self.options and self.correct_answer_index is not None:
             if isinstance(self.options, list):
                 if self.correct_answer_index >= len(self.options):
-                    raise ValidationError(f'Correct answer index {self.correct_answer_index} is out of range. Options has {len(self.options)} items.')
+                    raise ValidationError(
+                        f"Correct answer index {self.correct_answer_index} is out of range. Options has {len(self.options)} items."
+                    )
                 if self.correct_answer_index < 0:
-                    raise ValidationError('Correct answer index must be non-negative.')
+                    raise ValidationError("Correct answer index must be non-negative.")
 
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -192,7 +204,11 @@ class Quiz(models.Model):
         """
         Get the correct answer text based on the index.
         """
-        if self.options and isinstance(self.options, list) and 0 <= self.correct_answer_index < len(self.options):
+        if (
+            self.options
+            and isinstance(self.options, list)
+            and 0 <= self.correct_answer_index < len(self.options)
+        ):
             return self.options[self.correct_answer_index]
         return None
 
@@ -204,15 +220,20 @@ class Note(models.Model):
     """
     Note model representing user-created notes for personal study.
     """
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    sub_topic = models.ForeignKey(Subtopic, on_delete=models.CASCADE, related_name='notes')
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notes')
+    sub_topic = models.ForeignKey(
+        Subtopic, on_delete=models.CASCADE, related_name="notes"
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notes"
+    )
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['created_at']
+        ordering = ["created_at"]
 
     def __str__(self):
         return f"{self.user.username} - {self.sub_topic.name} - {self.content[:30]}..."

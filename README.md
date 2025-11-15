@@ -24,7 +24,9 @@ A modern full-stack web application built with Django REST Framework backend, Re
 3. **Access the application:**
    - Frontend: http://localhost:3000
    - Backend API: http://localhost:8001
-   - API Documentation: http://localhost:8001/api/
+   - **API Documentation (Swagger)**: http://localhost:8001/api/docs/
+   - **API Documentation (ReDoc)**: http://localhost:8001/api/redoc/
+   - **OpenAPI Schema**: http://localhost:8001/api/schema/
 
 ## 📁 Project Structure
 
@@ -89,25 +91,72 @@ make frontend-install PKG=package-name   # Install frontend package
 ```
 
 
-## 🏗️ API Documentation
+## 📚 API Documentation
 
-### Authentication Endpoints
+The API is fully documented using OpenAPI 3.0 specification with interactive documentation available through Swagger UI and ReDoc.
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/auth/register/` | User registration |
-| POST | `/api/auth/login/` | Email/password login |
-| POST | `/api/auth/refresh/` | JWT token refresh |
-| POST | `/api/auth/google/` | Google OAuth login |
-| POST | `/api/auth/logout/` | Logout (blacklist token) |
+### Documentation URLs
 
-### User Endpoints
+- **Swagger UI**: http://localhost:8001/api/docs/ - Interactive API explorer
+- **ReDoc**: http://localhost:8001/api/redoc/ - Clean, responsive documentation
+- **OpenAPI Schema**: http://localhost:8001/api/schema/ - Raw OpenAPI 3.0 schema
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/auth/user/` | Get current user profile |
-| PUT | `/api/auth/user/` | Update user profile |
-| GET | `/api/health/` | Health check |
+### Authentication
+
+The API uses JWT (JSON Web Tokens) for authentication. Include the token in the Authorization header:
+
+```bash
+Authorization: Bearer <your-jwt-token>
+```
+
+### Key Endpoints
+
+#### Authentication
+- `POST /api/auth/register/` - User registration
+- `POST /api/auth/token/` - Login (get JWT tokens)
+- `POST /api/auth/token/refresh/` - Refresh JWT token
+- `POST /api/auth/logout/` - Logout (blacklist token)
+
+#### User Management
+- `GET /api/auth/user/` - Get current user profile
+- `PUT /api/auth/user/` - Update user profile
+- `GET /api/auth/profile/` - Get user profile details
+
+#### Courses
+- `GET /api/course/courses/` - List courses
+- `POST /api/course/courses/` - Create course
+- `GET /api/course/courses/{id}/` - Get course details
+
+#### AI Assistant
+- `POST /api/ai/chat/` - Chat with AI assistant
+- `GET /api/ai/conversations/` - List conversations
+
+### Example API Usage
+
+```bash
+# Register a new user
+curl -X POST http://localhost:8001/api/auth/register/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "newuser",
+    "email": "user@example.com",
+    "password": "secure_password123",
+    "first_name": "John",
+    "last_name": "Doe"
+  }'
+
+# Login to get tokens
+curl -X POST http://localhost:8001/api/auth/token/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "secure_password123"
+  }'
+
+# Use token to access protected endpoints
+curl -X GET http://localhost:8001/api/auth/user/ \
+  -H "Authorization: Bearer <your-access-token>"
+```
 
 
 ## 🧪 Testing

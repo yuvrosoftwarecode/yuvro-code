@@ -12,24 +12,60 @@ const Navigation: React.FC = () => {
   const [notificationCount, setNotificationCount] = useState(3);
   const profileRef = useRef<HTMLDivElement>(null);
 
-  const mainTabs = [
-    { label: 'Learn & Certify', path: '/dashboard' }, // Changed to match dashboard route
-    { label: 'Code Practice', path: '/code-practice' },
-    { label: 'Skill Test', path: '/skill-test' },
-    { label: 'Mock Interview', path: '/mock-interview' },
-    { label: 'Jobs', path: '/jobs' },
-    { label: 'Contest', path: '/contest' },
-  ];
+  // ✅ Role-based navigation setup
+  const role = user?.role || 'student';
 
-  const profileMenu = [
-    { label: 'Dashboard', path: '/dashboard' },
-    { label: 'Certifications', path: '/certifications' },
-    { label: 'Profile', path: '/profile' },
-  ];
+  const roleTabs: Record<string, { label: string; path: string }[]> = {
+    student: [
+      { label: 'Dashboard', path: '/student/dashboard' },
+      { label: 'Learn / Certify', path: '/student/learn-certify' },
+      { label: 'Code Practice', path: '/student/code-practice' },
+      { label: 'Skill Test', path: '/student/skill-test' },
+      { label: 'Mock Interview', path: '/student/mock-interview' },
+      { label: 'Jobs', path: '/student/jobs' },
+      { label: 'Contest', path: '/student/contest' },
+    ],
+    admin: [
+      { label: 'Dashboard', path: '/admin/dashboard' },
+      { label: 'Courses', path: '/admin/courses' },
+      { label: 'Batches', path: '/admin/batches' },
+      { label: 'Students', path: '/admin/students' },
+      { label: 'Practice Questions', path: '/admin/practice-questions' },
+      { label: 'Test Questions', path: '/admin/test-questions' }, 
+      { label: 'Add Admin/Content Admin', path: '/admin/add-admin-content-admin' }, 
+
+    ],
+    admin_content: [
+      { label: 'Dashboard', path: '/cadmin/dashboard' },
+      { label: 'Courses', path: '/cadmin/courses' },
+      { label: 'Batches', path: '/cadmin/batches' },
+      { label: 'Students', path: '/cadmin/students' },
+      { label: 'Practice Questions', path: '/cadmin/practice-questions' },
+      { label: 'Test Questions', path: '/cadmin/test-questions' }, 
+    ],
+  };
+
+  const roleProfileMenu: Record<string, { label: string; path: string }[]> = {
+    student: [
+      { label: 'Certifications', path: '/student/certifications' },
+      { label: 'Profile', path: '/student/profile' },
+    ],
+    admin: [
+      { label: 'Admin Settings', path: '/admin/settings' },
+      { label: 'Profile', path: '/admin/profile' },
+    ],
+    content_admin: [
+      { label: 'Upload History', path: '/content/uploads' },
+      { label: 'Profile', path: '/content/profile' },
+    ],
+  };
+
+  const mainTabs = roleTabs[role] || [];
+  const profileMenu = roleProfileMenu[role] || [];
 
   const handleLogout = () => logout();
 
-  // Default route handling
+  // Redirect base route
   useEffect(() => {
     if (location.pathname === '/') {
       navigate('/dashboard', { replace: true });
@@ -38,6 +74,7 @@ const Navigation: React.FC = () => {
 
   const currentPath = location.pathname;
 
+  // Close profile menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
@@ -56,7 +93,6 @@ const Navigation: React.FC = () => {
         <div className="flex justify-between items-center h-16">
           {/* Left: Logo + Tabs */}
           <div className="flex items-center space-x-6">
-            {/* Logo */}
             <Link to="/" className="flex items-center space-x-2">
               <span className="text-3xl font-bold text-foreground-700">Yuvro</span>
             </Link>
@@ -64,15 +100,17 @@ const Navigation: React.FC = () => {
             {/* Tabs */}
             <div className="hidden md:flex space-x-3 ml-3">
               {mainTabs.map((tab) => {
-                const isActive = currentPath === tab.path;
+               const isActive =
+                  currentPath === tab.path || currentPath.startsWith(tab.path + "/");
+
                 return (
                   <Link
                     key={tab.path}
                     to={tab.path}
                     className={`inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground-700 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2 ${
                       isActive
-                        ? 'bg-black text-white ring-1 ring-black' // Active: black rectangle
-                        : 'text-gray-700'                         // Inactive: dark gray text only
+                        ? 'bg-black text-white ring-1 ring-black'
+                        : 'text-gray-700 hover:text-black'
                     }`}
                   >
                     {tab.label}
@@ -91,32 +129,12 @@ const Navigation: React.FC = () => {
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             >
               {isMobileMenuOpen ? (
-                <svg
-                  className="h-6 w-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               ) : (
-                <svg
-                  className="h-6 w-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 6h16M4 12h16M4 18h16"
-                  />
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               )}
             </button>
@@ -141,7 +159,6 @@ const Navigation: React.FC = () => {
                   d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
                 />
               </svg>
-              {/* Notification Badge */}
               {notificationCount > 0 && (
                 <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 flex items-center justify-center text-white text-xs font-bold">
                   {notificationCount > 99 ? '99+' : notificationCount}
@@ -189,22 +206,24 @@ const Navigation: React.FC = () => {
       {isMobileMenuOpen && (
         <div className="md:hidden bg-white border-t border-gray-200 shadow-inner">
           <div className="px-4 py-3 space-y-2">
-              {mainTabs.map((tab) => {
-              const isActive = currentPath === tab.path;
+            {mainTabs.map((tab) => {
+              const isActive =
+  currentPath === tab.path || currentPath.startsWith(tab.path + "/");
+
               return (
-                  <Link
-                    key={tab.path}
-                    to={tab.path}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={`block w-full inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-base font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground-700 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-3 py-2 ${
-                        isActive
-                          ? 'bg-foreground-700 text-white'
-                          : 'text-foreground-600 hover:text-foreground-700'
-                      }`}
-                  >
-                    {tab.label}
-                  </Link>
-                );
+                <Link
+                  key={tab.path}
+                  to={tab.path}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`block w-full inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-base font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground-700 focus-visible:ring-offset-2 h-10 px-3 py-2 ${
+                    isActive
+                      ? 'bg-black text-white'
+                      : 'text-gray-700 hover:text-black'
+                  }`}
+                >
+                  {tab.label}
+                </Link>
+              );
             })}
           </div>
         </div>

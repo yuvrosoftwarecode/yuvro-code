@@ -15,6 +15,17 @@ import CodePractice from './pages/CodePractice';
 import NotFound from './pages/NotFound';
 import ResetPassword from './pages/ResetPassword';
 import ForgotPassword from './pages/ForgotPassword';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import ContentAdminDashboard from './pages/cadmin/ContentAdminDashboard';
+import StudentDashboard from './pages/student/StudentDashboard';
+import LearnAndCertify from './pages/student/LearnAndCertify';
+import CourseDetail from './components/student/CourseDetail';
+import AdminCourses from './pages/admin/AdminCourses';
+import AdminCourseEdit from "./pages/admin/AdminCourseEdit";
+import { Toaster } from "@/components/ui/sonner";
+
+
+
 
 function App() {
   return (
@@ -23,7 +34,7 @@ function App() {
         <div className="App">
           <Routes>
             {/* Public routes */}
-            <Route path="/" element={<Landing />} />
+            <Route path="/" element={<Landing />} />  
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -31,38 +42,97 @@ function App() {
 
 
             {/* Protected routes */}
+            {/* Student Routes */}
             <Route
-              path="/dashboard"
+              path="/student/profile"
               element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/profile"
-              element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={["student"]}>
                   <Profile />
                 </ProtectedRoute>
               }
             />
 
             <Route
-              path="/code-practice"
+              path="/student/learn-certify"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={["student"]}>
+                  <LearnAndCertify />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/student/learn/:courseId"
+              element={
+                <ProtectedRoute allowedRoles={["student"]}>
+                  <CourseDetail />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/student/code-practice"
+              element={
+                <ProtectedRoute allowedRoles={["student"]}>
                   <CodePractice />
                 </ProtectedRoute>
               }
             />
 
+            <Route
+              path="/admin/dashboard"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/courses"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <AdminCourses />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+  path="/admin/courses/:id"
+  element={
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <AdminCourseEdit />
+    </ProtectedRoute>
+  }
+/>
+
+            <Route
+              path="/cadmin/dashboard"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "admin_content"]}>
+                  <ContentAdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/student/dashboard"
+              element={
+                <ProtectedRoute allowedRoles={["student"]}>
+                  <StudentDashboard />
+                </ProtectedRoute>
+              }
+            />
+
+
             {/* 404 route */}
             <Route path="/404" element={<NotFound />} />
             <Route path="*" element={<Navigate to="/404" replace />} />
           </Routes>
+      <Toaster position="top-right" />
         </div>
       </Router>
+
     </AuthProvider>
   );
 }

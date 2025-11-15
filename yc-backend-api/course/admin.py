@@ -31,7 +31,7 @@ class CourseAdmin(admin.ModelAdmin):
     list_filter = ['category', 'created_at', 'updated_at']
     search_fields = ['name', 'short_code']
     readonly_fields = ['id', 'created_at', 'updated_at']
-    fields = ['name', 'short_code', 'category', 'id', 'created_at', 'updated_at']
+    fields = ['name', 'short_code', 'category', 'id', 'created_at', 'updated_at', 'assigned_admin']
     inlines = [TopicInline]
     ordering = ['category', '-created_at']
 

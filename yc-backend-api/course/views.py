@@ -3,11 +3,11 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.db import IntegrityError
 from django.shortcuts import get_object_or_404
-from .models import Course, Topic, Subtopic
+from .models import Course, Topic, Subtopic, Video, Quiz, CodingProblem, Note
 from .serializers import (
     CourseSerializer, CourseBasicSerializer,
     TopicSerializer, TopicBasicSerializer,
-    SubtopicSerializer
+    SubtopicSerializer, VideoSerializer, QuizSerializer, CodingProblemSerializer, NoteSerializer
 )
 
 
@@ -38,40 +38,28 @@ class CourseViewSet(viewsets.ModelViewSet):
         return CourseBasicSerializer
 
     def get_queryset(self):
-        """
-        Optionally filter courses by category.
-        """
         queryset = Course.objects.all()
-        category = self.request.query_params.get('category', None)
-        if category is not None:
+
+        category = self.request.query_params.get('category')
+        if category:
             queryset = queryset.filter(category=category)
+
+        admin_id = self.request.query_params.get('assigned_admin')
+        if admin_id:
+            queryset = queryset.filter(assigned_admin_id=admin_id)
+
         return queryset
 
     def destroy(self, request, *args, **kwargs):
-        """
-        Override destroy to handle cascade deletion gracefully.
-        """
-        try:
-            instance = self.get_object()
-            # Check if course has topics
-            if instance.topics.exists():
-                return Response(
-                    {
-                        "error": "Constraint violation",
-                        "message": "Cannot delete course with existing topics"
-                    },
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            self.perform_destroy(instance)
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        except IntegrityError as e:
-            return Response(
-                {
-                    "error": "Constraint violation",
-                    "message": str(e)
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def update(self, request, *args, **kwargs):
+        # IMPORTANT: this enables partial updates
+        kwargs["partial"] = True
+        return super().update(request, *args, **kwargs)
+
 
 
 class TopicViewSet(viewsets.ModelViewSet):
@@ -123,30 +111,10 @@ class TopicViewSet(viewsets.ModelViewSet):
             )
 
     def destroy(self, request, *args, **kwargs):
-        """
-        Override destroy to handle cascade deletion gracefully.
-        """
-        try:
-            instance = self.get_object()
-            # Check if topic has subtopics
-            if instance.subtopics.exists():
-                return Response(
-                    {
-                        "error": "Constraint violation",
-                        "message": "Cannot delete topic with existing subtopics"
-                    },
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            self.perform_destroy(instance)
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        except IntegrityError as e:
-            return Response(
-                {
-                    "error": "Constraint violation",
-                    "message": str(e)
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 
 class SubtopicViewSet(viewsets.ModelViewSet):
@@ -189,3 +157,66 @@ class SubtopicViewSet(viewsets.ModelViewSet):
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
+        
+
+
+class VideoViewSet(viewsets.ModelViewSet):
+    queryset = Video.objects.select_related("sub_topic").all()
+    serializer_class = VideoSerializer
+    permission_classes = [IsAdminOrReadOnly]
+
+    def get_queryset(self):
+        queryset = Video.objects.all()
+        sub_id = self.request.query_params.get("sub_topic")
+        if sub_id:
+            queryset = queryset.filter(sub_topic_id=sub_id)
+        return queryset
+
+class QuizViewSet(viewsets.ModelViewSet):
+    queryset = Quiz.objects.select_related("sub_topic").all()
+    serializer_class = QuizSerializer
+    permission_classes = [IsAdminOrReadOnly]
+
+    def get_queryset(self):
+        queryset = Quiz.objects.all()
+        sub_id = self.request.query_params.get("sub_topic")
+        if sub_id:
+            queryset = queryset.filter(sub_topic_id=sub_id)
+        return queryset
+    
+
+class CodingProblemViewSet(viewsets.ModelViewSet):
+    queryset = CodingProblem.objects.select_related("sub_topic").all()
+    serializer_class = CodingProblemSerializer
+    permission_classes = [IsAdminOrReadOnly]
+
+    def get_queryset(self):
+        queryset = CodingProblem.objects.all()
+        subtopic_id = self.request.query_params.get("sub_topic", None)
+        if subtopic_id:
+            queryset = queryset.filter(sub_topic_id=subtopic_id)
+        return queryset
+
+    def create(self, request, *args, **kwargs):
+        try:
+            return super().create(request, *args, **kwargs)
+        except IntegrityError as e:
+            return Response(
+                {"error": "Database error", "message": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+class NoteViewSet(viewsets.ModelViewSet):
+    queryset = Note.objects.select_related('sub_topic', 'user').all()
+    serializer_class = NoteSerializer
+    permission_classes = [IsAdminOrReadOnly]
+
+    def get_queryset(self):
+        queryset = Note.objects.all()
+        subtopic_id = self.request.query_params.get('sub_topic')
+        if subtopic_id:
+            queryset = queryset.filter(sub_topic_id=subtopic_id)
+        return queryset
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)

@@ -8,60 +8,76 @@ class User(AbstractUser):
     Custom User model extending AbstractUser with email as USERNAME_FIELD
     while retaining username field for compatibility.
     """
-    
+
     ROLE_CHOICES = [
-        ('student', 'Student'),
-        ('admin_content', 'Content Administrator'),
-        ('admin', 'Administrator'),
+        ("student", "Student"),
+        ("instructor", "Instructor"),
+        ("recruiter", "Recruiter"),
+        ("admin", "Administrator"),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email = models.EmailField(unique=True)
     username = models.CharField(max_length=150, unique=True)
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='student')
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="student")
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["username"]
 
     def __str__(self):
         return self.email
-    
+
     def is_admin(self):
         """Check if user has admin role."""
-        return self.role == 'admin'
-    
-    def is_content_admin(self):
-        """Check if user has content admin role."""
-        return self.role == 'admin_content'
-    
+        return self.role == "admin"
+
+    def is_instructor(self):
+        """Check if user has instructor role."""
+        return self.role == "instructor"
+
+    def is_recruiter(self):
+        """Check if user has recruiter role."""
+        return self.role == "recruiter"
+
     def is_student(self):
         """Check if user has student role."""
-        return self.role == 'student'
-    
+        return self.role == "student"
+
     def can_manage_content(self):
-        """Check if user can manage content (admin or content admin)."""
-        return self.role in ['admin', 'admin_content']
-    
+        """Check if user can manage content (admin or instructor)."""
+        return self.role in ["admin", "instructor"]
+
     def can_manage_users(self):
         """Check if user can manage users (admin only)."""
-        return self.role == 'admin'
-    
+        return self.role == "admin"
+
     # Override save method to ensure role consistency
     def save(self, *args, **kwargs):
         if self.is_superuser:
-            self.role = 'admin'
+            self.role = "admin"
         super().save(*args, **kwargs)
+
 
 class Profile(models.Model):
     """
     Profile model to store additional user information and OAuth data.
     """
 
+    GENDER_CHOICES = [
+        ("male", "Male"),
+        ("female", "Female"),
+        ("other", "Other"),
+        ("prefer_not_to_say", "Prefer not to say"),
+    ]
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
     google_id = models.CharField(max_length=100, blank=True, null=True, unique=True)
     avatar_url = models.URLField(blank=True, null=True)
     bio = models.TextField(blank=True, null=True)
+    gender = models.CharField(
+        max_length=20, choices=GENDER_CHOICES, blank=True, null=True
+    )
     location = models.CharField(max_length=100, blank=True, null=True)
     website = models.URLField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)

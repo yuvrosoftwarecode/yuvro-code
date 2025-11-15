@@ -21,6 +21,8 @@ help:
 	@echo ""
 	@echo "Setup and cleanup:"
 	@echo "  setup               Initial project setup"
+	@echo "  setup-testing       Setup test data for local development"
+	@echo "  setup-testing-fresh Setup test data (clear existing data)"
 	@echo "  clean               Clean up containers and volumes"
 	@echo "  rebuild             Rebuild and restart all services"
 	@echo ""
@@ -88,6 +90,14 @@ setup:
 	@cp yc-backend-api/.env.example yc-backend-api/.env 2>/dev/null || echo "Backend .env already exists"
 	@cp yc-web/.env.example yc-web/.env 2>/dev/null || echo "Frontend .env already exists"
 	@echo "Setup complete! Run 'make dev' to start the application."
+
+setup-testing:
+	@echo "Setting up test data for local development..."
+	docker compose exec backend python manage.py setup_local_testing
+
+setup-testing-fresh:
+	@echo "Setting up fresh test data (clearing existing data)..."
+	docker compose exec backend python manage.py setup_local_testing --clear
 
 clean:
 	docker compose down -v --remove-orphans

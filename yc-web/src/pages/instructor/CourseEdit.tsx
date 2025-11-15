@@ -1,4 +1,4 @@
-// src/pages/admin/AdminCourseEdit.tsx
+// src/pages/instructor/CourseEdit.tsx
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Navigation from "../../components/Navigation";
@@ -84,7 +84,7 @@ type Subtopic = {
   content?: string | null;
 };
 
-const AdminCourseEdit: React.FC = () => {
+const CourseEdit: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { id: courseId } = useParams<{ id: string }>();
@@ -819,4 +819,4 @@ const AdminCourseEdit: React.FC = () => {
   );
 };
 
-export default AdminCourseEdit;
+export default CourseEdit;

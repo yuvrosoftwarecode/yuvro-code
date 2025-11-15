@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import axios from "axios";
-import { getPasswordStrength } from "../utils/passwordStrength";
+import { getPasswordStrength } from "../../utils/passwordStrength";
 
 const ResetPassword: React.FC = () => {
   const { uidb64, token } = useParams();

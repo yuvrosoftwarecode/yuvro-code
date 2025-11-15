@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { redirectToDashboard } from '../utils/redirectToDashboard';
+import { useAuth } from '../../contexts/AuthContext';
+import { redirectToDashboard } from '../../utils/redirectToDashboard';
 
 const Landing: React.FC = () => {
   const { isAuthenticated, user } = useAuth();

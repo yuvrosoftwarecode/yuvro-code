@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
     # Local apps
+    "core",
     "authentication",
     "course",
     "ai_assistant",

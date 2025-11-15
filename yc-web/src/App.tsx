@@ -6,22 +6,26 @@ import {
 } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
-import Landing from './pages/Landing';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Dashboard from './pages/Dashboard';
-import Profile from './pages/Profile';
-import CodePractice from './pages/CodePractice';
-import NotFound from './pages/NotFound';
-import ResetPassword from './pages/ResetPassword';
-import ForgotPassword from './pages/ForgotPassword';
-import AdminDashboard from './pages/admin/AdminDashboard';
-import ContentAdminDashboard from './pages/cadmin/ContentAdminDashboard';
+import Landing from './pages/landing/Landing';
+import Home from './pages/landing/Home';
+import About from './pages/landing/About';
+import Login from './pages/common/Login';
+import Register from './pages/common/Register';
+import CommonDashboard from './pages/common/Dashboard';
+import Profile from './pages/common/Profile';
+import CodePractice from './pages/student/CodePractice';
+import NotFound from './pages/common/NotFound';
+import ResetPassword from './pages/common/ResetPassword';
+import ForgotPassword from './pages/common/ForgotPassword';
+import InstructorDashboard from './pages/instructor/Dashboard';
+import Courses from './pages/instructor/Courses';
+import CourseEdit from './pages/instructor/CourseEdit';
+import Jobs from './pages/instructor/Jobs';
+import Users from './pages/instructor/Users';
+import RecruiterDashboard from './pages/recruiter/Dashboard';
 import StudentDashboard from './pages/student/StudentDashboard';
 import LearnAndCertify from './pages/student/LearnAndCertify';
 import CourseDetail from './components/student/CourseDetail';
-import AdminCourses from './pages/admin/AdminCourses';
-import AdminCourseEdit from "./pages/admin/AdminCourseEdit";
 import { Toaster } from "@/components/ui/sonner";
 
 
@@ -34,7 +38,9 @@ function App() {
         <div className="App">
           <Routes>
             {/* Public routes */}
-            <Route path="/" element={<Landing />} />  
+            <Route path="/" element={<Home />} />
+            <Route path="/landing" element={<Landing />} />
+            <Route path="/about" element={<About />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -82,8 +88,8 @@ function App() {
             <Route
               path="/admin/dashboard"
               element={
-                <ProtectedRoute allowedRoles={["admin"]}>
-                  <AdminDashboard />
+                <ProtectedRoute allowedRoles={["admin", "instructor", "recruiter"]}>
+                  <InstructorDashboard />
                 </ProtectedRoute>
               }
             />
@@ -91,26 +97,89 @@ function App() {
             <Route
               path="/admin/courses"
               element={
-                <ProtectedRoute allowedRoles={["admin"]}>
-                  <AdminCourses />
+                <ProtectedRoute allowedRoles={["admin", "instructor"]}>
+                  <Courses />
                 </ProtectedRoute>
               }
             />
 
             <Route
-  path="/admin/courses/:id"
-  element={
-    <ProtectedRoute allowedRoles={["admin"]}>
-      <AdminCourseEdit />
-    </ProtectedRoute>
-  }
-/>
+              path="/admin/courses/:id"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "instructor"]}>
+                  <CourseEdit />
+                </ProtectedRoute>
+              }
+            />
 
             <Route
-              path="/cadmin/dashboard"
+              path="/admin/jobs"
               element={
-                <ProtectedRoute allowedRoles={["admin", "admin_content"]}>
-                  <ContentAdminDashboard />
+                <ProtectedRoute allowedRoles={["admin", "instructor", "recruiter"]}>
+                  <Jobs />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/users"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <Users />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/batches"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "instructor"]}>
+                  <div>Batches Management</div>
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/students"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "instructor"]}>
+                  <div>Students Management</div>
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/practice-questions"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "instructor"]}>
+                  <div>Practice Questions Management</div>
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/test-questions"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "instructor"]}>
+                  <div>Test Questions Management</div>
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/settings"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "instructor", "recruiter"]}>
+                  <div>Settings</div>
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/profile"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "instructor", "recruiter"]}>
+                  <div>Profile</div>
                 </ProtectedRoute>
               }
             />
@@ -129,7 +198,7 @@ function App() {
             <Route path="/404" element={<NotFound />} />
             <Route path="*" element={<Navigate to="/404" replace />} />
           </Routes>
-      <Toaster position="top-right" />
+          <Toaster position="top-right" />
         </div>
       </Router>
 

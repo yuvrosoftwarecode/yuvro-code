@@ -2,6 +2,7 @@ import json
 import os
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
+from django.db import models
 from authentication.models import Profile
 
 User = get_user_model()
@@ -49,18 +50,37 @@ class Command(BaseCommand):
 
             # Process each user
             for user_data in data["users"]:
-                # Create or get user
-                user, created = User.objects.get_or_create(
-                    email=user_data["email"],
-                    defaults={
-                        "username": user_data["username"],
-                        "first_name": user_data["first_name"],
-                        "last_name": user_data["last_name"],
-                        "role": user_data["role"],
-                        "is_staff": user_data.get("is_staff", False),
-                        "is_superuser": user_data.get("is_superuser", False),
-                    },
-                )
+                # Check if user already exists by email or username
+                existing_user = User.objects.filter(
+                    models.Q(email=user_data["email"]) | 
+                    models.Q(username=user_data["username"])
+                ).first()
+                
+                if existing_user:
+                    if existing_user.email == user_data["email"]:
+                        self.stdout.write(
+                            f'- {user_data["role"].title()} user already exists (email): {user_data["email"]}'
+                        )
+                    else:
+                        self.stdout.write(
+                            f'- Username "{user_data["username"]}" already exists for user: {existing_user.email}'
+                        )
+                    user = existing_user
+                    created = False
+                else:
+                    # Create new user
+                    user = User.objects.create(
+                        email=user_data["email"],
+                        username=user_data["username"],
+                        first_name=user_data["first_name"],
+                        last_name=user_data["last_name"],
+                        role=user_data["role"],
+                        is_staff=user_data.get("is_staff", False),
+                        is_superuser=user_data.get("is_superuser", False),
+                    )
+                    user.set_password(user_data["password"])
+                    user.save()
+                    created = True
 
                 if created:
                     user.set_password(user_data["password"])

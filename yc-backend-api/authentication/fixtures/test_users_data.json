@@ -66,8 +66,21 @@
       }
     },
     {
-      "email": "student2@gmail.com",
-      "username": "student2",
+        "email": "student2@gmail.com",
+        "username": "student2",
+        "first_name": "Devendra",
+        "last_name": "Dora",
+        "role": "student",
+        "password": "student123",
+        "is_staff": false,
+        "is_superuser": false,
+        "profile": {
+          "bio": "Computer Science student interested in web development and programming."
+        }
+    },
+    {
+      "email": "student3@gmail.com",
+      "username": "student3",
       "first_name": "Rohith",
       "last_name": "Krishna",
       "role": "student",

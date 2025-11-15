@@ -2,7 +2,7 @@ import type { User } from '../contexts/AuthContext';
 
 // Use backend URL from environment variable or default to local dev
 const API_BASE_URL =
-  import.meta.env.VITE_API_URL || 'http://127.0.0.1:8001/api';
+  import.meta.env.BACKEND_API_BASE_URL || 'http://127.0.0.1:8001/api';
 
 // Error class for structured API errors
 export class ApiError extends Error {

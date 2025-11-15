@@ -1,7 +1,7 @@
 // src/services/courseService.ts
 
 const API_BASE =
-  import.meta.env.VITE_API_URL || "http://127.0.0.1:8001/api";
+  import.meta.env.BACKEND_API_BASE_URL || "http://127.0.0.1:8001/api";
 
 // ------------------------------------------------------------
 // Auth Header Helper

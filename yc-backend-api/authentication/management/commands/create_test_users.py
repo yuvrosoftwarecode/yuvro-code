@@ -52,10 +52,10 @@ class Command(BaseCommand):
             for user_data in data["users"]:
                 # Check if user already exists by email or username
                 existing_user = User.objects.filter(
-                    models.Q(email=user_data["email"]) | 
-                    models.Q(username=user_data["username"])
+                    models.Q(email=user_data["email"])
+                    | models.Q(username=user_data["username"])
                 ).first()
-                
+
                 if existing_user:
                     if existing_user.email == user_data["email"]:
                         self.stdout.write(

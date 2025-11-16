@@ -150,8 +150,12 @@ class CodingProblem(models.Model):
     )
     title = models.CharField(max_length=255)
     description = models.TextField()
-    input = models.TextField()
-    test_cases = models.JSONField()
+    test_cases_basic = models.JSONField(
+        help_text="Basic test cases visible to students"
+    )
+    test_cases_advanced = models.JSONField(
+        default=list, help_text="Advanced test cases for submission evaluation"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

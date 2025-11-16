@@ -8,12 +8,20 @@ ENV PYTHONUNBUFFERED=1
 # Set work directory
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies including language runtimes for code execution
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         postgresql-client \
         build-essential \
         libpq-dev \
+        gcc \
+        g++ \
+        nodejs \
+        npm \
+        default-jre-headless \
+        default-jdk-headless \
+        curl \
+        wget \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies

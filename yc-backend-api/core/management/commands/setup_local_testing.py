@@ -48,10 +48,10 @@ class Command(BaseCommand):
                 call_command("load_sample_courses", verbosity=1)
             self.stdout.write("")
 
-            # Add any future setup commands here
-            # Example:
-            # self.stdout.write('🔧 Running additional setup...')
-            # call_command('your_future_command', verbosity=1)
+            # Setup sample test cases for code executor
+            self.stdout.write("🧪 Creating sample test cases...")
+            call_command("create_sample_test_cases", verbosity=1)
+            self.stdout.write("")
 
             self.stdout.write(
                 self.style.SUCCESS(

@@ -36,11 +36,25 @@ export interface TopicWithSubtopics extends TopicBasic {
   subtopics: Subtopic[];
 }
 
+export interface Module {
+  id: number;
+  title: string;
+  duration: number;
+  content?: string;
+}
+
 export interface Course {
-  id: string;
+  id: string | number;
   short_code?: string;
-  name: string;
+  name?: string;
+  title?: string; // For compatibility with LearnAndCertify component
   category: string;
+  level?: string;
+  duration?: number;
+  description?: string;
+  price?: number;
+  modules?: Module[];
+  enrolled_count?: number;
   created_at: string;
   updated_at: string;
   topics: TopicBasic[];
@@ -495,3 +509,40 @@ export const fetchAdmins = async () => {
   if (!res.ok) throw new Error("Failed to load admins");
   return res.json();
 };
+
+// Default export with commonly used functions
+const courseService = {
+  getCourses: fetchCourses,
+  getCourse: fetchCourseById,
+  createCourse,
+  updateCourse,
+  deleteCourse,
+  getTopics: fetchTopicsByCourse,
+  createTopic,
+  updateTopic,
+  deleteTopic,
+  getSubtopics: fetchSubtopicsByTopic,
+  createSubtopic,
+  updateSubtopic,
+  deleteSubtopic,
+  getCourseStructure: fetchCourseStructure,
+  getVideos: fetchVideosBySubtopic,
+  createVideo,
+  updateVideo,
+  deleteVideo,
+  getQuizzes: fetchQuizzesBySubtopic,
+  createQuiz,
+  updateQuiz,
+  deleteQuiz,
+  getCodingProblems: fetchCodingProblemsBySubtopic,
+  createCodingProblem,
+  updateCodingProblem,
+  deleteCodingProblem,
+  getNotes: fetchNotesBySubtopic,
+  createNote,
+  updateNote,
+  deleteNote,
+  getAdmins: fetchAdmins
+};
+
+export default courseService;

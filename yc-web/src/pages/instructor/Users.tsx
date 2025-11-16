@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { debugTokens, clearAllTokens, validateTokenFormat } from '../../utils/tokenDebug';
 import Navigation from '../../components/Navigation';
 
 interface User {
@@ -96,7 +97,6 @@ const Users: React.FC = () => {
     if (user?.role !== 'admin') {
         return (
             <div className="min-h-screen bg-gray-50">
-                <Navigation />
                 <div className="flex items-center justify-center" style={{ height: 'calc(100vh - 64px)' }}>
                     <div className="text-center">
                         <h2 className="text-2xl font-bold text-gray-900">Access Denied</h2>
@@ -110,7 +110,6 @@ const Users: React.FC = () => {
     return (
         <div className="min-h-screen bg-gray-50">
             <Navigation />
-            
             {/* Header */}
             <div className="bg-white shadow">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

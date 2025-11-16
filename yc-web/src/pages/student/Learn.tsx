@@ -16,15 +16,11 @@ import { Input } from "@/components/ui/input";
 
 import {
   Search,
-  Flame,
-  Award,
-  Database,
   Binary,
   Code,
+  Database,
   Sparkles,
   FileText,
-  History,
-  Table,
 } from "lucide-react";
 
 // ---------------------------
@@ -98,7 +94,7 @@ const CourseCard = ({
           {description}
         </p>
 
-        {/* 🧩 Topics inline, comma separated */}
+        {/* Topics inline, comma separated */}
         {topics && topics.length > 0 && (
           <p className="text-sm font-medium text-blue-600 dark:text-blue-400">
             {topicText}
@@ -109,7 +105,6 @@ const CourseCard = ({
         <Progress value={progress} className="h-1.5" />
         <Button
           className="w-full rounded-lg bg-gradient-to-r from-blue-500 to-cyan-500 text-white hover:opacity-90 transition-opacity shadow-sm"
-          size="sm"
           onClick={() => onStartLearning(id)}
         >
           {hasStarted ? "Continue Learning" : "Start Learning"}
@@ -122,7 +117,7 @@ const CourseCard = ({
 // ---------------------------
 // Main Page
 // ---------------------------
-const LearnAndCertify: React.FC = () => {
+const Learn: React.FC = () => {
   const navigate = useNavigate();
   const { token } = useAuth();
 
@@ -202,15 +197,14 @@ const LearnAndCertify: React.FC = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-
       <main className="p-6 space-y-8">
         {/* Header Section */}
         <div className="space-y-4">
           <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            Learn & Certify
+            Learn
           </h1>
           <p className="text-muted-foreground text-sm">
-            Continue your learning journey — unlock badges and grow your streak.
+            Explore courses, practice coding problems, and enhance your programming skills.
           </p>
         </div>
 
@@ -261,4 +255,4 @@ const LearnAndCertify: React.FC = () => {
   );
 };
 
-export default LearnAndCertify;
+export default Learn;

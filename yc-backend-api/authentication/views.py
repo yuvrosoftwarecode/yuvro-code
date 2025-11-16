@@ -39,12 +39,9 @@ class CustomTokenObtainPairView(TokenObtainPairView):
         examples=[
             OpenApiExample(
                 "Login Example",
-                value={
-                    "email": "user@example.com",
-                    "password": "your_password"
-                }
+                value={"email": "user@example.com", "password": "your_password"},
             )
-        ]
+        ],
     )
     def post(self, request, *args, **kwargs):
         return super().post(request, *args, **kwargs)
@@ -68,12 +65,11 @@ class UserRegistrationView(generics.CreateAPIView):
                     "email": "newuser@example.com",
                     "password": "secure_password123",
                     "first_name": "John",
-                    "last_name": "Doe"
-                }
+                    "last_name": "Doe",
+                },
             )
-        ]
+        ],
     )
-
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -100,12 +96,9 @@ class UserRegistrationView(generics.CreateAPIView):
     examples=[
         OpenApiExample(
             "Login Example",
-            value={
-                "email": "user@example.com",
-                "password": "your_password"
-            }
+            value={"email": "user@example.com", "password": "your_password"},
         )
-    ]
+    ],
 )
 @api_view(["POST"])
 @permission_classes([permissions.AllowAny])
@@ -138,16 +131,14 @@ def login_view(request):
         "properties": {
             "refresh": {"type": "string", "description": "Refresh token to blacklist"}
         },
-        "required": ["refresh"]
+        "required": ["refresh"],
     },
     examples=[
         OpenApiExample(
             "Logout Example",
-            value={
-                "refresh": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
-            }
+            value={"refresh": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."},
         )
-    ]
+    ],
 )
 @api_view(["POST"])
 @permission_classes([permissions.IsAuthenticated])
@@ -224,7 +215,7 @@ class ProfileDetailView(generics.RetrieveUpdateAPIView):
 @extend_schema(
     summary="Get Current User Info",
     description="Get information about the currently authenticated user.",
-    responses=UserSerializer
+    responses=UserSerializer,
 )
 @api_view(["GET"])
 @permission_classes([permissions.IsAuthenticated])

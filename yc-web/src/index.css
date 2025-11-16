@@ -64,3 +64,13 @@
 [data-radix-popper-content-wrapper] {
   z-index: 999999 !important;
 }
+
+/* Fade in animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 400ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}

@@ -186,23 +186,36 @@ class CodingProblemSerializer(serializers.ModelSerializer):
             "sub_topic",
             "title",
             "description",
-            "test_cases",
+            "test_cases_basic",
+            "test_cases_advanced",
             "created_at",
             "updated_at",
         ]
         read_only_fields = ["id", "created_at", "updated_at"]
 
     def validate(self, data):
-        test_cases = data.get("test_cases")
+        test_cases_basic = data.get("test_cases_basic")
+        test_cases_advanced = data.get("test_cases_advanced", [])
 
-        if not isinstance(test_cases, list) or len(test_cases) == 0:
-            raise serializers.ValidationError("There must be at least one test case.")
+        if not isinstance(test_cases_basic, list) or len(test_cases_basic) == 0:
+            raise serializers.ValidationError(
+                "There must be at least one basic test case."
+            )
 
-        for case in test_cases:
-            if "input" not in case or "expected_output" not in case:
+        # Validate basic test cases
+        for case in test_cases_basic:
+            if "input_data" not in case or "expected_output" not in case:
                 raise serializers.ValidationError(
-                    "Each test case must have 'input' and 'expected_output' fields."
+                    "Each basic test case must have 'input_data' and 'expected_output' fields."
                 )
+
+        # Validate advanced test cases if provided
+        if test_cases_advanced:
+            for case in test_cases_advanced:
+                if "input_data" not in case or "expected_output" not in case:
+                    raise serializers.ValidationError(
+                        "Each advanced test case must have 'input_data' and 'expected_output' fields."
+                    )
 
         return data
 

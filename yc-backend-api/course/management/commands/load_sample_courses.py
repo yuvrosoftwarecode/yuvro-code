@@ -111,8 +111,12 @@ class Command(BaseCommand):
                                 title=problem_data["title"],
                                 defaults={
                                     "description": problem_data["description"],
-                                    "input": problem_data["input"],
-                                    "test_cases": problem_data["test_cases"],
+                                    "test_cases_basic": problem_data[
+                                        "test_cases_basic"
+                                    ],
+                                    "test_cases_advanced": problem_data.get(
+                                        "test_cases_advanced", []
+                                    ),
                                 },
                             )
 

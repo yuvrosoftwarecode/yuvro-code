@@ -1,13 +1,13 @@
 // src/pages/instructor/CourseEdit.tsx
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import Navigation from "../../components/Navigation";
 import { useAuth, User } from "../../contexts/AuthContext";
 import VideosPanel from "../../components/admin/VideosPanel";
 import QuizComponent from "../../components/admin/QuizComponent";
 import CodingProblemsManager from "@/components/admin/CodingProblemsManager";
 import NotesManager from "@/components/admin/NotesManager";
 import { fetchAdmins } from "@/services/courseService";
+import Navigation from "../../components/Navigation";
 
 import {
   Card,
@@ -475,7 +475,6 @@ const CourseEdit: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      {/* Top navigation (full width) */}
       <Navigation />
       {/* Main content — full height remaining */}
       <div className="flex-1 overflow-hidden h-[calc(100vh-64px)]">

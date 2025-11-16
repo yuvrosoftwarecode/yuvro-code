@@ -9,7 +9,7 @@ const Navigation: React.FC = () => {
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
-  const [notificationCount, setNotificationCount] = useState(3);
+  const [notificationCount] = useState(3);
   const profileRef = useRef<HTMLDivElement>(null);
 
   // ✅ Role-based navigation setup
@@ -18,7 +18,7 @@ const Navigation: React.FC = () => {
   const roleTabs: Record<string, { label: string; path: string }[]> = {
     student: [
       { label: 'Dashboard', path: '/student/dashboard' },
-      { label: 'Learn / Certify', path: '/student/learn-certify' },
+      { label: 'Learn', path: '/student/learn' },
       { label: 'Code Practice', path: '/student/code-practice' },
       { label: 'Skill Test', path: '/student/skill-test' },
       { label: 'Mock Interview', path: '/student/mock-interview' },
@@ -29,6 +29,7 @@ const Navigation: React.FC = () => {
       { label: 'Dashboard', path: '/admin/dashboard' },
       { label: 'User Management', path: '/admin/users' },
       { label: 'Courses', path: '/admin/courses' },
+      { label: 'Code Management', path: '/admin/code-management' },
       { label: 'Learn/Certify', path: '/admin/learn' },
       { label: 'Practice Questions', path: '/admin/practice-questions' },
       { label: 'Skill Test', path: '/admin/test-questions' },
@@ -37,6 +38,7 @@ const Navigation: React.FC = () => {
     instructor: [
       { label: 'Dashboard', path: '/admin/dashboard' },
       { label: 'Courses', path: '/admin/courses' },
+      { label: 'Code Management', path: '/admin/code-management' },
       { label: 'Learn/Certify', path: '/admin/learn' },
       { label: 'Practice Questions', path: '/admin/practice-questions' },
       { label: 'Skill Test', path: '/admin/test-questions' },

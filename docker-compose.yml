@@ -30,6 +30,22 @@ services:
       sh -c "python manage.py migrate &&
              python manage.py runserver 0.0.0.0:8000"
 
+  code-executor:
+    build:
+      context: ./yc-code-executor
+      dockerfile: Dockerfile
+    ports:
+      - "8002:8002"
+    env_file:
+      - ./yc-code-executor/.env
+    volumes:
+      - ./yc-code-executor:/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   frontend:
     build:
       context: ./yc-web
@@ -46,6 +62,7 @@ services:
     tty: true
     depends_on:
       - backend
+      - code-executor
     command: npm run dev -- --host 0.0.0.0
 
 volumes:

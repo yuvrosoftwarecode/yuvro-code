@@ -1,23 +1,136 @@
-import React from 'react';
-import Navigation from '../../components/Navigation';
-const CodePractice: React.FC = () => {
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import Navigation from '@/components/Navigation';
+import CourseDashboard from '@/components/student/code-practice/CourseDashboard';
+import TopicSelection from '@/components/student/code-practice/TopicSelection';
+import ProblemSolving from '@/components/student/code-practice/ProblemSolving';
+import ScoreAnalytics from '@/components/student/code-practice/ScoreAnalytics';
+import AIInsights from '@/components/student/code-practice/AIInsights';
+
+export type ViewType = 'dashboard' | 'topics' | 'problem' | 'analytics' | 'insights';
+
+export interface Course {
+  id: string;
+  name: string;
+  icon: string;
+  progress: number;
+  totalProblems: number;
+  solvedProblems: number;
+  iconColor?: string;
+  category: string;
+}
+
+export interface Topic {
+  id: string;
+  name: string;
+  problemCount: number;
+  order_index: number;
+}
+
+export interface CodingProblem {
+  id: string;
+  title: string;
+  difficulty: 'Easy' | 'Medium' | 'Hard';
+  score: number;
+  description: string;
+  test_cases_basic: Array<{
+    input_data: string;
+    expected_output: string;
+    weight?: number;
+  }>;
+  test_cases_advanced: Array<{
+    input_data: string;
+    expected_output: string;
+    weight?: number;
+  }>;
+}
+
+const CodePractice = () => {
+  const navigate = useNavigate();
+  const [currentView, setCurrentView] = useState<ViewType>('dashboard');
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
+  const [selectedProblem, setSelectedProblem] = useState<CodingProblem | null>(null);
+
+  const handleCourseSelect = (course: Course) => {
+    setSelectedCourse(course);
+    setCurrentView('topics');
+  };
+
+  const handleTopicSelect = (topic: Topic) => {
+    setSelectedTopic(topic);
+  };
+
+  const handleProblemSelect = (problem: CodingProblem) => {
+    setSelectedProblem(problem);
+    setCurrentView('problem');
+  };
+
+  const handleBackToDashboard = () => {
+    setCurrentView('dashboard');
+    setSelectedCourse(null);
+    setSelectedTopic(null);
+    setSelectedProblem(null);
+  };
+
+  const handleBackToTopics = () => {
+    setCurrentView('topics');
+    setSelectedProblem(null);
+  };
+
+  const handleViewAnalytics = () => {
+    setCurrentView('analytics');
+  };
+
+  const handleViewInsights = () => {
+    setCurrentView('insights');
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <Navigation />
-        <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-
-      <h1 className="text-3xl font-bold mb-4">
-        Code Practice (Dummy Page)</h1>
-      <p className="text-gray-600 mb-6">
-        This is a placeholder for the Code Practice page. Implement practice exercises here.
-      </p>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="p-4 border rounded-lg">Exercise card 1 (placeholder)</div>
-        <div className="p-4 border rounded-lg">Exercise card 2 (placeholder)</div>
-        <div className="p-4 border rounded-lg">Exercise card 3 (placeholder)</div>
+      <div className="transition-all duration-300 ease-in-out">
+        {currentView === 'dashboard' && (
+          <CourseDashboard
+            onCourseSelect={handleCourseSelect}
+            onViewAnalytics={handleViewAnalytics}
+          />
+        )}
+        
+        {currentView === 'topics' && selectedCourse && (
+          <TopicSelection
+            course={selectedCourse}
+            selectedTopic={selectedTopic}
+            onTopicSelect={handleTopicSelect}
+            onProblemSelect={handleProblemSelect}
+            onBack={handleBackToDashboard}
+          />
+        )}
+        
+        {currentView === 'problem' && selectedProblem && selectedCourse && selectedTopic && (
+          <ProblemSolving
+            problem={selectedProblem}
+            course={selectedCourse}
+            topic={selectedTopic}
+            onBack={handleBackToTopics}
+            onViewAnalytics={handleViewAnalytics}
+          />
+        )}
+        
+        {currentView === 'analytics' && (
+          <ScoreAnalytics
+            onBack={handleBackToDashboard}
+            onViewInsights={handleViewInsights}
+          />
+        )}
+        
+        {currentView === 'insights' && (
+          <AIInsights
+            onBack={() => setCurrentView('analytics')}
+            onGeneratePracticeSet={() => setCurrentView('topics')}
+          />
+        )}
       </div>
-    </div>
     </div>
   );
 };

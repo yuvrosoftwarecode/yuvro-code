@@ -32,6 +32,7 @@ import MockInterview from './pages/student/MockInterview';
 import StudentJobs from './pages/student/Jobs';
 import Contest from './pages/student/Contest';
 import CodePractice from './pages/student/CodePractice';
+import StudentJobs from './pages/student/Jobs';
 import { Toaster } from "@/components/ui/sonner";
 import ErrorBoundary from './components/ErrorBoundary';
 import DashboardRedirect from './components/DashboardRedirect';

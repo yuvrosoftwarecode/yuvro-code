@@ -35,6 +35,7 @@ const Navigation: React.FC = () => {
       { label: 'Skill Test', path: '/instructor/skill-test' },
       { label: 'Jobs', path: '/instructor/jobs' },
       { label: 'Contests', path: '/instructor/contests' },
+
     ],
     instructor: [
       { label: 'Dashboard', path: '/instructor/dashboard' },
@@ -47,8 +48,8 @@ const Navigation: React.FC = () => {
     ],
     recruiter: [
       { label: 'Dashboard', path: '/admin/dashboard' },
-      { label: 'Jobs', path: '/admin/jobs' },
       { label: 'Contests', path: '/instructor/contests' },
+      { label: 'Jobs', path: '/recruiter/jobs' },
     ],
   };
 

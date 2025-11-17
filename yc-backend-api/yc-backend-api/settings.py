@@ -42,7 +42,8 @@ INSTALLED_APPS = [
     "course",
     "ai_assistant",
     "code_executor",
-    "contest"
+    "contest",
+    "job",
 ]
 
 MIDDLEWARE = [

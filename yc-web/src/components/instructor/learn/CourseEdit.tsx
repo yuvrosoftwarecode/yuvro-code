@@ -4,8 +4,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useAuth, User } from "../../../contexts/AuthContext";
 import VideosPanel from "./VideosPanel";
 import QuizComponent from "./QuizComponent";
-import CodingProblemsManager from "@/components/instructor/courses/CodingProblemsManager";
-import NotesManager from "@/components/instructor/courses/NotesManager";
+import CodingProblemsManager from "@/components/instructor/learn/CodingProblemsManager";
+import NotesManager from "@/components/instructor/learn/NotesManager";
 import { fetchAdmins } from "@/services/courseService";
 import Navigation from "../../Navigation";
 

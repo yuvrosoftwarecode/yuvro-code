@@ -20,7 +20,7 @@ import ForgotPassword from './pages/common/ForgotPassword';
 import InstructorDashboard from './pages/instructor/Dashboard';
 import Courses from './pages/instructor/Courses';
 import LearnAndCertify  from './pages/instructor/LearnAndCertify';
-import CourseEdit from './components/instructor/courses/CourseEdit';
+import CourseEdit from './components/instructor/learn/CourseEdit';
 import Jobs from './pages/instructor/Jobs';
 import Users from './pages/instructor/Users';
 import StudentDashboard from './pages/student/StudentDashboard';
@@ -33,6 +33,8 @@ import CodePractice from './pages/student/CodePractice';
 import { Toaster } from "@/components/ui/sonner";
 import ErrorBoundary from './components/ErrorBoundary';
 import DashboardRedirect from './components/DashboardRedirect';
+import InstructorSkillTest from './pages/instructor/SkillTest';
+
 
 
 
@@ -220,10 +222,10 @@ function App() {
               />
 
               <Route
-                path="/admin/test-questions"
+                path="/admin/skill-test"
                 element={
                   <ProtectedRoute allowedRoles={["admin", "instructor"]}>
-                    <div>Test Questions Management</div>
+                    <InstructorSkillTest />
                   </ProtectedRoute>
                 }
               />

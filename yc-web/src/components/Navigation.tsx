@@ -32,7 +32,7 @@ const Navigation: React.FC = () => {
       { label: 'Code Management', path: '/admin/code-management' },
       { label: 'Learn/Certify', path: '/admin/learn' },
       { label: 'Practice Questions', path: '/admin/practice-questions' },
-      { label: 'Skill Test', path: '/admin/test-questions' },
+      { label: 'Skill Test', path: '/admin/skill-test' },
       { label: 'Jobs', path: '/admin/jobs' },
     ],
     instructor: [

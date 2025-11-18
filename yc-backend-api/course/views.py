@@ -175,28 +175,55 @@ class VideoViewSet(viewsets.ModelViewSet):
 
 
 class QuizViewSet(viewsets.ModelViewSet):
-    queryset = Quiz.objects.select_related("sub_topic").all()
+    queryset = Quiz.objects.select_related("topic", "sub_topic").all()
     serializer_class = QuizSerializer
     permission_classes = [IsAdminOrReadOnly]
 
     def get_queryset(self):
         queryset = Quiz.objects.all()
-        sub_id = self.request.query_params.get("sub_topic")
-        if sub_id:
-            queryset = queryset.filter(sub_topic_id=sub_id)
+
+        # Filter by category
+        category = self.request.query_params.get("category")
+        if category:
+            queryset = queryset.filter(category=category)
+
+        # Filter by topic
+        topic_id = self.request.query_params.get("topic")
+        if topic_id:
+            queryset = queryset.filter(topic_id=topic_id)
+
+        # Filter by subtopic
+        subtopic_id = self.request.query_params.get("sub_topic")
+        if subtopic_id:
+            queryset = queryset.filter(sub_topic_id=subtopic_id)
+
         return queryset
 
 
+
 class CodingProblemViewSet(viewsets.ModelViewSet):
-    queryset = CodingProblem.objects.select_related("sub_topic").all()
+    queryset = CodingProblem.objects.select_related("topic", "sub_topic").all()
     serializer_class = CodingProblemSerializer
     permission_classes = [IsAdminOrReadOnly]
 
     def get_queryset(self):
         queryset = CodingProblem.objects.all()
-        subtopic_id = self.request.query_params.get("sub_topic", None)
+
+        # Filter by category
+        category = self.request.query_params.get("category")
+        if category:
+            queryset = queryset.filter(category=category)
+
+        # Filter by topic
+        topic_id = self.request.query_params.get("topic")
+        if topic_id:
+            queryset = queryset.filter(topic_id=topic_id)
+
+        # Filter by subtopic
+        subtopic_id = self.request.query_params.get("sub_topic")
         if subtopic_id:
             queryset = queryset.filter(sub_topic_id=subtopic_id)
+
         return queryset
 
     def create(self, request, *args, **kwargs):
@@ -207,6 +234,7 @@ class CodingProblemViewSet(viewsets.ModelViewSet):
                 {"error": "Database error", "message": str(e)},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
 
 
 class NoteViewSet(viewsets.ModelViewSet):

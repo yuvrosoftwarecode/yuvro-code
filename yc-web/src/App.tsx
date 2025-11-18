@@ -19,7 +19,8 @@ import ResetPassword from './pages/common/ResetPassword';
 import ForgotPassword from './pages/common/ForgotPassword';
 import InstructorDashboard from './pages/instructor/Dashboard';
 import Courses from './pages/instructor/Courses';
-import CourseEdit from './pages/instructor/CourseEdit';
+import LearnAndCertify  from './pages/instructor/LearnAndCertify';
+import CourseEdit from './components/instructor/courses/CourseEdit';
 import Jobs from './pages/instructor/Jobs';
 import Users from './pages/instructor/Users';
 import StudentDashboard from './pages/student/StudentDashboard';
@@ -147,7 +148,16 @@ function App() {
               />
 
               <Route
-                path="/admin/courses/:id"
+                path="/admin/learn"
+                element={
+                  <ProtectedRoute allowedRoles={["admin", "instructor"]}>
+                    <LearnAndCertify />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/admin/learn/:id"
                 element={
                   <ProtectedRoute allowedRoles={["admin", "instructor"]}>
                     <CourseEdit />

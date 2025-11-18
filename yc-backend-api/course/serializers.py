@@ -156,6 +156,8 @@ class QuizSerializer(serializers.ModelSerializer):
         model = Quiz
         fields = [
             "id",
+            "category",
+            "topic",
             "sub_topic",
             "question",
             "options",
@@ -166,16 +168,42 @@ class QuizSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_at", "updated_at"]
 
     def validate(self, data):
+        category = data.get("category")
+        topic = data.get("topic")
+        sub_topic = data.get("sub_topic")
         options = data.get("options")
         index = data.get("correct_answer_index")
 
+        # ---- OPTION VALIDATIONS ----
         if not isinstance(options, list) or len(options) < 2:
             raise serializers.ValidationError("Quiz must have at least 2 options.")
 
         if index >= len(options) or index < 0:
             raise serializers.ValidationError("Correct answer index is out of range.")
 
+        # ---- CATEGORY MAPPING VALIDATION ----
+        if category == "learn_certify":
+            if not sub_topic:
+                raise serializers.ValidationError(
+                    "Learn & Certify quizzes must be linked to a Subtopic."
+                )
+            if topic:
+                raise serializers.ValidationError(
+                    "Learn & Certify quizzes cannot be linked to a Topic."
+                )
+
+        if category in ["practice", "skill_test"]:
+            if not topic:
+                raise serializers.ValidationError(
+                    "Practice/Skill Test quizzes must be linked to a Topic."
+                )
+            if sub_topic:
+                raise serializers.ValidationError(
+                    "Practice/Skill Test quizzes cannot be linked to a Subtopic."
+                )
+
         return data
+
 
 
 class CodingProblemSerializer(serializers.ModelSerializer):
@@ -183,6 +211,8 @@ class CodingProblemSerializer(serializers.ModelSerializer):
         model = CodingProblem
         fields = [
             "id",
+            "category",
+            "topic",
             "sub_topic",
             "title",
             "description",
@@ -194,9 +224,14 @@ class CodingProblemSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_at", "updated_at"]
 
     def validate(self, data):
+        category = data.get("category")
+        topic = data.get("topic")
+        sub_topic = data.get("sub_topic")
+
         test_cases_basic = data.get("test_cases_basic")
         test_cases_advanced = data.get("test_cases_advanced", [])
 
+        # ---- TEST CASE VALIDATION ----
         if not isinstance(test_cases_basic, list) or len(test_cases_basic) == 0:
             raise serializers.ValidationError(
                 "There must be at least one basic test case."
@@ -217,7 +252,29 @@ class CodingProblemSerializer(serializers.ModelSerializer):
                         "Each advanced test case must have 'input_data' and 'expected_output' fields."
                     )
 
+        # ---- CATEGORY MAPPING VALIDATION ----
+        if category == "learn_certify":
+            if not sub_topic:
+                raise serializers.ValidationError(
+                    "Learn & Certify coding problems must be linked to a Subtopic."
+                )
+            if topic:
+                raise serializers.ValidationError(
+                    "Learn & Certify coding problems cannot be linked to a Topic."
+                )
+
+        if category in ["practice", "skill_test"]:
+            if not topic:
+                raise serializers.ValidationError(
+                    "Practice/Skill Test coding problems must be linked to a Topic."
+                )
+            if sub_topic:
+                raise serializers.ValidationError(
+                    "Practice/Skill Test coding problems cannot be linked to a Subtopic."
+                )
+
         return data
+
 
 
 class NoteSerializer(serializers.ModelSerializer):

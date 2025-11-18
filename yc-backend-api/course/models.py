@@ -140,22 +140,40 @@ class Video(models.Model):
 
 
 class CodingProblem(models.Model):
-    """
-    CodingProblem model representing coding exercises for programming practice.
-    """
+    CATEGORY_CHOICES = [
+        ("learn_certify", "Learn & Certify"),
+        ("practice", "Practice Questions"),
+        ("skill_test", "Skill Test"),
+    ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    sub_topic = models.ForeignKey(
-        Subtopic, on_delete=models.CASCADE, related_name="coding_problems"
+
+    # NEW: optional topic mapping
+    topic = models.ForeignKey(
+        Topic,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="coding_problems_topic",
     )
+
+    # OLD: subtopic mapping (now optional)
+    sub_topic = models.ForeignKey(
+        Subtopic,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="coding_problems",
+    )
+
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
+
     title = models.CharField(max_length=255)
     description = models.TextField()
-    test_cases_basic = models.JSONField(
-        help_text="Basic test cases visible to students"
-    )
-    test_cases_advanced = models.JSONField(
-        default=list, help_text="Advanced test cases for submission evaluation"
-    )
+
+    test_cases_basic = models.JSONField(help_text="Basic test cases visible to students")
+    test_cases_advanced = models.JSONField(default=list, help_text="Advanced test cases")
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -163,21 +181,66 @@ class CodingProblem(models.Model):
         ordering = ["created_at"]
 
     def __str__(self):
-        return f"{self.sub_topic.name} - {self.title}"
+        return f"{self.sub_topic.name if self.sub_topic else self.topic.name} - {self.title}"
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+
+        # CASE 1: learn & certify → must map to subtopic
+        if self.category == "learn_certify":
+            if not self.sub_topic:
+                raise ValidationError("Learn & Certify questions must belong to a Subtopic.")
+            if self.topic:
+                raise ValidationError("Learn & Certify questions cannot be linked to a Topic.")
+
+        # CASE 2: practice / skill test → must map to topic
+        if self.category in ["practice", "skill_test"]:
+            if not self.topic:
+                raise ValidationError("Practice/Skill Test questions must belong to a Topic.")
+            if self.sub_topic:
+                raise ValidationError("Practice/Skill Test questions cannot be linked to a Subtopic.")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    
+
 
 
 class Quiz(models.Model):
-    """
-    Quiz model representing multiple choice questions for knowledge assessment.
-    """
+    CATEGORY_CHOICES = [
+        ("learn_certify", "Learn & Certify"),
+        ("practice", "Practice Questions"),
+        ("skill_test", "Skill Test"),
+    ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    sub_topic = models.ForeignKey(
-        Subtopic, on_delete=models.CASCADE, related_name="quizzes"
+
+    # NEW: optional topic
+    topic = models.ForeignKey(
+        Topic,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="quizzes_topic",
     )
+
+    # OLD: optional subtopic
+    sub_topic = models.ForeignKey(
+        Subtopic,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="quizzes",
+    )
+
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
+
     question = models.TextField()
     options = models.JSONField()
     correct_answer_index = models.PositiveIntegerField()
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -185,11 +248,9 @@ class Quiz(models.Model):
         ordering = ["created_at"]
 
     def clean(self):
-        """
-        Validate that correct_answer_index is within the range of options.
-        """
         from django.core.exceptions import ValidationError
 
+        # validate answer index
         if self.options and self.correct_answer_index is not None:
             if isinstance(self.options, list):
                 if self.correct_answer_index >= len(self.options):
@@ -198,6 +259,19 @@ class Quiz(models.Model):
                     )
                 if self.correct_answer_index < 0:
                     raise ValidationError("Correct answer index must be non-negative.")
+
+        # Mapping logic
+        if self.category == "learn_certify":
+            if not self.sub_topic:
+                raise ValidationError("Learn & Certify quizzes must belong to a Subtopic.")
+            if self.topic:
+                raise ValidationError("Learn & Certify quizzes cannot be linked to a Topic.")
+
+        if self.category in ["practice", "skill_test"]:
+            if not self.topic:
+                raise ValidationError("Practice/Skill Test quizzes must belong to a Topic.")
+            if self.sub_topic:
+                raise ValidationError("Practice/Skill Test quizzes cannot be linked to a Subtopic.")
 
     def save(self, *args, **kwargs):
         self.full_clean()

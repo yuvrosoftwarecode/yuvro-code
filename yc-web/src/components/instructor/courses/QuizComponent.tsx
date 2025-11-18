@@ -85,11 +85,14 @@ const QuizComponent = ({ subtopic }: any) => {
     if (correctIndex === null) return toast.error("Select correct answer");
 
     const payload = {
+      category: "learn_certify",
       sub_topic: subtopic.id,
+      topic: null,
       question,
       options,
       correct_answer_index: correctIndex,
     };
+
 
     try {
       if (mode === "add") {

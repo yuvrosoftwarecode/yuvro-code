@@ -1,13 +1,13 @@
 // src/pages/instructor/CourseEdit.tsx
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useAuth, User } from "../../contexts/AuthContext";
-import VideosPanel from "../../components/admin/VideosPanel";
-import QuizComponent from "../../components/admin/QuizComponent";
-import CodingProblemsManager from "@/components/admin/CodingProblemsManager";
-import NotesManager from "@/components/admin/NotesManager";
+import { useAuth, User } from "../../../contexts/AuthContext";
+import VideosPanel from "./VideosPanel";
+import QuizComponent from "./QuizComponent";
+import CodingProblemsManager from "@/components/instructor/courses/CodingProblemsManager";
+import NotesManager from "@/components/instructor/courses/NotesManager";
 import { fetchAdmins } from "@/services/courseService";
-import Navigation from "../../components/Navigation";
+import Navigation from "../../Navigation";
 
 import {
   Card,

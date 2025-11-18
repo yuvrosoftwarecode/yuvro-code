@@ -663,20 +663,48 @@ export const deleteSkillTestCodingProblem = async (id: string) => {
 };
 
 
-// ------------------------------------------------------------
-// ADD EXPORTS TO DEFAULT EXPORT LIST
-// ------------------------------------------------------------
+// ---------------------------------------------
+// PRACTICE QUESTIONS —  CODING
+// ---------------------------------------------
 
-/*
-Add these lines at the bottom inside the `courseService` default export:
+// Fetch coding problems filtered by topic & category=practice
+export async function fetchPracticeCodingProblemsByTopic(topicId: string) {
+  const res = await fetch(
+    `${API_BASE}/course/coding-problems/?topic=${topicId}&category=practice`,
+    { headers: getAuthHeader() }
+  );
+  if (!res.ok) throw new Error("Failed to fetch practice coding problems");
+  return res.json();
+}
 
-  getSkillTestQuizzes: fetchSkillTestQuizzesByTopic,
-  createSkillTestQuiz,
-  updateSkillTestQuiz,
-  deleteSkillTestQuiz,
+// Create new practice coding problem
+export async function createPracticeCodingProblem(payload: any) {
+  const res = await fetch(`${API_BASE}/course/coding-problems/`, {
+    method: "POST",
+    headers: { ...getAuthHeader(), "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error("Failed to create practice problem");
+  return res.json();
+}
 
-  getSkillTestCodingProblems: fetchSkillTestCodingProblemsByTopic,
-  createSkillTestCodingProblem,
-  updateSkillTestCodingProblem,
-  deleteSkillTestCodingProblem,
-*/
+// Update practice coding problem
+export async function updatePracticeCodingProblem(id: string, payload: any) {
+  const res = await fetch(`${API_BASE}/course/coding-problems/${id}/`, {
+    method: "PUT",
+    headers: { ...getAuthHeader(), "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error("Failed to update practice problem");
+  return res.json();
+}
+
+// Delete practice problem
+export async function deletePracticeCodingProblem(id: string) {
+  const res = await fetch(`${API_BASE}/course/coding-problems/${id}/`, {
+    method: "DELETE",
+    headers: getAuthHeader(),
+  });
+  if (!res.ok) throw new Error("Failed to delete practice problem");
+  return true;
+}

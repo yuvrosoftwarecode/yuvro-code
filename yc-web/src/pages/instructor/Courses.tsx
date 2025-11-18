@@ -212,14 +212,6 @@ const Courses: React.FC = () => {
                     key={course.id}
                     className="relative hover:shadow-md transition border border-gray-200"
                   >
-                    {/* EDIT ICON – absolute to card */}
-                    <button
-                      onClick={() => openEditCourseModal(course)}
-                      className="absolute top-2 right-2 p-1 rounded hover:bg-gray-100"
-                    >
-                      <Pencil className="w-4 h-4 text-gray-600" />
-                    </button>
-
                     <CardContent className="p-4">
                       <h3 className="font-medium text-gray-800">{course.name}</h3>
 
@@ -231,9 +223,9 @@ const Courses: React.FC = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => navigate(`/admin/courses/${course.id}`)}
+                          onClick={() => openEditCourseModal(course)}
                         >
-                          Manage
+                          Edit
                         </Button>
 
                         <Button

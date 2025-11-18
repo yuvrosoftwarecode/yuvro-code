@@ -44,8 +44,8 @@ const CodingProblemsManager: React.FC<Props> = ({ subtopicId }) => {
   const [modalMode, setModalMode] = useState<"create" | "edit">("create");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [inputSample, setInputSample] = useState("");
-  const [testCasesText, setTestCasesText] = useState(""); // JSON as string
+  const [basicTestCasesText, setBasicTestCasesText] = useState("[]");
+  const [advancedTestCasesText, setAdvancedTestCasesText] = useState("[]");
   const [saving, setSaving] = useState(false);
 
   // delete confirmation
@@ -70,9 +70,9 @@ const CodingProblemsManager: React.FC<Props> = ({ subtopicId }) => {
       // ensure test_cases parsed if server returned string
       const normalized = Array.isArray(data)
         ? data.map((p: any) => ({
-            ...p,
-            test_cases: typeof p.test_cases === "string" ? JSON.parse(p.test_cases || "[]") : p.test_cases || [],
-          }))
+          ...p,
+          test_cases: typeof p.test_cases === "string" ? JSON.parse(p.test_cases || "[]") : p.test_cases || [],
+        }))
         : [];
       setProblems(normalized);
     } catch (err) {
@@ -88,8 +88,8 @@ const CodingProblemsManager: React.FC<Props> = ({ subtopicId }) => {
     setSelectedProblem(null);
     setTitle("");
     setDescription("");
-    setInputSample("");
-    setTestCasesText("[]");
+    setBasicTestCasesText("[]");
+    setAdvancedTestCasesText("[]");
     setIsModalOpen(true);
   };
 
@@ -98,8 +98,9 @@ const CodingProblemsManager: React.FC<Props> = ({ subtopicId }) => {
     setSelectedProblem(p);
     setTitle(p.title || "");
     setDescription(p.description || "");
-    setInputSample(p.input || "");
-    setTestCasesText(JSON.stringify(p.test_cases ?? [], null, 2));
+    setBasicTestCasesText(JSON.stringify(p.test_cases_basic ?? [], null, 2));
+    setAdvancedTestCasesText(JSON.stringify(p.test_cases_advanced ?? [], null, 2));
+
     setIsModalOpen(true);
   };
 
@@ -114,29 +115,46 @@ const CodingProblemsManager: React.FC<Props> = ({ subtopicId }) => {
     }
 
     // parse test cases JSON
-    let parsedTestCases: any = [];
-    if (testCasesText.trim()) {
-      try {
-        parsedTestCases = JSON.parse(testCasesText);
-        if (!Array.isArray(parsedTestCases)) {
-          toast.error("Test cases must be a JSON array");
-          return;
-        }
-      } catch (err) {
-        toast.error("Invalid JSON in test cases");
+    // Parse basic test cases
+    let parsedBasic: any = [];
+    try {
+      parsedBasic = JSON.parse(basicTestCasesText);
+      if (!Array.isArray(parsedBasic)) {
+        toast.error("Basic test cases must be a JSON array");
         return;
       }
+    } catch {
+      toast.error("Invalid JSON in basic test cases");
+      return;
     }
+
+    // Parse advanced test cases
+    let parsedAdvanced: any = [];
+    try {
+      parsedAdvanced = JSON.parse(advancedTestCasesText);
+      if (!Array.isArray(parsedAdvanced)) {
+        toast.error("Advanced test cases must be a JSON array");
+        return;
+      }
+    } catch {
+      toast.error("Invalid JSON in advanced test cases");
+      return;
+    }
+
 
     setSaving(true);
     try {
       const payload = {
+        category: "learn_certify",
+        topic: null,
         sub_topic: subtopicId,
         title: title.trim(),
         description: description.trim(),
-        input: inputSample,
-        test_cases: parsedTestCases,
+        test_cases_basic: parsedBasic,
+        test_cases_advanced: parsedAdvanced,
       };
+
+
 
       if (modalMode === "create") {
         const created = await createCodingProblem(payload);
@@ -245,22 +263,32 @@ const CodingProblemsManager: React.FC<Props> = ({ subtopicId }) => {
               <Label>Description</Label>
               <Input value={description} onChange={(e) => setDescription(e.target.value)} />
             </div>
-
             <div>
-              <Label>Input (sample)</Label>
-              <Input value={inputSample} onChange={(e) => setInputSample(e.target.value)} />
-            </div>
-
-            <div>
-              <Label>Test Cases (JSON array)</Label>
+              <Label>Basic Test Cases (JSON array)</Label>
               <textarea
-                className="w-full border rounded px-3 py-2 min-h-[120px] resize-y"
-                value={testCasesText}
-                onChange={(e) => setTestCasesText(e.target.value)}
-                placeholder='e.g. [{"input":"1\n2","output":"3"},{"input":"3\n4","output":"7"}]'
+                className="w-full border rounded px-3 py-2 min-h-[120px]"
+                value={basicTestCasesText}
+                onChange={(e) => setBasicTestCasesText(e.target.value)}
+                placeholder='[{"input_data":"1 2", "expected_output":"3"}]'
               />
-              <p className="text-xs text-muted-foreground mt-1">Enter valid JSON array. Example: <code>[{"{ }"}]</code></p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Visible to students. Must be a JSON array.
+              </p>
             </div>
+
+            <div>
+              <Label>Advanced Test Cases (JSON array)</Label>
+              <textarea
+                className="w-full border rounded px-3 py-2 min-h-[120px]"
+                value={advancedTestCasesText}
+                onChange={(e) => setAdvancedTestCasesText(e.target.value)}
+                placeholder='[{"input_data":"1000 2000","expected_output":"3000"}]'
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Used for evaluation during submissions.
+              </p>
+            </div>
+
           </div>
 
           <DialogFooter>

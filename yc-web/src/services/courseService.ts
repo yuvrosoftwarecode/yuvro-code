@@ -546,3 +546,137 @@ const courseService = {
 };
 
 export default courseService;
+
+// ------------------------------------------------------------
+// SKILL TEST — QUIZZES (Topic Level + category=skill_test)
+// ------------------------------------------------------------
+
+// Fetch MCQs for Skill Test (category=skill_test)
+export const fetchSkillTestQuizzesByTopic = async (topicId: string) => {
+  const url = `${API_BASE}/course/quizzes/?topic=${topicId}&category=skill_test`;
+
+  const res = await fetch(url, {
+    headers: getAuthHeader(),
+  });
+
+  if (!res.ok) throw new Error("Failed to fetch skill test quizzes");
+  return res.json();
+};
+
+// Create Skill Test MCQ
+export const createSkillTestQuiz = async (payload: any) => {
+  const res = await fetch(`${API_BASE}/course/quizzes/`, {
+    method: "POST",
+    headers: {
+      ...getAuthHeader(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) throw new Error("Failed to create skill test quiz");
+  return res.json();
+};
+
+// Update Skill Test MCQ
+export const updateSkillTestQuiz = async (id: string, payload: any) => {
+  const res = await fetch(`${API_BASE}/course/quizzes/${id}/`, {
+    method: "PATCH",
+    headers: {
+      ...getAuthHeader(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) throw new Error("Failed to update skill test quiz");
+  return res.json();
+};
+
+// Delete Skill Test MCQ
+export const deleteSkillTestQuiz = async (id: string) => {
+  const res = await fetch(`${API_BASE}/course/quizzes/${id}/`, {
+    method: "DELETE",
+    headers: getAuthHeader(),
+  });
+
+  if (!res.ok) throw new Error("Failed to delete skill test quiz");
+  return true;
+};
+
+
+// ------------------------------------------------------------
+// SKILL TEST — CODING PROBLEMS (Topic Level + category=skill_test)
+// ------------------------------------------------------------
+
+// Fetch Coding Problems (Skill Test)
+export const fetchSkillTestCodingProblemsByTopic = async (topicId: string) => {
+  const url = `${API_BASE}/course/coding-problems/?topic=${topicId}&category=skill_test`;
+
+  const res = await fetch(url, {
+    headers: getAuthHeader(),
+  });
+
+  if (!res.ok) throw new Error("Failed to fetch skill test coding problems");
+  return res.json();
+};
+
+// Create Skill Test Coding Problem
+export const createSkillTestCodingProblem = async (payload: any) => {
+  const res = await fetch(`${API_BASE}/course/coding-problems/`, {
+    method: "POST",
+    headers: {
+      ...getAuthHeader(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) throw new Error("Failed to create skill test coding problem");
+  return res.json();
+};
+
+// Update Skill Test Coding Problem
+export const updateSkillTestCodingProblem = async (id: string, payload: any) => {
+  const res = await fetch(`${API_BASE}/course/coding-problems/${id}/`, {
+    method: "PATCH",
+    headers: {
+      ...getAuthHeader(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) throw new Error("Failed to update skill test coding problem");
+  return res.json();
+};
+
+// Delete Skill Test Coding Problem
+export const deleteSkillTestCodingProblem = async (id: string) => {
+  const res = await fetch(`${API_BASE}/course/coding-problems/${id}/`, {
+    method: "DELETE",
+    headers: getAuthHeader(),
+  });
+
+  if (!res.ok) throw new Error("Failed to delete skill test coding problem");
+  return true;
+};
+
+
+// ------------------------------------------------------------
+// ADD EXPORTS TO DEFAULT EXPORT LIST
+// ------------------------------------------------------------
+
+/*
+Add these lines at the bottom inside the `courseService` default export:
+
+  getSkillTestQuizzes: fetchSkillTestQuizzesByTopic,
+  createSkillTestQuiz,
+  updateSkillTestQuiz,
+  deleteSkillTestQuiz,
+
+  getSkillTestCodingProblems: fetchSkillTestCodingProblemsByTopic,
+  createSkillTestCodingProblem,
+  updateSkillTestCodingProblem,
+  deleteSkillTestCodingProblem,
+*/

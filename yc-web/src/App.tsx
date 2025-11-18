@@ -34,6 +34,7 @@ import { Toaster } from "@/components/ui/sonner";
 import ErrorBoundary from './components/ErrorBoundary';
 import DashboardRedirect from './components/DashboardRedirect';
 import InstructorSkillTest from './pages/instructor/SkillTest';
+import PracticeQuestions from './pages/instructor/PracticeQuestions';
 
 
 
@@ -216,7 +217,7 @@ function App() {
                 path="/admin/practice-questions"
                 element={
                   <ProtectedRoute allowedRoles={["admin", "instructor"]}>
-                    <div>Practice Questions Management</div>
+                    <PracticeQuestions />
                   </ProtectedRoute>
                 }
               />

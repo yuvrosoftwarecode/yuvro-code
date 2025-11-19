@@ -3,7 +3,6 @@ from django.db import models
 class Job(models.Model):
     title = models.CharField(max_length=255)
     company = models.CharField(max_length=255)
-    logo = models.URLField(blank=True, null=True)
     location = models.CharField(max_length=100)
     work_type = models.CharField(max_length=50, choices=[('Remote','Remote'),('Hybrid','Hybrid'),('Onsite','Onsite')])
     posted_date = models.DateField(auto_now_add=True)

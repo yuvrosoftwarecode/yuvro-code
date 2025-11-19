@@ -32,13 +32,19 @@ import MockInterview from './pages/student/MockInterview';
 import StudentJobs from './pages/student/Jobs';
 import Contest from './pages/student/Contest';
 import CodePractice from './pages/student/CodePractice';
-import StudentJobs from './pages/student/Jobs';
 import { Toaster } from "@/components/ui/sonner";
 import ErrorBoundary from './components/ErrorBoundary';
 import DashboardRedirect from './components/DashboardRedirect';
+<<<<<<< HEAD
 import InstructorSkillTest from './pages/instructor/SkillTest';
 import PracticeQuestions from './pages/instructor/PracticeQuestions';
 import OwnerContest from './pages/instructor/Contest';
+=======
+import RecruiterJobs from "./pages/recruiter/Jobs";
+import Vinod from "./pages/recruiter/Vinod";
+
+
+>>>>>>> 7d78b66 (feat(jobs): add jobs in Frontend)
 
 function App() {
   return (
@@ -56,6 +62,9 @@ function App() {
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password/:uidb64/:token" element={<ResetPassword />} />
               <Route path="/dashboard" element={<DashboardRedirect />} />
+              <Route path="/student/jobs" element={<StudentJobs />} />
+              <Route path="/recruiter/jobs" element={<RecruiterJobs />} />
+              <Route path="/recruiter/vinod" element={<Vinod />} />
 
 
               {/* Protected routes */}
@@ -140,6 +149,16 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+
+                <Route
+                  path="/recruiter/jobs"
+                  element={
+                    <ProtectedRoute allowedRoles={["recruiter"]}>
+                      <RecruiterJobs />
+                    </ProtectedRoute>
+                  }
+                />
+
 
               <Route
                 path="/instructor/courses"

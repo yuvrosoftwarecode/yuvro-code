@@ -2,12 +2,12 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ChevronLeft, Play, Send, BarChart3, Minimize2, Maximize2 } from 'lucide-react';
 import CodeEditor from '@/components/CodeEditor';
 import { PerformanceMetrics } from '@/components/code-execution';
 import codeExecutorService from '@/services/codeExecutorService';
 import type { Course, Topic, CodingProblem } from '@/pages/student/CodePractice';
+import { ResizablePanel, ResizablePanelGroup, ResizableHandle } from '@/components/ui/resizable';
 import { toast } from 'sonner';
 
 interface ProblemSolvingProps {
@@ -18,561 +18,507 @@ interface ProblemSolvingProps {
   onViewAnalytics: () => void;
 }
 
-const ProblemSolving = ({
-  problem,
-  course,
-  topic,
-  onBack,
-  onViewAnalytics,
-}: ProblemSolvingProps) => {
+const ProblemSolving = ({ problem, course, topic, onBack, onViewAnalytics }: ProblemSolvingProps) => {
+  // Editor & code state
   const [code, setCode] = useState('');
   const [language, setLanguage] = useState('python');
+
+  // Execution state
   const [output, setOutput] = useState('');
-  const [isRunning, setIsRunning] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [testResults, setTestResults] = useState<any>(null);
   const [executionMetrics, setExecutionMetrics] = useState<any>(null);
+  const [isRunning, setIsRunning] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // UI state
+  const [editorOpen, setEditorOpen] = useState(false); 
   const [isEditorMinimized, setIsEditorMinimized] = useState(false);
   const [isEditorFullscreen, setIsEditorFullscreen] = useState(false);
+  const [showOutput, setShowOutput] = useState(false);
 
-  // Handle keyboard shortcuts
+  // keyboard shortcuts
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isEditorFullscreen) {
-        setIsEditorFullscreen(false);
-      }
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isEditorFullscreen) setIsEditorFullscreen(false);
       if (e.key === 'F11') {
         e.preventDefault();
-        setIsEditorFullscreen(!isEditorFullscreen);
+        setIsEditorFullscreen((s) => !s);
       }
     };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
   }, [isEditorFullscreen]);
 
-  // Sample solution templates for different languages
-  const getSampleSolution = (lang: string) => {
-    const templates = {
-      python: `# Python Solution Template
-def solution():
-    # Read input
-    # Process the data
-    # Return or print the result
-    pass
-
-# Example usage:
-# result = solution()
-# print(result)`,
-      javascript: `// JavaScript Solution Template
-function solution() {
-    // Read input
-    // Process the data
-    // Return the result
-}
-
-// Example usage:
-// const result = solution();
-// console.log(result);`,
-      java: `// Java Solution Template
-public class Solution {
-    public static void main(String[] args) {
-        // Read input
-        // Process the data
-        // Print the result
-    }
-    
-    public static int solve() {
-        // Your solution logic here
-        return 0;
-    }
-}`,
-      cpp: `// C++ Solution Template
-#include <iostream>
-#include <vector>
-#include <string>
-using namespace std;
-
-int main() {
-    // Read input
-    // Process the data
-    // Print the result
-    return 0;
-}`,
-      c: `// C Solution Template
-#include <stdio.h>
-#include <stdlib.h>
-
-int main() {
-    // Read input
-    // Process the data
-    // Print the result
-    return 0;
-}`
-    };
-    return templates[lang as keyof typeof templates] || templates.python;
+  // templates for new files
+  const templates: Record<string, string> = {
+    python: `# Python solution template\n\nif __name__ == "__main__":\n    pass\n`,
+    javascript: `// JavaScript solution template\n\nfunction solution() {\n  // ...\n}\n`,
+    java: `// Java solution template\npublic class Solution {\n  public static void main(String[] args) {\n  }\n}\n`,
+    cpp: `// C++ template\n#include <bits/stdc++.h>\nusing namespace std;\nint main(){\n  return 0;\n}\n`,
   };
 
-  // Initialize with template on component mount
   useEffect(() => {
-    const template = getSampleSolution(language);
-    setCode(template);
-  }, []); // Only run on mount
+    setCode(templates[language] ?? templates.python);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  // Auto-populate code when language changes
   useEffect(() => {
-    const template = getSampleSolution(language);
-    setCode(template);
+    // update code to template when language changes
+    setCode(templates[language] ?? templates.python);
     toast.success(`Switched to ${language} template`);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [language]);
 
-  const getDifficultyColor = (diff: string) => {
-    switch (diff) {
-      case 'Easy':
-        return 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20';
-      case 'Medium':
-        return 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/20';
-      case 'Hard':
-        return 'bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20';
-      default:
-        return 'bg-muted text-muted-foreground';
-    }
-  };
+  // difficulty badge style (pure Tailwind)
+  const difficultyBadgeClass =
+    problem.difficulty === 'Easy'
+      ? 'bg-green-50 text-green-700 border border-green-200'
+      : problem.difficulty === 'Medium'
+      ? 'bg-yellow-50 text-yellow-700 border border-yellow-200'
+      : problem.difficulty === 'Hard'
+      ? 'bg-red-50 text-red-700 border border-red-200'
+      : 'bg-gray-50 text-gray-700 border border-gray-200';
 
-  const handleRunCode = async () => {
-    if (!code.trim()) {
-      toast.error('Please write some code first');
-      return;
-    }
-
+  const runCode = async () => {
+    if (!code.trim()) return toast.error('Please write some code first');
     setIsRunning(true);
     setOutput('');
     setTestResults(null);
     setExecutionMetrics(null);
+    setShowOutput(true); // show output area while running
 
     try {
-      // Transform test cases to ensure they are strings
-      const transformedTestCases = problem.test_cases_basic.map(testCase => ({
-        input_data: typeof testCase.input_data === 'string' 
-          ? testCase.input_data 
-          : JSON.stringify(testCase.input_data),
-        expected_output: typeof testCase.expected_output === 'string' 
-          ? testCase.expected_output 
-          : JSON.stringify(testCase.expected_output),
-        weight: testCase.weight || 1
+      const transformed = (problem.test_cases_basic || []).map((t: any) => ({
+        input_data: typeof t.input_data === 'string' ? t.input_data : JSON.stringify(t.input_data),
+        expected_output: typeof t.expected_output === 'string' ? t.expected_output : JSON.stringify(t.expected_output),
+        weight: t.weight || 1,
       }));
 
-      const result = await codeExecutorService.runCode({
+      const res = await codeExecutorService.runCode({
         code,
         language,
-        test_cases: transformedTestCases,
+        test_cases: transformed,
         problem_title: problem.title,
       });
 
-      setOutput(result.output || result.error_message || 'No output');
-      setTestResults(result.test_results);
+      setOutput(res.output ?? res.error_message ?? '');
+      setTestResults(res.test_results ?? null);
       setExecutionMetrics({
-        execution_time: result.execution_time,
-        memory_usage: result.memory_usage,
-        status: result.status,
+        execution_time: res.execution_time,
+        memory_usage: res.memory_usage,
+        status: res.status,
       });
 
-      if (result.status === 'completed') {
-        toast.success(`Code executed successfully! ${result.test_results.passed}/${result.test_results.total} test cases passed`);
+      if (res.status === 'completed') {
+        const passed = res.test_results?.passed ?? 0;
+        const total = res.test_results?.total ?? 0;
+        toast.success(`${passed}/${total} tests passed`);
       } else {
         toast.error('Code execution failed');
       }
-    } catch (error) {
-      console.error('Code execution failed:', error);
-      setOutput(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      toast.error('Failed to execute code');
+    } catch (err) {
+      console.error('runCode error', err);
+      toast.error('Error running code');
+      setOutput(typeof err === 'string' ? err : err instanceof Error ? err.message : 'Unknown error');
+      setShowOutput(true);
     } finally {
       setIsRunning(false);
     }
   };
 
-  const handleSubmitSolution = async () => {
-    if (!code.trim()) {
-      toast.error('Please write some code first');
-      return;
-    }
-
+  const submitSolution = async () => {
+    if (!code.trim()) return toast.error('Please write some code first');
     setIsSubmitting(true);
+    setShowOutput(true);
 
     try {
-      // Combine basic and advanced test cases for submission
-      const allTestCases = [
-        ...problem.test_cases_basic,
-        ...problem.test_cases_advanced,
-      ];
-
-      // Transform test cases to ensure they are strings
-      const transformedTestCases = allTestCases.map(testCase => ({
-        input_data: typeof testCase.input_data === 'string' 
-          ? testCase.input_data 
-          : JSON.stringify(testCase.input_data),
-        expected_output: typeof testCase.expected_output === 'string' 
-          ? testCase.expected_output 
-          : JSON.stringify(testCase.expected_output),
-        weight: testCase.weight || 1
+      const all = [
+        ...(problem.test_cases_basic || []),
+        ...(problem.test_cases_advanced || []),
+      ].map((t: any) => ({
+        input_data: typeof t.input_data === 'string' ? t.input_data : JSON.stringify(t.input_data),
+        expected_output: typeof t.expected_output === 'string' ? t.expected_output : JSON.stringify(t.expected_output),
+        weight: t.weight || 1,
       }));
 
-      const result = await codeExecutorService.submitSolution({
+      const res = await codeExecutorService.submitSolution({
         code,
         language,
         coding_problem_id: problem.id,
-        test_cases: transformedTestCases,
+        test_cases: all,
       });
 
-      setTestResults(result.test_results);
+      setTestResults(res.test_results ?? null);
       setExecutionMetrics({
-        execution_time: result.execution_time,
-        memory_usage: result.memory_usage,
-        status: result.status,
+        execution_time: res.execution_time,
+        memory_usage: res.memory_usage,
+        status: res.status,
       });
 
-      if (result.status === 'completed') {
-        const passRate = (result.test_results.passed / result.test_results.total) * 100;
-        toast.success(`Solution submitted! ${result.test_results.passed}/${result.test_results.total} test cases passed (${passRate.toFixed(1)}%)`);
-        
-        if (result.plagiarism_flagged) {
-          toast.warning('Plagiarism detected in your submission');
-        }
+      if (res.status === 'completed') {
+        const passed = res.test_results?.passed ?? 0;
+        const total = res.test_results?.total ?? 0;
+        const passRate = total ? ((passed / total) * 100).toFixed(1) : '0.0';
+        toast.success(`Solution submitted: ${passed}/${total} passed (${passRate}%)`);
       } else {
-        toast.error('Solution submission failed');
+        toast.error('Submission failed');
       }
-    } catch (error) {
-      console.error('Solution submission failed:', error);
-      toast.error('Failed to submit solution');
+    } catch (err) {
+      console.error('submitSolution error', err);
+      toast.error('Error submitting solution');
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const showTestsCount = (arr?: any[]) => (Array.isArray(arr) ? arr.length : 0);
+
+  useEffect(() => {
+    if (!output && !testResults && !executionMetrics && !isRunning && !isSubmitting) {
+    }
+  }, []);
+
   return (
-    <div className={`${isEditorFullscreen ? 'h-screen' : 'container mx-auto px-4 py-6 max-w-7xl'}`}>
+    <div className={`${isEditorFullscreen ? 'h-screen bg-white' : 'container mx-auto px-4 py-3 max-w-9xl'}`}>
       {/* Breadcrumb */}
       {!isEditorFullscreen && (
-        <div className="flex items-center gap-2 mb-6 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2 mb-3 text-sm text-gray-500">
           <Button variant="ghost" size="sm" onClick={onBack} className="gap-1">
             <ChevronLeft className="h-4 w-4" />
             {topic.name}
           </Button>
           <span>/</span>
-          <span className="text-foreground font-medium">{problem.title}</span>
+          <span className="text-gray-800 font-medium">{problem.title}</span>
         </div>
       )}
 
-      <div className={`${isEditorFullscreen ? 'h-full' : 'grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-200px)]'}`}>
-        {/* Problem Description */}
-        {!isEditorFullscreen && (
-          <Card className="flex flex-col">
-          <CardHeader className="flex-shrink-0">
-            <div className="flex items-start justify-between gap-2">
-              <CardTitle className="text-xl">{problem.title}</CardTitle>
-              <Badge variant="outline" className={getDifficultyColor(problem.difficulty)}>
-                {problem.difficulty}
-              </Badge>
-            </div>
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span>Score: {problem.score}</span>
-              <span>•</span>
-              <span>{course.name} - {topic.name}</span>
+      {/* 1) Problem-only view (editor hidden) */}
+      {!editorOpen && !isEditorFullscreen && (
+        <Card className="pt-1 border border-gray-200 shadow-sm bg-white">
+          <CardHeader className="p-4">
+            <div className="flex items-start justify-between">
+              <div>
+                <CardTitle className="text-xl text-gray-900">{problem.title}</CardTitle>
+                <div className="flex items-center gap-3 mt-2 text-sm text-gray-600">
+                  <Badge className={`px-2 py-1 rounded ${difficultyBadgeClass}`}>{problem.difficulty}</Badge>
+                  <span>Score: {problem.score}</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Button
+                  onClick={() => setEditorOpen(true)}
+                  className="border border-gray-200 text-gray-700 hover:bg-gray-100"
+                  variant="outline"
+                >
+                  Open Code Editor
+                </Button>
+                <Button onClick={onViewAnalytics} variant="outline" className="!border-gray-300 text-gray-700">
+                  <BarChart3 className="h-4 w-4 mr-1" />
+                  Analytics
+                </Button>
+              </div>
             </div>
           </CardHeader>
-          <CardContent className="flex-1 overflow-auto">
-            <Tabs defaultValue="description" className="h-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="description">Description</TabsTrigger>
-                <TabsTrigger value="testcases">Test Cases</TabsTrigger>
-                <TabsTrigger value="constraints">Constraints</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="description" className="mt-4">
-                <div className="prose prose-sm max-w-none">
-                  <p className="text-foreground whitespace-pre-wrap">{problem.description}</p>
+
+          <CardContent className="p-4 space-y-6">
+            <div className="space-y-6">
+              {/* Description */}
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-2">Description</h3>
+                <p className="text-gray-700 text-sm whitespace-pre-wrap">{problem.description}</p>
+              </div>
+
+              {/* Input format */}
+              {problem.inputFormat && (
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-2">Input Format</h3>
+                  <p className="text-gray-700 text-sm whitespace-pre-wrap">{problem.inputFormat}</p>
                 </div>
-              </TabsContent>
-              
-              <TabsContent value="testcases" className="mt-4 space-y-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold">Test Cases</h3>
-                  <Badge variant="outline" className="text-xs">
-                    {problem.test_cases_basic.length} visible cases
-                  </Badge>
+              )}
+
+              {/* Output format */}
+              {problem.outputFormat && (
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-2">Output Format</h3>
+                  <p className="text-gray-700 text-sm">{problem.outputFormat}</p>
                 </div>
-                {problem.test_cases_basic.slice(0, 5).map((testCase, index) => (
-                  <div key={index} className="border rounded-lg p-4 bg-card">
-                    <h4 className="font-semibold mb-3 text-primary">Test Case {index + 1}</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="font-medium text-sm">Input:</span>
-                          <Badge variant="secondary" className="text-xs">stdin</Badge>
+              )}
+
+              {/* Examples */}
+              {problem.examples && problem.examples.length > 0 && (
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-2">Examples</h3>
+                  <div className="space-y-3">
+                    {problem.examples.map((ex: any, idx: number) => (
+                      <div key={idx} className="bg-gray-50 p-4 rounded-lg shadow-sm">
+                        <div className="text-sm mb-1">
+                          <strong>Input:</strong> <code className="font-mono">{ex.input}</code>
                         </div>
-                        <pre className="bg-muted p-3 rounded text-sm overflow-x-auto border">
-                          {typeof testCase.input_data === 'string' 
-                            ? testCase.input_data 
-                            : JSON.stringify(testCase.input_data, null, 2)}
+                        <div className="text-sm">
+                          <strong>Output:</strong> <code className="font-mono">{ex.output}</code>
+                        </div>
+                        {ex.explanation && (
+                          <p className="text-gray-600 text-sm mt-2">
+                            <strong>Explanation:</strong> {ex.explanation}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Test cases (lovable style - no harsh borders) */}
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-2">Test Cases</h3>
+                <div className="space-y-4">
+                  {(problem.test_cases_basic || []).map((tc: any, i: number) => (
+                    <div key={i} className="bg-gray-50 p-4 rounded-lg shadow-sm">
+                      <div>
+                        <div className="text-sm font-medium text-gray-700 mb-1">Input:</div>
+                        <pre className="bg-gray-100 p-3 rounded-lg text-sm whitespace-pre-wrap overflow-x-auto">
+                          {typeof tc.input_data === 'string' ? tc.input_data : JSON.stringify(tc.input_data, null, 2)}
                         </pre>
                       </div>
-                      <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="font-medium text-sm">Expected Output:</span>
-                          <Badge variant="secondary" className="text-xs">stdout</Badge>
-                        </div>
-                        <pre className="bg-muted p-3 rounded text-sm overflow-x-auto border">
-                          {typeof testCase.expected_output === 'string' 
-                            ? testCase.expected_output 
-                            : JSON.stringify(testCase.expected_output, null, 2)}
+
+                      <div className="mt-4">
+                        <div className="text-sm font-medium text-gray-700 mb-1">Expected Output:</div>
+                        <pre className="bg-gray-100 p-3 rounded-lg text-sm whitespace-pre-wrap overflow-x-auto">
+                          {typeof tc.expected_output === 'string'
+                            ? tc.expected_output
+                            : JSON.stringify(tc.expected_output, null, 2)}
                         </pre>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                {problem.test_cases_basic.length > 5 && (
-                  <div className="text-center py-4 text-muted-foreground">
-                    <p className="text-sm">... and {problem.test_cases_basic.length - 5} more test cases</p>
-                  </div>
-                )}
-              </TabsContent>
-
-
-              
-              <TabsContent value="constraints" className="mt-4">
-                <div className="space-y-2">
-                  <h4 className="font-semibold">Constraints:</h4>
-                  <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
-                    <li>Time limit: 2 seconds</li>
-                    <li>Memory limit: 256 MB</li>
-                    <li>Test cases: {problem.test_cases_basic.length + problem.test_cases_advanced.length} total</li>
-                  </ul>
-                </div>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
-        )}
-
-        {/* Code Editor and Results */}
-        <div className={`flex flex-col gap-4 ${isEditorFullscreen ? 'fixed inset-0 z-50 bg-background p-4' : ''}`}>
-          {/* Fullscreen indicator */}
-          {isEditorFullscreen && (
-            <div className="flex items-center justify-between py-2 px-4 bg-muted rounded-lg">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={onBack} 
-                  className="gap-1 h-6 px-2"
-                >
-                  <ChevronLeft className="h-3 w-3" />
-                  {topic.name}
-                </Button>
-                <span>/</span>
-                <span className="text-foreground font-medium">{problem.title}</span>
-              </div>
-              <div className="flex items-center gap-4">
-                <p className="text-sm text-muted-foreground">
-                  Fullscreen Mode • Press <kbd className="px-2 py-1 bg-background rounded text-xs">Esc</kbd> to exit
-                </p>
-                <Button
-                  onClick={() => setIsEditorFullscreen(false)}
-                  size="sm"
-                  variant="outline"
-                  className="gap-1"
-                >
-                  <Maximize2 className="h-4 w-4" />
-                  Exit Fullscreen
-                </Button>
-              </div>
-            </div>
-          )}
-          {/* Test Cases in Fullscreen */}
-          {isEditorFullscreen && (
-            <Card className="mb-4">
-              <CardHeader>
-                <CardTitle className="text-lg">Test Cases</CardTitle>
-              </CardHeader>
-              <CardContent className="max-h-48 overflow-y-auto">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {problem.test_cases_basic.slice(0, 3).map((testCase, index) => (
-                    <div key={index} className="border rounded-lg p-3 bg-card">
-                      <h5 className="font-semibold mb-2 text-sm">Test Case {index + 1}</h5>
-                      <div className="space-y-2">
-                        <div>
-                          <span className="font-medium text-xs">Input:</span>
-                          <pre className="bg-muted p-2 rounded text-xs overflow-x-auto">
-                            {typeof testCase.input_data === 'string' 
-                              ? testCase.input_data 
-                              : JSON.stringify(testCase.input_data, null, 2)}
-                          </pre>
-                        </div>
-                        <div>
-                          <span className="font-medium text-xs">Expected:</span>
-                          <pre className="bg-muted p-2 rounded text-xs overflow-x-auto">
-                            {typeof testCase.expected_output === 'string' 
-                              ? testCase.expected_output 
-                              : JSON.stringify(testCase.expected_output, null, 2)}
-                          </pre>
-                        </div>
                       </div>
                     </div>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Code Editor */}
-          <Card className={`${isEditorMinimized ? 'h-16' : 'flex-1'} transition-all duration-300`}>
-            <CardHeader className="flex-shrink-0">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <CardTitle className="text-lg">Solution</CardTitle>
-                    <Badge variant="secondary" className="text-xs capitalize">
-                      {language}
-                    </Badge>
-                </div>
-                <div className="flex gap-2">
-                  {/* Editor Controls */}
-                  <Button
-                    onClick={() => setIsEditorMinimized(!isEditorMinimized)}
-                    size="sm"
-                    variant="ghost"
-                    className="gap-1"
-                    title={isEditorMinimized ? 'Expand Editor' : 'Minimize Editor'}
-                  >
-                    <Minimize2 className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    onClick={() => setIsEditorFullscreen(!isEditorFullscreen)}
-                    size="sm"
-                    variant="ghost"
-                    className="gap-1"
-                    title={isEditorFullscreen ? 'Exit Fullscreen (Esc)' : 'Fullscreen Editor (F11)'}
-                  >
-                    <Maximize2 className="h-4 w-4" />
-                  </Button>
-                  
-                  {/* Action Buttons */}
-                  <div className="border-l pl-2 ml-2 flex gap-2">
-                    <Button
-                      onClick={handleRunCode}
-                      disabled={isRunning || isSubmitting}
-                      size="sm"
-                      variant="outline"
-                      className="gap-1"
-                    >
-                      <Play className="h-4 w-4" />
-                      {isRunning ? 'Running...' : 'Run'}
-                    </Button>
-                    <Button
-                      onClick={handleSubmitSolution}
-                      disabled={isRunning || isSubmitting}
-                      size="sm"
-                      className="gap-1"
-                    >
-                      <Send className="h-4 w-4" />
-                      {isSubmitting ? 'Submitting...' : 'Submit'}
-                    </Button>
-                    {!isEditorFullscreen && (
-                      <Button
-                        onClick={onViewAnalytics}
-                        size="sm"
-                        variant="outline"
-                        className="gap-1"
-                      >
-                        <BarChart3 className="h-4 w-4" />
-                        Analytics
-                      </Button>
-                    )}
-                  </div>
-                </div>
               </div>
-            </CardHeader>
-            {!isEditorMinimized && (
-              <CardContent className="flex-1 p-0">
-                <CodeEditor
-                  value={code}
-                  onChange={setCode}
-                  language={language}
-                  onLanguageChange={(newLanguage) => {
-                    setLanguage(newLanguage);
-                  }}
-                  height={isEditorFullscreen ? "calc(100vh - 200px)" : "400px"}
-                />
-              </CardContent>
-            )}
-          </Card>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-          {/* Results */}
-          {(output || testResults || executionMetrics) && !isEditorMinimized && (
-            <Card className={isEditorFullscreen ? 'mt-4' : ''}>
-              <CardHeader>
-                <CardTitle className="text-lg">Results</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Performance Metrics */}
-                {executionMetrics && testResults && (
-                  <PerformanceMetrics
-                    result={{
-                      id: 0,
-                      coding_problem: problem.id,
-                      problem_title: problem.title,
-                      problem_description: problem.description,
-                      code: code,
-                      language: language,
-                      status: executionMetrics.status,
-                      output: output,
-                      error_message: '',
-                      execution_time: executionMetrics.execution_time,
-                      memory_usage: executionMetrics.memory_usage,
-                      test_cases_passed: testResults.passed,
-                      total_test_cases: testResults.total,
-                      plagiarism_score: 0,
-                      plagiarism_details: null,
-                      created_at: new Date().toISOString(),
-                      updated_at: new Date().toISOString(),
-                      test_results: testResults,
-                      plagiarism_flagged: false
-                    }}
-                  />
-                )}
+      {/* 2) Split view when editor is open (horizontal resizable) */}
+      {editorOpen && !isEditorFullscreen && (
+        <div className="h-[calc(100vh-140px)]">
+          <ResizablePanelGroup direction="horizontal" className="w-full h-full flex">
+            {/* LEFT PANEL — Problem */}
+            <ResizablePanel defaultSize={50} minSize={25}>
+              <div className="h-full overflow-y-auto pr-1">
+                <Card className="border border-gray-200 shadow-sm bg-white flex flex-col h-full">
+                  <CardHeader className="p-4">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <CardTitle className="text-xl text-gray-900">{problem.title}</CardTitle>
+                        <div className="flex items-center gap-3 mt-2 text-sm text-gray-600">
+                          <Badge className={`px-2 py-1 rounded ${difficultyBadgeClass}`}>{problem.difficulty}</Badge>
+                          <span>Score: {problem.score}</span>
+                        </div>
+                      </div>
 
-                {/* Test Results */}
-                {testResults && (
-                  <div>
-                    <h4 className="font-semibold mb-2">Test Cases</h4>
-                    <div className="flex items-center gap-4 text-sm">
-                      <span className={`font-medium ${
-                        testResults.passed === testResults.total 
-                          ? 'text-green-600' 
-                          : 'text-red-600'
-                      }`}>
-                        {testResults.passed}/{testResults.total} Passed
-                      </span>
-                      <span className="text-muted-foreground">
-                        Success Rate: {((testResults.passed / testResults.total) * 100).toFixed(1)}%
-                      </span>
+                      <Button variant="ghost" size="sm" onClick={() => setEditorOpen(false)} className="gap-1 !border-none text-gray-700 hover:bg-gray-100">
+                        <ChevronLeft className="h-4 w-4 mr-1" /> Back
+                      </Button>
                     </div>
-                  </div>
-                )}
+                  </CardHeader>
 
-                {/* Output */}
-                {output && (
-                  <div>
-                    <h4 className="font-semibold mb-2">Output</h4>
-                    <pre className="bg-muted p-3 rounded text-sm overflow-x-auto max-h-32">
-                      {output}
-                    </pre>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
+                  <CardContent className="flex-1 overflow-y-auto p-4">
+                    <div className="space-y-6">
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap">{problem.description}</p>
+
+                      {problem.examples && problem.examples.length > 0 && (
+                        <div>
+                          <h4 className="font-semibold text-gray-900 mb-2">Examples</h4>
+                          <div className="space-y-3">
+                            {problem.examples.map((ex: any, idx: number) => (
+                              <div key={idx} className="bg-gray-50 p-3 rounded-lg shadow-sm">
+                                <p><strong>Input:</strong> <code>{ex.input}</code></p>
+                                <p><strong>Output:</strong> <code>{ex.output}</code></p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <div>
+                        <h4 className="font-semibold text-gray-900 mb-2">Visible Test Cases</h4>
+                        <div className="space-y-3">
+                          {(problem.test_cases_basic || []).map((tc: any, i: number) => (
+                            <div key={i} className="bg-gray-50 p-3 rounded-lg shadow-sm">
+                              <p className="text-sm font-medium text-gray-700 mb-1">Input:</p>
+                              <pre className="bg-gray-100 p-2 rounded-lg text-sm overflow-x-auto whitespace-pre-wrap">
+                                {typeof tc.input_data === 'string' ? tc.input_data : JSON.stringify(tc.input_data, null, 2)}
+                              </pre>
+
+                              <p className="text-sm mt-3 font-medium text-gray-700 mb-1">Expected Output:</p>
+                              <pre className="bg-gray-100 p-2 rounded-lg text-sm overflow-x-auto whitespace-pre-wrap">
+                                {typeof tc.expected_output === 'string' ? tc.expected_output : JSON.stringify(tc.expected_output, null, 2)}
+                              </pre>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </ResizablePanel>
+
+            {/* Draggable Handle (six-dot grip) */}
+            <ResizableHandle className="w-1 flex items-center justify-center px-1 cursor-col-resize select-none">
+              <div className="flex flex-col items-center justify-center gap-1 h-22">
+                <span className="block w-1 h-1 bg-gray-400 rounded-full transition-colors hover:bg-gray-600" />
+                <span className="block w-1 h-1 bg-gray-400 rounded-full transition-colors hover:bg-gray-600" />
+                <span className="block w-1 h-1 bg-gray-400 rounded-full transition-colors hover:bg-gray-600" />
+                <span className="block w-1 h-1 bg-gray-400 rounded-full transition-colors hover:bg-gray-600" />
+                <span className="block w-1 h-1 bg-gray-400 rounded-full transition-colors hover:bg-gray-600" />
+                <span className="block w-1 h-1 bg-gray-400 rounded-full transition-colors hover:bg-gray-600" />
+              </div>
+            </ResizableHandle>
+
+            {/* RIGHT PANEL — Editor + Output inside ONE rounded card */}
+            <ResizablePanel defaultSize={50} minSize={25}>
+              <div className="h-full overflow-hidden pl-1">
+                <Card className="border border-gray-200 shadow-sm bg-white flex flex-col h-full overflow-hidden">
+                  
+                  {/* Header */}
+                  <CardHeader className="p-4 py-1 flex justify-between">
+                    <CardTitle className="text-lg text-left text-gray-900">Solution
+                      <Button size="sm" variant="ghost" className="!border-none text-gray-700"
+                        onClick={() => setIsEditorFullscreen(true)}>
+                        <Maximize2 className="h-4 w-4" />
+                      </Button>
+                    </CardTitle>
+                  </CardHeader>
+
+                  {/* VERTICAL RESIZE GROUP (editor + output) */}
+                  <ResizablePanelGroup direction="vertical" className="flex-1 overflow-hidden">
+
+                    {/* EDITOR PANEL */}
+                    <ResizablePanel defaultSize={65} minSize={30} maxSize={85}>
+                      <div className="h-full flex flex-col">
+
+                        {/* Editor */}
+                        <div className="flex-1 overflow-hidden">
+                          <CodeEditor
+                            value={code}
+                            onChange={setCode}
+                            language={language}
+                            onLanguageChange={setLanguage}
+                            height="100%"
+                          />
+                        </div>
+
+                        {/* Controls */}
+                        <div className="p-4 border-t border-gray-200 bg-white flex items-center gap-3">
+                          <Button onClick={runCode} size="sm" variant="outline" className="!border-gray-300 text-gray-700"
+                            disabled={isRunning || isSubmitting}>
+                            <Play className="h-4 w-4 mr-1" /> {isRunning ? 'Running…' : 'Run'}
+                          </Button>
+
+                          <Button onClick={submitSolution} size="sm"
+                            className="bg-gray-900 text-white hover:bg-gray-800"
+                            disabled={isSubmitting || isRunning}>
+                            <Send className="h-4 w-4 mr-1" /> {isSubmitting ? 'Submitting…' : 'Submit'}
+                          </Button>
+
+                          <Button onClick={onViewAnalytics} size="sm" variant="outline"
+                            className="ml-auto !border-gray-300 text-gray-700">
+                            <BarChart3 className="h-4 w-4 mr-1" /> Analytics
+                          </Button>
+                        </div>
+                      </div>
+                    </ResizablePanel>
+
+                    {/* DIVIDER */}
+                    {showOutput && (
+                      <ResizableHandle className="h-3 cursor-row-resize flex items-center justify-center bg-gray-100 hover:bg-gray-200">
+                        <div className="w-10 h-1 bg-gray-400 rounded-full" />
+                      </ResizableHandle>
+                    )}
+
+                    {/* OUTPUT PANEL */}
+                    {showOutput && (
+                      <ResizablePanel defaultSize={35} minSize={15} maxSize={70}>
+                        <div className="h-full overflow-auto p-4">
+                          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+                            {output && (
+                              <>
+                                <h4 className="font-semibold text-gray-900 mb-2">Output</h4>
+                                <pre className="bg-gray-100 p-3 rounded-lg text-sm whitespace-pre-wrap overflow-auto">
+                                  {output}
+                                </pre>
+                              </>
+                            )}
+
+                            {testResults && (
+                              <>
+                                <h4 className="font-semibold text-gray-900 mb-2">Test Results</h4>
+                                <pre className="bg-gray-100 p-3 rounded-lg text-sm whitespace-pre-wrap overflow-auto">
+                                  {JSON.stringify(testResults, null, 2)}
+                                </pre>
+                              </>
+                            )}
+
+                            {executionMetrics && (
+                              <>
+                                <h4 className="font-semibold text-gray-900 mb-2">Execution Metrics</h4>
+                                <pre className="bg-gray-100 p-3 rounded-lg text-sm whitespace-pre-wrap overflow-auto">
+                                  {JSON.stringify(executionMetrics, null, 2)}
+                                </pre>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </ResizablePanel>
+                    )}
+                  </ResizablePanelGroup>
+                </Card>
+              </div>
+            </ResizablePanel>
+          </ResizablePanelGroup>
+        </div>   
+      )}
+
+      {/* 3) Fullscreen editor mode */}
+      {isEditorFullscreen && (
+        <div className="fixed inset-0 z-50 bg-white flex flex-col p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-sm text-gray-700">Fullscreen Editor • press Esc to exit</div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => setIsEditorFullscreen(false)} className="!border-gray-300 text-gray-700">
+                Exit Fullscreen
+              </Button>
+              <Button onClick={runCode} variant="outline" size="sm" className="!border-gray-300 text-gray-700">
+                <Play className="h-4 w-4 mr-1" /> Run
+              </Button>
+              <Button onClick={submitSolution} size="sm" className="bg-gray-900 text-white hover:bg-gray-800">
+                <Send className="h-4 w-4 mr-1" /> Submit
+              </Button>
+            </div>
+          </div>
+
+          <div className="flex-1">
+            <CodeEditor
+              value={code}
+              onChange={setCode}
+              language={language}
+              onLanguageChange={(l) => setLanguage(l)}
+              height="calc(100vh - 160px)"
+            />
+          </div>
+
+          <div className="mt-3 flex gap-3">
+            <Button onClick={runCode} variant="outline" className="!border-gray-300 text-gray-700">
+              <Play className="h-4 w-4 mr-1" /> Run
+            </Button>
+            <Button onClick={submitSolution} className="bg-gray-900 text-white hover:bg-gray-800">
+              <Send className="h-4 w-4 mr-1" /> Submit
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

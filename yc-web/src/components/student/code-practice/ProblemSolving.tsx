@@ -442,7 +442,6 @@ const ProblemSolving = ({ problem, course, topic, onBack, onViewAnalytics }: Pro
                     {showOutput && (
                       <ResizablePanel defaultSize={35} minSize={15} maxSize={70}>
                         <div className="h-full overflow-auto p-4">
-                          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
                             {output && (
                               <>
                                 <h4 className="font-semibold text-gray-900 mb-2">Output</h4>
@@ -452,24 +451,68 @@ const ProblemSolving = ({ problem, course, topic, onBack, onViewAnalytics }: Pro
                               </>
                             )}
 
-                            {testResults && (
+                            {testResults && Array.isArray(testResults.results) && (
                               <>
                                 <h4 className="font-semibold text-gray-900 mb-2">Test Results</h4>
-                                <pre className="bg-gray-100 p-3 rounded-lg text-sm whitespace-pre-wrap overflow-auto">
-                                  {JSON.stringify(testResults, null, 2)}
-                                </pre>
+                                <div className="space-y-4">
+                                  {testResults.results.map((result: any, idx: number) => (
+                                    <div key={idx} className={`p-4 rounded-lg border ${result.passed ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+                                      <div className="flex flex-wrap gap-4 mb-2">
+                                        <span className="font-medium text-gray-700">Test #{idx + 1}</span>
+                                        <span className={`px-2 py-1 rounded text-xs font-semibold ${result.passed ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{result.passed ? 'Passed' : 'Failed'}</span>
+                                        {result.execution_time !== undefined && (
+                                          <span className="text-xs text-gray-500">Time: {result.execution_time} ms</span>
+                                        )}
+                                      </div>
+                                      <div className="mb-2">
+                                        <span className="font-semibold text-gray-800">Input:</span>
+                                        <pre className="bg-gray-100 p-2 rounded text-sm whitespace-pre-wrap overflow-x-auto mt-1">{result.input_data}</pre>
+                                      </div>
+                                      <div className="mb-2">
+                                        <span className="font-semibold text-gray-800">Expected Output:</span>
+                                        <pre className="bg-gray-100 p-2 rounded text-sm whitespace-pre-wrap overflow-x-auto mt-1">{result.expected_output}</pre>
+                                      </div>
+                                      <div className="mb-2">
+                                        <span className="font-semibold text-gray-800">Actual Output:</span>
+                                        <pre className="bg-gray-100 p-2 rounded text-sm whitespace-pre-wrap overflow-x-auto mt-1">{result.actual_output}</pre>
+                                      </div>
+                                      <div className="mb-2">
+                                        <span className="font-semibold text-gray-800">Error Message:</span>
+                                        <pre className="bg-gray-100 p-2 rounded text-sm whitespace-pre-wrap overflow-x-auto mt-1">{result.error_message || 'N/A'}</pre>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
                               </>
                             )}
 
                             {executionMetrics && (
                               <>
                                 <h4 className="font-semibold text-gray-900 mb-2">Execution Metrics</h4>
-                                <pre className="bg-gray-100 p-3 rounded-lg text-sm whitespace-pre-wrap overflow-auto">
-                                  {JSON.stringify(executionMetrics, null, 2)}
-                                </pre>
+                                <div className="p-4 rounded-lg border bg-blue-50 border-blue-200 mb-2">
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                    {executionMetrics.execution_time !== undefined && (
+                                      <div>
+                                        <span className="font-semibold text-gray-800">Execution Time:</span>
+                                        <span className="ml-2 text-sm text-gray-700">{executionMetrics.execution_time} ms</span>
+                                      </div>
+                                    )}
+                                    {executionMetrics.memory_usage !== undefined && (
+                                      <div>
+                                        <span className="font-semibold text-gray-800">Memory Usage:</span>
+                                        <span className="ml-2 text-sm text-gray-700">{executionMetrics.memory_usage} KB</span>
+                                      </div>
+                                    )}
+                                    {executionMetrics.status && (
+                                      <div>
+                                        <span className="font-semibold text-gray-800">Status:</span>
+                                        <span className="ml-2 text-sm text-gray-700">{executionMetrics.status}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
                               </>
                             )}
-                          </div>
                         </div>
                       </ResizablePanel>
                     )}

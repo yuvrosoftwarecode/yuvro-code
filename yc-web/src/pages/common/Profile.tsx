@@ -6,9 +6,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar'
 import { MapPin, Edit, Globe, Mail } from 'lucide-react';
 import EditProfileDialog, { ProfileData } from '../../components/profile/EditProfileDialog';
 import EditAboutDialog from '../../components/profile/EditAboutDialog';
-import Navigation from '../../components/Navigation';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+const API_URL = import.meta.env.BACKEND_API_BASE_URL || 'http://localhost:8001/api';
 
 const Profile = () => {
   const { user, token } = useAuth();

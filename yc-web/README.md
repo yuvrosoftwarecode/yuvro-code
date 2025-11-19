@@ -42,7 +42,7 @@ cp .env.example .env
 
 3. Update the `.env` file with your backend API URL:
 ```
-VITE_API_URL=http://localhost:8000/api
+BACKEND_API_BASE_URL=http://localhost:8000/api
 ```
 
 ### Development
@@ -137,4 +137,4 @@ The frontend communicates with a Django REST Framework backend. The API client (
 
 ## Environment Variables
 
-- `VITE_API_URL` - Backend API base URL (default: http://localhost:8000/api)
+- `BACKEND_API_BASE_URL` - Backend API base URL (default: http://localhost:8000/api)

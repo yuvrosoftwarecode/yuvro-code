@@ -48,40 +48,16 @@ class Command(BaseCommand):
                 call_command("load_sample_courses", verbosity=1)
             self.stdout.write("")
 
-            # Add any future setup commands here
-            # Example:
-            # self.stdout.write('🔧 Running additional setup...')
-            # call_command('your_future_command', verbosity=1)
+            # Setup sample test cases for code executor
+            self.stdout.write("🧪 Creating sample test cases...")
+            call_command("create_sample_test_cases", verbosity=1)
+            self.stdout.write("")
 
             self.stdout.write(
                 self.style.SUCCESS(
                     "🎉 Local testing environment setup completed successfully!"
                 )
             )
-
-            # Display helpful information
-            self.stdout.write("\n" + "=" * 60)
-            self.stdout.write(self.style.SUCCESS("📋 SETUP SUMMARY"))
-            self.stdout.write("=" * 60)
-            self.stdout.write("✓ Database migrations applied")
-            self.stdout.write("✓ Test users created:")
-            self.stdout.write("  - admin@yuvro.com (password: admin123)")
-            self.stdout.write("  - instructor_ds@yuvro.com (password: instructor123)")
-            self.stdout.write(
-                "  - instructor_python@yuvro.com (password: instructor123)"
-            )
-            self.stdout.write("  - recruiter@yuvro.com (password: recruiter123)")
-            self.stdout.write("  - student1@gmail.com - Shilpa (password: student123)")
-            self.stdout.write("  - student2@gmail.com - Rohith (password: student123)")
-            self.stdout.write("✓ Sample courses loaded:")
-            self.stdout.write("  - Data Structures and Algorithms Fundamentals (DS101)")
-            self.stdout.write("  - Python Programming Complete Course (PY101)")
-            self.stdout.write("\n🌐 Your development server is ready!")
-            self.stdout.write("   Frontend: http://localhost:3000")
-            self.stdout.write("   Backend API: http://localhost:8001")
-            self.stdout.write("   Admin Panel: http://localhost:8001/admin")
-            self.stdout.write("=" * 60)
-
         except Exception as e:
             self.stdout.write(self.style.ERROR(f"❌ Error during setup: {str(e)}"))
             raise e

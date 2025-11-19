@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
-import Navigation from "../../components/Navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Plus } from "lucide-react";
@@ -29,6 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
+import Navigation from "../../components/Navigation";
 
 // ✅ Correct Sonner import
 import { toast } from "sonner";
@@ -183,7 +183,6 @@ const Courses: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
-
       <div className="max-w-6xl mx-auto p-6">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">

@@ -2,7 +2,7 @@ import type { User } from '../contexts/AuthContext';
 
 // Use backend URL from environment variable or default to local dev
 const API_BASE_URL =
-  import.meta.env.VITE_API_URL || 'http://127.0.0.1:8001/api';
+  import.meta.env.BACKEND_API_BASE_URL || 'http://127.0.0.1:8001/api';
 
 // Error class for structured API errors
 export class ApiError extends Error {
@@ -56,13 +56,17 @@ class ApiClient {
   clearAuthToken() {
     this.token = null;
     localStorage.removeItem('token');
+    localStorage.removeItem('access');
+    localStorage.removeItem('refresh');
     localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
+    localStorage.removeItem('auth');
   }
 
   // --- Core Request Function ---
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${this.baseURL}${endpoint}`;
-    let token = localStorage.getItem('token');
+    let token = this.token || localStorage.getItem('access') || localStorage.getItem('token');
 
     const config: RequestInit = {
       headers: {
@@ -80,7 +84,7 @@ class ApiClient {
       if (response.status === 401) {
         const refreshed = await this.refreshToken();
         if (refreshed) {
-          token = localStorage.getItem('token');
+          token = this.token || localStorage.getItem('access') || localStorage.getItem('token');
           const retryConfig: RequestInit = {
             ...config,
             headers: {
@@ -115,7 +119,7 @@ class ApiClient {
 
   // --- Refresh Token Logic ---
   private async refreshToken(): Promise<boolean> {
-    const refreshToken = localStorage.getItem('refreshToken');
+    const refreshToken = localStorage.getItem('refresh') || localStorage.getItem('refreshToken');
     if (!refreshToken) return false;
 
     try {
@@ -127,7 +131,8 @@ class ApiClient {
 
       if (response.ok) {
         const data = await response.json();
-        localStorage.setItem('token', data.access);
+        localStorage.setItem('access', data.access);
+        localStorage.setItem('token', data.access); // Keep both for compatibility
         this.token = data.access;
         return true;
       } else {
@@ -151,7 +156,7 @@ class ApiClient {
   // --- Helper for Authorization headers ---
   private getHeaders(): HeadersInit {
     const headers: HeadersInit = { 'Content-Type': 'application/json' };
-    const token = localStorage.getItem('token');
+    const token = this.token || localStorage.getItem('access') || localStorage.getItem('token');
     if (token) headers['Authorization'] = `Bearer ${token}`;
     return headers;
   }
@@ -171,9 +176,11 @@ class ApiClient {
 
     const data = await response.json();
 
-    // Store tokens
-    localStorage.setItem('token', data.access);
-    localStorage.setItem('refreshToken', data.refresh);
+    // Store tokens consistently
+    localStorage.setItem('access', data.access);
+    localStorage.setItem('refresh', data.refresh);
+    localStorage.setItem('token', data.access); // Keep for compatibility
+    localStorage.setItem('refreshToken', data.refresh); // Keep for compatibility
 
     this.setAuthToken(data.access);
     return data;
@@ -193,9 +200,11 @@ class ApiClient {
 
     const responseData = await response.json();
 
-    // Store tokens
-    localStorage.setItem('token', responseData.access);
-    localStorage.setItem('refreshToken', responseData.refresh);
+    // Store tokens consistently
+    localStorage.setItem('access', responseData.access);
+    localStorage.setItem('refresh', responseData.refresh);
+    localStorage.setItem('token', responseData.access); // Keep for compatibility
+    localStorage.setItem('refreshToken', responseData.refresh); // Keep for compatibility
 
     this.setAuthToken(responseData.access);
     return responseData;
@@ -207,9 +216,11 @@ class ApiClient {
       body: JSON.stringify({ token }),
     });
 
-    // Store tokens
-    localStorage.setItem('token', response.access);
-    localStorage.setItem('refreshToken', response.refresh);
+    // Store tokens consistently
+    localStorage.setItem('access', response.access);
+    localStorage.setItem('refresh', response.refresh);
+    localStorage.setItem('token', response.access); // Keep for compatibility
+    localStorage.setItem('refreshToken', response.refresh); // Keep for compatibility
 
     this.setAuthToken(response.access);
     return response;
@@ -229,7 +240,7 @@ class ApiClient {
 
   // --- Logout Endpoint ---
   async logoutUser(): Promise<void> {
-    const refreshToken = localStorage.getItem('refreshToken');
+    const refreshToken = localStorage.getItem('refresh') || localStorage.getItem('refreshToken');
     if (refreshToken) {
       try {
         await this.request('/auth/logout/', {
@@ -247,6 +258,42 @@ class ApiClient {
   async healthCheck(): Promise<{ status: string }> {
     return await this.request<{ status: string }>('/health/');
   }
+
+  // --- Generic HTTP Methods ---
+  async get<T>(endpoint: string, options?: RequestInit): Promise<T> {
+    return await this.request<T>(endpoint, { method: 'GET', ...options });
+  }
+
+  async post<T>(endpoint: string, data?: any, options?: RequestInit): Promise<T> {
+    return await this.request<T>(endpoint, {
+      method: 'POST',
+      body: data ? JSON.stringify(data) : undefined,
+      ...options,
+    });
+  }
+
+  async put<T>(endpoint: string, data?: any, options?: RequestInit): Promise<T> {
+    return await this.request<T>(endpoint, {
+      method: 'PUT',
+      body: data ? JSON.stringify(data) : undefined,
+      ...options,
+    });
+  }
+
+  async patch<T>(endpoint: string, data?: any, options?: RequestInit): Promise<T> {
+    return await this.request<T>(endpoint, {
+      method: 'PATCH',
+      body: data ? JSON.stringify(data) : undefined,
+      ...options,
+    });
+  }
+
+  async delete<T>(endpoint: string, options?: RequestInit): Promise<T> {
+    return await this.request<T>(endpoint, { method: 'DELETE', ...options });
+  }
 }
 
 export const apiClient = new ApiClient(API_BASE_URL);
+
+// Default export for backward compatibility
+export default apiClient;

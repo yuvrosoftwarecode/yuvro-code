@@ -1,5 +1,4 @@
 import { useAuth } from '../../contexts/AuthContext';
-import Navigation from '../../components/Navigation';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();

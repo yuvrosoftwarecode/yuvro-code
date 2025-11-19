@@ -4,22 +4,17 @@ import Navigation from "../../components/Navigation";
 import StudentVideos from "./StudentVideos";
 import StudentQuiz from "./StudentQuiz";
 import StudentNotes  from "./StudentNotes";
+import { CodeExecutionPanel } from "../code-execution";
+import { toast } from "sonner";
+import { ChevronUp, ChevronDown } from "lucide-react";
 import {
   fetchCourseById,
   fetchTopicsByCourse,
   fetchSubtopicsByTopic,
+  Course as CourseType,
 } from "@/services/courseService";
 
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import { ChevronDown, ChevronUp } from "lucide-react";
-
 // ------------------- Types -------------------
-type Course = {
-  id: string;
-  name: string;
-  category: string;
-};
 
 type Topic = {
   id: string;
@@ -35,28 +30,13 @@ type Subtopic = {
   content?: string | null;
 };
 
-// ------------------- Placeholders -------------------
-const StudentVideosPlaceholder = () => (
-  <div className="text-center text-gray-500">🎥 Videos will appear here</div>
-);
 
-const StudentQuizPlaceholder = () => (
-  <div className="text-center text-gray-500">📝 Quiz section coming soon</div>
-);
-
-const StudentCodingPlaceholder = () => (
-  <div className="text-center text-gray-500">💻 Coding problems coming soon</div>
-);
-
-const StudentNotesPlaceholder = () => (
-  <div className="text-center text-gray-500">📄 Notes will be shown here</div>
-);
 
 // ------------------- Main Page -------------------
 const CourseDetail: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
 
-  const [course, setCourse] = useState<Course | null>(null);
+  const [course, setCourse] = useState<CourseType | null>(null);
   const [loading, setLoading] = useState(true);
 
   const [topics, setTopics] = useState<Topic[]>([]);
@@ -74,7 +54,7 @@ const CourseDetail: React.FC = () => {
   );
 
   const [rightTab, setRightTab] = useState<
-    "videos" | "quizzes" | "coding" | "notes"
+    "videos" | "quizzes" | "code-editor" | "notes"
   >("videos");
 
   // ------------------- Load Data -------------------
@@ -237,17 +217,22 @@ const CourseDetail: React.FC = () => {
             {/* Tabs */}
             <div className="border-b px-4 py-3 flex items-center justify-between">
               <div className="flex gap-2">
-                {["videos", "quizzes", "coding", "notes"].map((tab) => (
+                {[
+                  { key: "videos", label: "Videos" },
+                  { key: "quizzes", label: "Quizzes" },
+                  { key: "code-editor", label: "Code Editor" },
+                  { key: "notes", label: "Notes" }
+                ].map((tab) => (
                   <button
-                    key={tab}
+                    key={tab.key}
                     className={`px-3 py-1 rounded-md text-sm ${
-                      rightTab === tab
+                      rightTab === tab.key
                         ? "bg-black text-white"
                         : "text-gray-700 hover:bg-gray-100"
                     }`}
-                    onClick={() => setRightTab(tab as any)}
+                    onClick={() => setRightTab(tab.key as any)}
                   >
-                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                    {tab.label}
                   </button>
                 ))}
               </div>
@@ -280,7 +265,25 @@ const CourseDetail: React.FC = () => {
                   {rightTab === "quizzes" && selectedSubtopic && (
                     <StudentQuiz subtopicId={selectedSubtopic.id} />
                   )}
-                  {rightTab === "coding" && <StudentCodingPlaceholder />}
+                  {rightTab === "code-editor" && (
+                    <CodeExecutionPanel
+                      problem={{
+                        id: selectedSubtopic.id,
+                        title: `${selectedSubtopic.name} - Code Editor`,
+                        description: selectedSubtopic.content || `Write and test your code for ${selectedSubtopic.name}`,
+                        test_cases_basic: [] // No predefined test cases - user can add their own
+                      }}
+                      mode="learn"
+                      showSubmitButton={false} // No submission in learn mode
+                      showRunButton={true}
+                      showTestCases={true}
+                      allowCustomTestCases={true} // Allow users to add custom test cases
+                      className="border-0 shadow-none p-0"
+                      onSubmissionComplete={(result) => {
+                        console.log('Code executed:', result);
+                      }}
+                    />
+                  )}
                   {rightTab === "notes" && selectedSubtopic && (
                     <StudentNotes subtopicId={selectedSubtopic.id} />
                   )}

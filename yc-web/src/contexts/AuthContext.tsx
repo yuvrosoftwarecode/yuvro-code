@@ -148,10 +148,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   dispatch({ type: 'LOGIN_START' });
   try {
     const response = await apiClient.login(email, password);
-    localStorage.setItem("user", JSON.stringify(response.user));
-    localStorage.setItem("access", response.access);
-    localStorage.setItem("refresh", response.refresh);
-
+    
     dispatch({
       type: 'LOGIN_SUCCESS',
       payload: { user: response.user, token: response.access },
@@ -190,7 +187,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         type: 'LOGIN_SUCCESS',
         payload: { user: response.user, token: response.access },
       });
-      localStorage.setItem('refreshToken', response.refresh);
     } catch (error) {
       dispatch({ type: 'LOGIN_FAILURE' });
       throw error;
@@ -199,7 +195,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = (): void => {
     apiClient.logoutUser().finally(() => {
-      localStorage.removeItem('refreshToken');
       dispatch({ type: 'LOGOUT' });
     });
   };

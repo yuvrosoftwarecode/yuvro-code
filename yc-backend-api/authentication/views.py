@@ -5,6 +5,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenRefreshView, TokenObtainPairView
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 from django.contrib.auth import login
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
+from drf_spectacular.openapi import OpenApiTypes
 from .models import User, Profile
 from .serializers import (
     CustomTokenObtainPairSerializer,
@@ -31,6 +33,19 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
     serializer_class = CustomTokenObtainPairSerializer
 
+    @extend_schema(
+        summary="Obtain JWT Token Pair",
+        description="Login with email/username and password to get access and refresh tokens with user role information.",
+        examples=[
+            OpenApiExample(
+                "Login Example",
+                value={"email": "user@example.com", "password": "your_password"},
+            )
+        ],
+    )
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)
+
 
 class UserRegistrationView(generics.CreateAPIView):
     """User registration endpoint."""
@@ -39,6 +54,22 @@ class UserRegistrationView(generics.CreateAPIView):
     serializer_class = UserRegistrationSerializer
     permission_classes = [permissions.AllowAny]
 
+    @extend_schema(
+        summary="Register New User",
+        description="Create a new user account and receive JWT tokens.",
+        examples=[
+            OpenApiExample(
+                "Registration Example",
+                value={
+                    "username": "newuser",
+                    "email": "newuser@example.com",
+                    "password": "secure_password123",
+                    "first_name": "John",
+                    "last_name": "Doe",
+                },
+            )
+        ],
+    )
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -58,6 +89,17 @@ class UserRegistrationView(generics.CreateAPIView):
         )
 
 
+@extend_schema(
+    summary="User Login",
+    description="Login with email and password to get JWT tokens.",
+    request=UserLoginSerializer,
+    examples=[
+        OpenApiExample(
+            "Login Example",
+            value={"email": "user@example.com", "password": "your_password"},
+        )
+    ],
+)
 @api_view(["POST"])
 @permission_classes([permissions.AllowAny])
 def login_view(request):
@@ -81,6 +123,23 @@ def login_view(request):
     )
 
 
+@extend_schema(
+    summary="User Logout",
+    description="Logout user by blacklisting the refresh token.",
+    request={
+        "type": "object",
+        "properties": {
+            "refresh": {"type": "string", "description": "Refresh token to blacklist"}
+        },
+        "required": ["refresh"],
+    },
+    examples=[
+        OpenApiExample(
+            "Logout Example",
+            value={"refresh": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."},
+        )
+    ],
+)
 @api_view(["POST"])
 @permission_classes([permissions.IsAuthenticated])
 def logout_view(request):
@@ -153,6 +212,11 @@ class ProfileDetailView(generics.RetrieveUpdateAPIView):
         return self.update(request, *args, **kwargs)
 
 
+@extend_schema(
+    summary="Get Current User Info",
+    description="Get information about the currently authenticated user.",
+    responses=UserSerializer,
+)
 @api_view(["GET"])
 @permission_classes([permissions.IsAuthenticated])
 def user_info_view(request):

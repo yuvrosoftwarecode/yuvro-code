@@ -40,6 +40,11 @@ help:
 	@echo "  backend-lint        Lint backend code"
 	@echo "  backend-install PKG Install backend package"
 	@echo ""
+	@echo "Code Executor commands:"
+	@echo "  executor-shell      Code executor shell"
+	@echo "  executor-test       Test code executor service"
+	@echo "  executor-logs       View code executor logs"
+	@echo ""
 	@echo "Frontend commands:"
 	@echo "  frontend-shell      Node.js shell"
 	@echo "  frontend-test       Run frontend tests"
@@ -177,6 +182,16 @@ frontend-install:
 		exit 1; \
 	fi
 	docker compose exec frontend npm install $(PKG)
+
+# Code Executor commands
+executor-shell:
+	docker compose exec code-executor sh
+
+executor-test:
+	docker compose exec code-executor python test_service.py
+
+executor-logs:
+	docker compose logs -f code-executor
 
 # Combined operations
 test-all:

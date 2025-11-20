@@ -141,10 +141,10 @@ const ScoreAnalytics = ({ onBack, onViewInsights }: ScoreAnalyticsProps) => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-7xl">
+    <div className="container mx-auto px-4 py-3 max-w-9xl">
       {/* Breadcrumb */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+      <div className="flex items-center gap-2 mb-3 text-sm">
+        <div className="flex items-center gap-2 py-1 text-sm text-muted-foreground">
           <Button variant="ghost" size="sm" onClick={onBack} className="gap-1">
             <ChevronLeft className="h-4 w-4" />
             Code Practice
@@ -152,7 +152,7 @@ const ScoreAnalytics = ({ onBack, onViewInsights }: ScoreAnalyticsProps) => {
           <span>/</span>
           <span className="text-foreground font-medium">Analytics</span>
         </div>
-        <Button onClick={onViewInsights} className="gap-1">
+        <Button onClick={onViewInsights} className="gap-1 items-right ml-auto bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 hover:opacity-90 transition-all duration-300">
           <Brain className="h-4 w-4" />
           AI Insights
         </Button>
@@ -160,29 +160,29 @@ const ScoreAnalytics = ({ onBack, onViewInsights }: ScoreAnalyticsProps) => {
 
       {/* Overview Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <Card>
+        <Card className="bg-white border border-gray-200 rounded-xl shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
                 <Target className="h-6 w-6 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Total Submissions</p>
-                <p className="text-3xl font-bold text-foreground">{stats.totalSubmissions}</p>
+                <p className="text-sm text-gray-600">Total Submissions</p>
+                <p className="text-3xl font-bold text-gray-900">{stats.totalSubmissions}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-white border border-gray-200 rounded-xl shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center">
                 <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Success Rate</p>
-                <p className="text-3xl font-bold text-foreground">
+                <p className="text-sm text-gray-600">Success Rate</p>
+                <p className="text-3xl font-bold text-gray-900">
                   {stats.totalSubmissions > 0 
                     ? Math.round((stats.successfulSubmissions / stats.totalSubmissions) * 100)
                     : 0}%
@@ -192,29 +192,29 @@ const ScoreAnalytics = ({ onBack, onViewInsights }: ScoreAnalyticsProps) => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-white border border-gray-200 rounded-xl shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                <Trophy className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+              <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center">
+                <Trophy className="h-6 w-6 text-purple-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Total Score</p>
-                <p className="text-3xl font-bold text-foreground">{stats.totalScore}</p>
+                <p className="text-sm text-gray-600">Total Score</p>
+                <p className="text-3xl font-bold text-gray-900">{stats.totalScore}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-white border border-gray-200 rounded-xl shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-                <Clock className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+              <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center">
+                <Clock className="h-6 w-6 text-amber-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Avg. Execution Time</p>
-                <p className="text-3xl font-bold text-foreground">
+                <p className="text-sm text-gray-600">Avg. Execution Time</p>
+                <p className="text-3xl font-bold text-gray-900">
                   {stats.averageExecutionTime.toFixed(2)}s
                 </p>
               </div>
@@ -225,7 +225,7 @@ const ScoreAnalytics = ({ onBack, onViewInsights }: ScoreAnalyticsProps) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Language Distribution */}
-        <Card>
+        <Card className="bg-white border border-gray-200 rounded-xl shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
           <CardHeader>
             <CardTitle>Language Distribution</CardTitle>
           </CardHeader>
@@ -253,14 +253,14 @@ const ScoreAnalytics = ({ onBack, onViewInsights }: ScoreAnalyticsProps) => {
         </Card>
 
         {/* Difficulty Breakdown */}
-        <Card>
+        <Card className="bg-white border border-gray-200 rounded-xl shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
           <CardHeader>
             <CardTitle>Difficulty Breakdown</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {Object.entries(stats.difficultyBreakdown).map(([difficulty, data]) => (
-                <div key={difficulty} className="flex items-center justify-between p-3 border rounded-lg">
+                <div key={difficulty} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-gray-50">
                   <div className="flex items-center gap-3">
                     <Badge variant="outline" className={getDifficultyColor(difficulty)}>
                       {difficulty}
@@ -277,14 +277,14 @@ const ScoreAnalytics = ({ onBack, onViewInsights }: ScoreAnalyticsProps) => {
         </Card>
 
         {/* Recent Submissions */}
-        <Card className="lg:col-span-2">
+        <Card className="bg-white border border-gray-200 rounded-xl shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1 lg:col-span-2">
           <CardHeader>
             <CardTitle>Recent Submissions</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               {stats.recentSubmissions.map((submission) => (
-                <div key={submission.id} className="flex items-center justify-between p-3 border rounded-lg">
+                <div key={submission.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition">
                   <div className="flex items-center gap-3">
                     <Badge variant="outline" className={getStatusColor(submission.status)}>
                       {submission.status}

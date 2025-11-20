@@ -33,6 +33,13 @@ export interface CodingProblem {
   difficulty: 'Easy' | 'Medium' | 'Hard';
   score: number;
   description: string;
+  inputFormat?: string;
+  outputFormat?: string;
+  examples?: Array<{
+    input: string;
+    output: string;
+    explanation?: string;
+  }>;
   test_cases_basic: Array<{
     input_data: string;
     expected_output: string;

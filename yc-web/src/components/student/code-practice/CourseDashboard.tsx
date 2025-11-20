@@ -107,7 +107,7 @@ const CourseDashboard = ({ onCourseSelect, onViewAnalytics }: CourseDashboardPro
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 
           {/* Problems Solved */}
-          <Card className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition">
+          <Card className="bg-white border border-gray-200 rounded-xl shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
             <CardContent className="p-6">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center">
@@ -124,7 +124,7 @@ const CourseDashboard = ({ onCourseSelect, onViewAnalytics }: CourseDashboardPro
           </Card>
 
           {/* Total Score */}
-          <Card className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition">
+          <Card className="bg-white border border-gray-200 rounded-xl shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
             <CardContent className="p-6">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center">
@@ -139,7 +139,7 @@ const CourseDashboard = ({ onCourseSelect, onViewAnalytics }: CourseDashboardPro
           </Card>
 
           {/* AI Help */}
-          <Card className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition">
+          <Card className="bg-white border border-gray-200 rounded-xl shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
             <CardContent className="p-6">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center">
@@ -154,7 +154,7 @@ const CourseDashboard = ({ onCourseSelect, onViewAnalytics }: CourseDashboardPro
           </Card>
 
           {/* Courses Available */}
-          <Card className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition">
+          <Card className="bg-white border border-gray-200 rounded-xl shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
             <CardContent className="p-6">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center">

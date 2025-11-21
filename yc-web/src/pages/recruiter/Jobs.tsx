@@ -1,115 +1,83 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Plus, Pencil, Trash, Eye } from "lucide-react";
 import Navigation from "../../components/Navigation";
+import {fetchJobs, createJob, updateJob, deleteJobById } from "../../services/jobsapi";
 
 interface Job {
   id: number;
   title: string;
   company: string;
   location: string;
-  workType: string;
+  work_type: string;
   salary: string;
   applicants: number;
   status: string;
-  jobType?: string;
-  experience?: string;
+  job_type?: string;
+  experience_level?: BigInteger;
+  description: string,
   skills?: string;
 }
 
 const Jobs: React.FC = () => {
-  const [jobs, setJobs] = useState<Job[]>([
-    {
-      id: 1,
-      title: "Frontend Developer",
-      company: "Tech Innovations Inc",
-      location: "Bangalore",
-      workType: "Hybrid",
-      salary: "₹6-10 LPA",
-      applicants: 45,
-      status: "Active",
-    },
-    {
-      id: 2,
-      title: "Full Stack Developer",
-      company: "Startup Labs",
-      location: "Remote",
-      workType: "Remote",
-      salary: "₹8-12 LPA",
-      applicants: 67,
-      status: "Active",
-    },
-    {
-      id: 3,
-      title: "Backend Developer",
-      company: "Enterprise Solutions",
-      location: "Pune",
-      workType: "Onsite",
-      salary: "₹7-11 LPA",
-      applicants: 32,
-      status: "Closed",
-    },
-  ]);
-
-  // Add/Edit Modal
+  const [jobs, setJobs] = useState<Job[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState<number | null>(null);
-
   const [formData, setFormData] = useState({
     title: "",
     company: "",
     location: "",
-    workType: "Remote",
+    work_type: "Remote",
     salary: "",
-    status: "Active",
-    jobType: "",
-    experience: "",
+    experience_level: 0,
+    job_type: "",
+    description: "",
     skills: "",
+    status: "Active",
   });
 
-  // Delete Modal
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [jobToDelete, setJobToDelete] = useState<number | null>(null);
+  const [deleteJobId, setDeleteJobId] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  // Input Handler
+  useEffect(() => {
+    loadJobs();
+  }, []);
+
+  const loadJobs = async () => {
+    try {
+      const data = await fetchJobs();
+      setJobs(data);
+    } catch (error) {
+      console.error("Error fetching jobs:", error);
+    }
+  };
+
+  // Input handler
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Open Add Job Modal
+  // Add Job Modal
   const openAddModal = () => {
     setIsEditing(false);
     setFormData({
-      title: "",
-      company: "",
-      location: "",
-      workType: "Remote",
-      salary: "",
-      status: "Active",
-      jobType: "",
-      experience: "",
-      skills: "",
+    title: "",
+    company: "",
+    location: "",
+    work_type: "Remote",
+    salary: "",
+    experience_level: 0,
+    job_type: "",
+    description: "",
+    skills: "",
+    status: "Active",
     });
     setIsModalOpen(true);
   };
 
-  // Add Job
-  const handleAddJob = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const job: Job = {
-      id: jobs.length + 1,
-      applicants: 0,
-      ...formData,
-    };
-
-    setJobs([...jobs, job]);
-    setIsModalOpen(false);
-  };
-
-  // Open Edit Modal
   const openEditModal = (job: Job) => {
     setIsEditing(true);
     setSelectedJobId(job.id);
@@ -117,40 +85,69 @@ const Jobs: React.FC = () => {
       title: job.title,
       company: job.company,
       location: job.location,
-      workType: job.workType,
+      work_type: job.work_type,
       salary: job.salary,
       status: job.status,
-      jobType: job.jobType || "",
-      experience: job.experience || "",
-      skills: job.skills || "",
+      job_type: job.job_type,
+      experience_level: job.experience_level,
+      skills: job.skills,
+      description: job.description,
     });
     setIsModalOpen(true);
   };
 
-  // Update Job
-  const handleUpdateJob = (e: React.FormEvent) => {
+  // ADD Job → Backend
+  const handleAddJob = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    setJobs(
-      jobs.map((job) =>
-        job.id === selectedJobId ? { ...job, ...formData } : job
-      )
-    );
-
-    setIsModalOpen(false);
-    setIsEditing(false);
-    setSelectedJobId(null);
+    try {
+      await createJob(formData);
+      loadJobs();
+      setIsModalOpen(false);
+    } catch (err) {
+      console.error("Error creating job:", err);
+    }
   };
 
-  // Delete Modal
+  const handleUpdateJob = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!selectedJobId) return;
+
+    try {
+      await updateJob(selectedJobId, formData);
+      loadJobs();
+      setIsModalOpen(false);
+      setIsEditing(false);
+      setSelectedJobId(null);
+    } catch (err) {
+      console.error("Error updating job:", err);
+    }
+  };
+
   const openDeleteModal = (id: number) => {
-    setJobToDelete(id);
+    setDeleteJobId(id);
     setIsDeleteModalOpen(true);
   };
 
-  const deleteJob = () => {
-    setJobs(jobs.filter((job) => job.id !== jobToDelete));
+  const confirmDeleteJob = async () => {
+    if (!deleteJobId) return;
+    try {
+      setIsDeleting(true);
+      await deleteJobById(deleteJobId);
+      setJobs(prev => prev.filter(job => job.id !== deleteJobId));
+      setIsDeleteModalOpen(false);
+      setDeleteJobId(null);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const closeDeleteModal = () => {
     setIsDeleteModalOpen(false);
+    setDeleteJobId(null);
   };
 
   return (
@@ -158,7 +155,7 @@ const Jobs: React.FC = () => {
       <Navigation />
 
       <div className="container mx-auto p-6">
-        {/* Top bar */}
+        {/* Top Section */}
         <div className="flex justify-between items-center mb-6">
           <input
             type="text"
@@ -174,7 +171,7 @@ const Jobs: React.FC = () => {
           </button>
         </div>
 
-        {/* Job Table */}
+        {/* Jobs List */}
         <h2 className="text-2xl font-bold mb-4">Job Listings</h2>
         <p className="text-gray-600 mb-6">{jobs.length} job(s) found</p>
 
@@ -215,6 +212,7 @@ const Jobs: React.FC = () => {
                       {job.status}
                     </span>
                   </td>
+
                   <td className="p-3 flex gap-3 text-gray-600">
                     <Pencil
                       size={18}
@@ -233,10 +231,13 @@ const Jobs: React.FC = () => {
           </table>
         </div>
 
+        {/* ---------------- MODALS ---------------- */}
+
         {/* ADD/EDIT MODAL */}
         {isModalOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center overflow-y-auto">
             <div className="bg-white p-6 w-full max-w-3xl rounded shadow-lg my-10">
+              {/* Header */}
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold">
                   {isEditing ? "Update Job" : "Post New Job"}
@@ -244,11 +245,12 @@ const Jobs: React.FC = () => {
                 <button onClick={() => setIsModalOpen(false)}>✖</button>
               </div>
 
+              {/* Form */}
               <form
                 onSubmit={isEditing ? handleUpdateJob : handleAddJob}
                 className="space-y-4"
               >
-                {/* Job Title */}
+                {/* Title */}
                 <div>
                   <label className="font-semibold">Job Title</label>
                   <input
@@ -261,7 +263,7 @@ const Jobs: React.FC = () => {
                   />
                 </div>
 
-                {/* Company + Location */}
+                {/* Company / Location */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label>Company</label>
@@ -286,7 +288,7 @@ const Jobs: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Work Type + Job Type */}
+                {/* Work Type / Job Type */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label>Work Type</label>
@@ -306,8 +308,8 @@ const Jobs: React.FC = () => {
                     <label>Job Type</label>
                     <input
                       type="text"
-                      name="jobType"
-                      value={formData.jobType}
+                      name="job_type"
+                      value={formData.job_type}
                       onChange={handleChange}
                       className="w-full border px-3 py-2 rounded mt-1"
                       placeholder="e.g., Full-time"
@@ -315,22 +317,38 @@ const Jobs: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Experience + Salary */}
+                {/* Experience / Salary */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label>Experience Level</label>
                     <input
                       type="text"
-                      name="experience"
-                      value={formData.experience}
+                      name="experience_level"
+                      value={formData.experience_level}
                       onChange={handleChange}
                       className="w-full border px-3 py-2 rounded mt-1"
                       placeholder="e.g., Fresher"
                     />
                   </div>
 
+
+                    {/* Experience / Salary */}
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label>Salary Range</label>
+                    <label> Description</label>
+                    <input
+                      type="text"
+                      name="description"
+                      value={formData.description}
+                      onChange={handleChange}
+                      className="w-full border px-3 py-2 rounded mt-1"
+                      placeholder="e.g., Fresher"
+                    />
+                  </div>
+                  </div>
+
+                  <div>
+                    <label>Salary</label>
                     <input
                       type="text"
                       name="salary"
@@ -370,7 +388,7 @@ const Jobs: React.FC = () => {
                 </div>
 
                 {/* Buttons */}
-                <div className="flex justify-end gap-4 mt-4">
+                <div className="flex justify-end gap-4">
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
@@ -378,7 +396,6 @@ const Jobs: React.FC = () => {
                   >
                     Cancel
                   </button>
-
                   <button
                     type="submit"
                     className="px-4 py-2 bg-blue-600 text-white rounded"
@@ -391,7 +408,7 @@ const Jobs: React.FC = () => {
           </div>
         )}
 
-        {/* DELETE CONFIRMATION MODAL */}
+        {/* DELETE MODAL */}
         {isDeleteModalOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center">
             <div className="bg-white p-6 rounded shadow-lg w-96 text-center">
@@ -408,7 +425,7 @@ const Jobs: React.FC = () => {
                 </button>
 
                 <button
-                  onClick={deleteJob}
+                  onClick={confirmDeleteJob}
                   className="px-4 py-2 bg-red-600 text-white rounded"
                 >
                   Delete
@@ -417,6 +434,8 @@ const Jobs: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* END MODALS */}
       </div>
     </div>
   );

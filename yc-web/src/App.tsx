@@ -41,8 +41,8 @@ import PracticeQuestions from './pages/instructor/PracticeQuestions';
 import OwnerContest from './pages/instructor/Contest';
 =======
 import RecruiterJobs from "./pages/recruiter/Jobs";
-import Vinod from "./pages/recruiter/Vinod";
-
+import AddJob from "./components/student/AddJob";
+import JobList from "./components/student/JobList";
 
 >>>>>>> 7d78b66 (feat(jobs): add jobs in Frontend)
 
@@ -64,7 +64,8 @@ function App() {
               <Route path="/dashboard" element={<DashboardRedirect />} />
               <Route path="/student/jobs" element={<StudentJobs />} />
               <Route path="/recruiter/jobs" element={<RecruiterJobs />} />
-              <Route path="/recruiter/vinod" element={<Vinod />} />
+              <Route path="/" element={<JobList />} />
+             <Route path="/add-job" element={<AddJob />} />  
 
 
               {/* Protected routes */}

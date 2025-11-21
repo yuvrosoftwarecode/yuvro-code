@@ -50,7 +50,6 @@ const Navigation: React.FC = () => {
       { label: 'Dashboard', path: '/admin/dashboard' },
       { label: 'Contests', path: '/instructor/contests' },
       { label: 'Jobs', path: '/recruiter/jobs' },
-      { label: 'Vinod', path: '/recruiter/Vinod' },
     ],
   };
 

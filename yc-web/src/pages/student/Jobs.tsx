@@ -10,7 +10,7 @@ interface Job {
   company: string;
   location: string;
   type: 'full-time' | 'part-time' | 'contract' | 'internship';
-  experience: string;
+  experience_level: string;
   salary: string;
   description: string;
   requirements: string[];
@@ -27,7 +27,7 @@ const SAMPLE_JOBS: Job[] = [
     company: 'TechCorp Inc.',
     location: 'San Francisco, CA',
     type: 'full-time',
-    experience: '2-4 years',
+    experience_level: '2-4 years',
     salary: '$80,000 - $120,000',
     description: 'We are looking for a skilled Frontend Developer to join our dynamic team. You will be responsible for developing user-facing web applications using modern JavaScript frameworks.',
     requirements: [
@@ -47,7 +47,7 @@ const SAMPLE_JOBS: Job[] = [
     company: 'DataSoft Solutions',
     location: 'New York, NY',
     type: 'full-time',
-    experience: '3-5 years',
+    experience_level: '3-5 years',
     salary: '$90,000 - $140,000',
     description: 'Join our backend team to build scalable APIs and microservices. You will work with cloud technologies and help architect our next-generation platform.',
     requirements: [
@@ -67,7 +67,7 @@ const SAMPLE_JOBS: Job[] = [
     company: 'StartupXYZ',
     location: 'Austin, TX',
     type: 'internship',
-    experience: '0-1 years',
+    experience_level: '0-1 years',
     salary: '$20 - $25/hour',
     description: 'Great opportunity for students or recent graduates to gain hands-on experience in full-stack development. You will work on real projects and learn from experienced developers.',
     requirements: [

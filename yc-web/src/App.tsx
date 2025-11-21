@@ -35,10 +35,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import DashboardRedirect from './components/DashboardRedirect';
 import InstructorSkillTest from './pages/instructor/SkillTest';
 import PracticeQuestions from './pages/instructor/PracticeQuestions';
-
-
-
-
+import OwnerContest from './pages/instructor/Contest';
 
 function App() {
   return (
@@ -258,7 +255,15 @@ function App() {
                 }
               />
 
-
+              <Route
+                path="/instructor/contests"
+                element={
+                  <ProtectedRoute allowedRoles={["admin", "instructor"]}>
+                    <OwnerContest />
+                  </ProtectedRoute>
+                }
+              />
+              
               {/* 404 route */}
               <Route path="/404" element={<NotFound />} />
               <Route path="*" element={<Navigate to="/404" replace />} />

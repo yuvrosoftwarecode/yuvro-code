@@ -218,7 +218,7 @@ const QuizComponent = ({ subtopic }: any) => {
               <Label>Options</Label>
 
               {options.map((opt, i) => (
-                <div key={i} className="flex gap-2 mt-2">
+                <div key={i} className="flex gap-2 mt-2 border border-gray-200">
                   <Input
                     value={opt}
                     onChange={(e) => {

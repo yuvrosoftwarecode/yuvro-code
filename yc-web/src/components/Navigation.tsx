@@ -12,13 +12,13 @@ const Navigation: React.FC = () => {
   const [notificationCount] = useState(3);
   const profileRef = useRef<HTMLDivElement>(null);
 
-  // ✅ Role-based navigation setup
+  // Role-based navigation setup
   const role = user?.role || 'student';
 
   const roleTabs: Record<string, { label: string; path: string }[]> = {
     student: [
       { label: 'Dashboard', path: '/student/dashboard' },
-      { label: 'Learn', path: '/student/learn' },
+      { label: 'Learn/Certify', path: '/student/learn' },
       { label: 'Code Practice', path: '/student/code-practice' },
       { label: 'Skill Test', path: '/student/skill-test' },
       { label: 'Mock Interview', path: '/student/mock-interview' },
@@ -34,6 +34,7 @@ const Navigation: React.FC = () => {
       { label: 'Practice Questions', path: '/instructor/practice-questions' },
       { label: 'Skill Test', path: '/instructor/skill-test' },
       { label: 'Jobs', path: '/instructor/jobs' },
+      { label: 'Contests', path: '/instructor/contests' },
     ],
     instructor: [
       { label: 'Dashboard', path: '/instructor/dashboard' },
@@ -100,9 +101,9 @@ const Navigation: React.FC = () => {
       <div className="w-full mx-auto px-2 sm:px-3 lg:px-4">
         <div className="flex justify-between items-center h-16">
           {/* Left: Logo + Tabs */}
-          <div className="flex items-center space-x-6">
+          <div className="flex items-center space-x-2">
             <Link to="/" className="flex items-center space-x-2">
-              <span className="text-3xl font-bold text-foreground-700">Yuvro</span>
+              <span className="text-xl font-bold text-foreground-700">Yuvro</span>
             </Link>
 
             {/* Tabs */}

@@ -4,17 +4,15 @@ import Navigation from "../../components/Navigation";
 import StudentVideos from "./StudentVideos";
 import StudentQuiz from "./StudentQuiz";
 import StudentNotes  from "./StudentNotes";
-import { CodeExecutionPanel } from "../code-execution";
 import { toast } from "sonner";
-import { ChevronUp, ChevronDown } from "lucide-react";
+import { ChevronDown, ChevronRight, ChevronLeft } from "lucide-react";
 import {
   fetchCourseById,
   fetchTopicsByCourse,
   fetchSubtopicsByTopic,
-  Course as CourseType,
-} from "@/services/courseService";
-
-// ------------------- Types -------------------
+  Course as CourseType} from "@/services/courseService";
+import { Check } from "lucide-react";
+import { PlayCircle, HelpCircle, StickyNote } from "lucide-react";
 
 type Topic = {
   id: string;
@@ -30,10 +28,8 @@ type Subtopic = {
   content?: string | null;
 };
 
-
-
-// ------------------- Main Page -------------------
 const CourseDetail: React.FC = () => {
+  const [readMap, setReadMap] = useState<Record<string, boolean>>({});
   const { courseId } = useParams<{ courseId: string }>();
 
   const [course, setCourse] = useState<CourseType | null>(null);
@@ -44,7 +40,8 @@ const CourseDetail: React.FC = () => {
     {}
   );
 
-  // Only ONE expanded topic at a time
+  const [collapsed, setCollapsed] = useState(false);
+
   const [expandedTopics, setExpandedTopics] = useState<Record<string, boolean>>(
     {}
   );
@@ -54,10 +51,15 @@ const CourseDetail: React.FC = () => {
   );
 
   const [rightTab, setRightTab] = useState<
-    "videos" | "quizzes" | "code-editor" | "notes"
+    "videos" | "quizzes" | "code-editor" | "notes" | "markAsRead"
   >("videos");
 
-  // ------------------- Load Data -------------------
+  const handleMarkAsRead = () => {
+    if (!selectedSubtopic) return;
+    setReadMap((prev) => ({ ...prev, [selectedSubtopic.id]: true }));
+    toast.success(`Marked '${selectedSubtopic.name}' as read!`);
+  };
+      
   useEffect(() => {
     loadPage();
   }, [courseId]);
@@ -74,7 +76,6 @@ const CourseDetail: React.FC = () => {
       const t = await fetchTopicsByCourse(courseId);
       setTopics(t);
 
-      // Initialize all collapsed
       const expanded: Record<string, boolean> = {};
       t.forEach((topic) => (expanded[topic.id] = false));
       setExpandedTopics(expanded);
@@ -88,18 +89,14 @@ const CourseDetail: React.FC = () => {
     }
   };
 
-  // ------------------- Toggle Topic Expand -------------------
   const toggleExpandTopic = async (topicId: string) => {
     const isOpen = expandedTopics[topicId];
-
-    // Accordion behavior → close all others
     const newState: Record<string, boolean> = {};
     topics.forEach((t) => (newState[t.id] = false));
     newState[topicId] = !isOpen;
 
     setExpandedTopics(newState);
 
-    // If opening and subtopics not loaded yet
     if (!isOpen && !subtopicsMap[topicId]) {
       try {
         const subs = await fetchSubtopicsByTopic(topicId);
@@ -129,75 +126,104 @@ const CourseDetail: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Navigation />
+      <div className="flex flex-1 h-[calc(100vh-64px)] overflow-hidden relative">
+        {/* LEFT PANEL */}
+        <div
+          className={`bg-white shadow-sm transition-all duration-300 flex flex-col relative`}
+          style={{
+            width: collapsed ? "70px" : "355px",
+            minWidth: collapsed ? "70px" : "355px",
+            overflow: "auto",
+          }}
+        >
+          {/* CONTENT AREA */}
+          {collapsed ? (
+            <div className="flex flex-col items-center h-full py-4 gap-4">
+              <div className="w-8 h-8 flex items-center justify-center text-2xl font-bold mb-2" title={course.name}>
+                🗂️
+              </div>
+              <div className="flex flex-col items-center gap-2 w-full">
+                {topics.map((topic) => (
+                  <div
+                    key={topic.id}
+                    className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-sm font-bold cursor-pointer border border-gray-300"
+                    title={topic.name}
+                    onClick={() => toggleExpandTopic(topic.id)}
+                  >
+                    {topic.name.charAt(0)}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="opacity-100 transition-opacity duration-200 px-4">
+              <div className="flex items-center gap-3 mb-4 py-2">
+                <span style={{ fontSize: "2em" }}>🗂️</span>
+                <span className="text-md font-semibold">{course.name}</span>
+              </div>
 
-      <div className="flex-1 overflow-hidden h-[calc(100vh-64px)]">
-        <div className="h-full w-full p-4 md:p-6 flex gap-6">
-
-          {/* ---------------- Left Panel (Topics) ---------------- */}
-          <div
-            className="bg-white rounded-md shadow-sm flex flex-col"
-            style={{ flexBasis: "30%", minWidth: 300, maxWidth: 560, height: "100%" }}
-          >
-            <div className="p-4 overflow-y-auto flex-1">
-              <h2 className="text-lg font-semibold mb-4">{course.name}</h2>
+              <p className="pt-0 text-gray-600 mt-[-15px]">Track your learning progress</p>
+              <hr className="my-4 border-gray-200" />
 
               <h3 className="text-md font-semibold mb-2">Topics</h3>
 
               <div className="space-y-3">
-                {topics.length === 0 && (
-                  <div className="text-sm text-muted-foreground">No topics found</div>
-                )}
-
                 {topics.map((topic) => {
                   const expanded = expandedTopics[topic.id];
                   const subs = subtopicsMap[topic.id] || [];
-
+                  const allRead = subs.length > 0 && subs.every((s) => readMap[s.id]);
+                  const progress = Math.floor(Math.random() * 100);
                   return (
-                    <div key={topic.id} className="border rounded p-3 bg-white">
-
-                      {/* Topic Header Clickable Anywhere */}
+                    <div key={topic.id} className="border border-gray-200 rounded p-4 bg-white">
+                      {/* Topic header */}
                       <div
-                        className="flex items-center justify-between cursor-pointer"
+                        className="flex items-center justify-between cursor-pointer w-full"
                         onClick={() => toggleExpandTopic(topic.id)}
                       >
-                        <div>
-                          <div className="font-medium">{topic.name}</div>
-                          <div className="text-xs text-muted-foreground">
-                            Order: {topic.order_index}
-                          </div>
+                        <div className="flex items-center">
+                          {expanded ? <ChevronDown className="w-4 h-4 mr-2" /> : <ChevronRight className="w-4 h-4 mr-2" />}
+                          <span className="font-medium truncate">{topic.name}</span>
                         </div>
-
-                        {/* Arrow Icon */}
-                        {expanded ? <ChevronUp /> : <ChevronDown />}
+                        {allRead && (
+                          <span className="flex items-center justify-center rounded-full bg-green-100 border border-green-400 w-6 h-6">
+                            <Check className="text-green-600 w-4 h-4" strokeWidth={3} />
+                          </span>
+                        )}
+                      </div>
+                      {/* Dummy progress bar */}
+                      <div className="mt-2 w-full">
+                        <div className="h-2 bg-gray-200 rounded-full">
+                          <div
+                            className="h-2 bg-green-400 rounded-full transition-all"
+                            style={{ width: `${progress}%` }}
+                          ></div>
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">Progress: {progress}%</div>
                       </div>
 
-                      {/* Expanded Subtopics */}
+                      {/* Subtopics */}
                       {expanded && (
                         <div className="mt-3 space-y-2">
-                          {subs.length === 0 && (
-                            <div className="text-sm text-muted-foreground">
-                              No subtopics
-                            </div>
-                          )}
-
                           {subs.map((s) => (
                             <div
                               key={s.id}
-                              className={`p-2 rounded border cursor-pointer ${
+                              className={`p-2 rounded border border-gray-200 cursor-pointer flex items-center justify-between ${
                                 selectedSubtopic?.id === s.id
                                   ? "bg-sky-50 border-sky-300"
                                   : "bg-white"
                               }`}
                               onClick={(e) => {
-                                e.stopPropagation(); // Prevent closing parent
+                                e.stopPropagation();
                                 setSelectedSubtopic(s);
                                 setRightTab("videos");
                               }}
                             >
-                              <div className="font-medium">{s.name}</div>
-                              <div className="text-xs text-muted-foreground">
-                                Order: {s.order_index}
-                              </div>
+                              <span className="font-medium">{s.name}</span>
+                              {readMap[s.id] && (
+                                <span className="flex items-center justify-center rounded-full bg-green-100 border border-green-400 w-6 h-6">
+                                  <Check className="text-green-600 w-4 h-4" strokeWidth={3} />
+                                </span>
+                              )}
                             </div>
                           ))}
                         </div>
@@ -207,91 +233,85 @@ const CourseDetail: React.FC = () => {
                 })}
               </div>
             </div>
-          </div>
+          )}
+        </div>
 
-          {/* ---------------- Right Panel ---------------- */}
-          <div
-            className="bg-white rounded-md shadow-sm overflow-auto flex flex-col"
-            style={{ flexBasis: "70%", height: "100%", overflow: "hidden" }}
-          >
-            {/* Tabs */}
-            <div className="border-b px-4 py-3 flex items-center justify-between">
-              <div className="flex gap-2">
-                {[
-                  { key: "videos", label: "Videos" },
-                  { key: "quizzes", label: "Quizzes" },
-                  { key: "code-editor", label: "Code Editor" },
-                  { key: "notes", label: "Notes" }
-                ].map((tab) => (
-                  <button
-                    key={tab.key}
-                    className={`px-3 py-1 rounded-md text-sm ${
-                      rightTab === tab.key
-                        ? "bg-black text-white"
-                        : "text-gray-700 hover:bg-gray-100"
-                    }`}
-                    onClick={() => setRightTab(tab.key as any)}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
+        {/* Divider chevron button */}
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          className="fixed top-24 transform -translate-y-1/2 bg-white border border-gray-300 shadow rounded-full w-5 h-5 flex items-center justify-center hover:bg-gray-100 z-30"
+          style={{
+            left: `calc(${collapsed ? '70px' : '355px'} - 10px)`,
+            boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+            position: "fixed"
+          }}
+        >
+          {collapsed ? (
+            <ChevronRight className="w-4 h-4" />
+          ) : (
+            <ChevronLeft className="w-4 h-4" />
+          )}
+        </button>
 
-              <div className="text-sm text-muted-foreground">
-                {selectedSubtopic
-                  ? `Selected: ${selectedSubtopic.name}`
-                  : "No subtopic selected"}
-              </div>
+        {/* RIGHT PANEL */}
+        <div className="flex-1 bg-white shadow-sm overflow-hidden flex flex-col">
+          {/* Tabs */}
+          <div className="border-b border-gray-200 py-3 flex items-center justify-between">
+            <div className="flex gap-2 justify-center flex-1">
+              {[
+                { key: "videos", label: "Videos", icon: <PlayCircle /> },
+                { key: "quizzes", label: "Quizzes", icon: <HelpCircle /> },
+                { key: "notes", label: "Notes", icon: <StickyNote /> },
+                { key: "markAsRead", label: "Mark as Read" }
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  className={`px-4 py-2 rounded-md text-sm flex items-center gap-2 ${
+                    rightTab === tab.key
+                      ? "bg-gray-300 text-black"
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                  onClick={() => setRightTab(tab.key as any)}
+                >
+                  {tab.icon}
+                  {tab.label}
+                </button>
+              ))}
             </div>
 
-            {/* Right Panel Content */}
-              <div className="p-6 flex-1 overflow-y-auto min-h-0">
-              {!selectedSubtopic && (
-                <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground">
-                  <div className="text-lg font-medium mb-2">
-                    Select a subtopic on the left
-                  </div>
-                  <div className="text-sm">
-                    Then browse Videos / Quizzes / Coding / Notes
-                  </div>
-                </div>
-              )}
-
-              {selectedSubtopic && (
-                <>
-                  {rightTab === "videos" && selectedSubtopic && (
-                    <StudentVideos subtopicId={selectedSubtopic.id} />
-                  )}
-                  {rightTab === "quizzes" && selectedSubtopic && (
-                    <StudentQuiz subtopicId={selectedSubtopic.id} />
-                  )}
-                  {rightTab === "code-editor" && (
-                    <CodeExecutionPanel
-                      problem={{
-                        id: selectedSubtopic.id,
-                        title: `${selectedSubtopic.name} - Code Editor`,
-                        description: selectedSubtopic.content || `Write and test your code for ${selectedSubtopic.name}`,
-                        test_cases_basic: [] // No predefined test cases - user can add their own
-                      }}
-                      mode="learn"
-                      showSubmitButton={false} // No submission in learn mode
-                      showRunButton={true}
-                      showTestCases={true}
-                      allowCustomTestCases={true} // Allow users to add custom test cases
-                      className="border-0 shadow-none p-0"
-                      onSubmissionComplete={(result) => {
-                        console.log('Code executed:', result);
-                      }}
-                    />
-                  )}
-                  {rightTab === "notes" && selectedSubtopic && (
-                    <StudentNotes subtopicId={selectedSubtopic.id} />
-                  )}
-                </>
-              )}
+            <div className="flex items-center gap-2 text-sm bg-white border border-gray-300 shadow-sm rounded-full ml-4 mr-6 px-4 py-1 font-medium text-gray-700">
+              <span>
+                {selectedSubtopic ? selectedSubtopic.name : "No subtopic selected"}
+              </span>
             </div>
           </div>
 
+          {/* Content */}
+          <div className="p-6 flex-1 overflow-y-auto">
+            {!selectedSubtopic ? (
+              <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground">
+                <div className="text-lg font-medium mb-2">Select a subtopic on the left</div>
+                <div className="text-sm">Then browse Videos / Quizzes / Notes</div>
+              </div>
+            ) : (
+              <>
+                {rightTab === "videos" && <StudentVideos subtopicId={selectedSubtopic.id} />}
+                {rightTab === "quizzes" && <StudentQuiz subtopicId={selectedSubtopic.id} />}
+                {rightTab === "notes" && <StudentNotes subtopicId={selectedSubtopic.id} />}
+                {rightTab === "markAsRead" && (
+                  <div className="flex flex-col items-center justify-center h-full">
+                    <button
+                      className="bg-green-100 text-green-900 font-semibold border border-green-300 px-6 py-3 rounded-lg shadow hover:bg-green-200 transition-colors"
+                      onClick={handleMarkAsRead}
+                      disabled={!selectedSubtopic}
+                    >
+                      Mark '{selectedSubtopic?.name}' as Read
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>

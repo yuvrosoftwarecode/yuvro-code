@@ -6,10 +6,17 @@ const API_BASE =
 // ------------------------------------------------------------
 // Auth Header Helper
 // ------------------------------------------------------------
-function getAuthHeader() {
-  const token =
-    localStorage.getItem("token") || localStorage.getItem("access");
-  return token ? { Authorization: `Bearer ${token}` } : {};
+function getAuthHeader(): Record<string, string> {
+  const token = localStorage.getItem("token") || localStorage.getItem("access");
+  if (token) {
+    return { Authorization: `Bearer ${token}` };
+  }
+  return {};
+}
+
+function buildHeaders(extra?: Record<string, string>): HeadersInit {
+  const auth = getAuthHeader();
+  return { ...auth, ...(extra || {}) };
 }
 
 // ------------------------------------------------------------
@@ -60,6 +67,16 @@ export interface Course {
   topics: TopicBasic[];
 }
 
+// MARK VIDEO AS READ
+export const markVideoAsRead = async (videoId: string) => {
+  const res = await fetch(`${API_BASE}/course/videos/${videoId}/mark-read/`, {
+    method: "POST",
+    headers: buildHeaders({ "Content-Type": "application/json" }),
+  });
+  if (!res.ok) throw new Error("Failed to mark video as read");
+  return res.json();
+};
+
 // ------------------------------------------------------------
 // Fetch All Courses
 // ------------------------------------------------------------
@@ -68,10 +85,7 @@ export async function fetchCourses(category?: string): Promise<Course[]> {
   if (category) url.searchParams.set("category", category);
 
   const res = await fetch(url.toString(), {
-    headers: {
-      "Content-Type": "application/json",
-      ...getAuthHeader(),
-    },
+    headers: buildHeaders({ "Content-Type": "application/json" }),
   });
 
   if (!res.ok) {
@@ -89,10 +103,7 @@ export async function fetchCourseById(courseId: string): Promise<Course> {
   const url = `${API_BASE}/course/courses/${courseId}/`;
 
   const res = await fetch(url, {
-    headers: {
-      "Content-Type": "application/json",
-      ...getAuthHeader(),
-    },
+    headers: buildHeaders({ "Content-Type": "application/json" }),
   });
 
   if (!res.ok) {
@@ -112,10 +123,7 @@ export async function fetchTopicsByCourse(
   const url = `${API_BASE}/course/topics/?course=${courseId}`;
 
   const res = await fetch(url, {
-    headers: {
-      "Content-Type": "application/json",
-      ...getAuthHeader(),
-    },
+    headers: buildHeaders({ "Content-Type": "application/json" }),
   });
 
   if (!res.ok) {
@@ -143,7 +151,7 @@ export async function fetchCourseStructure(courseId: string) {
 export async function createCourse(courseData: any) {
   const res = await fetch(`${API_BASE}/course/courses/`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", ...getAuthHeader() },
+    headers: buildHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify(courseData),
   });
 
@@ -161,7 +169,7 @@ export async function updateCourse(
 ) {
   const res = await fetch(`${API_BASE}/course/courses/${courseId}/`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json", ...getAuthHeader() },
+    headers: buildHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify(payload),
   });
 
@@ -176,7 +184,7 @@ export async function updateCourse(
 export async function deleteCourse(courseId: string) {
   const res = await fetch(`${API_BASE}/course/courses/${courseId}/`, {
     method: "DELETE",
-    headers: { "Content-Type": "application/json", ...getAuthHeader() },
+    headers: buildHeaders({ "Content-Type": "application/json" }),
   });
 
   if (!res.ok) {
@@ -198,7 +206,7 @@ export async function createTopic(payload: {
 }) {
   const res = await fetch(`${API_BASE}/course/topics/`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", ...getAuthHeader() },
+    headers: buildHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify(payload),
   });
 
@@ -216,7 +224,7 @@ export async function updateTopic(
 ) {
   const res = await fetch(`${API_BASE}/course/topics/${topicId}/`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json", ...getAuthHeader() },
+    headers: buildHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify(payload),
   });
 
@@ -231,7 +239,7 @@ export async function updateTopic(
 export async function deleteTopic(topicId: string) {
   const res = await fetch(`${API_BASE}/course/topics/${topicId}/`, {
     method: "DELETE",
-    headers: { "Content-Type": "application/json", ...getAuthHeader() },
+    headers: buildHeaders({ "Content-Type": "application/json" }),
   });
 
   if (!res.ok) {
@@ -249,7 +257,7 @@ export async function fetchSubtopicsByTopic(topicId: string) {
   const url = `${API_BASE}/course/subtopics/?topic=${topicId}`;
 
   const res = await fetch(url, {
-    headers: { "Content-Type": "application/json", ...getAuthHeader() },
+    headers: buildHeaders({ "Content-Type": "application/json" }),
   });
 
   if (!res.ok) {
@@ -268,7 +276,7 @@ export async function createSubtopic(payload: {
 }) {
   const res = await fetch(`${API_BASE}/course/subtopics/`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", ...getAuthHeader() },
+    headers: buildHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify(payload),
   });
 
@@ -286,7 +294,7 @@ export async function updateSubtopic(
 ) {
   const res = await fetch(`${API_BASE}/course/subtopics/${subtopicId}/`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json", ...getAuthHeader() },
+    headers: buildHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify(payload),
   });
 

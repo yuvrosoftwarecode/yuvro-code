@@ -6,7 +6,6 @@ import VideosPanel from "./VideosPanel";
 import QuizComponent from "./QuizComponent";
 import CodingProblemsManager from "@/components/instructor/learn/CodingProblemsManager";
 import NotesManager from "@/components/instructor/learn/NotesManager";
-import { fetchAdmins } from "@/services/courseService";
 import Navigation from "../../Navigation";
 
 import {
@@ -94,27 +93,6 @@ const CourseEdit: React.FC = () => {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [expandedTopics, setExpandedTopics] = useState<Record<string, boolean>>({});
   const [subtopicsMap, setSubtopicsMap] = useState<Record<string, Subtopic[]>>({});
-
-  const [isAssignAdminOpen, setIsAssignAdminOpen] = useState(false);
-  const [admins, setAdmins] = useState<User[]>([]);
-
-
-  useEffect(() => {
-  fetchAdmins()
-    .then(setAdmins)
-    .catch(() => toast.error("Failed to load admins"));
-}, []);
-
-
-
-  // Course edit
-  const [editCourseValues, setEditCourseValues] = useState({
-  name: "",
-  short_code: "",
-  category: "" as Category | "",
-  assigned_admin: null as string | null,
-});
-
   const [savingCourse, setSavingCourse] = useState(false);
 
   // Topic modal
@@ -153,30 +131,6 @@ const CourseEdit: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseId]);
 
-  const handleAssignAdmin = async () => {
-  if (!course) return;
-  setSavingCourse(true);
-
-  try {
-    const payload = {
-      assigned_admin_id: editCourseValues.assigned_admin || null,
-    };
-
-    await updateCourse(course.id, payload);
-
-    toast.success("Admin updated successfully");
-
-    setIsAssignAdminOpen(false);  // CLOSE MODAL
-    await loadCourse();           // REFRESH DATA
-  } catch (err) {
-    toast.error("Failed to assign admin");
-    console.error(err);
-  } finally {
-    setSavingCourse(false);
-  }
-};
-
-
   const loadCourse = async () => {
     if (!courseId) return;
     setLoading(true);
@@ -184,14 +138,6 @@ const CourseEdit: React.FC = () => {
     try {
       const c = await fetchCourseById(courseId);
       setCourse(c);
-
-      setEditCourseValues({
-        name: c.name,
-        short_code: c.short_code ?? "",
-        category: c.category,
-        assigned_admin: c.assigned_admin ? c.assigned_admin.id : null,
-      });
-
 
       const t = await fetchTopicsByCourse(courseId);
       setTopics(t);
@@ -228,30 +174,28 @@ const CourseEdit: React.FC = () => {
 
   // Save course
   const handleSaveCourse = async () => {
-  if (!course) return;
-  setSavingCourse(true);
+    if (!course) return;
+    setSavingCourse(true);
 
-  try {
-    const payload = {
-      name: editCourseValues.name,
-      short_code: editCourseValues.short_code || null,
-      category: editCourseValues.category,
-      assigned_admin: editCourseValues.assigned_admin || null,   // ✅ IMPORTANT FIX
-    };
+    try {
+      const payload = {
+        name: editCourseValues.name,
+        short_code: editCourseValues.short_code || null,
+        category: editCourseValues.category,
+      };
 
-    await updateCourse(course.id, payload);
+      await updateCourse(course.id, payload);
 
-    toast.success("Course updated successfully");
+      toast.success("Course updated successfully");
 
-    setIsAssignAdminOpen(false);  // ✅ CLOSE THE MODAL
-    await loadCourse();           // ✅ REFRESH COURSE STATE
-  } catch (err) {
-    toast.error("Failed to update course");
-    console.error(err);
-  } finally {
-    setSavingCourse(false);
-  }
-};
+      await loadCourse();           // ✅ REFRESH COURSE STATE
+    } catch (err) {
+      toast.error("Failed to update course");
+      console.error(err);
+    } finally {
+      setSavingCourse(false);
+    }
+  };
 
 
   const handleDeleteCourse = async () => {
@@ -261,7 +205,7 @@ const CourseEdit: React.FC = () => {
     try {
       await deleteCourse(course.id);
       toast.success("Course deleted");
-      navigate("/admin/courses");
+      navigate("/instructor/courses");
     } catch (err) {
       toast.error("Failed to delete course");
       console.error(err);
@@ -485,25 +429,9 @@ const CourseEdit: React.FC = () => {
             className="bg-white rounded-md shadow-sm flex flex-col"
             style={{ flexBasis: "30%", minWidth: 300, maxWidth: 560, height: "100%" }}
           >
-  
+
             <div className="p-4" style={{ flexBasis: "70%", overflowY: "auto" }}>
-              {/* ADMIN ASSIGNMENT HEADER */}
-<div className="mb-4 flex items-center justify-between bg-gray-100 p-2 rounded">
-  <div className="text-sm font-medium text-gray-700">
-    {course?.assigned_admin
-      ? `Admin: ${course.assigned_admin.username}`
-      : "No admin assigned"}
-  </div>
-
-  <Button
-    size="sm"
-    onClick={() => setIsAssignAdminOpen(true)}   // <-- create this modal handler
-    className="flex items-center gap-2"
-  >
-    {course?.assigned_admin ? "Change Admin" : "Assign Admin"}
-  </Button>
-</div>
-
+              
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-md font-semibold">Topics</h3>
                 <Button onClick={openCreateTopicModal} className="flex items-center gap-2">
@@ -679,7 +607,7 @@ const CourseEdit: React.FC = () => {
                   )}
 
 
-                  { rightTab === "coding" && selectedSubtopic && (
+                  {rightTab === "coding" && selectedSubtopic && (
                     <CodingProblemsManager subtopicId={selectedSubtopic.id} />
                   )}
 
@@ -777,43 +705,6 @@ const CourseEdit: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      <Dialog open={isAssignAdminOpen} onOpenChange={setIsAssignAdminOpen}>
-  <DialogContent>
-    <DialogHeader>
-      <DialogTitle>Assign Admin</DialogTitle>
-    </DialogHeader>
-
-    <div className="space-y-4 py-2">
-      <Label>Select Admin</Label>
-
-      <Select
-        onValueChange={(adminId) => setEditCourseValues(v => ({ ...v, assigned_admin: adminId }))}
-      >
-        <SelectTrigger>
-          <SelectValue placeholder="Choose admin" />
-        </SelectTrigger>
-
-        <SelectContent>
-          {admins.map((a) => (
-            <SelectItem key={a.id} value={a.id}>
-              {a.username}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
-
-    <DialogFooter>
-      <Button variant="outline" onClick={() => setIsAssignAdminOpen(false)}>
-        Cancel
-      </Button>
-
-      <Button onClick={handleAssignAdmin}>Save</Button>
-
-    </DialogFooter>
-  </DialogContent>
-</Dialog>
-
     </div>
   );
 };

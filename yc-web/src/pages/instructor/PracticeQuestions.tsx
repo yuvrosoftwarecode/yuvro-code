@@ -26,9 +26,11 @@ import {
   fetchTopicsByCourse,
   createTopic,
   updateTopic,
-  deleteTopic
+  deleteTopic,
+  fetchCourseInstructors   // ✅ Added for role filtering
 } from "@/services/courseService";
 
+import { useAuth } from "@/contexts/AuthContext";
 import PracticeCoding from "@/components/instructor/practice/PracticeCoding";
 
 type Course = {
@@ -46,6 +48,7 @@ type Topic = {
 };
 
 const PracticeQuestions: React.FC = () => {
+  const { user } = useAuth();   // ✅ Needed for role
   const [courses, setCourses] = useState<Course[]>([]);
   const [expandedCourses, setExpandedCourses] = useState<Record<string, boolean>>({});
   const [topicsMap, setTopicsMap] = useState<Record<string, Topic[]>>({});
@@ -54,7 +57,6 @@ const PracticeQuestions: React.FC = () => {
   const [loadingCourses, setLoadingCourses] = useState(true);
   const [loadingTopics, setLoadingTopics] = useState(false);
 
-  // Modal state for topics
   const [isTopicModalOpen, setIsTopicModalOpen] = useState(false);
   const [topicModalMode, setTopicModalMode] = useState<"create" | "edit">("create");
   const [topicEditing, setTopicEditing] = useState<Topic | null>(null);
@@ -69,11 +71,39 @@ const PracticeQuestions: React.FC = () => {
     loadCourses();
   }, []);
 
+  // -------------------------------------------------------
+  // ROLE-BASED COURSE FILTERING  (Admin vs Instructor)
+  // -------------------------------------------------------
   const loadCourses = async () => {
     setLoadingCourses(true);
     try {
       const data = await fetchCourses();
-      setCourses(data);
+
+      // ADMIN → sees ALL courses
+      if (user?.role === "admin") {
+        setCourses(data);
+      }
+
+      // INSTRUCTOR → sees only assigned courses
+      else if (user?.role === "instructor") {
+        const myCourses: Course[] = [];
+
+        for (const c of data) {
+          const instructors = await fetchCourseInstructors(c.id);
+
+          // API returns: [{ id, name, email }]
+          const isAssigned = instructors.some((inst: any) => inst.id === user.id);
+
+          if (isAssigned) myCourses.push(c);
+        }
+
+        setCourses(myCourses);
+      }
+
+      // OTHER ROLES → no access
+      else {
+        setCourses([]);
+      }
 
       const expandState: Record<string, boolean> = {};
       data.forEach((c) => (expandState[c.id] = false));
@@ -87,36 +117,37 @@ const PracticeQuestions: React.FC = () => {
     }
   };
 
+  // -------------------------------------------------------
+  // Expand / Collapse Course + Load Topics
+  // -------------------------------------------------------
   const toggleCourse = async (courseId: string) => {
-  const isOpen = expandedCourses[courseId];
+    const isOpen = expandedCourses[courseId];
 
-  // If opening this course → close all others
-  const newState: Record<string, boolean> = {};
-  courses.forEach((c) => {
-    newState[c.id] = c.id === courseId ? !isOpen : false;
-  });
+    const newState: Record<string, boolean> = {};
+    courses.forEach((c) => {
+      newState[c.id] = c.id === courseId ? !isOpen : false;
+    });
 
-  // Load topics only when expanding
-  if (!isOpen && !topicsMap[courseId]) {
-    setLoadingTopics(true);
-    try {
-      const t = await fetchTopicsByCourse(courseId);
-      setTopicsMap((prev) => ({ ...prev, [courseId]: t }));
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to load topics");
-    } finally {
-      setLoadingTopics(false);
+    if (!isOpen && !topicsMap[courseId]) {
+      setLoadingTopics(true);
+      try {
+        const t = await fetchTopicsByCourse(courseId);
+        setTopicsMap((prev) => ({ ...prev, [courseId]: t }));
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to load topics");
+      } finally {
+        setLoadingTopics(false);
+      }
     }
-  }
 
-  setExpandedCourses(newState);
-};
-
+    setExpandedCourses(newState);
+  };
 
   // ---------------------------
-  // Topic CRUD
+  // Topic CRUD (Unchanged)
   // ---------------------------
+
   const openCreateTopicModal = (courseId: string) => {
     setTopicModalMode("create");
     setTopicEditing({ id: "", course: courseId, name: "", order_index: 0 });
@@ -211,6 +242,9 @@ const PracticeQuestions: React.FC = () => {
     }
   };
 
+  // ---------------------------
+  // RENDER UI
+  // ---------------------------
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Navigation />
@@ -218,7 +252,7 @@ const PracticeQuestions: React.FC = () => {
       <div className="flex-1 overflow-hidden h-[calc(100vh-64px)]">
         <div className="flex h-full p-4 gap-6">
 
-          {/* ---------------- LEFT PANEL ---------------- */}
+          {/* LEFT PANEL */}
           <div className="bg-white rounded-md shadow-sm flex flex-col"
                style={{ flexBasis: "30%", minWidth: 300 }}>
 
@@ -331,7 +365,7 @@ const PracticeQuestions: React.FC = () => {
             </div>
           </div>
 
-          {/* ---------------- RIGHT PANEL ---------------- */}
+          {/* RIGHT PANEL */}
           <div className="bg-white rounded-md shadow-sm flex-1 p-6 overflow-auto">
             {!selectedTopic ? (
               <div className="h-full flex flex-col items-center justify-center text-muted-foreground">

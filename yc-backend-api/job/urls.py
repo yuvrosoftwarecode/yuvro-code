@@ -1,10 +1,7 @@
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-from .views import JobViewSet
-
-router = DefaultRouter()
-router.register(r'jobs', JobViewSet, basename='job')
+from django.urls import path
+from .views import JobListCreateAPIView, JobDetailAPIView
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path('', JobListCreateAPIView.as_view(), name='job_list_create'),
+    path('<int:pk>/', JobDetailAPIView.as_view(), name='job_detail'),
 ]

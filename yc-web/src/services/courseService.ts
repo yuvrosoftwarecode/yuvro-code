@@ -502,14 +502,6 @@ export const deleteNote = async (id: string) => {
   return true;
 };
 
-export const fetchAdmins = async () => {
-  const res = await fetch(`${API_BASE}/auth/admin-users/`, {
-    headers: getAuthHeader(),
-  });
-  if (!res.ok) throw new Error("Failed to load admins");
-  return res.json();
-};
-
 // Default export with commonly used functions
 const courseService = {
   getCourses: fetchCourses,
@@ -542,7 +534,6 @@ const courseService = {
   createNote,
   updateNote,
   deleteNote,
-  getAdmins: fetchAdmins
 };
 
 export default courseService;
@@ -707,4 +698,53 @@ export async function deletePracticeCodingProblem(id: string) {
   });
   if (!res.ok) throw new Error("Failed to delete practice problem");
   return true;
+}
+
+// Fetch instructors of a course
+export async function fetchCourseInstructors(courseId: string) {
+  const res = await fetch(`${API_BASE}/course/courses/${courseId}/instructors/`, {
+    headers: getAuthHeader()
+  });
+
+  if (!res.ok) throw new Error("Failed to fetch instructors");
+  return res.json();
+}
+
+// Add instructor to course
+export async function addInstructorToCourse(courseId: string, instructorId: string) {
+  const res = await fetch(`${API_BASE}/course/courses/${courseId}/add_instructor/`, {
+    method: "POST",
+    headers: {
+      ...getAuthHeader(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ instructor_id: instructorId }),
+  });
+
+  if (!res.ok) throw new Error("Failed to add instructor");
+  return res.json();
+}
+
+// Remove instructor
+export async function removeInstructorFromCourse(courseId: string, instructorId: string) {
+  const res = await fetch(`${API_BASE}/course/courses/${courseId}/remove_instructor/`, {
+    method: "POST",
+    headers: {
+      ...getAuthHeader(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ instructor_id: instructorId }),
+  });
+
+  if (!res.ok) throw new Error("Failed to remove instructor");
+  return res.json();
+}
+
+export async function fetchAllInstructors() {
+  const res = await fetch(`${API_BASE}/auth/users/?role=instructor`, {
+    headers: getAuthHeader(),
+  });
+
+  if (!res.ok) throw new Error("Failed to fetch instructors");
+  return res.json();
 }

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Course, Topic, Subtopic, Video, Quiz, CodingProblem, Note
+from .models import Course, Topic, Subtopic, Video, Quiz, CodingProblem, Note, CourseInstructor
 from authentication.serializers import UserSerializer
 from django.contrib.auth import get_user_model
 
@@ -51,6 +51,14 @@ class TopicBasicSerializer(serializers.ModelSerializer):
         fields = ["id", "course", "name", "order_index", "created_at"]
         read_only_fields = ["id", "created_at"]
 
+class CourseInstructorSerializer(serializers.ModelSerializer):
+    instructor = UserSerializer(read_only=True)
+
+    class Meta:
+        model = CourseInstructor
+        fields = ["id", "instructor", "created_at"]
+
+
 
 class CourseSerializer(serializers.ModelSerializer):
     """
@@ -58,16 +66,7 @@ class CourseSerializer(serializers.ModelSerializer):
     """
 
     topics = TopicSerializer(many=True, read_only=True)
-    # Full details for GET (retrieve)
-    assigned_admin_id = UserSerializer(read_only=True)
-
-    assigned_admin_id = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(),
-        source="assigned_admin",
-        write_only=True,
-        required=False,
-        allow_null=True,
-    )
+    instructors = serializers.SerializerMethodField()
 
     class Meta:
         model = Course
@@ -79,10 +78,14 @@ class CourseSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
             "topics",
-            "assigned_admin",
-            "assigned_admin_id",
+            "instructors",
+       
         ]
         read_only_fields = ["id", "created_at", "updated_at"]
+
+    def get_instructors(self, obj):
+        mappings = CourseInstructor.objects.filter(course=obj).select_related("instructor")
+        return CourseInstructorSerializer(mappings, many=True).data
 
     def validate_short_code(self, value):
         """
@@ -112,15 +115,7 @@ class CourseSerializer(serializers.ModelSerializer):
 
 
 class CourseBasicSerializer(serializers.ModelSerializer):
-    assigned_admin = UserSerializer(read_only=True)
-
-    assigned_admin_id = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(),
-        source="assigned_admin",
-        write_only=True,
-        required=False,
-        allow_null=True,
-    )
+    
 
     class Meta:
         model = Course
@@ -131,8 +126,6 @@ class CourseBasicSerializer(serializers.ModelSerializer):
             "category",
             "created_at",
             "updated_at",
-            "assigned_admin",
-            "assigned_admin_id",
         ]
 
 

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Course, Topic, Subtopic, Video, CodingProblem, Quiz, Note
+from .models import Course, Topic, Subtopic, Video, CodingProblem, Quiz, Note, CourseInstructor
 
 
 class TopicInline(admin.TabularInline):
@@ -16,6 +16,12 @@ class SubtopicInline(admin.TabularInline):
     ordering = ["order_index"]
 
 
+class CourseInstructorInline(admin.TabularInline):
+    model = CourseInstructor
+    extra = 1
+    fields = ["instructor", "created_at", "updated_at"]
+    readonly_fields = ["created_at", "updated_at"]
+
 # ------------------ COURSE ADMIN ------------------
 @admin.register(Course)
 class CourseAdmin(admin.ModelAdmin):
@@ -27,13 +33,13 @@ class CourseAdmin(admin.ModelAdmin):
         "name",
         "short_code",
         "category",
-        "assigned_admin",
         "id",
         "created_at",
         "updated_at",
     ]
     ordering = ["category", "-created_at"]
-    inlines = [TopicInline]
+    inlines = [TopicInline, CourseInstructorInline]  # ⭐ Add here
+
 
 
 # ------------------ TOPIC ADMIN ------------------
@@ -198,3 +204,13 @@ class NoteAdmin(admin.ModelAdmin):
         return obj.content[:30] + "..." if len(obj.content) > 30 else obj.content
 
     content_preview.short_description = "Content"
+
+
+@admin.register(CourseInstructor)
+class CourseInstructorAdmin(admin.ModelAdmin):
+    list_display = ["course", "instructor", "created_at", "updated_at"]
+    list_filter = ["course", "instructor", "created_at"]
+    search_fields = ["course__name", "instructor__email", "instructor__username"]
+    readonly_fields = ["id", "created_at", "updated_at"]
+    fields = ["course", "instructor", "id", "created_at", "updated_at"]
+    ordering = ["-created_at"]

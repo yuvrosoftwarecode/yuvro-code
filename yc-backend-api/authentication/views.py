@@ -24,6 +24,9 @@ from django.conf import settings
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from rest_framework.permissions import IsAdminUser
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -296,3 +299,30 @@ class ResetPasswordView(generics.GenericAPIView):
 def admin_users(request):
     admins = User.objects.filter(is_staff=True).values("id", "email", "username")
     return Response(list(admins))
+
+from django.contrib.auth import get_user_model
+from rest_framework.views import APIView
+from rest_framework.response import Response
+
+User = get_user_model()
+
+class UsersListView(APIView):
+    def get(self, request):
+        role = request.GET.get("role")
+
+        users = User.objects.all()
+
+        if role:
+            users = users.filter(role=role)
+
+        data = [
+            {
+                "id": u.id,
+                "username": u.username,
+                "email": u.email,
+                "role": u.role
+            }
+            for u in users
+        ]
+
+        return Response(data)

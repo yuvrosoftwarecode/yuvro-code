@@ -23,13 +23,13 @@ class Course(models.Model):
     short_code = models.CharField(max_length=20, blank=True, null=True, unique=True)
     name = models.TextField()
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
-    assigned_admin = models.ForeignKey(
+    instructors = models.ManyToManyField(
         User,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="assigned_courses",
+        through="CourseInstructor",
+        related_name="courses_taught"
     )
+
+    
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -315,3 +315,43 @@ class Note(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.sub_topic.name} - {self.content[:30]}..."
+
+class CourseInstructor(models.Model):
+    """
+    Mapping table for assigning multiple instructors to a course.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    course = models.ForeignKey(
+        Course,
+        on_delete=models.CASCADE,
+        related_name="course_instructors"
+    )
+
+    instructor = models.ForeignKey(
+        User,  # Using your custom User model
+        on_delete=models.CASCADE,
+        related_name="instructor_courses"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ("course", "instructor")  # Prevent duplicates
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.instructor.email} → {self.course.name}"
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+
+        # Only users with instructor/admin roles can be linked
+        if self.instructor.role not in ["instructor", "admin"]:
+            raise ValidationError("Only instructors or admins can be assigned to a course.")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()  # Validate before saving
+        super().save(*args, **kwargs)

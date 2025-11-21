@@ -26,4 +26,6 @@ urlpatterns = [
         name="reset_password",
     ),
     path("admin-users/", admin_users),
+    path("users/", views.UsersListView.as_view(), name="users_list"),
+
 ]

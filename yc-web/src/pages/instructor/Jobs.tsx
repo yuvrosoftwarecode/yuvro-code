@@ -8,7 +8,7 @@ interface Job {
   company: string;
   location: string;
   type: string;
-  experience: string;
+  experience_level: string;
   salary: string;
   description: string;
   requirements: string[];
@@ -28,7 +28,7 @@ const Jobs: React.FC = () => {
       company: 'TechCorp Solutions',
       location: 'Bangalore, India',
       type: 'Full-time',
-      experience: '3-5 years',
+      experience_level: '3-5 years',
       salary: '₹12-18 LPA',
       description: 'We are looking for a skilled Full Stack Developer to join our dynamic team. You will be responsible for developing and maintaining web applications using modern technologies.',
       requirements: ['React.js', 'Node.js', 'MongoDB', 'TypeScript', 'AWS'],
@@ -41,7 +41,7 @@ const Jobs: React.FC = () => {
       company: 'DataTech Analytics',
       location: 'Hyderabad, India',
       type: 'Full-time',
-      experience: '2-4 years',
+      experience_level: '2-4 years',
       salary: '₹10-15 LPA',
       description: 'Join our data science team to work on cutting-edge machine learning projects and data analytics solutions.',
       requirements: ['Python', 'Pandas', 'Scikit-learn', 'TensorFlow', 'SQL'],
@@ -54,7 +54,7 @@ const Jobs: React.FC = () => {
       company: 'StartupXYZ',
       location: 'Remote',
       type: 'Internship',
-      experience: '0-1 years',
+      experience_level: '0-1 years',
       salary: '₹15,000/month',
       description: 'Great opportunity for fresh graduates to work on real-world projects and learn from experienced developers.',
       requirements: ['HTML', 'CSS', 'JavaScript', 'React.js'],
@@ -67,7 +67,7 @@ const Jobs: React.FC = () => {
       company: 'CloudTech Systems',
       location: 'Mumbai, India',
       type: 'Full-time',
-      experience: '4-6 years',
+      experience_level: '4-6 years',
       salary: '₹15-22 LPA',
       description: 'Looking for an experienced DevOps engineer to manage our cloud infrastructure and CI/CD pipelines.',
       requirements: ['AWS', 'Docker', 'Kubernetes', 'Jenkins', 'Terraform'],
@@ -175,7 +175,7 @@ const Jobs: React.FC = () => {
                   <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  {job.type} • {job.experience}
+                  {job.type} • {job.experience_level}
                 </div>
                 <div className="flex items-center text-sm text-gray-600">
                   <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

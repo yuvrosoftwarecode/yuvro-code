@@ -1,115 +1,98 @@
-// src/services/jobsapi.ts
+const API_BASE =
+  import.meta.env.BACKEND_API_BASE_URL || "http://127.0.0.1:8001/api";
 
-const API_BASE = import.meta.env.BACKEND_API_BASE_URL || "http://127.0.0.1:8001/api";
+const JOBS_URL = `${API_BASE}/jobs/`;
 
-// Helper to get Authorization header
-function getAuthHeader() {
-  const accessToken = localStorage.getItem("access"); // must use 'access'
-  if (!accessToken) return {};
-  return {
-    Authorization: `Bearer ${accessToken}`,
-  };
+
+function getAccessToken() {
+  return localStorage.getItem("access");
 }
 
-// Job interface
-export interface Job {
-  id: string;
-  title: string;
-  company: string;
-  logo?: string;
-  location: string;
-  workType: "Remote" | "Hybrid" | "Onsite";
-  postedDate: string;
-  skills: string[];
-  salaryRange?: string;
-  matchPercentage?: number;
-  experienceLevel: string;
-  jobType: string;
-  description: string;
+function getRefreshToken() {
+  return localStorage.getItem("refresh");
 }
 
-// Fetch all jobs
-export const fetchJobs = async (): Promise<Job[]> => {
-  const token = localStorage.getItem("access");
-  if (!token) throw new Error("Unauthorized: Please login to fetch jobs");
 
-  const response = await fetch(`${API_BASE}/jobs/`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${token}`,
-    },
-  });
+async function refreshAccessToken() {
+  const refresh = getRefreshToken();
+  if (!refresh) return null;
 
-  if (!response.ok) {
-    throw new Error(`Error fetching jobs: ${response.statusText}`);
-  }
-
-  return response.json();
-};
-
-// Fetch job by ID
-export const fetchJobById = async (jobId: string): Promise<Job> => {
-  const res = await fetch(`${API_BASE}/jobs/${jobId}/`, {
-    headers: { "Content-Type": "application/json", ...getAuthHeader() },
-  });
-
-  if (!res.ok) {
-    if (res.status === 401) throw new Error("Unauthorized: Please log in to access this job");
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.detail || data.message || "Failed to fetch job");
-  }
-
-  return res.json();
-};
-
-// Create a new job
-export const createJob = async (payload: Partial<Job>) => {
-  const res = await fetch(`${API_BASE}/jobs/`, {
+  const res = await fetch(`${API_BASE}/token/refresh/`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", ...getAuthHeader() },
-    body: JSON.stringify(payload),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ refresh }),
   });
 
-  if (!res.ok) {
-    if (res.status === 401) throw new Error("Unauthorized: Cannot create job");
-    throw new Error("Failed to create job");
+  if (!res.ok) return null;
+
+  const data = await res.json();
+  localStorage.setItem("access", data.access);
+  return data.access;
+}
+
+
+async function fetchWithAuth(url: string, options: any = {}) {
+  let token = getAccessToken();
+
+  options.headers = {
+    ...(options.headers || {}),
+    "Content-Type": "application/json",
+    Authorization: token ? `Bearer ${token}` : "",
+  };
+
+  let res = await fetch(url, options);
+
+  if (res.status === 401) {
+    token = await refreshAccessToken();
+    if (!token) throw new Error("Session expired. Please login again.");
+
+    options.headers.Authorization = `Bearer ${token}`;
+    res = await fetch(url, options);
   }
 
-  return res.json();
+  if (res.status === 204) {
+    return { ok: true };
+  }
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw err;
+  }
+
+  return res.json(); 
+}
+
+
+
+export const fetchJobs = () => {
+  return fetchWithAuth(JOBS_URL, { method: "GET" });
 };
 
-// Update a job
-export const updateJob = async (jobId: string, payload: Partial<Job>) => {
-  const res = await fetch(`${API_BASE}/jobs/${jobId}/`, {
+export const fetchJobById = (id: number) => {
+  return fetchWithAuth(`${JOBS_URL}${id}/`, { method: "GET" });
+};
+
+export const createJob = (payload: any) => {
+  return fetchWithAuth(JOBS_URL, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+};
+
+export const updateJob = (id: number, payload: any) => {
+  return fetchWithAuth(`${JOBS_URL}${id}/`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json", ...getAuthHeader() },
     body: JSON.stringify(payload),
   });
-
-  if (!res.ok) {
-    if (res.status === 401) throw new Error("Unauthorized: Cannot update job");
-    throw new Error("Failed to update job");
-  }
-
-  return res.json();
 };
 
-// Delete a job
-export const deleteJob = async (jobId: string) => {
-  const res = await fetch(`${API_BASE}/jobs/${jobId}/`, {
+
+export const deleteJobById = async (id: number) => {
+  const response = await fetchWithAuth(`${JOBS_URL}${id}/`, {
     method: "DELETE",
-    headers: getAuthHeader(),
   });
 
-  if (!res.ok) {
-    if (res.status === 401) throw new Error("Unauthorized: Cannot delete job");
-    throw new Error("Failed to delete job");
-  }
+  if (response.ok) return true;
 
-  return true;
+  throw new Error("Failed to delete job");
 };
-
-// Default export
-const jobsapi = { fetchJobs, fetchJobById, createJob, updateJob, deleteJob };
-export default jobsapi;

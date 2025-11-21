@@ -16,8 +16,8 @@ import {
 interface FilterState {
   search: string;
   location: string[];
-  experienceLevel: string[];
-  jobType: string[];
+  experience_level: string[];
+  job_type: string[];
   salaryRange: number[];
   skills: string[];
   companySize: string[];
@@ -32,8 +32,8 @@ const JobFilters = ({ onFilterChange }: JobFiltersProps) => {
   const [filters, setFilters] = useState<FilterState>({
     search: '',
     location: [],
-    experienceLevel: [],
-    jobType: [],
+    experience_level: [],
+    job_type: [],
     salaryRange: [0, 30],
     skills: [],
     companySize: [],
@@ -60,8 +60,8 @@ const JobFilters = ({ onFilterChange }: JobFiltersProps) => {
     const clearedFilters: FilterState = {
       search: '',
       location: [],
-      experienceLevel: [],
-      jobType: [],
+      experience_level: [],
+      job_type: [],
       salaryRange: [0, 30],
       skills: [],
       companySize: [],
@@ -85,8 +85,8 @@ const JobFilters = ({ onFilterChange }: JobFiltersProps) => {
   };
 
   const locationOptions = ['Remote', 'Hybrid', 'Onsite'];
-  const experienceOptions = ['Fresher', '0-2 yrs', '2-5 yrs'];
-  const jobTypeOptions = ['Full-time', 'Internship', 'Contract'];
+  const experience_levelOptions = ['Fresher', '0-2 yrs', '2-5 yrs'];
+  const job_typeOptions = ['Full-time', 'Internship', 'Contract'];
   const skillOptions = ['React', 'Node.js', 'Python', 'Java', 'TypeScript', 'MongoDB', 'Spring Boot', 'Tailwind CSS'];
   const companySizeOptions = ['1-10', '10-50', '50-100', '100-500', '500+'];
   const postedDateOptions = ['Last 24 hours', 'Last 7 days', 'Last 30 days'];
@@ -107,14 +107,14 @@ const JobFilters = ({ onFilterChange }: JobFiltersProps) => {
       </div>
 
       {/* Active Filters */}
-      {(filters.location.length > 0 || filters.experienceLevel.length > 0 || filters.skills.length > 0) && (
+      {(filters.location.length > 0 || filters.experience_level.length > 0 || filters.skills.length > 0) && (
         <div className="flex flex-wrap gap-2 pb-2 border-b border-border">
-          {[...filters.location, ...filters.experienceLevel, ...filters.skills].map(filter => (
+          {[...filters.location, ...filters.experience_level, ...filters.skills].map(filter => (
             <Badge key={filter} variant="secondary" className="gap-1">
               {filter}
               <X className="h-3 w-3 cursor-pointer" onClick={() => {
                 if (filters.location.includes(filter)) toggleArrayFilter('location', filter);
-                if (filters.experienceLevel.includes(filter)) toggleArrayFilter('experienceLevel', filter);
+                if (filters.experience_level.includes(filter)) toggleArrayFilter('experience_level', filter);
                 if (filters.skills.includes(filter)) toggleArrayFilter('skills', filter);
               }} />
             </Badge>
@@ -149,12 +149,12 @@ const JobFilters = ({ onFilterChange }: JobFiltersProps) => {
           <Label className="text-sm font-semibold">Experience Level</Label>
         </CollapsibleTrigger>
         <CollapsibleContent className="space-y-2 mt-2">
-          {experienceOptions.map(option => (
+          {experience_levelOptions.map(option => (
             <div key={option} className="flex items-center space-x-2">
               <Checkbox
                 id={`exp-${option}`}
-                checked={filters.experienceLevel.includes(option)}
-                onCheckedChange={() => toggleArrayFilter('experienceLevel', option)}
+                checked={filters.experience_level.includes(option)}
+                onCheckedChange={() => toggleArrayFilter('experience_level', option)}
               />
               <label htmlFor={`exp-${option}`} className="text-sm cursor-pointer">
                 {option}
@@ -170,12 +170,12 @@ const JobFilters = ({ onFilterChange }: JobFiltersProps) => {
           <Label className="text-sm font-semibold">Job Type</Label>
         </CollapsibleTrigger>
         <CollapsibleContent className="space-y-2 mt-2">
-          {jobTypeOptions.map(option => (
+          {job_typeOptions.map(option => (
             <div key={option} className="flex items-center space-x-2">
               <Checkbox
                 id={`type-${option}`}
-                checked={filters.jobType.includes(option)}
-                onCheckedChange={() => toggleArrayFilter('jobType', option)}
+                checked={filters.job_type.includes(option)}
+                onCheckedChange={() => toggleArrayFilter('job_type', option)}
               />
               <label htmlFor={`type-${option}`} className="text-sm cursor-pointer">
                 {option}

@@ -62,7 +62,7 @@ const SkillTestMCQs: React.FC<{ topic: Topic }> = ({ topic }) => {
     setMode("add");
     setEditing(null);
     setQuestion("");
-    setOptions(["", ""]);
+    setOptions(["", "", "", ""]); // always 4 default options
     setCorrectIndex(null);
     setOpen(true);
   };

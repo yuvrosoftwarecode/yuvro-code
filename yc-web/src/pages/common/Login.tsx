@@ -26,7 +26,7 @@ const Login: React.FC = () => {
       const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
 
       if (storedUser.role === "admin" || storedUser.role === "instructor" || storedUser.role === "recruiter") {
-        navigate("/admin/dashboard");
+        navigate("/instructor/dashboard");
       } else {
         navigate("/student/dashboard");
       }

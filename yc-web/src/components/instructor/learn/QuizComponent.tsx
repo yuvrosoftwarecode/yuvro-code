@@ -1,7 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Trash, Edit, Plus } from "lucide-react";
@@ -18,7 +24,6 @@ const QuizComponent = ({ subtopic }: any) => {
   const [quizzes, setQuizzes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Modal states
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<"add" | "edit">("add");
   const [editingQuiz, setEditingQuiz] = useState<any | null>(null);
@@ -30,7 +35,6 @@ const QuizComponent = ({ subtopic }: any) => {
 
   useEffect(() => {
     if (subtopic?.id) loadQuizzes();
-    // eslint-disable-next-line
   }, [subtopic]);
 
   const loadQuizzes = async () => {
@@ -45,44 +49,55 @@ const QuizComponent = ({ subtopic }: any) => {
     }
   };
 
+  // ============ ADD QUIZ =============
   const openAddModal = () => {
     setMode("add");
     setEditingQuiz(null);
+
     setQuestion("");
-    setOptions(["", ""]);
+    setOptions(["", "","", ""]); // always 2 default options
     setCorrectIndex(null);
+
     setOpen(true);
   };
 
+  // ============ EDIT QUIZ =============
   const openEditModal = (quiz: any) => {
     setMode("edit");
     setEditingQuiz(quiz);
+
     setQuestion(quiz.question);
     setOptions(quiz.options);
     setCorrectIndex(quiz.correct_answer_index);
+
     setOpen(true);
   };
 
-  // Add/remove option fields
+  // ============ OPTION HANDLING =============
   const addOption = () => setOptions([...options, ""]);
+
   const removeOption = (i: number) => {
     if (options.length <= 2) {
       toast.error("Quiz must have at least 2 options");
       return;
     }
-    const copy = [...options];
-    copy.splice(i, 1);
-    setOptions(copy);
 
-    // adjust correct index
+    const updated = [...options];
+    updated.splice(i, 1);
+    setOptions(updated);
+
     if (correctIndex === i) setCorrectIndex(null);
   };
 
+  // ============ SAVE QUIZ =============
   const saveQuiz = async () => {
     if (!question.trim()) return toast.error("Enter a question");
-    if (options.some((o) => !o.trim())) return toast.error("Options cannot be empty");
-    if (options.length < 2) return toast.error("At least 2 options required");
-    if (correctIndex === null) return toast.error("Select correct answer");
+    if (options.some((o) => !o.trim()))
+      return toast.error("Options cannot be empty");
+    if (options.length < 2)
+      return toast.error("At least 2 options required");
+    if (correctIndex === null)
+      return toast.error("Select correct answer");
 
     const payload = {
       category: "learn_certify",
@@ -92,7 +107,6 @@ const QuizComponent = ({ subtopic }: any) => {
       options,
       correct_answer_index: correctIndex,
     };
-
 
     try {
       if (mode === "add") {
@@ -113,6 +127,7 @@ const QuizComponent = ({ subtopic }: any) => {
     }
   };
 
+  // ============ DELETE QUIZ =============
   const removeQuiz = async (id: string) => {
     try {
       await deleteQuiz(id);
@@ -123,10 +138,12 @@ const QuizComponent = ({ subtopic }: any) => {
     }
   };
 
+  // ============ UI =============
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-semibold">Quizzes</h3>
+
         <Button onClick={openAddModal} className="flex gap-2">
           <Plus size={16} /> Add Quiz
         </Button>
@@ -146,7 +163,14 @@ const QuizComponent = ({ subtopic }: any) => {
                     <div className="font-medium">{quiz.question}</div>
                     <ul className="list-disc ml-5 text-sm mt-1">
                       {quiz.options.map((o: string, idx: number) => (
-                        <li key={idx} className={idx === quiz.correct_answer_index ? "text-green-600 font-semibold" : ""}>
+                        <li
+                          key={idx}
+                          className={
+                            idx === quiz.correct_answer_index
+                              ? "text-green-600 font-semibold"
+                              : ""
+                          }
+                        >
                           {o}
                         </li>
                       ))}
@@ -157,7 +181,11 @@ const QuizComponent = ({ subtopic }: any) => {
                     <Button variant="ghost" onClick={() => openEditModal(quiz)}>
                       <Edit size={16} />
                     </Button>
-                    <Button variant="destructive" onClick={() => removeQuiz(quiz.id)}>
+
+                    <Button
+                      variant="destructive"
+                      onClick={() => removeQuiz(quiz.id)}
+                    >
                       <Trash size={16} />
                     </Button>
                   </div>
@@ -168,17 +196,22 @@ const QuizComponent = ({ subtopic }: any) => {
         </div>
       )}
 
-      {/* Add/Edit Modal */}
+      {/* ADD / EDIT MODAL */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{mode === "add" ? "Add Quiz" : "Edit Quiz"}</DialogTitle>
+            <DialogTitle>
+              {mode === "add" ? "Add Quiz" : "Edit Quiz"}
+            </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 py-2">
             <div>
               <Label>Question</Label>
-              <Input value={question} onChange={(e) => setQuestion(e.target.value)} />
+              <Input
+                value={question}
+                onChange={(e) => setQuestion(e.target.value)}
+              />
             </div>
 
             <div>
@@ -189,11 +222,12 @@ const QuizComponent = ({ subtopic }: any) => {
                   <Input
                     value={opt}
                     onChange={(e) => {
-                      const copy = [...options];
-                      copy[i] = e.target.value;
-                      setOptions(copy);
+                      const updated = [...options];
+                      updated[i] = e.target.value;
+                      setOptions(updated);
                     }}
                   />
+
                   <Button variant="destructive" onClick={() => removeOption(i)}>
                     <Trash size={16} />
                   </Button>
@@ -226,6 +260,7 @@ const QuizComponent = ({ subtopic }: any) => {
             <Button variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
+
             <Button onClick={saveQuiz}>
               {mode === "add" ? "Create Quiz" : "Save Changes"}
             </Button>

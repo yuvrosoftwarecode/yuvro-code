@@ -133,7 +133,7 @@ function App() {
               />
 
               <Route
-                path="/admin/dashboard"
+                path="/instructor/dashboard"
                 element={
                   <ProtectedRoute allowedRoles={["admin", "instructor", "recruiter"]}>
                     <InstructorDashboard />
@@ -142,7 +142,7 @@ function App() {
               />
 
               <Route
-                path="/admin/courses"
+                path="/instructor/courses"
                 element={
                   <ProtectedRoute allowedRoles={["admin", "instructor"]}>
                     <Courses />
@@ -151,7 +151,7 @@ function App() {
               />
 
               <Route
-                path="/admin/learn"
+                path="/instructor/learn"
                 element={
                   <ProtectedRoute allowedRoles={["admin", "instructor"]}>
                     <LearnAndCertify />
@@ -160,7 +160,7 @@ function App() {
               />
 
               <Route
-                path="/admin/learn/:id"
+                path="/instructor/learn/:id"
                 element={
                   <ProtectedRoute allowedRoles={["admin", "instructor"]}>
                     <CourseEdit />
@@ -169,7 +169,7 @@ function App() {
               />
 
               <Route
-                path="/admin/code-management"
+                path="/instructor/code-management"
                 element={
                   <ProtectedRoute allowedRoles={["admin", "instructor"]}>
                     <CodeManagement />
@@ -178,7 +178,7 @@ function App() {
               />
 
               <Route
-                path="/admin/jobs"
+                path="/instructor/jobs"
                 element={
                   <ProtectedRoute allowedRoles={["admin", "instructor", "recruiter"]}>
                     <Jobs />
@@ -187,7 +187,7 @@ function App() {
               />
 
               <Route
-                path="/admin/users"
+                path="/instructor/users"
                 element={
                   <ProtectedRoute allowedRoles={["admin"]}>
                     <Users />
@@ -196,7 +196,7 @@ function App() {
               />
 
               <Route
-                path="/admin/batches"
+                path="/instructor/batches"
                 element={
                   <ProtectedRoute allowedRoles={["admin", "instructor"]}>
                     <div>Batches Management</div>
@@ -205,7 +205,7 @@ function App() {
               />
 
               <Route
-                path="/admin/students"
+                path="/instructor/students"
                 element={
                   <ProtectedRoute allowedRoles={["admin", "instructor"]}>
                     <div>Students Management</div>
@@ -214,7 +214,7 @@ function App() {
               />
 
               <Route
-                path="/admin/practice-questions"
+                path="/instructor/practice-questions"
                 element={
                   <ProtectedRoute allowedRoles={["admin", "instructor"]}>
                     <PracticeQuestions />
@@ -223,7 +223,7 @@ function App() {
               />
 
               <Route
-                path="/admin/skill-test"
+                path="/instructor/skill-test"
                 element={
                   <ProtectedRoute allowedRoles={["admin", "instructor"]}>
                     <InstructorSkillTest />
@@ -232,7 +232,7 @@ function App() {
               />
 
               <Route
-                path="/admin/settings"
+                path="/instructor/settings"
                 element={
                   <ProtectedRoute allowedRoles={["admin", "instructor", "recruiter"]}>
                     <div>Settings</div>
@@ -241,7 +241,7 @@ function App() {
               />
 
               <Route
-                path="/admin/profile"
+                path="/instructor/profile"
                 element={
                   <ProtectedRoute allowedRoles={["admin", "instructor", "recruiter"]}>
                     <div>Profile</div>

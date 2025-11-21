@@ -13,7 +13,7 @@ const DashboardRedirect: React.FC = () => {
         case 'admin':
         case 'instructor':
         case 'recruiter':
-          navigate('/admin/dashboard', { replace: true });
+          navigate('/instructor/dashboard', { replace: true });
           break;
         case 'student':
         default:

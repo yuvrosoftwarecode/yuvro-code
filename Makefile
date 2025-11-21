@@ -99,10 +99,14 @@ setup:
 setup-testing:
 	@echo "Setting up test data for local development..."
 	docker compose exec backend python manage.py setup_local_testing
+	docker compose exec backend python manage.py load_sample_courses --clear
+
 
 setup-testing-fresh:
 	@echo "Setting up fresh test data (clearing existing data)..."
 	docker compose exec backend python manage.py setup_local_testing --clear
+	docker compose exec backend python manage.py load_sample_courses --clear
+
 
 clean:
 	docker compose down -v --remove-orphans

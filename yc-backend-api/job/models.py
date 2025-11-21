@@ -16,6 +16,8 @@ class Job(models.Model):
     preferred_skills = models.JSONField(default=list, blank=True)
     benefits = models.JSONField(default=list, blank=True)
     company_info = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
 
     def __str__(self):
         return f"{self.title} at {self.company}"

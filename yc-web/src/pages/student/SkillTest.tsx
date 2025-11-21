@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import Navigation from '../../components/Navigation';
-import CourseCard from '../../components/student/CourseCard';
 import courseService, { Course } from '../../services/courseService';
 
 interface TestQuestion {

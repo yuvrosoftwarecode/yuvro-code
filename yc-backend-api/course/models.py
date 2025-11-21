@@ -6,7 +6,6 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
-
 class Course(models.Model):
     """
     Course model representing a complete learning course.
@@ -354,4 +353,3 @@ class CourseInstructor(models.Model):
 
     def save(self, *args, **kwargs):
         self.full_clean()  # Validate before saving
-        super().save(*args, **kwargs)

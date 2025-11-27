@@ -28,8 +28,6 @@ class Course(models.Model):
         related_name="courses_taught"
     )
 
-    
-
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -40,7 +38,6 @@ class Course(models.Model):
         if self.short_code:
             return f"{self.short_code}: {self.name}"
         return self.name
-
 
 class Topic(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -78,7 +75,6 @@ class Topic(models.Model):
 
         super().save(*args, **kwargs)
 
-
 class Subtopic(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     topic = models.ForeignKey(Topic, on_delete=models.CASCADE, related_name="subtopics")
@@ -115,7 +111,6 @@ class Subtopic(models.Model):
 
         super().save(*args, **kwargs)
 
-
 class Video(models.Model):
     """
     Video model representing video content associated with a subtopic.
@@ -136,7 +131,6 @@ class Video(models.Model):
 
     def __str__(self):
         return f"{self.sub_topic.name} - {self.title}"
-
 
 class CodingProblem(models.Model):
     CATEGORY_CHOICES = [
@@ -202,10 +196,6 @@ class CodingProblem(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
-
-    
-
-
 
 class Quiz(models.Model):
     CATEGORY_CHOICES = [
@@ -353,3 +343,4 @@ class CourseInstructor(models.Model):
 
     def save(self, *args, **kwargs):
         self.full_clean()  # Validate before saving
+        super().save(*args, **kwargs)

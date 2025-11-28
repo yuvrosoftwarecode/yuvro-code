@@ -4,17 +4,28 @@ from rest_framework.decorators import action
 from django.db import IntegrityError
 from django.shortcuts import get_object_or_404
 from .models import (
-    Course, Topic, Subtopic, Video,
-    Quiz, CodingProblem, Note, CourseInstructor
+    Course,
+    Topic,
+    Subtopic,
+    Video,
+    Quiz,
+    CodingProblem,
+    Note,
+    CourseInstructor,
 )
 from .serializers import (
-    CourseSerializer, CourseBasicSerializer,
-    TopicSerializer, TopicBasicSerializer,
-    SubtopicSerializer, VideoSerializer,
-    QuizSerializer, CodingProblemSerializer,
-    NoteSerializer
+    CourseSerializer,
+    CourseBasicSerializer,
+    TopicSerializer,
+    TopicBasicSerializer,
+    SubtopicSerializer,
+    VideoSerializer,
+    QuizSerializer,
+    CodingProblemSerializer,
+    NoteSerializer,
 )
 from django.contrib.auth import get_user_model
+
 User = get_user_model()
 
 
@@ -22,9 +33,7 @@ User = get_user_model()
 #   REUSABLE CHECK — Instructor must be assigned
 # =====================================================
 def instructor_assigned(user, course):
-    return CourseInstructor.objects.filter(
-        instructor=user, course=course
-    ).exists()
+    return CourseInstructor.objects.filter(instructor=user, course=course).exists()
 
 
 # =====================================================
@@ -55,10 +64,12 @@ class CourseViewSet(viewsets.ModelViewSet):
     def instructors(self, request, pk=None):
         course = self.get_object()
         instructors = course.instructors.all()
-        return Response([
-            {"id": str(u.id), "name": u.username, "email": u.email}
-            for u in instructors
-        ])
+        return Response(
+            [
+                {"id": str(u.id), "name": u.username, "email": u.email}
+                for u in instructors
+            ]
+        )
 
     @action(detail=True, methods=["post"])
     def add_instructor(self, request, pk=None):
@@ -81,7 +92,9 @@ class CourseViewSet(viewsets.ModelViewSet):
     def remove_instructor(self, request, pk=None):
         course = self.get_object()
         instructor_id = request.data.get("instructor_id")
-        mapping = CourseInstructor.objects.filter(course=course, instructor_id=instructor_id).first()
+        mapping = CourseInstructor.objects.filter(
+            course=course, instructor_id=instructor_id
+        ).first()
 
         if not mapping:
             return Response({"error": "Instructor not assigned"}, status=400)
@@ -109,9 +122,9 @@ class TopicViewSet(viewsets.ModelViewSet):
         user = self.request.user
 
         if user.role == "instructor":
-            assigned_ids = CourseInstructor.objects.filter(
-                instructor=user
-            ).values_list("course_id", flat=True)
+            assigned_ids = CourseInstructor.objects.filter(instructor=user).values_list(
+                "course_id", flat=True
+            )
             qs = qs.filter(course_id__in=assigned_ids)
 
         course_id = self.request.query_params.get("course")
@@ -125,7 +138,9 @@ class TopicViewSet(viewsets.ModelViewSet):
         course_id = request.data.get("course")
         course = get_object_or_404(Course, id=course_id)
 
-        if user.role == "admin" or (user.role == "instructor" and instructor_assigned(user, course)):
+        if user.role == "admin" or (
+            user.role == "instructor" and instructor_assigned(user, course)
+        ):
             return super().create(request, *a, **kw)
 
         return Response({"error": "Not allowed"}, status=403)
@@ -135,7 +150,9 @@ class TopicViewSet(viewsets.ModelViewSet):
         course = topic.course
         user = request.user
 
-        if user.role == "admin" or (user.role == "instructor" and instructor_assigned(user, course)):
+        if user.role == "admin" or (
+            user.role == "instructor" and instructor_assigned(user, course)
+        ):
             return super().update(request, *a, **kw)
 
         return Response({"error": "Not allowed"}, status=403)
@@ -145,7 +162,9 @@ class TopicViewSet(viewsets.ModelViewSet):
         course = topic.course
         user = request.user
 
-        if user.role == "admin" or (user.role == "instructor" and instructor_assigned(user, course)):
+        if user.role == "admin" or (
+            user.role == "instructor" and instructor_assigned(user, course)
+        ):
             return super().destroy(request, *a, **kw)
 
         return Response({"error": "Not allowed"}, status=403)
@@ -181,7 +200,9 @@ class SubtopicViewSet(viewsets.ModelViewSet):
         topic = get_object_or_404(Topic, id=request.data.get("topic"))
         course = topic.course
 
-        if user.role == "admin" or (user.role == "instructor" and instructor_assigned(user, course)):
+        if user.role == "admin" or (
+            user.role == "instructor" and instructor_assigned(user, course)
+        ):
             return super().create(request, *a, **kw)
 
         return Response({"error": "Not allowed"}, status=403)
@@ -191,7 +212,9 @@ class SubtopicViewSet(viewsets.ModelViewSet):
         course = sub.topic.course
         user = request.user
 
-        if user.role == "admin" or (user.role == "instructor" and instructor_assigned(user, course)):
+        if user.role == "admin" or (
+            user.role == "instructor" and instructor_assigned(user, course)
+        ):
             return super().update(request, *a, **kw)
 
         return Response({"error": "Not allowed"}, status=403)
@@ -201,7 +224,9 @@ class SubtopicViewSet(viewsets.ModelViewSet):
         course = sub.topic.course
         user = request.user
 
-        if user.role == "admin" or (user.role == "instructor" and instructor_assigned(user, course)):
+        if user.role == "admin" or (
+            user.role == "instructor" and instructor_assigned(user, course)
+        ):
             return super().destroy(request, *a, **kw)
 
         return Response({"error": "Not allowed"}, status=403)
@@ -236,7 +261,9 @@ class VideoViewSet(viewsets.ModelViewSet):
         course = subtopic.topic.course
         user = request.user
 
-        if user.role == "admin" or (user.role == "instructor" and instructor_assigned(user, course)):
+        if user.role == "admin" or (
+            user.role == "instructor" and instructor_assigned(user, course)
+        ):
             return super().create(request, *a, **kw)
 
         return Response({"error": "Not allowed"}, status=403)
@@ -246,7 +273,9 @@ class VideoViewSet(viewsets.ModelViewSet):
         course = video.sub_topic.topic.course
         user = request.user
 
-        if user.role == "admin" or (user.role == "instructor" and instructor_assigned(user, course)):
+        if user.role == "admin" or (
+            user.role == "instructor" and instructor_assigned(user, course)
+        ):
             return super().update(request, *a, **kw)
 
         return Response({"error": "Not allowed"}, status=403)
@@ -256,7 +285,9 @@ class VideoViewSet(viewsets.ModelViewSet):
         course = video.sub_topic.topic.course
         user = request.user
 
-        if user.role == "admin" or (user.role == "instructor" and instructor_assigned(user, course)):
+        if user.role == "admin" or (
+            user.role == "instructor" and instructor_assigned(user, course)
+        ):
             return super().destroy(request, *a, **kw)
 
         return Response({"error": "Not allowed"}, status=403)
@@ -285,11 +316,11 @@ class QuizViewSet(viewsets.ModelViewSet):
                 ).values_list("course_id", flat=True)
             )
 
-        if (cid := self.request.query_params.get("category")):
+        if cid := self.request.query_params.get("category"):
             qs = qs.filter(category=cid)
-        if (tid := self.request.query_params.get("topic")):
+        if tid := self.request.query_params.get("topic"):
             qs = qs.filter(topic_id=tid)
-        if (sid := self.request.query_params.get("sub_topic")):
+        if sid := self.request.query_params.get("sub_topic"):
             qs = qs.filter(sub_topic_id=sid)
 
         return qs
@@ -307,7 +338,9 @@ class QuizViewSet(viewsets.ModelViewSet):
         if subtopic_id:
             course = get_object_or_404(Subtopic, id=subtopic_id).topic.course
 
-        if user.role == "admin" or (user.role == "instructor" and instructor_assigned(user, course)):
+        if user.role == "admin" or (
+            user.role == "instructor" and instructor_assigned(user, course)
+        ):
             return super().create(request, *a, **kw)
 
         return Response({"error": "Not allowed"}, status=403)
@@ -317,7 +350,9 @@ class QuizViewSet(viewsets.ModelViewSet):
         course = quiz.topic.course if quiz.topic else quiz.sub_topic.topic.course
         user = request.user
 
-        if user.role == "admin" or (user.role == "instructor" and instructor_assigned(user, course)):
+        if user.role == "admin" or (
+            user.role == "instructor" and instructor_assigned(user, course)
+        ):
             return super().update(request, *a, **kw)
 
         return Response({"error": "Not allowed"}, status=403)
@@ -327,7 +362,9 @@ class QuizViewSet(viewsets.ModelViewSet):
         course = quiz.topic.course if quiz.topic else quiz.sub_topic.topic.course
         user = request.user
 
-        if user.role == "admin" or (user.role == "instructor" and instructor_assigned(user, course)):
+        if user.role == "admin" or (
+            user.role == "instructor" and instructor_assigned(user, course)
+        ):
             return super().destroy(request, *a, **kw)
 
         return Response({"error": "Not allowed"}, status=403)
@@ -356,11 +393,11 @@ class CodingProblemViewSet(viewsets.ModelViewSet):
                 ).values_list("course_id", flat=True)
             )
 
-        if (cid := self.request.query_params.get("category")):
+        if cid := self.request.query_params.get("category"):
             qs = qs.filter(category=cid)
-        if (tid := self.request.query_params.get("topic")):
+        if tid := self.request.query_params.get("topic"):
             qs = qs.filter(topic_id=tid)
-        if (sid := self.request.query_params.get("sub_topic")):
+        if sid := self.request.query_params.get("sub_topic"):
             qs = qs.filter(sub_topic_id=sid)
 
         return qs
@@ -377,27 +414,37 @@ class CodingProblemViewSet(viewsets.ModelViewSet):
         if sub_id:
             course = get_object_or_404(Subtopic, id=sub_id).topic.course
 
-        if user.role == "admin" or (user.role == "instructor" and instructor_assigned(user, course)):
+        if user.role == "admin" or (
+            user.role == "instructor" and instructor_assigned(user, course)
+        ):
             return super().create(request, *a, **kw)
 
         return Response({"error": "Not allowed"}, status=403)
 
     def update(self, request, *a, **kw):
         problem = self.get_object()
-        course = problem.topic.course if problem.topic else problem.sub_topic.topic.course
+        course = (
+            problem.topic.course if problem.topic else problem.sub_topic.topic.course
+        )
         user = request.user
 
-        if user.role == "admin" or (user.role == "instructor" and instructor_assigned(user, course)):
+        if user.role == "admin" or (
+            user.role == "instructor" and instructor_assigned(user, course)
+        ):
             return super().update(request, *a, **kw)
 
         return Response({"error": "Not allowed"}, status=403)
 
     def destroy(self, request, *a, **kw):
         problem = self.get_object()
-        course = problem.topic.course if problem.topic else problem.sub_topic.topic.course
+        course = (
+            problem.topic.course if problem.topic else problem.sub_topic.topic.course
+        )
         user = request.user
 
-        if user.role == "admin" or (user.role == "instructor" and instructor_assigned(user, course)):
+        if user.role == "admin" or (
+            user.role == "instructor" and instructor_assigned(user, course)
+        ):
             return super().destroy(request, *a, **kw)
 
         return Response({"error": "Not allowed"}, status=403)
@@ -422,7 +469,7 @@ class NoteViewSet(viewsets.ModelViewSet):
                 ).values_list("course_id", flat=True)
             )
 
-        if (sid := self.request.query_params.get("sub_topic")):
+        if sid := self.request.query_params.get("sub_topic"):
             qs = qs.filter(sub_topic_id=sid)
 
         return qs
@@ -432,7 +479,10 @@ class NoteViewSet(viewsets.ModelViewSet):
         subtopic = get_object_or_404(Subtopic, id=request.data.get("sub_topic"))
         course = subtopic.topic.course
 
-        if not (user.role == "admin" or (user.role == "instructor" and instructor_assigned(user, course))):
+        if not (
+            user.role == "admin"
+            or (user.role == "instructor" and instructor_assigned(user, course))
+        ):
             return Response({"error": "Not allowed"}, status=403)
 
         serializer = self.get_serializer(data=request.data)
@@ -448,7 +498,10 @@ class NoteViewSet(viewsets.ModelViewSet):
         course = note.sub_topic.topic.course
         user = request.user
 
-        if not (user.role == "admin" or (user.role == "instructor" and instructor_assigned(user, course))):
+        if not (
+            user.role == "admin"
+            or (user.role == "instructor" and instructor_assigned(user, course))
+        ):
             return Response({"error": "Not allowed"}, status=403)
 
         return super().update(request, *a, **kw)
@@ -458,7 +511,10 @@ class NoteViewSet(viewsets.ModelViewSet):
         course = note.sub_topic.topic.course
         user = request.user
 
-        if not (user.role == "admin" or (user.role == "instructor" and instructor_assigned(user, course))):
+        if not (
+            user.role == "admin"
+            or (user.role == "instructor" and instructor_assigned(user, course))
+        ):
             return Response({"error": "Not allowed"}, status=403)
 
         return super().destroy(request, *a, **kw)

@@ -1,6 +1,15 @@
 from rest_framework import serializers
 
-from .models import Course, Topic, Subtopic, Video, Quiz, CodingProblem, Note, CourseInstructor
+from .models import (
+    Course,
+    Topic,
+    Subtopic,
+    Video,
+    Quiz,
+    CodingProblem,
+    Note,
+    CourseInstructor,
+)
 from authentication.serializers import UserSerializer
 from django.contrib.auth import get_user_model
 
@@ -51,13 +60,13 @@ class TopicBasicSerializer(serializers.ModelSerializer):
         fields = ["id", "course", "name", "order_index", "created_at"]
         read_only_fields = ["id", "created_at"]
 
+
 class CourseInstructorSerializer(serializers.ModelSerializer):
     instructor = UserSerializer(read_only=True)
 
     class Meta:
         model = CourseInstructor
         fields = ["id", "instructor", "created_at"]
-
 
 
 class CourseSerializer(serializers.ModelSerializer):
@@ -79,12 +88,13 @@ class CourseSerializer(serializers.ModelSerializer):
             "updated_at",
             "topics",
             "instructors",
-       
         ]
         read_only_fields = ["id", "created_at", "updated_at"]
 
     def get_instructors(self, obj):
-        mappings = CourseInstructor.objects.filter(course=obj).select_related("instructor")
+        mappings = CourseInstructor.objects.filter(course=obj).select_related(
+            "instructor"
+        )
         return CourseInstructorSerializer(mappings, many=True).data
 
     def validate_short_code(self, value):
@@ -115,8 +125,6 @@ class CourseSerializer(serializers.ModelSerializer):
 
 
 class CourseBasicSerializer(serializers.ModelSerializer):
-    
-
     class Meta:
         model = Course
         fields = [
@@ -198,7 +206,6 @@ class QuizSerializer(serializers.ModelSerializer):
         return data
 
 
-
 class CodingProblemSerializer(serializers.ModelSerializer):
     class Meta:
         model = CodingProblem
@@ -267,7 +274,6 @@ class CodingProblemSerializer(serializers.ModelSerializer):
                 )
 
         return data
-
 
 
 class NoteSerializer(serializers.ModelSerializer):

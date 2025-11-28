@@ -64,7 +64,9 @@ class Command(BaseCommand):
             self.stdout.write(self.style.ERROR(str(e)))
             return
 
-        self.stdout.write("Creating sample courses, topics, subtopics, and questions...")
+        self.stdout.write(
+            "Creating sample courses, topics, subtopics, and questions..."
+        )
 
         with transaction.atomic():
             self._create_sample_data(instructor1, instructor2)
@@ -87,7 +89,9 @@ class Command(BaseCommand):
         You picked V2: YouTube-style placeholder links.
         We can still make them look uniqueish per resource.
         """
-        base_id = f"{course_short}-{topic_idx}-{sub_idx}-{video_idx}".replace("_", "").replace("-", "")
+        base_id = f"{course_short}-{topic_idx}-{sub_idx}-{video_idx}".replace(
+            "_", ""
+        ).replace("-", "")
         # Just take a slice (YouTube IDs are 11 chars, but any string is fine here)
         yt_id = (base_id or "samplevideo").lower()[:11]
         return f"https://youtu.be/{yt_id or 'samplevideo'}"
@@ -99,12 +103,20 @@ class Command(BaseCommand):
         """
         if label == "sum":
             basic = [
-                {"input": "2 3", "output": "5", "description": "Small positive numbers"},
+                {
+                    "input": "2 3",
+                    "output": "5",
+                    "description": "Small positive numbers",
+                },
                 {"input": "10 0", "output": "10", "description": "Zero case"},
             ]
             advanced = [
                 {"input": "-5 12", "output": "7", "description": "Negative + positive"},
-                {"input": "1000000 1000000", "output": "2000000", "description": "Large numbers"},
+                {
+                    "input": "1000000 1000000",
+                    "output": "2000000",
+                    "description": "Large numbers",
+                },
             ]
         else:
             basic = [
@@ -113,7 +125,11 @@ class Command(BaseCommand):
             ]
             advanced = [
                 {"input": "racecar", "output": "racecar", "description": "Palindrome"},
-                {"input": "longerstring", "output": "gnirtSregnol".lower(), "description": "Long string"},
+                {
+                    "input": "longerstring",
+                    "output": "gnirtSregnol".lower(),
+                    "description": "Long string",
+                },
             ]
         return basic, advanced
 
@@ -137,7 +153,9 @@ class Command(BaseCommand):
             Video.objects.create(
                 sub_topic=subtopic,
                 title=title,
-                video_link=self._youtube_link(course.short_code, topic_index, sub_index, v_idx),
+                video_link=self._youtube_link(
+                    course.short_code, topic_index, sub_index, v_idx
+                ),
                 ai_context=f"Context for {title} in course {course.name}",
             )
 
@@ -319,7 +337,9 @@ class Command(BaseCommand):
                 if created:
                     self.stdout.write(f"  ✓ Created course: {course_name} [{desc}]")
                 else:
-                    self.stdout.write(f"  - Course already exists: {course_name} [{desc}]")
+                    self.stdout.write(
+                        f"  - Course already exists: {course_name} [{desc}]"
+                    )
 
                 # Assign instructors via CourseInstructor
                 for inst in owners:
@@ -362,4 +382,6 @@ class Command(BaseCommand):
                             course, topic, subtopic, t_idx, s_idx
                         )
 
-        self.stdout.write(self.style.SUCCESS("\nSuccessfully created full sample dataset."))
+        self.stdout.write(
+            self.style.SUCCESS("\nSuccessfully created full sample dataset.")
+        )

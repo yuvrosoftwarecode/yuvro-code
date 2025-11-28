@@ -300,11 +300,13 @@ def admin_users(request):
     admins = User.objects.filter(is_staff=True).values("id", "email", "username")
     return Response(list(admins))
 
+
 from django.contrib.auth import get_user_model
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
 User = get_user_model()
+
 
 class UsersListView(APIView):
     def get(self, request):
@@ -316,12 +318,7 @@ class UsersListView(APIView):
             users = users.filter(role=role)
 
         data = [
-            {
-                "id": u.id,
-                "username": u.username,
-                "email": u.email,
-                "role": u.role
-            }
+            {"id": u.id, "username": u.username, "email": u.email, "role": u.role}
             for u in users
         ]
 

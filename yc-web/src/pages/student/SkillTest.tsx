@@ -1,382 +1,438 @@
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
-import Navigation from '../../components/Navigation';
-import courseService, { Course } from '../../services/courseService';
+// src/pages/student/SkillTest.tsx
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import Navigation from "@/components/Navigation";
+import { useAuth } from "@/contexts/AuthContext";
 
-interface TestQuestion {
-  id: number;
-  question: string;
-  options: string[];
-  correct_answer: number;
-  difficulty: 'easy' | 'medium' | 'hard';
-  category: string;
+import CourseSelection from "@/components/student/skill-test/CourseSelection";
+import TopicSidebar from "@/components/student/skill-test/TopicSidebar";
+import TestCards from "@/components/student/skill-test/TestCards";
+import TestInstructions from "@/components/student/skill-test/TestInstructions";
+import TestThankYou from "@/components/student/skill-test/TestThankYou";
+import TestResults from "@/components/student/skill-test/TestResults";
+import AssessmentInterface from "@/components/student/AssessmentInterface";
+
+import {
+  fetchCourses,
+  fetchTopicsByCourse,
+  fetchSkillTestQuizzesByTopic,
+  fetchSkillTestCodingProblemsByTopic,
+} from "@/services/courseService";
+import { toast } from "sonner";
+
+// -------------------- Types for this page --------------------
+
+export interface Topic {
+  id: string;
+  name: string;
+  // Progress-related fields (not yet calculated, kept for UI compatibility)
+  progress: number;
+  completed: boolean;
 }
 
-interface Test {
-  id: number;
-  title: string;
+export interface Course {
+  id: string;
+  name: string;
   description: string;
-  duration: number;
-  questions: TestQuestion[];
-  category: string;
+  icon: string;
+  color: string;
+  topics: Topic[];
 }
 
-const SAMPLE_TESTS: Test[] = [
-  {
-    id: 1,
-    title: 'JavaScript Fundamentals',
-    description: 'Test your knowledge of JavaScript basics including variables, functions, and objects.',
-    duration: 30,
-    category: 'Programming',
-    questions: [
-      {
-        id: 1,
-        question: 'What is the correct way to declare a variable in JavaScript?',
-        options: ['var x = 5;', 'variable x = 5;', 'v x = 5;', 'declare x = 5;'],
-        correct_answer: 0,
-        difficulty: 'easy',
-        category: 'JavaScript'
-      }
-    ]
-  },
-  {
-    id: 2,
-    title: 'Python Data Structures',
-    description: 'Assess your understanding of Python lists, dictionaries, and sets.',
-    duration: 45,
-    category: 'Programming',
-    questions: []
-  },
-  {
-    id: 3,
-    title: 'Web Development Basics',
-    description: 'Test your HTML, CSS, and basic web development knowledge.',
-    duration: 25,
-    category: 'Web Development',
-    questions: []
-  }
+export interface Test {
+  id: string;
+  title: string;
+  difficulty: "Easy" | "Medium" | "Hard";
+  questions: number;
+  duration: number; // minutes
+  topicId: string;
+}
+
+// Stats reported by AssessmentInterface when test completes
+interface TestStats {
+  answeredCount: number;
+  totalQuestions: number;
+  timeSpent: number; // seconds
+}
+
+type View =
+  | "courses"
+  | "tests"
+  | "instructions"
+  | "test"
+  | "thankyou"
+  | "results";
+
+const ICONS = ["🧠", "🗂️", "⚙️", "🐍", "⚡", "⚛️", "📘", "💻"];
+const COLORS = [
+  "blue",
+  "green",
+  "orange",
+  "yellow",
+  "purple",
+  "cyan",
+  "pink",
+  "indigo",
 ];
 
 const SkillTest: React.FC = () => {
   const { user } = useAuth();
-  const [selectedTest, setSelectedTest] = useState<Test | null>(null);
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [answers, setAnswers] = useState<{ [key: number]: number }>({});
-  const [testStarted, setTestStarted] = useState(false);
-  const [testCompleted, setTestCompleted] = useState(false);
-  const [timeRemaining, setTimeRemaining] = useState(0);
-  const [score, setScore] = useState(0);
-  
-  // Course-related state
-  const [view, setView] = useState<'courses' | 'tests' | 'test'>('courses');
+  const navigate = useNavigate();
+
+  // -------------------- State --------------------
+
   const [courses, setCourses] = useState<Course[]>([]);
+  const [loadingCourses, setLoadingCourses] = useState(true);
+
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
-  const [coursesLoading, setCoursesLoading] = useState(true);
+  const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
+  const [selectedTest, setSelectedTest] = useState<Test | null>(null);
+
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [currentView, setCurrentView] = useState<View>("courses");
+
+  const [tests, setTests] = useState<Test[]>([]);
+  const [testCompleted, setTestCompleted] = useState<Set<string>>(new Set());
+  const [testStats, setTestStats] = useState<TestStats | null>(null);
+
+  // -------------------- Load courses from backend --------------------
 
   useEffect(() => {
-    loadCourses();
+    const load = async () => {
+      try {
+        setLoadingCourses(true);
+        const backendCourses = await fetchCourses();
+
+        // Map backend courses → UI courses
+        const mapped: Course[] = backendCourses.map(
+          (c: any, index: number): Course => ({
+            id: c.id,
+            name: c.name,
+            description: `Skill tests for ${c.name}`,
+            icon: ICONS[index % ICONS.length],
+            color: COLORS[index % COLORS.length],
+            topics: [], // topics will be loaded lazily per-course
+          })
+        );
+
+        setCourses(mapped);
+      } catch (err) {
+        console.error("Failed to load courses", err);
+        toast.error("Failed to load courses");
+      } finally {
+        setLoadingCourses(false);
+      }
+    };
+
+    load();
   }, []);
 
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (testStarted && timeRemaining > 0 && !testCompleted) {
-      timer = setTimeout(() => {
-        setTimeRemaining(timeRemaining - 1);
-      }, 1000);
-    } else if (timeRemaining === 0 && testStarted) {
-      completeTest();
-    }
-    return () => clearTimeout(timer);
-  }, [timeRemaining, testStarted, testCompleted]);
+  // -------------------- Helper: load tests for a topic (dynamic) --------------------
 
-  const loadCourses = async () => {
+  const loadTestsForTopic = async (topic: Topic) => {
     try {
-      setCoursesLoading(true);
-      const courseList = await courseService.getCourses();
-      setCourses(courseList);
-    } catch (error) {
-      console.error('Failed to load courses:', error);
-    } finally {
-      setCoursesLoading(false);
-    }
-  };
+      // Optional: you could add a separate loading state for tests
+      setTests([]);
 
-  const startTest = (test: Test) => {
-    setSelectedTest(test);
-    setTestStarted(true);
-    setTimeRemaining(test.duration * 60); // Convert minutes to seconds
-    setCurrentQuestion(0);
-    setAnswers({});
-    setTestCompleted(false);
-  };
+      // Fetch all skill test MCQs + coding problems for this topic
+      const [quizzes, codingProblems] = await Promise.all([
+        fetchSkillTestQuizzesByTopic(topic.id),
+        fetchSkillTestCodingProblemsByTopic(topic.id),
+      ]);
 
-  const selectAnswer = (questionId: number, answerIndex: number) => {
-    setAnswers(prev => ({
-      ...prev,
-      [questionId]: answerIndex
-    }));
-  };
+      const quizCount = Array.isArray(quizzes) ? quizzes.length : 0;
+      const codingCount = Array.isArray(codingProblems)
+        ? codingProblems.length
+        : 0;
+      const totalQuestions = quizCount + codingCount;
 
-  const nextQuestion = () => {
-    if (selectedTest && currentQuestion < selectedTest.questions.length - 1) {
-      setCurrentQuestion(currentQuestion + 1);
-    }
-  };
-
-  const previousQuestion = () => {
-    if (currentQuestion > 0) {
-      setCurrentQuestion(currentQuestion - 1);
-    }
-  };
-
-  const completeTest = () => {
-    if (!selectedTest) return;
-
-    let correctAnswers = 0;
-    selectedTest.questions.forEach(question => {
-      if (answers[question.id] === question.correct_answer) {
-        correctAnswers++;
+      // If no questions → no tests available
+      if (totalQuestions === 0) {
+        setTests([]);
+        return;
       }
-    });
 
-    const finalScore = Math.round((correctAnswers / selectedTest.questions.length) * 100);
-    setScore(finalScore);
-    setTestCompleted(true);
-    setTestStarted(false);
-  };
+      // Simple duration logic: 2 mins per question, at least 15 mins
+      const duration = Math.max(15, totalQuestions * 2);
 
-  const resetTest = () => {
-    setSelectedTest(null);
-    setTestStarted(false);
-    setTestCompleted(false);
-    setCurrentQuestion(0);
-    setAnswers({});
-    setTimeRemaining(0);
-    setScore(0);
-  };
+      const uiTest: Test = {
+        id: `${topic.id}-skill-test`,
+        title: `${topic.name} Skill Test`,
+        difficulty: "Medium",
+        questions: totalQuestions,
+        duration,
+        topicId: topic.id,
+      };
 
-  const formatTime = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-  };
-
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case 'easy': return 'text-green-600 bg-green-100';
-      case 'medium': return 'text-yellow-600 bg-yellow-100';
-      case 'hard': return 'text-red-600 bg-red-100';
-      default: return 'text-gray-600 bg-gray-100';
+      setTests([uiTest]);
+    } catch (err) {
+      console.error("Failed to load skill test questions", err);
+      toast.error("Failed to load skill test questions");
+      setTests([]);
     }
   };
 
-  if (testCompleted) {
+  // -------------------- Handlers --------------------
+
+  const handleCourseSelect = async (course: UiCourse) => {
+  setSelectedCourse(course);
+  setSelectedTopic(null);
+  setSelectedTest(null);
+  setSidebarOpen(true);
+  setCurrentView("tests");
+
+  try {
+    // Fetch topics
+    const backendTopics = await fetchTopicsByCourse(course.id);
+
+    const uiTopics: UiTopic[] = backendTopics.map((t: any) => ({
+      id: t.id,
+      name: t.name,
+      progress: 0,
+      completed: false,
+    }));
+
+    // Update course topics
+    setCourses(prev =>
+      prev.map(c =>
+        c.id === course.id ? { ...c, topics: uiTopics } : c
+      )
+    );
+
+    setSelectedCourse(prev =>
+      prev ? { ...prev, topics: uiTopics } : prev
+    );
+
+    setSelectedTopic(uiTopics[0] || null);
+
+    // ***** NOW BUILD DYNAMIC SKILL TESTS *****
+    const dynamicTests: UiTest[] = [];
+
+    for (const topic of uiTopics) {
+      const quizzes = await fetchSkillTestQuizzesByTopic(topic.id);
+      const coding = await fetchSkillTestCodingProblemsByTopic(topic.id);
+
+      const totalQuestions = quizzes.length + coding.length;
+
+      // If a topic has no skill test questions, skip it
+      if (totalQuestions === 0) continue;
+
+      dynamicTests.push({
+        id: `${course.id}-${topic.id}-skilltest`,
+        title: `${topic.name} Skill Test`,
+        difficulty: "Medium",
+        questions: totalQuestions,
+        duration: 45,
+        topicId: topic.id,
+      });
+    }
+
+    setTests(dynamicTests);
+  } catch (err) {
+    console.error("Failed to load topics or tests", err);
+    toast.error("Failed to load topics or tests");
+  }
+};
+;
+
+  const handleTopicSelect = (topic: Topic) => {
+    setSelectedTopic(topic);
+    setSelectedTest(null);
+    setCurrentView("tests");
+    loadTestsForTopic(topic);
+  };
+
+  const handleStartTest = (test: Test) => {
+    setSelectedTest(test);
+
+    // If test already completed → view results directly
+    if (testCompleted.has(test.id)) {
+      setCurrentView("results");
+    } else {
+      setCurrentView("instructions");
+    }
+  };
+
+  const handleBeginTest = () => {
+    setCurrentView("test");
+  };
+
+  const handleTestComplete = (
+    stats?: { answeredCount: number; totalQuestions: number; timeSpent: number }
+  ) => {
+    if (selectedTest) {
+      setTestCompleted((prev) => {
+        const updated = new Set(prev);
+        updated.add(selectedTest.id);
+        return updated;
+      });
+    }
+
+    if (stats) {
+      setTestStats(stats);
+    }
+
+    setCurrentView("thankyou");
+  };
+
+  const handleViewResults = () => {
+    setCurrentView("results");
+  };
+
+  const handleBackToCourses = () => {
+    setSelectedCourse(null);
+    setSelectedTopic(null);
+    setSelectedTest(null);
+    setTests([]);
+    setCurrentView("courses");
+  };
+
+  const handleBackToTests = () => {
+    setSelectedTest(null);
+    setCurrentView("tests");
+  };
+
+  const handleBackToInstructions = () => {
+    setCurrentView("instructions");
+  };
+
+  // Currently we only ever store tests for the selected topic,
+  // but keep this filter for safety/extensibility.
+  const filteredTests: Test[] = selectedTopic
+    ? tests.filter((t) => t.topicId === selectedTopic.id)
+    : [];
+
+  // Hide Navigation when full-screen test views?
+  const hideNavigation =
+    currentView === "instructions" ||
+    currentView === "test" ||
+    currentView === "thankyou" ||
+    currentView === "results";
+
+  // -------------------- View: Instructions --------------------
+  if (currentView === "instructions" && selectedTest && selectedTopic) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Navigation />
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="bg-white rounded-lg shadow-md p-8 text-center">
-            <div className="mb-6">
-              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-10 h-10 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Test Completed!</h2>
-              <p className="text-gray-600">You have successfully completed the {selectedTest?.title} test.</p>
-            </div>
-
-            <div className="bg-gray-50 rounded-lg p-6 mb-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">{score}%</div>
-                  <div className="text-sm text-gray-600">Final Score</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">
-                    {Object.keys(answers).length}/{selectedTest?.questions.length || 0}
-                  </div>
-                  <div className="text-sm text-gray-600">Questions Answered</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-purple-600">
-                    {Math.floor(((selectedTest?.duration || 0) * 60 - timeRemaining) / 60)}m
-                  </div>
-                  <div className="text-sm text-gray-600">Time Taken</div>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-center space-x-4">
-              <button
-                onClick={resetTest}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium"
-              >
-                Take Another Test
-              </button>
-              <button
-                onClick={() => window.print()}
-                className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-3 rounded-lg font-medium"
-              >
-                Print Certificate
-              </button>
-            </div>
-          </div>
-        </div>
+      <div className="min-h-screen bg-background">
+        {!hideNavigation && <Navigation />}
+        <TestInstructions
+          test={{
+            id: selectedTest.id,
+            title: selectedTest.title,
+            course: selectedCourse?.name || "",
+            duration: selectedTest.duration,
+            totalQuestions: selectedTest.questions,
+            difficulty: selectedTest.difficulty,
+            description: `${selectedTopic.name} - ${selectedTest.difficulty} level test`,
+            marks: selectedTest.questions * 1,
+          }}
+          onStart={handleBeginTest}
+          onBack={handleBackToTests}
+        />
       </div>
     );
   }
 
-  if (testStarted && selectedTest) {
-    const currentQ = selectedTest.questions[currentQuestion];
-    const progress = ((currentQuestion + 1) / selectedTest.questions.length) * 100;
-
+  // -------------------- View: Test Interface --------------------
+  if (currentView === "test" && selectedTest && selectedTopic) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Navigation />
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Test Header */}
-          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <h1 className="text-2xl font-bold text-gray-900">{selectedTest.title}</h1>
-              <div className="flex items-center space-x-4">
-                <div className="text-lg font-semibold text-red-600">
-                  {formatTime(timeRemaining)}
-                </div>
-                <button
-                  onClick={completeTest}
-                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium"
-                >
-                  Submit Test
-                </button>
-              </div>
-            </div>
-            
-            <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
-              <div 
-                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${progress}%` }}
-              ></div>
-            </div>
-            <div className="text-sm text-gray-600">
-              Question {currentQuestion + 1} of {selectedTest.questions.length}
-            </div>
-          </div>
-
-          {/* Question */}
-          {currentQ && (
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <div className="mb-6">
-                <div className="flex items-center justify-between mb-4">
-                  <span className={`
-                    px-2 py-1 text-xs font-medium rounded-full
-                    ${getDifficultyColor(currentQ.difficulty)}
-                  `}>
-                    {currentQ.difficulty}
-                  </span>
-                  <span className="text-sm text-gray-500">{currentQ.category}</span>
-                </div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-6">{currentQ.question}</h2>
-              </div>
-
-              <div className="space-y-3 mb-8">
-                {currentQ.options.map((option, index) => (
-                  <button
-                    key={index}
-                    onClick={() => selectAnswer(currentQ.id, index)}
-                    className={`
-                      w-full text-left p-4 rounded-lg border transition-colors
-                      ${answers[currentQ.id] === index
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                      }
-                    `}
-                  >
-                    <div className="flex items-center">
-                      <div className={`
-                        w-4 h-4 rounded-full border-2 mr-3
-                        ${answers[currentQ.id] === index
-                          ? 'border-blue-500 bg-blue-500'
-                          : 'border-gray-300'
-                        }
-                      `}>
-                        {answers[currentQ.id] === index && (
-                          <div className="w-2 h-2 bg-white rounded-full mx-auto mt-0.5"></div>
-                        )}
-                      </div>
-                      <span className="text-gray-900">{option}</span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-
-              <div className="flex justify-between">
-                <button
-                  onClick={previousQuestion}
-                  disabled={currentQuestion === 0}
-                  className="bg-gray-200 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 px-6 py-2 rounded-lg font-medium"
-                >
-                  Previous
-                </button>
-                <button
-                  onClick={nextQuestion}
-                  disabled={currentQuestion === selectedTest.questions.length - 1}
-                  className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-medium"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
+      <div className="min-h-screen bg-background">
+        {!hideNavigation && <Navigation />}
+        <AssessmentInterface
+          assessment={{
+            id: selectedTest.id,
+            title: selectedTest.title,
+            course: selectedCourse?.name || "",
+            duration: selectedTest.duration,
+            totalQuestions: selectedTest.questions,
+            // passes topicId so AssessmentInterface can fetch real questions if needed
+            topicId: selectedTopic.id,
+          }}
+          onComplete={handleTestComplete}
+          onBack={handleBackToInstructions}
+        />
       </div>
     );
   }
 
+  // -------------------- View: Thank You --------------------
+  if (currentView === "thankyou" && selectedTest && selectedTopic && testStats) {
+    return (
+      <div className="min-h-screen bg-background">
+        {!hideNavigation && <Navigation />}
+        <TestThankYou
+          test={{
+            id: selectedTest.id,
+            title: selectedTest.title,
+            course: selectedCourse?.name || "",
+            duration: selectedTest.duration,
+            totalQuestions: selectedTest.questions,
+          }}
+          answeredCount={testStats.answeredCount}
+          totalQuestions={testStats.totalQuestions}
+          timeSpent={testStats.timeSpent}
+          onViewResults={handleViewResults}
+        />
+      </div>
+    );
+  }
+
+  // -------------------- View: Results --------------------
+  if (currentView === "results" && selectedTest && selectedTopic) {
+    return (
+      <div className="min-h-screen bg-background">
+        {!hideNavigation && <Navigation />}
+        <TestResults
+          test={{
+            id: selectedTest.id,
+            title: selectedTest.title,
+            course: selectedCourse?.name || "",
+            duration: selectedTest.duration,
+            totalQuestions: selectedTest.questions,
+            marks: selectedTest.questions * 1,
+            // placeholder score – later replace with real score from backend
+            score: Math.floor(Math.random() * 20) + 70,
+          }}
+          onBackToList={handleBackToTests}
+          onTryAgain={() => handleStartTest(selectedTest)}
+        />
+      </div>
+    );
+  }
+
+  // -------------------- View: Courses & Tests --------------------
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navigation />
-      
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Skill Tests</h1>
-          <p className="text-gray-600 mt-2">Test your knowledge and earn certifications</p>
-        </div>
+    <div className="min-h-screen bg-background">
+      {!hideNavigation && <Navigation />}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {SAMPLE_TESTS.map((test) => (
-            <div key={test.id} className="bg-white rounded-lg shadow-md p-6">
-              <div className="mb-4">
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">{test.title}</h3>
-                <p className="text-gray-600 text-sm mb-4">{test.description}</p>
-              </div>
+      <div className="flex h-[calc(100vh-64px)]">
+        {/* Topic Sidebar – only show when course selected & on tests view */}
+        {selectedCourse && currentView === "tests" && (
+          <TopicSidebar
+            course={selectedCourse}
+            selectedTopic={selectedTopic}
+            onTopicSelect={handleTopicSelect}
+            isOpen={sidebarOpen}
+            onToggle={() => setSidebarOpen(!sidebarOpen)}
+          />
+        )}
 
-              <div className="flex items-center justify-between text-sm text-gray-500 mb-6">
-                <div className="flex items-center">
-                  <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                  </svg>
-                  {test.duration} minutes
-                </div>
-                <div className="flex items-center">
-                  <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  {test.questions.length} questions
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-500">{test.category}</span>
-                <button
-                  onClick={() => startTest(test)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium"
-                >
-                  Start Test
-                </button>
-              </div>
-            </div>
-          ))}
+        {/* Main Content */}
+        <div className="flex-1 overflow-auto">
+          {currentView === "courses" ? (
+            <CourseSelection
+              courses={courses}
+              onCourseSelect={handleCourseSelect}
+            />
+          ) : (
+            <TestCards
+              tests={filteredTests}
+              courseName={selectedCourse?.name || ""}
+              topicName={selectedTopic?.name || ""}
+              onBack={handleBackToCourses}
+              onStartTest={handleStartTest}
+              completedTests={testCompleted}
+            />
+          )}
         </div>
       </div>
     </div>

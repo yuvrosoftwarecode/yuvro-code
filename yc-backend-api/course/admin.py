@@ -1,5 +1,14 @@
 from django.contrib import admin
-from .models import Course, Topic, Subtopic, Video, CodingProblem, Quiz, Note, CourseInstructor
+from .models import (
+    Course,
+    Topic,
+    Subtopic,
+    Video,
+    CodingProblem,
+    Quiz,
+    Note,
+    CourseInstructor,
+)
 
 
 class TopicInline(admin.TabularInline):
@@ -22,6 +31,7 @@ class CourseInstructorInline(admin.TabularInline):
     fields = ["instructor", "created_at", "updated_at"]
     readonly_fields = ["created_at", "updated_at"]
 
+
 # ------------------ COURSE ADMIN ------------------
 @admin.register(Course)
 class CourseAdmin(admin.ModelAdmin):
@@ -39,7 +49,6 @@ class CourseAdmin(admin.ModelAdmin):
     ]
     ordering = ["category", "-created_at"]
     inlines = [TopicInline, CourseInstructorInline]  # ⭐ Add here
-
 
 
 # ------------------ TOPIC ADMIN ------------------
@@ -87,8 +96,14 @@ class VideoAdmin(admin.ModelAdmin):
 # ------------------ CODING PROBLEM ADMIN ------------------
 @admin.register(CodingProblem)
 class CodingProblemAdmin(admin.ModelAdmin):
-
-    list_display = ["title", "category", "topic", "sub_topic", "created_at", "updated_at"]
+    list_display = [
+        "title",
+        "category",
+        "topic",
+        "sub_topic",
+        "created_at",
+        "updated_at",
+    ]
 
     list_filter = [
         "category",
@@ -127,7 +142,6 @@ class CodingProblemAdmin(admin.ModelAdmin):
 # ------------------ QUIZ ADMIN ------------------
 @admin.register(Quiz)
 class QuizAdmin(admin.ModelAdmin):
-
     list_display = [
         "question_preview",
         "category",

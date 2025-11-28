@@ -756,3 +756,89 @@ export async function fetchAllInstructors() {
   if (!res.ok) throw new Error("Failed to fetch instructors");
   return res.json();
 }
+
+// Fetch Skill Test Questions (MCQ + Coding) for a Topic
+export async function fetchSkillTestQuestions(topicId: string) {
+
+  function safeParseOptions(raw: any): string[] {
+  if (!raw) return [];
+
+  // If already array
+  if (Array.isArray(raw)) {
+    return raw.map(String);
+  }
+
+  // If it's an object → convert values to array
+  if (typeof raw === "object") {
+    try {
+      return Object.values(raw).map(String);
+    } catch {
+      return [];
+    }
+  }
+
+  // If it's not a string → convert it
+  if (typeof raw !== "string") {
+    raw = String(raw);
+  }
+
+  // Try JSON parse
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed.map(String);
+  } catch {}
+
+  // Try single-quote JSON
+  try {
+    const fixed = raw.replace(/'/g, '"');
+    const parsed = JSON.parse(fixed);
+    if (Array.isArray(parsed)) return parsed.map(String);
+  } catch {}
+
+  // Fallback: split by common separators
+  return raw.split(/[,|;]/).map(s => s.trim()).filter(Boolean);
+}
+
+  const headers = {
+    ...getAuthHeader(),
+    "Content-Type": "application/json",
+  };
+
+  // Fetch quizzes
+  const quizRes = await fetch(
+    `${API_BASE}/course/quizzes/?topic=${topicId}&category=skill_test`,
+    { headers }
+  );
+
+  if (!quizRes.ok) throw new Error("Failed to fetch skill test quizzes");
+  const quizzes = await quizRes.json();
+
+  // Fetch coding problems
+  const codingRes = await fetch(
+    `${API_BASE}/course/coding-problems/?topic=${topicId}&category=skill_test`,
+    { headers }
+  );
+
+  if (!codingRes.ok) throw new Error("Failed to fetch coding questions");
+  const coding = await codingRes.json();
+
+  const mcqQuestions = quizzes.map((q: any) => ({
+    id: q.id,
+    type: "mcq",
+    question: q.question,
+    options: safeParseOptions(q.options),   // << FIXED HERE
+    multipleCorrect: q.multiple_correct ?? false,
+    marks: 2,
+  }));
+
+  const codingQuestions = coding.map((c: any) => ({
+    id: c.id,
+    type: "coding",
+    question: c.title,
+    test_cases_basic: c.test_cases_basic,
+    test_cases_advanced: c.test_cases_advanced,
+    marks: 10,
+  }));
+
+  return [...mcqQuestions, ...codingQuestions];
+}

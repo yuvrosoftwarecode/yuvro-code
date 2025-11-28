@@ -23,9 +23,7 @@ class Course(models.Model):
     name = models.TextField()
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
     instructors = models.ManyToManyField(
-        User,
-        through="CourseInstructor",
-        related_name="courses_taught"
+        User, through="CourseInstructor", related_name="courses_taught"
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -151,8 +149,12 @@ class CodingProblem(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField()
 
-    test_cases_basic = models.JSONField(help_text="Basic test cases visible to students")
-    test_cases_advanced = models.JSONField(default=list, help_text="Advanced test cases")
+    test_cases_basic = models.JSONField(
+        help_text="Basic test cases visible to students"
+    )
+    test_cases_advanced = models.JSONField(
+        default=list, help_text="Advanced test cases"
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -169,19 +171,31 @@ class CodingProblem(models.Model):
 
         if self.category == "learn_certify":
             if not self.sub_topic:
-                raise ValidationError("Learn & Certify questions must belong to a Subtopic.")
+                raise ValidationError(
+                    "Learn & Certify questions must belong to a Subtopic."
+                )
             if self.topic:
-                raise ValidationError("Learn & Certify questions cannot be linked to a Topic.")
+                raise ValidationError(
+                    "Learn & Certify questions cannot be linked to a Topic."
+                )
 
         if self.category in ["practice", "skill_test"]:
             if not self.topic:
-                raise ValidationError("Practice/Skill Test questions must belong to a Topic.")
+                raise ValidationError(
+                    "Practice/Skill Test questions must belong to a Topic."
+                )
             if self.sub_topic:
-                raise ValidationError("Practice/Skill Test questions cannot be linked to a Subtopic.")
+                raise ValidationError(
+                    "Practice/Skill Test questions cannot be linked to a Subtopic."
+                )
 
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
+
+    
+
+
 
 class Quiz(models.Model):
     CATEGORY_CHOICES = [
@@ -234,15 +248,23 @@ class Quiz(models.Model):
 
         if self.category == "learn_certify":
             if not self.sub_topic:
-                raise ValidationError("Learn & Certify quizzes must belong to a Subtopic.")
+                raise ValidationError(
+                    "Learn & Certify quizzes must belong to a Subtopic."
+                )
             if self.topic:
-                raise ValidationError("Learn & Certify quizzes cannot be linked to a Topic.")
+                raise ValidationError(
+                    "Learn & Certify quizzes cannot be linked to a Topic."
+                )
 
         if self.category in ["practice", "skill_test"]:
             if not self.topic:
-                raise ValidationError("Practice/Skill Test quizzes must belong to a Topic.")
+                raise ValidationError(
+                    "Practice/Skill Test quizzes must belong to a Topic."
+                )
             if self.sub_topic:
-                raise ValidationError("Practice/Skill Test quizzes cannot be linked to a Subtopic.")
+                raise ValidationError(
+                    "Practice/Skill Test quizzes cannot be linked to a Subtopic."
+                )
 
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -285,7 +307,8 @@ class Note(models.Model):
         ordering = ["created_at"]
 
     def __str__(self):
-        return f"Note for {self.sub_topic.name} by {self.user}" if self.sub_topic and self.user else "Note"
+        return f"{self.user.username} - {self.sub_topic.name} - {self.content[:30]}..."
+
 
 class CourseInstructor(models.Model):
     """
@@ -295,15 +318,13 @@ class CourseInstructor(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     course = models.ForeignKey(
-        Course,
-        on_delete=models.CASCADE,
-        related_name="course_instructors"
+        Course, on_delete=models.CASCADE, related_name="course_instructors"
     )
 
     instructor = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name="instructor_courses"
+        related_name="instructor_courses",
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -319,8 +340,11 @@ class CourseInstructor(models.Model):
     def clean(self):
         from django.core.exceptions import ValidationError
 
-        if self.instructor.role not in ["instructor", "admin"]: # type: ignore
-            raise ValidationError("Only instructors or admins can be assigned to a course.")
+        # Only users with instructor/admin roles can be linked
+        if self.instructor.role not in ["instructor", "admin"]:
+            raise ValidationError(
+                "Only instructors or admins can be assigned to a course."
+            )
 
     def save(self, *args, **kwargs):
         self.full_clean()  # Validate before saving

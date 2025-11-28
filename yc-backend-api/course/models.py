@@ -35,9 +35,7 @@ class Course(models.Model):
         ordering = ["category", "-created_at"]
 
     def __str__(self):
-        if self.short_code:
-            return f"{self.short_code}: {self.name}"
-        return self.name
+        return f"{self.short_code} - {self.name}" if self.short_code else self.name
 
 class Topic(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -48,11 +46,8 @@ class Topic(models.Model):
 
     class Meta:
         ordering = ["order_index"]
-        # ❌ REMOVE UNIQUE CONSTRAINT (we handle it manually)
-        # unique_together = ['course', 'order_index']
 
     def save(self, *args, **kwargs):
-        # **Auto assign if no index**
         if self.order_index is None:
             last = (
                 Topic.objects.filter(course=self.course)
@@ -62,13 +57,11 @@ class Topic(models.Model):
             self.order_index = (last.order_index + 1) if last else 0
 
         else:
-            # **Check if another topic already has this index**
             conflict = Topic.objects.filter(
                 course=self.course, order_index=self.order_index
             ).exclude(id=self.id)
 
             if conflict.exists():
-                # SHIFT all indexes >= current
                 Topic.objects.filter(
                     course=self.course, order_index__gte=self.order_index
                 ).exclude(id=self.id).update(order_index=models.F("order_index") + 1)
@@ -85,11 +78,8 @@ class Subtopic(models.Model):
 
     class Meta:
         ordering = ["order_index"]
-        # ❌ REMOVE UNIQUE TOGETHER (we handle ordering ourselves)
-        # unique_together = ['topic', 'order_index']
 
     def save(self, *args, **kwargs):
-        # Auto assign if empty
         if self.order_index is None:
             last = (
                 Subtopic.objects.filter(topic=self.topic)
@@ -99,7 +89,6 @@ class Subtopic(models.Model):
             self.order_index = (last.order_index + 1) if last else 0
 
         else:
-            # Detect conflict
             conflict = Subtopic.objects.filter(
                 topic=self.topic, order_index=self.order_index
             ).exclude(id=self.id)
@@ -141,7 +130,6 @@ class CodingProblem(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
-    # NEW: optional topic mapping
     topic = models.ForeignKey(
         Topic,
         on_delete=models.CASCADE,
@@ -150,7 +138,6 @@ class CodingProblem(models.Model):
         related_name="coding_problems_topic",
     )
 
-    # OLD: subtopic mapping (now optional)
     sub_topic = models.ForeignKey(
         Subtopic,
         on_delete=models.CASCADE,
@@ -174,19 +161,18 @@ class CodingProblem(models.Model):
         ordering = ["created_at"]
 
     def __str__(self):
-        return f"{self.sub_topic.name if self.sub_topic else self.topic.name} - {self.title}"
+        name = self.sub_topic.name if self.sub_topic else (self.topic.name if self.topic else "")
+        return f"{name} - {self.title}"
 
     def clean(self):
         from django.core.exceptions import ValidationError
 
-        # CASE 1: learn & certify → must map to subtopic
         if self.category == "learn_certify":
             if not self.sub_topic:
                 raise ValidationError("Learn & Certify questions must belong to a Subtopic.")
             if self.topic:
                 raise ValidationError("Learn & Certify questions cannot be linked to a Topic.")
 
-        # CASE 2: practice / skill test → must map to topic
         if self.category in ["practice", "skill_test"]:
             if not self.topic:
                 raise ValidationError("Practice/Skill Test questions must belong to a Topic.")
@@ -206,7 +192,6 @@ class Quiz(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
-    # NEW: optional topic
     topic = models.ForeignKey(
         Topic,
         on_delete=models.CASCADE,
@@ -215,7 +200,6 @@ class Quiz(models.Model):
         related_name="quizzes_topic",
     )
 
-    # OLD: optional subtopic
     sub_topic = models.ForeignKey(
         Subtopic,
         on_delete=models.CASCADE,
@@ -239,7 +223,6 @@ class Quiz(models.Model):
     def clean(self):
         from django.core.exceptions import ValidationError
 
-        # validate answer index
         if self.options and self.correct_answer_index is not None:
             if isinstance(self.options, list):
                 if self.correct_answer_index >= len(self.options):
@@ -249,7 +232,6 @@ class Quiz(models.Model):
                 if self.correct_answer_index < 0:
                     raise ValidationError("Correct answer index must be non-negative.")
 
-        # Mapping logic
         if self.category == "learn_certify":
             if not self.sub_topic:
                 raise ValidationError("Learn & Certify quizzes must belong to a Subtopic.")
@@ -280,7 +262,7 @@ class Quiz(models.Model):
         return None
 
     def __str__(self):
-        return f"{self.sub_topic.name} - {self.question[:50]}..."
+        return f"{self.sub_topic.name} - {self.question[:50]}..." # type: ignore
 
 
 class Note(models.Model):
@@ -303,7 +285,7 @@ class Note(models.Model):
         ordering = ["created_at"]
 
     def __str__(self):
-        return f"{self.user.username} - {self.sub_topic.name} - {self.content[:30]}..."
+        return f"Note for {self.sub_topic.name} by {self.user}" if self.sub_topic and self.user else "Note"
 
 class CourseInstructor(models.Model):
     """
@@ -319,7 +301,7 @@ class CourseInstructor(models.Model):
     )
 
     instructor = models.ForeignKey(
-        User,  # Using your custom User model
+        User,
         on_delete=models.CASCADE,
         related_name="instructor_courses"
     )
@@ -337,8 +319,7 @@ class CourseInstructor(models.Model):
     def clean(self):
         from django.core.exceptions import ValidationError
 
-        # Only users with instructor/admin roles can be linked
-        if self.instructor.role not in ["instructor", "admin"]:
+        if self.instructor.role not in ["instructor", "admin"]: # type: ignore
             raise ValidationError("Only instructors or admins can be assigned to a course.")
 
     def save(self, *args, **kwargs):

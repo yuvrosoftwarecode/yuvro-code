@@ -3,9 +3,9 @@ Django settings for yc-backend-api project.
 """
 
 from pathlib import Path
-from decouple import config
+from decouple import config # type: ignore
 from datetime import timedelta
-import dj_database_url
+import dj_database_url # type: ignore
 import os
 
 
@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "course",
     "ai_assistant",
     "code_executor",
+    "contest"
 ]
 
 MIDDLEWARE = [

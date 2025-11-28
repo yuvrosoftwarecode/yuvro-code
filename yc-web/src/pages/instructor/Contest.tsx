@@ -1,17 +1,20 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Search, Plus, Pencil, Trash2, Eye, Trophy, Users, Calendar, Building2, GraduationCap, Zap, Clock, CalendarIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import Navigation from '@/components/Navigation';
 import SearchBar from '@/components/common/SearchBar';
+import { useAuth } from "@/contexts/AuthContext";
+
+
 
 interface Contest {
   id: string;
@@ -28,56 +31,32 @@ interface Contest {
   description: string;
 }
 
-const mockContests: Contest[] = [
-  {
-    id: '1',
-    title: 'Cloud Developer Challenge',
-    organizer: 'Infosys',
-    type: 'company',
-    status: 'upcoming',
-    startDate: '2025-10-15',
-    endDate: '2025-10-15',
-    duration: '2 hours',
-    participants: 1234,
-    prize: '₹50,000',
-    difficulty: 'Medium',
-    description: 'Test your cloud computing skills'
-  },
-  {
-    id: '2',
-    title: 'Data Structures Sprint',
-    organizer: 'TCS',
-    type: 'company',
-    status: 'ongoing',
-    startDate: '2025-10-08',
-    endDate: '2025-10-08',
-    duration: '2 hours',
-    participants: 892,
-    prize: '₹30,000',
-    difficulty: 'Hard',
-    description: 'Advanced data structures and algorithms'
-  },
-  {
-    id: '3',
-    title: 'Weekly Coding Battle #42',
-    organizer: 'Yuvro Platform',
-    type: 'weekly',
-    status: 'upcoming',
-    startDate: '2025-10-12',
-    endDate: '2025-10-12',
-    duration: '2 hours',
-    participants: 2341,
-    difficulty: 'Easy',
-    description: 'Weekly practice contest'
-  }
-];
+const API_URL = import.meta.env.BACKEND_API_BASE_URL || 'http://localhost:8001/api/contest/';
+
+function mapContestFromBackend(c: any): Contest {
+  return {
+    id: String(c.id),
+    title: c.title,
+    organizer: c.organizer,
+    type: c.type,
+    status: c.status,
+    startDate: c.start_date,
+    endDate: c.end_date,
+    duration: c.duration ? `${Math.round((typeof c.duration === 'string' ? parseFloat(c.duration) : c.duration) / 60)} min` : '',
+    participants: c.participants_count ?? 0,
+    prize: c.prize ?? '',
+    difficulty: c.difficulty.charAt(0).toUpperCase() + c.difficulty.slice(1),
+    description: c.description ?? '',
+  };
+}
 
 export default function OwnerContest() {
-  const [contests, setContests] = useState<Contest[]>(mockContests);
+  const [contests, setContests] = useState<Contest[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTab, setSelectedTab] = useState('all');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingContest, setEditingContest] = useState<Contest | null>(null);
+  const { token } = useAuth();
 
   const [formData, setFormData] = useState({
     title: '',
@@ -92,33 +71,114 @@ export default function OwnerContest() {
     description: ''
   });
 
-  const handleAddContest = () => {
-    const newContest: Contest = {
-      id: Date.now().toString(),
-      ...formData,
-      participants: 0
+  const fetchContests = () => {
+    fetch(API_URL)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setContests(data.map(mapContestFromBackend));
+        }
+      })
+      .catch(err => {
+        console.error('Failed to fetch contests:', err);
+      });
+  };
+
+  useEffect(() => {
+    fetchContests();
+  }, []);
+
+  const handleAddContest = async () => {
+    const payload = {
+      title: formData.title,
+      organizer: formData.organizer,
+      type: formData.type,
+      status: formData.status,
+      start_date: formData.startDate,
+      end_date: formData.endDate,
+      duration: formData.duration ? parseInt(formData.duration) * 60 : null, // expects seconds
+      prize: formData.prize,
+      difficulty: formData.difficulty.toLowerCase(),
+      description: formData.description,
     };
-    setContests([...contests, newContest]);
-    toast.success('Contest created successfully');
-    setIsAddDialogOpen(false);
-    resetForm();
+
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        toast.success('Contest created successfully');
+        fetchContests();
+        setIsAddDialogOpen(false);
+        resetForm();
+      } else {
+        toast.error('Failed to create contest');
+      }
+    } catch (err) {
+      toast.error('Failed to create contest');
+    }
   };
 
-  const handleEditContest = () => {
+  const handleEditContest = async () => {
     if (!editingContest) return;
-    setContests(contests.map(contest => 
-      contest.id === editingContest.id 
-        ? { ...contest, ...formData }
-        : contest
-    ));
-    toast.success('Contest updated successfully');
-    setEditingContest(null);
-    resetForm();
+    const payload = {
+      title: formData.title,
+      organizer: formData.organizer,
+      type: formData.type,
+      status: formData.status,
+      start_date: formData.startDate,
+      end_date: formData.endDate,
+      duration: formData.duration ? parseInt(formData.duration) * 60 : null,
+      prize: formData.prize,
+      difficulty: formData.difficulty.toLowerCase(),
+      description: formData.description,
+    };
+
+    try {
+      const res = await fetch(`${API_URL}${editingContest.id}/`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        toast.success('Contest updated successfully');
+        fetchContests();
+        setEditingContest(null);
+        resetForm();
+      } else {
+        toast.error('Failed to update contest');
+      }
+    } catch (err) {
+      toast.error('Failed to update contest');
+    }
   };
 
-  const handleDeleteContest = (id: string) => {
-    setContests(contests.filter(contest => contest.id !== id));
-    toast.success('Contest deleted successfully');
+  const handleDeleteContest = async (id: string) => {
+    try {
+      const res = await fetch(`${API_URL}${id}/`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (res.ok) {
+        toast.success('Contest deleted successfully');
+        fetchContests();
+      } else {
+        toast.error('Failed to delete contest');
+      }
+    } catch (err) {
+      toast.error('Failed to delete contest');
+    }
   };
 
   const resetForm = () => {
@@ -143,8 +203,8 @@ export default function OwnerContest() {
       organizer: contest.organizer,
       type: contest.type,
       status: contest.status,
-      startDate: contest.startDate,
-      endDate: contest.endDate,
+      startDate: contest.startDate ? contest.startDate.slice(0, 10) : '', // Ensure YYYY-MM-DD
+      endDate: contest.endDate ? contest.endDate.slice(0, 10) : '',
       duration: contest.duration,
       prize: contest.prize || '',
       difficulty: contest.difficulty,
@@ -224,6 +284,7 @@ export default function OwnerContest() {
               <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-5 rounded-2xl shadow-2xl border border-gray-200">
                 <DialogHeader>
                   <DialogTitle>Create New Contest</DialogTitle>
+                  <DialogDescription>Fill out the contest details below.</DialogDescription>
                 </DialogHeader>
 
                 <div className="grid gap-6 py-4">
@@ -597,6 +658,7 @@ export default function OwnerContest() {
                               <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                                 <DialogHeader>
                                   <DialogTitle>Edit Contest</DialogTitle>
+                                  <DialogDescription>Update the contest details below.</DialogDescription>
                                 </DialogHeader>
                                 <div className="grid gap-4 py-4">
                                   <div className="grid gap-2">
@@ -628,6 +690,7 @@ export default function OwnerContest() {
                                       </select>
                                     </div>
                                   </div>
+
                                   <div className="grid grid-cols-2 gap-4">
                                     <div className="grid gap-2">
                                       <Label>Start Date</Label>
@@ -636,7 +699,34 @@ export default function OwnerContest() {
                                         value={formData.startDate}
                                         onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
                                       />
+                                      className="border border-gray-400 rounded-md pr-10"
                                     </div>
+
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        const input = e.currentTarget.previousSibling as HTMLInputElement;
+                                        if (input?.showPicker) {
+                                          input.showPicker();
+
+                                          // Ensure React receives the updated value
+                                          input.addEventListener(
+                                            "input",
+                                            () => {
+                                              setFormData((prev) => ({
+                                                ...prev,
+                                                startDate: input.value,
+                                              }));
+                                            },
+                                            { once: true }
+                                          );
+                                        }
+                                      }}
+                                      className="absolute right-3 top-1/2 -translate-y-1/2"
+                                    >
+                                      <CalendarIcon className="w-5 h-5 text-gray-500" />
+                                    </button>
+
                                     <div className="grid gap-2">
                                       <Label>End Date</Label>
                                       <Input
@@ -644,8 +734,33 @@ export default function OwnerContest() {
                                         value={formData.endDate}
                                         onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
                                       />
+                                      className="border border-gray-400 rounded-md pr-10"
                                     </div>
+
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        const input = e.currentTarget.previousSibling as HTMLInputElement;
+                                        if (input?.showPicker) {
+                                          input.showPicker();
+                                          input.addEventListener(
+                                            "input",
+                                            () => {
+                                              setFormData((prev) => ({
+                                                ...prev,
+                                                endDate: input.value,
+                                              }));
+                                            },
+                                            { once: true }
+                                          );
+                                        }
+                                      }}
+                                      className="absolute right-3 top-1/2 -translate-y-1/2"
+                                    >
+                                      <CalendarIcon className="w-5 h-5 text-gray-500" />
+                                    </button>
                                   </div>
+
                                   <div className="grid grid-cols-2 gap-4">
                                     <div className="grid gap-2">
                                       <Label>Duration</Label>

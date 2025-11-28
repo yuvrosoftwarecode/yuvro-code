@@ -45,7 +45,7 @@ class Contest(models.Model):
     prize = models.CharField(max_length=255, blank=True, null=True)
     difficulty = models.CharField(max_length=10, choices=DIFF_CHOICES, default=DIFF_MEDIUM)
     description = models.TextField(blank=True)
-    created_by = models.ForeignKey(User, null=True, blank = True, on_delete=models.SET_NULL, related_name='created_contests')
+    created_by = models.ForeignKey(User, null=True, blank = True, on_delete=models.CASCADE, related_name='created_contests')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     

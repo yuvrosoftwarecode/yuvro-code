@@ -6,6 +6,7 @@ from django.db.models import Q
 from .models import Contest
 from .serializers import ContestSerializer
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from .permissions import IsOwnerOrAdmin
 
 class ContestViewSet(viewsets.ModelViewSet):
     queryset = Contest.objects.all()
@@ -15,10 +16,10 @@ class ContestViewSet(viewsets.ModelViewSet):
     
     search_fields =['title', 'organizer', 'description']
     ordering_fields = ['start_date', 'participants_count', 'created_at']
+    permission_classes = [IsOwnerOrAdmin]
     
     def perform_create(self, serializer):
-        user = getattr(self.request, 'user', None)
-        serializer.save(created_by=user)
+        serializer.save(created_by=self.request.user)
         
     def get_queryset(self):
         qs = super().get_queryset()

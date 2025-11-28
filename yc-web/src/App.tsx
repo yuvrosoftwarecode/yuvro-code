@@ -263,7 +263,16 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-              
+
+              <Route
+                path="/admin/contests"
+                element={
+                  <ProtectedRoute allowedRoles={["recruiter"]}>
+                    <OwnerContest />
+                  </ProtectedRoute>
+                }
+              />
+
               {/* 404 route */}
               <Route path="/404" element={<NotFound />} />
               <Route path="*" element={<Navigate to="/404" replace />} />

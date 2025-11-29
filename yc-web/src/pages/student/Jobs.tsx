@@ -1,309 +1,322 @@
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
-import Navigation from '../../components/Navigation';
-import jobsapi, { Job } from "@/services/jobsapi";
+import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+
+import {
+  fetchFilteredJobs,
+  createJob,
+  Job as JobType,
+} from "@/services/jobsapi";
+
+import Header from "@/components/common/Header";
+import JobFilters from "@/components/student/jobs/JobFilters";
+import JobCard from "@/components/student/jobs/JobCard";
+import JobDetail from "@/components/student/jobs/JobDetail";
+import ApplicationTracker from "@/components/student/jobs/ApplicationTracker";
+
+import studentNavigationConfig from "@/config/studentNavigation";
+import { Button } from "@/components/ui/button";
+import { FileText, X } from "lucide-react";
 
 
-interface Job {
-  id: number;
-  title: string;
-  company: string;
-  location: string;
-  type: 'full-time' | 'part-time' | 'contract' | 'internship';
-  experience_level: string;
-  salary: string;
-  description: string;
-  requirements: string[];
-  skills: string[];
-  posted_date: string;
-  application_deadline: string;
-  remote: boolean;
-}
-
-const SAMPLE_JOBS: Job[] = [
-  {
-    id: 1,
-    title: 'Frontend Developer',
-    company: 'TechCorp Inc.',
-    location: 'San Francisco, CA',
-    type: 'full-time',
-    experience_level: '2-4 years',
-    salary: '$80,000 - $120,000',
-    description: 'We are looking for a skilled Frontend Developer to join our dynamic team. You will be responsible for developing user-facing web applications using modern JavaScript frameworks.',
-    requirements: [
-      'Bachelor\'s degree in Computer Science or related field',
-      '2+ years of experience with React.js',
-      'Strong knowledge of HTML, CSS, and JavaScript',
-      'Experience with responsive design and cross-browser compatibility'
-    ],
-    skills: ['React', 'JavaScript', 'HTML', 'CSS', 'TypeScript', 'Git'],
-    posted_date: '2024-01-15',
-    application_deadline: '2024-02-15',
-    remote: true
-  },
-  {
-    id: 2,
-    title: 'Backend Developer',
-    company: 'DataSoft Solutions',
-    location: 'New York, NY',
-    type: 'full-time',
-    experience_level: '3-5 years',
-    salary: '$90,000 - $140,000',
-    description: 'Join our backend team to build scalable APIs and microservices. You will work with cloud technologies and help architect our next-generation platform.',
-    requirements: [
-      'Bachelor\'s degree in Computer Science',
-      '3+ years of experience with Node.js or Python',
-      'Experience with databases (SQL and NoSQL)',
-      'Knowledge of cloud platforms (AWS, GCP, or Azure)'
-    ],
-    skills: ['Node.js', 'Python', 'PostgreSQL', 'MongoDB', 'AWS', 'Docker'],
-    posted_date: '2024-01-12',
-    application_deadline: '2024-02-12',
-    remote: false
-  },
-  {
-    id: 3,
-    title: 'Full Stack Developer Intern',
-    company: 'StartupXYZ',
-    location: 'Austin, TX',
-    type: 'internship',
-    experience_level: '0-1 years',
-    salary: '$20 - $25/hour',
-    description: 'Great opportunity for students or recent graduates to gain hands-on experience in full-stack development. You will work on real projects and learn from experienced developers.',
-    requirements: [
-      'Currently pursuing or recently completed CS degree',
-      'Basic knowledge of web development',
-      'Eagerness to learn and grow',
-      'Good communication skills'
-    ],
-    skills: ['JavaScript', 'React', 'Node.js', 'HTML', 'CSS'],
-    posted_date: '2024-01-10',
-    application_deadline: '2024-02-10',
-    remote: true
+const safeArray = (value: any): string[] => {
+  if (Array.isArray(value)) return value;
+  try {
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+        return JSON.parse(trimmed);
+      }
+      return trimmed.split(",").map((v) => v.trim()).filter(Boolean);
+    }
+    return [];
+  } catch {
+    return [];
   }
-];
+};
 
-const Jobs: React.FC = () => {
-  const { user } = useAuth();
-  const [jobs, setJobs] = useState<Job[]>(SAMPLE_JOBS);
-  const [filteredJobs, setFilteredJobs] = useState<Job[]>(SAMPLE_JOBS);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedType, setSelectedType] = useState<string>('all');
-  const [selectedLocation, setSelectedLocation] = useState<string>('all');
-  const [remoteOnly, setRemoteOnly] = useState(false);
+const safeCompanyInfo = (value: any) => {
+  if (!value) return { about: "No company information available.", size: "N/A", domain: "N/A", website: "", name: "Unknown" };
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      return {
+        about: parsed.about || "No company information available.",
+        size: parsed.size || "N/A",
+        domain: parsed.domain || "N/A",
+        website: parsed.website || "",
+        name: parsed.name || "Unknown",
+      };
+    } catch {
+      return { about: value, size: "N/A", domain: "N/A", website: "", name: "Unknown" };
+    }
+  }
+  if (typeof value === "object") {
+    return {
+      about: value.about || "No company information available.",
+      size: value.size || "N/A",
+      domain: value.domain || "N/A",
+      website: value.website || "",
+      name: value.name || "Unknown",
+    };
+  }
+  return { about: "No company information available.", size: "N/A", domain: "N/A", website: "", name: "Unknown" };
+};
+
+
+const normalizeJob = (job: any): JobType => ({
+  ...job,
+  skills: safeArray(job.skills),
+  responsibilities: safeArray(job.responsibilities),
+  required_skills: safeArray(job.required_skills),
+  preferred_skills: safeArray(job.preferred_skills),
+  requiredSkills: safeArray(job.required_skills),  
+  preferredSkills: safeArray(job.preferred_skills),  
+  benefits: safeArray(job.benefits),
+  company_info: job.company_info || { about: "", size: "N/A", domain: "", website: "", name: job.company || "Unknown" },
+  companyInfo: job.company_info || { about: "", size: "N/A", domain: "", website: "", name: job.company || "Unknown" },  
+  salary: job.salary ? Number(job.salary) : 0,
+  workType: job.work_type || job.workType,  
+  experienceLevel: job.experience_level || job.experienceLevel,
+  jobType: job.job_type || job.jobType,
+});
+
+
+const Jobs = () => {
+  const navigate = useNavigate();
+
+  const [jobs, setJobs] = useState<JobType[]>([]);
+  const [filteredJobs, setFilteredJobs] = useState<JobType[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const FILTERS_KEY = "yc_jobs_filters_v1";
+  const defaultFilters = {
+    search: '',
+    location: [],
+    experienceLevel: [],
+    jobType: [],
+    salaryRange: [0, 30],
+    skills: [],
+    companySize: [],
+    postedDate: [],
+  };
+
+  const [filters, setFilters] = useState<any>(() => {
+    try {
+      const raw = localStorage.getItem(FILTERS_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed.postedDate) && parsed.postedDate.length === 1 && parsed.postedDate[0] === 'Last 24 hours') {
+          parsed.postedDate = [];
+          try {
+            localStorage.setItem(FILTERS_KEY, JSON.stringify(parsed));
+          } catch (err) {
+          }
+        }
+        return parsed;
+      }
+    } catch (err) {
+    }
+    return defaultFilters;
+  });
 
   useEffect(() => {
-    filterJobs();
-  }, [searchTerm, selectedType, selectedLocation, remoteOnly]);
+    try {
+      const toSave = { ...(filters || defaultFilters) };
+      if (Array.isArray(toSave.postedDate) && toSave.postedDate.length === 1 && toSave.postedDate[0] === 'Last 24 hours') {
+        toSave.postedDate = [];
+      }
+      localStorage.setItem(FILTERS_KEY, JSON.stringify(toSave));
+      if (JSON.stringify(toSave) !== JSON.stringify(filters || defaultFilters)) {
+        setFilters(toSave);
+      }
+    } catch (err) {
+    }
+  }, [filters]);
 
-  const filterJobs = () => {
-    let filtered = jobs;
+  const [selectedJob, setSelectedJob] = useState<JobType | null>(null);
+  const [showTracker, setShowTracker] = useState(false);
 
-    // Search filter
-    if (searchTerm) {
-      filtered = filtered.filter(job =>
-        job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        job.skills.some(skill => skill.toLowerCase().includes(searchTerm.toLowerCase()))
-      );
+  const [savedJobs, setSavedJobs] = useState<number[]>([]);
+  const [appliedJobs, setAppliedJobs] = useState<number[]>([]);
+
+  const menuItems = studentNavigationConfig.getMenuItems(navigate, "jobs");
+
+
+  const INITIAL_FETCH_FLAG = 'yc_jobs_fetched_v1';
+  const isInitialRef = useRef(true);
+  const lastPayloadRef = useRef<string | null>(null);
+
+  const mapFiltersToPayload = (f: any) => ({
+    search: f.search,
+    location: f.location,
+    experience_level: f.experienceLevel,
+    job_type: f.jobType,
+    salary_min: f.salaryRange?.[0],
+    salary_max: f.salaryRange?.[1],
+    skills: f.skills,
+    company_size: f.companySize,
+    posted_date: Array.isArray(f.postedDate) && f.postedDate.length === 1 && f.postedDate[0] === 'Last 24 hours' ? [] : f.postedDate,
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const doFetch = async () => {
+      if (jobs.length === 0) {
+        setLoading(true);
+      }
+      try {
+        const payload = mapFiltersToPayload(filters || {});
+        const payloadStr = JSON.stringify(payload || {});
+        console.log('[Jobs] Filter change detected. Payload:', payload);
+        if (lastPayloadRef.current === payloadStr) {
+          console.log('[Jobs] Payload unchanged, skipping fetch');
+          return;
+        }
+        lastPayloadRef.current = payloadStr;
+        console.log('[Jobs] Fetching filtered jobs...');
+        const data = await fetchFilteredJobs(payload);
+        const normalized = data.map(normalizeJob);
+        if (cancelled) return;
+        console.log('[Jobs] Received', normalized.length, 'jobs');
+        setJobs(normalized);
+        setFilteredJobs(normalized);
+        (window as any)[INITIAL_FETCH_FLAG] = true;
+      } catch (error) {
+        console.error("Error fetching jobs:", error);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+
+    if (isInitialRef.current) {
+      isInitialRef.current = false;
+      if ((window as any)[INITIAL_FETCH_FLAG]) return;
     }
 
-    // Type filter
-    if (selectedType !== 'all') {
-      filtered = filtered.filter(job => job.type === selectedType);
-    }
+    doFetch();
+    return () => {
+      cancelled = true;
+    };
+  }, [filters]);
 
-    // Location filter
-    if (selectedLocation !== 'all') {
-      filtered = filtered.filter(job => job.location.includes(selectedLocation));
-    }
 
-    // Remote filter
-    if (remoteOnly) {
-      filtered = filtered.filter(job => job.remote);
-    }
 
-    setFilteredJobs(filtered);
+  const handleJobSelect = (job: JobType) => setSelectedJob(job);
+
+  const handleSaveJob = (jobId: number) => {
+    setSavedJobs((prev) =>
+      prev.includes(jobId) ? prev.filter((id) => id !== jobId) : [...prev, jobId]
+    );
   };
 
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'full-time': return 'text-green-600 bg-green-100';
-      case 'part-time': return 'text-blue-600 bg-blue-100';
-      case 'contract': return 'text-purple-600 bg-purple-100';
-      case 'internship': return 'text-orange-600 bg-orange-100';
-      default: return 'text-gray-600 bg-gray-100';
+  const handleApply = (jobId: string | number) => {
+    const id = typeof jobId === 'string' ? Number(jobId) : jobId;
+    if (Number.isNaN(id)) return;
+    setAppliedJobs((prev) => (prev.includes(id as number) ? prev : [...prev, id as number]));
+  };
+
+  const handleAddJob = async (formData: any) => {
+    try {
+      formData.skills = safeArray(formData.skills);
+      formData.responsibilities = safeArray(formData.responsibilities);
+      formData.required_skills = safeArray(formData.required_skills);
+      formData.preferred_skills = safeArray(formData.preferred_skills);
+      formData.benefits = safeArray(formData.benefits);
+      formData.company_info = safeCompanyInfo(formData.company_info);
+      formData.salary = Number(formData.salary || 0);
+
+      const newJob = await createJob(formData);
+      if (!newJob) return;
+
+      const normalized = normalizeJob(newJob);
+      setJobs((prev) => [...prev, normalized]);
+      setFilteredJobs((prev) => [...prev, normalized]);
+      alert("Job created successfully!");
+    } catch (error) {
+      console.error("Failed to create job:", error);
+      alert("Failed to create job.");
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
-
-  const applyToJob = (jobId: number) => {
-    // In a real application, this would handle the job application process
-    alert('Application submitted! You will be redirected to the company\'s application portal.');
-  };
+  if (loading) return <p className="p-6">Loading jobs...</p>;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navigation />
-      
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Job Opportunities</h1>
-          <p className="text-gray-600 mt-2">Find your next career opportunity</p>
+    <div className="min-h-screen bg-background">
+      <Header showMenu={true} menuItems={menuItems} />
+
+      <div className="flex h-[calc(100vh-64px)]">
+   
+        <div className="w-80 border-r border-border bg-card overflow-y-auto">
+          <JobFilters onFilterChange={setFilters} initialFilters={filters} />
         </div>
 
-        {/* Filters */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Job title, company, or skills..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
+    
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h1 className="text-2xl font-bold">Job Opportunities</h1>
+                <p className="text-sm text-muted-foreground mt-1">{filteredJobs.length} jobs found</p>
+              </div>
+
+              <Button variant="outline" onClick={() => setShowTracker(!showTracker)} className="gap-2">
+                <FileText className="h-4 w-4" /> My Applications ({appliedJobs.length})
+              </Button>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Job Type</label>
-              <select
-                value={selectedType}
-                onChange={(e) => setSelectedType(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="all">All Types</option>
-                <option value="full-time">Full Time</option>
-                <option value="part-time">Part Time</option>
-                <option value="contract">Contract</option>
-                <option value="internship">Internship</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
-              <select
-                value={selectedLocation}
-                onChange={(e) => setSelectedLocation(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="all">All Locations</option>
-                <option value="San Francisco">San Francisco</option>
-                <option value="New York">New York</option>
-                <option value="Austin">Austin</option>
-                <option value="Seattle">Seattle</option>
-              </select>
-            </div>
-            <div className="flex items-end">
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={remoteOnly}
-                  onChange={(e) => setRemoteOnly(e.target.checked)}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                <span className="ml-2 text-sm text-gray-700">Remote only</span>
-              </label>
+
+            <div className="space-y-4">
+              {filteredJobs.length === 0 ? (
+                <p className="text-center text-muted-foreground">No jobs found.</p>
+              ) : (
+                filteredJobs.map((job) => (
+                  <JobCard
+                    key={job.id}
+                    job={job}
+                    isSelected={selectedJob?.id === job.id}
+                    isSaved={savedJobs.includes(job.id)}
+                    isApplied={appliedJobs.includes(job.id)}
+                    onClick={() => handleJobSelect(job)}
+                    onSave={() => handleSaveJob(job.id)}
+                  />
+                ))
+              )}
             </div>
           </div>
         </div>
 
-        {/* Job Listings */}
-        <div className="space-y-6">
-          {filteredJobs.map((job) => (
-            <div key={job.id} className="bg-white rounded-lg shadow-md p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <h3 className="text-xl font-semibold text-gray-900">{job.title}</h3>
-                    <span className={`
-                      px-2 py-1 text-xs font-medium rounded-full
-                      ${getTypeColor(job.type)}
-                    `}>
-                      {job.type.replace('-', ' ')}
-                    </span>
-                    {job.remote && (
-                      <span className="px-2 py-1 text-xs font-medium rounded-full text-blue-600 bg-blue-100">
-                        Remote
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center text-gray-600 text-sm space-x-4 mb-2">
-                    <div className="flex items-center">
-                      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-6a1 1 0 00-1-1H9a1 1 0 00-1 1v6a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clipRule="evenodd" />
-                      </svg>
-                      {job.company}
-                    </div>
-                    <div className="flex items-center">
-                      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                      </svg>
-                      {job.location}
-                    </div>
-                    <div className="flex items-center">
-                      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                      </svg>
-                      {job.experience}
-                    </div>
-                  </div>
-                  <div className="text-lg font-semibold text-green-600 mb-3">{job.salary}</div>
-                </div>
-                <button
-                  onClick={() => applyToJob(job.id)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium"
-                >
-                  Apply Now
-                </button>
-              </div>
+   
+        {selectedJob && !showTracker && (
+          <div className="w-[600px] border-l border-border bg-card overflow-y-auto">
+            <JobDetail
+              job={selectedJob}
+              onClose={() => setSelectedJob(null)}
+              onApply={handleApply}
+              isApplied={appliedJobs.includes(selectedJob.id)}
+              similarJobs={filteredJobs
+                .filter(
+                  (j) =>
+                    j.id !== selectedJob.id &&
+                    safeArray(j.skills).some((skill) => safeArray(selectedJob.skills).includes(skill))
+                )
+                .slice(0, 3)}
+              onSelectSimilar={handleJobSelect}
+            />
+          </div>
+        )}
 
-              <p className="text-gray-700 mb-4">{job.description}</p>
-
-              <div className="mb-4">
-                <h4 className="font-medium text-gray-900 mb-2">Requirements:</h4>
-                <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
-                  {job.requirements.map((req, index) => (
-                    <li key={index}>{req}</li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="mb-4">
-                <h4 className="font-medium text-gray-900 mb-2">Skills:</h4>
-                <div className="flex flex-wrap gap-2">
-                  {job.skills.map((skill, index) => (
-                    <span
-                      key={index}
-                      className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded-full"
-                    >
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between text-sm text-gray-500 pt-4 border-t border-gray-200">
-                <div>Posted: {formatDate(job.posted_date)}</div>
-                <div>Deadline: {formatDate(job.application_deadline)}</div>
-              </div>
+        
+        {showTracker && (
+          <div className="w-[600px] border-l border-border bg-card overflow-y-auto">
+            <div className="sticky top-0 z-10 bg-card border-b border-border p-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold">My Applications</h2>
+              <Button variant="ghost" size="icon" onClick={() => setShowTracker(false)}>
+                <X className="h-4 w-4" />
+              </Button>
             </div>
-          ))}
-        </div>
 
-        {filteredJobs.length === 0 && (
-          <div className="text-center py-12">
-            <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2V6" />
-            </svg>
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No jobs found</h3>
-            <p className="mt-1 text-sm text-gray-500">Try adjusting your search criteria.</p>
+            <ApplicationTracker appliedJobs={jobs.filter((j) => appliedJobs.includes(j.id))} />
           </div>
         )}
       </div>
@@ -312,3 +325,4 @@ const Jobs: React.FC = () => {
 };
 
 export default Jobs;
+

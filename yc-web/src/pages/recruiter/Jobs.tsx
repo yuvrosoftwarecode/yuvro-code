@@ -3,6 +3,7 @@ import { Plus, Pencil, Trash, Eye } from "lucide-react";
 import Navigation from "../../components/Navigation";
 import {fetchJobs, createJob, updateJob, deleteJobById } from "../../services/jobsapi";
 
+
 interface Job {
   id: number;
   title: string;
@@ -53,14 +54,12 @@ const Jobs: React.FC = () => {
     }
   };
 
-  // Input handler
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Add Job Modal
   const openAddModal = () => {
     setIsEditing(false);
     setFormData({
@@ -96,7 +95,6 @@ const Jobs: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  // ADD Job → Backend
   const handleAddJob = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -171,7 +169,6 @@ const Jobs: React.FC = () => {
           </button>
         </div>
 
-        {/* Jobs List */}
         <h2 className="text-2xl font-bold mb-4">Job Listings</h2>
         <p className="text-gray-600 mb-6">{jobs.length} job(s) found</p>
 
@@ -182,8 +179,6 @@ const Jobs: React.FC = () => {
                 <th className="p-3 text-left">Job Title</th>
                 <th className="p-3 text-left">Company</th>
                 <th className="p-3 text-left">Location</th>
-                <th className="p-3 text-left">Work Type</th>
-                <th className="p-3 text-left">Salary</th>
                 <th className="p-3 text-left">Applicants</th>
                 <th className="p-3 text-left">Status</th>
                 <th className="p-3 text-left">Actions</th>
@@ -196,8 +191,6 @@ const Jobs: React.FC = () => {
                   <td className="p-3 font-semibold">{job.title}</td>
                   <td className="p-3">{job.company}</td>
                   <td className="p-3">{job.location}</td>
-                  <td className="p-3">{job.workType}</td>
-                  <td className="p-3">{job.salary}</td>
                   <td className="p-3 flex items-center gap-1">
                     <Eye size={18} /> {job.applicants}
                   </td>
@@ -231,13 +224,9 @@ const Jobs: React.FC = () => {
           </table>
         </div>
 
-        {/* ---------------- MODALS ---------------- */}
-
-        {/* ADD/EDIT MODAL */}
         {isModalOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center overflow-y-auto">
             <div className="bg-white p-6 w-full max-w-3xl rounded shadow-lg my-10">
-              {/* Header */}
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold">
                   {isEditing ? "Update Job" : "Post New Job"}
@@ -245,12 +234,11 @@ const Jobs: React.FC = () => {
                 <button onClick={() => setIsModalOpen(false)}>✖</button>
               </div>
 
-              {/* Form */}
               <form
                 onSubmit={isEditing ? handleUpdateJob : handleAddJob}
                 className="space-y-4"
               >
-                {/* Title */}
+
                 <div>
                   <label className="font-semibold">Job Title</label>
                   <input
@@ -263,7 +251,6 @@ const Jobs: React.FC = () => {
                   />
                 </div>
 
-                {/* Company / Location */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label>Company</label>
@@ -288,7 +275,6 @@ const Jobs: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Work Type / Job Type */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label>Work Type</label>
@@ -317,7 +303,6 @@ const Jobs: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Experience / Salary */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label>Experience Level</label>
@@ -332,7 +317,6 @@ const Jobs: React.FC = () => {
                   </div>
 
 
-                    {/* Experience / Salary */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label> Description</label>
@@ -360,7 +344,6 @@ const Jobs: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Skills */}
                 <div>
                   <label>Skills (comma-separated)</label>
                   <input
@@ -373,7 +356,6 @@ const Jobs: React.FC = () => {
                   />
                 </div>
 
-                {/* Status */}
                 <div>
                   <label>Status</label>
                   <select
@@ -387,7 +369,6 @@ const Jobs: React.FC = () => {
                   </select>
                 </div>
 
-                {/* Buttons */}
                 <div className="flex justify-end gap-4">
                   <button
                     type="button"
@@ -408,7 +389,6 @@ const Jobs: React.FC = () => {
           </div>
         )}
 
-        {/* DELETE MODAL */}
         {isDeleteModalOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center">
             <div className="bg-white p-6 rounded shadow-lg w-96 text-center">
@@ -435,7 +415,6 @@ const Jobs: React.FC = () => {
           </div>
         )}
 
-        {/* END MODALS */}
       </div>
     </div>
   );

@@ -10,8 +10,18 @@ import psutil
 import difflib
 import asyncio
 import json
+from observability import setup_telemetry, instrument_fastapi_app, get_tracer, record_code_execution
+
+# Initialize OpenTelemetry
+setup_telemetry()
 
 app = FastAPI(title="Code Executor Service", version="1.0.0")
+
+# Instrument FastAPI app for tracing
+instrument_fastapi_app(app)
+
+# Get tracer for custom spans
+tracer = get_tracer(__name__)
 
 # CORS middleware
 app.add_middleware(
@@ -110,15 +120,28 @@ class CodeExecutorService:
     @staticmethod
     async def execute_code(code: str, language: str, input_data: str = "", timeout: int = 10) -> Dict[str, Any]:
         """Execute code and return results"""
-        if language not in LANGUAGE_CONFIGS:
-            return {
-                'success': False,
-                'error': f'Unsupported language: {language}',
-                'output': '',
-                'execution_time': 0,
-                'memory_usage': 0,
-                'status': 'error'
+        with tracer.start_as_current_span(
+            f"execute_code_{language}",
+            attributes={
+                "code.language": language,
+                "code.length": len(code),
+                "input.length": len(input_data),
+                "timeout": timeout
             }
+        ) as span:
+            start_time = time.time()
+            
+            if language not in LANGUAGE_CONFIGS:
+                result = {
+                    'success': False,
+                    'error': f'Unsupported language: {language}',
+                    'output': '',
+                    'execution_time': 0,
+                    'memory_usage': 0,
+                    'status': 'error'
+                }
+                record_code_execution(language, 'error', 0)
+                return result
 
         config = LANGUAGE_CONFIGS[language]
         
@@ -237,7 +260,7 @@ class CodeExecutorService:
                         pass
                     
                     if process.returncode == 0:
-                        return {
+                        result = {
                             'success': True,
                             'output': stdout.decode().strip(),
                             'error': stderr.decode().strip(),
@@ -245,8 +268,13 @@ class CodeExecutorService:
                             'memory_usage': memory_usage,
                             'status': 'completed'
                         }
+                        span.set_attribute("execution.success", True)
+                        span.set_attribute("execution.time", execution_time)
+                        span.set_attribute("execution.memory_mb", memory_usage)
+                        record_code_execution(language, 'success', execution_time, int(memory_usage * 1024 * 1024))
+                        return result
                     else:
-                        return {
+                        result = {
                             'success': False,
                             'output': stdout.decode().strip(),
                             'error': stderr.decode().strip(),
@@ -254,10 +282,14 @@ class CodeExecutorService:
                             'memory_usage': memory_usage,
                             'status': 'runtime_error'
                         }
+                        span.set_attribute("execution.success", False)
+                        span.set_attribute("execution.error", stderr.decode().strip())
+                        record_code_execution(language, 'runtime_error', execution_time)
+                        return result
 
                 except asyncio.TimeoutError:
                     process.kill()
-                    return {
+                    result = {
                         'success': False,
                         'error': f'Code execution timed out after {timeout} seconds',
                         'output': '',
@@ -265,16 +297,24 @@ class CodeExecutorService:
                         'memory_usage': 0,
                         'status': 'timeout'
                     }
+                    span.set_attribute("execution.success", False)
+                    span.set_attribute("execution.timeout", True)
+                    record_code_execution(language, 'timeout', timeout)
+                    return result
 
             except Exception as e:
-                return {
+                result = {
                     'success': False,
                     'error': str(e),
                     'output': '',
-                    'execution_time': 0,
+                    'execution_time': time.time() - start_time,
                     'memory_usage': 0,
                     'status': 'error'
                 }
+                span.set_attribute("execution.success", False)
+                span.set_attribute("execution.error", str(e))
+                record_code_execution(language, 'error', time.time() - start_time)
+                return result
 
     @staticmethod
     def calculate_similarity(code1: str, code2: str) -> float:

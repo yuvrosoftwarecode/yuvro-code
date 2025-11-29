@@ -1,4 +1,5 @@
 import type { User } from '../contexts/AuthContext';
+import { trackApiCall } from '../observability/telemetry';
 
 // Use backend URL from environment variable or default to local dev
 const API_BASE_URL =
@@ -77,6 +78,8 @@ class ApiClient {
       ...options,
     };
 
+    const startTime = performance.now();
+    
     try {
       let response = await fetch(url, config);
 
@@ -99,6 +102,9 @@ class ApiClient {
         }
       }
 
+      const duration = performance.now() - startTime;
+      trackApiCall(options.method || 'GET', url, response.status, duration);
+
       // Handle non-success responses
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -112,7 +118,12 @@ class ApiClient {
       // Return JSON data
       return await response.json();
     } catch (error) {
-      if (error instanceof ApiError) throw error;
+      const duration = performance.now() - startTime;
+      if (error instanceof ApiError) {
+        trackApiCall(options.method || 'GET', url, error.status, duration);
+        throw error;
+      }
+      trackApiCall(options.method || 'GET', url, 0, duration);
       throw new ApiError('Network error. Please try again later.', 0);
     }
   }

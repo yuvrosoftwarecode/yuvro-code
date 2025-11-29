@@ -6,6 +6,8 @@ import {
 } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
+// Initialize OpenTelemetry
+import './observability/telemetry';
 import Landing from './pages/landing/Landing';
 import Home from './pages/landing/Home';
 import About from './pages/landing/About';

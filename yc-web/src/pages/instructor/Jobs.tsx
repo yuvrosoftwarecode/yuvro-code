@@ -20,61 +20,7 @@ const Jobs: React.FC = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'all' | 'active' | 'draft' | 'closed'>('all');
   
-  // Sample job data
-  const [jobs] = useState<Job[]>([
-    {
-      id: '1',
-      title: 'Senior Full Stack Developer',
-      company: 'TechCorp Solutions',
-      location: 'Bangalore, India',
-      type: 'Full-time',
-      experience_level: '3-5 years',
-      salary: '₹12-18 LPA',
-      description: 'We are looking for a skilled Full Stack Developer to join our dynamic team. You will be responsible for developing and maintaining web applications using modern technologies.',
-      requirements: ['React.js', 'Node.js', 'MongoDB', 'TypeScript', 'AWS'],
-      postedDate: '2024-11-10',
-      status: 'active'
-    },
-    {
-      id: '2',
-      title: 'Python Data Scientist',
-      company: 'DataTech Analytics',
-      location: 'Hyderabad, India',
-      type: 'Full-time',
-      experience_level: '2-4 years',
-      salary: '₹10-15 LPA',
-      description: 'Join our data science team to work on cutting-edge machine learning projects and data analytics solutions.',
-      requirements: ['Python', 'Pandas', 'Scikit-learn', 'TensorFlow', 'SQL'],
-      postedDate: '2024-11-08',
-      status: 'active'
-    },
-    {
-      id: '3',
-      title: 'Frontend Developer Intern',
-      company: 'StartupXYZ',
-      location: 'Remote',
-      type: 'Internship',
-      experience_level: '0-1 years',
-      salary: '₹15,000/month',
-      description: 'Great opportunity for fresh graduates to work on real-world projects and learn from experienced developers.',
-      requirements: ['HTML', 'CSS', 'JavaScript', 'React.js'],
-      postedDate: '2024-11-05',
-      status: 'draft'
-    },
-    {
-      id: '4',
-      title: 'DevOps Engineer',
-      company: 'CloudTech Systems',
-      location: 'Mumbai, India',
-      type: 'Full-time',
-      experience_level: '4-6 years',
-      salary: '₹15-22 LPA',
-      description: 'Looking for an experienced DevOps engineer to manage our cloud infrastructure and CI/CD pipelines.',
-      requirements: ['AWS', 'Docker', 'Kubernetes', 'Jenkins', 'Terraform'],
-      postedDate: '2024-10-28',
-      status: 'closed'
-    }
-  ]);
+  const [jobs, setJobs] = useState<Job[]>([]);
 
   const filteredJobs = jobs.filter(job => {
     if (activeTab === 'all') return true;
@@ -95,7 +41,6 @@ const Jobs: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
-      {/* Header */}
       <div className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="py-6">
@@ -120,7 +65,6 @@ const Jobs: React.FC = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Tabs */}
         <div className="mb-6">
           <nav className="flex space-x-8">
             {[
@@ -149,7 +93,6 @@ const Jobs: React.FC = () => {
           </nav>
         </div>
 
-        {/* Jobs Grid */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredJobs.map((job) => (
             <div key={job.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">

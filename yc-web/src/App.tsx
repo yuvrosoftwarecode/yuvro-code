@@ -42,7 +42,7 @@ import OwnerContest from './pages/instructor/Contest';
 =======
 import RecruiterJobs from "./pages/recruiter/Jobs";
 import AddJob from "./components/student/AddJob";
-import JobList from "./components/student/JobList";
+import JobFiltersSidebar from "@/components/student/jobs/ApplicationTracker";
 
 >>>>>>> 7d78b66 (feat(jobs): add jobs in Frontend)
 
@@ -64,8 +64,10 @@ function App() {
               <Route path="/dashboard" element={<DashboardRedirect />} />
               <Route path="/student/jobs" element={<StudentJobs />} />
               <Route path="/recruiter/jobs" element={<RecruiterJobs />} />
-              <Route path="/" element={<JobList />} />
-             <Route path="/add-job" element={<AddJob />} />  
+              {/* <Route path="/" element={<JobList />} /> */}
+              <Route path="/add-job" element={<AddJob />} />  
+              <Route path="/student/JobFiltersSidebar" element={<JobFiltersSidebar />} />
+
 
 
               {/* Protected routes */}

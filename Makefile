@@ -7,6 +7,7 @@
 .PHONY: frontend-shell frontend-test frontend-test-watch frontend-format frontend-format-fix frontend-lint frontend-install
 .PHONY: test-all format-all lint-all check-all
 .PHONY: prod-build prod-up prod-down
+.PHONY: observability-setup observability-start observability-stop observability-logs observability-dashboards
 
 # Default target - show available commands
 help:
@@ -60,14 +61,24 @@ help:
 	@echo "  lint-all            Lint all code"
 	@echo "  check-all           Run all checks"
 	@echo ""
+	@echo "Observability:"
+	@echo "  observability-setup Setup observability stack"
+	@echo "  observability-start Start observability services"
+	@echo "  observability-stop  Stop observability services"
+	@echo "  observability-logs  View observability logs"
+	@echo "  observability-dashboards Open dashboards in browser"
+	@echo ""
 	@echo "Production commands:"
 	@echo "  prod-build          Build production images"
 	@echo "  prod-up             Start production services"
 	@echo "  prod-down           Stop production services"
 
 # Development commands
-dev:
+build:
 	docker compose up --build
+
+dev:
+	docker compose up
 
 dev-detached:
 	docker compose up --build -d
@@ -233,3 +244,37 @@ prod-up:
 
 prod-down:
 	docker compose -f docker-compose.prod.yml down
+
+# Observability commands
+observability-setup:
+	@echo "🚀 Setting up observability stack..."
+	./yc-observability/setup.sh
+
+observability-start:
+	@echo "🐳 Starting observability services..."
+	docker compose up -d jaeger otel-collector prometheus grafana
+
+observability-stop:
+	@echo "🛑 Stopping observability services..."
+	docker compose stop jaeger otel-collector prometheus grafana
+
+observability-logs:
+	@echo "📋 Viewing observability logs..."
+	docker compose logs -f jaeger otel-collector prometheus grafana
+
+observability-dashboards:
+	@echo "🌐 Opening observability dashboards..."
+	@echo "Grafana: http://localhost:3001 (admin/admin)"
+	@echo "Jaeger: http://localhost:16686"
+	@echo "Prometheus: http://localhost:9090"
+	@if command -v open >/dev/null 2>&1; then \
+		open http://localhost:3001 & \
+		open http://localhost:16686 & \
+		open http://localhost:9090 & \
+	elif command -v xdg-open >/dev/null 2>&1; then \
+		xdg-open http://localhost:3001 & \
+		xdg-open http://localhost:16686 & \
+		xdg-open http://localhost:9090 & \
+	else \
+		echo "Please open the URLs manually in your browser"; \
+	fi

@@ -1,0 +1,99 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+        cors:
+          allowed_origins:
+            - "http://localhost:3000"
+            - "http://localhost:8001"
+            - "http://localhost:8002"
+          allowed_headers:
+            - "*"
+  
+  # File log receivers for container logs
+  filelog/containers:
+    include:
+      - /var/lib/docker/containers/*/*-json.log
+    operators:
+      - type: json_parser
+        id: parser-docker
+        output: extract_metadata_from_filepath
+        timestamp:
+          parse_from: attributes.time
+          layout: '%Y-%m-%dT%H:%M:%S.%LZ'
+      - type: regex_parser
+        id: extract_metadata_from_filepath
+        regex: '^.*containers/(?P<container_id>[^/]+)/.*\.log$'
+        parse_from: attributes["log.file.path"]
+        output: add_service_name
+      - type: add
+        id: add_service_name
+        field: attributes.service_name
+        value: 'container'
+      - type: move
+        id: move_body
+        from: attributes.log
+        to: body
+
+processors:
+  batch:
+    timeout: 1s
+    send_batch_size: 1024
+  memory_limiter:
+    limit_mib: 512
+    check_interval: 1s
+  
+  # Resource processor to add service information
+  resource:
+    attributes:
+      - key: service.name
+        from_attribute: service_name
+        action: upsert
+      - key: service.version
+        value: "1.0.0"
+        action: insert
+  
+  # Attributes processor for log enrichment
+  attributes/logs:
+    actions:
+      - key: loki.attribute.labels
+        value: service_name, container_id
+        action: insert
+
+exporters:
+  otlp/jaeger:
+    endpoint: jaeger:4317
+    tls:
+      insecure: true
+  
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+  
+  loki:
+    endpoint: http://loki:3100/loki/api/v1/push
+    default_labels_enabled:
+      exporter: false
+      job: true
+    
+  logging:
+    verbosity: detailed
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlp/jaeger, logging]
+    
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [prometheus, logging]
+    
+    logs:
+      receivers: [otlp, filelog/containers]
+      processors: [memory_limiter, resource, attributes/logs, batch]
+      exporters: [loki, logging]

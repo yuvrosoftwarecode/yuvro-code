@@ -30,7 +30,7 @@ class UserSerializer(serializers.ModelSerializer):
     """
     Serializer for User model.
     """
-
+    
     class Meta:
         model = User
         fields = [

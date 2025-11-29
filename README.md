@@ -30,6 +30,12 @@ A modern full-stack web application built with Django REST Framework backend, Re
    - **Code Executor API Docs**: http://localhost:8002/docs
    - **OpenAPI Schema**: http://localhost:8001/api/schema/
 
+4. **Access observability dashboards:**
+   - **Grafana**: http://localhost:3001 (admin/admin)
+   - **Jaeger Tracing**: http://localhost:16686
+   - **Prometheus**: http://localhost:9090
+   - **Loki Logs**: http://localhost:3100
+
 ## 📁 Project Structure
 
 ```
@@ -50,6 +56,12 @@ yuvro-code/
 │   ├── public/            # Static assets
 │   ├── Dockerfile         # Frontend container config
 │   └── package.json       # Node.js dependencies
+├── yc-observability/      # Monitoring and tracing stack
+│   ├── grafana/           # Grafana dashboards and config
+│   ├── otel-collector-config.yaml # OpenTelemetry collector config
+│   ├── prometheus.yml     # Prometheus configuration
+│   ├── setup.sh           # Observability setup script
+│   └── README.md          # Observability documentation
 ├── .github/workflows/     # CI/CD pipelines
 ├── docker-compose.yml     # Development orchestration
 ├── docker-compose.prod.yml # Production orchestration
@@ -195,12 +207,59 @@ docker compose exec backend coverage report
 - **Frontend**: React Testing Library for components and integration tests
 - **CI/CD**: Automated testing on pull requests
 
+## 📊 Observability & Monitoring
+
+The YC Platform includes a comprehensive observability stack with distributed tracing, metrics collection, and monitoring dashboards.
+
+### Features
+
+- **Distributed Tracing**: Track requests across all services (frontend → backend → code executor)
+- **Metrics Collection**: HTTP requests, response times, code execution metrics, database connections
+- **Centralized Logging**: Structured logs aggregation with Loki and log correlation with traces
+- **Real-time Dashboards**: Pre-configured Grafana dashboards for system monitoring
+- **Error Tracking**: Automatic error detection and alerting
+
+### Quick Setup
+
+```bash
+# Setup observability stack
+./yc-observability/setup.sh
+
+# Or manually
+docker-compose up -d jaeger otel-collector prometheus grafana loki
+```
+
+### Access Dashboards
+
+- **Grafana**: http://localhost:3001 (admin/admin)
+  - YC Platform Overview dashboard
+  - Detailed metrics and performance monitoring
+  - Centralized logs dashboard with filtering and search
+- **Jaeger**: http://localhost:16686
+  - Distributed trace visualization
+  - Service dependency mapping
+- **Prometheus**: http://localhost:9090
+  - Raw metrics and custom queries
+- **Loki**: http://localhost:3100
+  - Log aggregation and querying API
+
+### Key Observability Data
+
+- **HTTP Requests**: Rate, duration, error rate by service and endpoint
+- **Code Execution**: Execution count, duration, memory usage by language
+- **Database**: Active connections, query performance
+- **User Actions**: Frontend interactions, navigation patterns
+- **Structured Logs**: Application logs with correlation IDs, user context, and error details
+- **Container Logs**: Docker container logs with automatic service labeling
+
+For detailed observability documentation, see [yc-observability/README.md](yc-observability/README.md).
+
 ## 🚀 Production Deployment
 
 ### Production Build
 
 ```bash
-# Build and start production services
+# Build and start production services (includes observability)
 make prod-build
 make prod-up
 
@@ -368,3 +427,7 @@ make test-all
 make format-all
 make check-all
 
+
+Grafana: http://localhost:3001 (admin/admin)
+Jaeger: http://localhost:16686
+Prometheus: http://localhost:9090

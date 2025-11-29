@@ -55,6 +55,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
+    "observability.TracingMiddleware",
 ]
 
 ROOT_URLCONF = "yc-backend-api.urls"
@@ -244,3 +245,11 @@ SPECTACULAR_SETTINGS = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
 }
+
+# Initialize OpenTelemetry
+if not DEBUG or config("ENABLE_TRACING", default=True, cast=bool):
+    try:
+        from observability import setup_telemetry
+        setup_telemetry()
+    except ImportError:
+        pass

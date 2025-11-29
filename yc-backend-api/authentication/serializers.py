@@ -1,6 +1,16 @@
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from .models import User, Profile
+
+from .models import (
+    User,
+    Profile,
+    SocialLinks,
+    Skill,
+    Experience,
+    Project,
+    Education,
+    Certification,
+)
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -18,10 +28,6 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         token["email"] = user.email
         token["first_name"] = user.first_name
         token["last_name"] = user.last_name
-
-        # Add profile information if available
-        if hasattr(user, "profile"):
-            token["avatar_url"] = user.profile.avatar_url
 
         return token
 
@@ -45,29 +51,6 @@ class UserSerializer(serializers.ModelSerializer):
             "last_login",
         ]
         read_only_fields = ["id", "date_joined", "last_login"]
-
-
-class ProfileSerializer(serializers.ModelSerializer):
-    """
-    Serializer for Profile model.
-    """
-
-    user = UserSerializer(read_only=True)
-
-    class Meta:
-        model = Profile
-        fields = [
-            "id",
-            "user",
-            "google_id",
-            "avatar_url",
-            "bio",
-            "location",
-            "website",
-            "created_at",
-            "updated_at",
-        ]
-        read_only_fields = ["id", "created_at", "updated_at"]
 
 
 class UserLoginSerializer(serializers.Serializer):
@@ -158,3 +141,164 @@ class UserUpdateSerializer(serializers.ModelSerializer):
                         "You don't have permission to change user roles."
                     )
         return value
+
+
+class SocialLinksSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SocialLinks
+        fields = [
+            "id",
+            "github",
+            "linkedin",
+            "portfolio",
+            "email",
+            "website",
+        ]
+        read_only_fields = ["id"]
+
+
+# ----- Skills -----
+class SkillSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Skill
+        fields = [
+            "id",
+            "name",
+            "level",
+            "percentage",
+        ]
+        read_only_fields = ["id"]
+
+
+# ----- Experience -----
+class ExperienceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Experience
+        fields = [
+            "id",
+            "company",
+            "role",
+            "duration",
+            "description_list",
+            "technologies",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
+
+
+# ----- Projects -----
+class ProjectSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Project
+        fields = [
+            "id",
+            "title",
+            "description",
+            "role",
+            "tech_stack",
+            "github_link",
+            "live_link",
+            "created_at",
+        ]
+        read_only_fields = ["id", "created_at"]
+
+
+# ----- Education -----
+class EducationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Education
+        fields = [
+            "id",
+            "institution",
+            "degree",
+            "field",
+            "duration",
+            "cgpa",
+            "start_year",
+            "end_year",
+        ]
+        read_only_fields = ["id"]
+
+
+# ----- Certifications -----
+class CertificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Certification
+        fields = [
+            "id",
+            "name",
+            "issuer",
+            "completion_date",
+            "certificate_file",
+        ]
+        read_only_fields = ["id"]
+
+
+# ------------------------------------------------------------
+# PROFILE SERIALIZER (NESTED READ)
+# ------------------------------------------------------------
+class ProfileSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+
+    # Allow editing user’s first and last name
+    first_name = serializers.CharField(write_only=True, required=False)
+    last_name = serializers.CharField(write_only=True, required=False)
+
+    links = SocialLinksSerializer(read_only=True)
+    skills = SkillSerializer(many=True, read_only=True)
+    experiences = ExperienceSerializer(many=True, read_only=True)
+    projects = ProjectSerializer(many=True, read_only=True)
+    education = EducationSerializer(many=True, read_only=True)
+    certifications = CertificationSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Profile
+        fields = [
+            "id",
+            "user",
+            "first_name",
+            "last_name",
+            "full_name",
+            "title",
+            "location",
+            "about",
+            "gender",
+            "profile_image",
+            "cover_image",
+            "google_id",
+            "created_at",
+            "updated_at",
+            "links",
+            "skills",
+            "experiences",
+            "projects",
+            "education",
+            "certifications",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at", "full_name"]
+
+    def update(self, instance, validated_data):
+        user = instance.user
+
+        # 1. Extract user fields
+        first_name = validated_data.pop("first_name", None)
+        last_name = validated_data.pop("last_name", None)
+
+        if first_name is not None:
+            user.first_name = first_name
+        if last_name is not None:
+            user.last_name = last_name
+        user.save()
+
+        # 2. Update profile fields normally
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        # 3. Always regenerate full_name
+        instance.full_name = f"{user.first_name} {user.last_name}".strip()
+
+        # 4. Save profile
+        instance.save()
+
+        return instance

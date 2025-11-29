@@ -72,16 +72,135 @@ class Profile(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
+
+    # Profile media
+    profile_image = models.URLField(blank=True, null=True)
+    cover_image = models.URLField(blank=True, null=True)
+
+    # Personal info
+    full_name = models.CharField(max_length=200, blank=True, null=True)
+    title = models.CharField(max_length=200, blank=True, null=True)
+    location = models.CharField(max_length=200, blank=True, null=True)
+
     google_id = models.CharField(max_length=100, blank=True, null=True, unique=True)
-    avatar_url = models.URLField(blank=True, null=True)
-    bio = models.TextField(blank=True, null=True)
+    about = models.TextField(blank=True, null=True)
     gender = models.CharField(
         max_length=20, choices=GENDER_CHOICES, blank=True, null=True
     )
-    location = models.CharField(max_length=100, blank=True, null=True)
-    website = models.URLField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.user.email}'s Profile"
+
+
+class SocialLinks(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    profile = models.OneToOneField(
+        Profile, on_delete=models.CASCADE, related_name="links"
+    )
+
+    github = models.URLField(blank=True, null=True)
+    linkedin = models.URLField(blank=True, null=True)
+    portfolio = models.URLField(blank=True, null=True)
+    email = models.EmailField(blank=True, null=True)
+    website = models.URLField(blank=True, null=True)
+
+    def __str__(self):
+        return f"Links for {self.profile.user.email}"
+
+
+class Skill(models.Model):
+    level_choices = [
+        ("Beginner", "Beginner"),
+        ("Intermediate", "Intermediate"),
+        ("Advanced", "Advanced"),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    profile = models.ForeignKey(
+        Profile, on_delete=models.CASCADE, related_name="skills"
+    )
+
+    name = models.CharField(max_length=100)
+    level = models.CharField(
+        max_length=100, choices=level_choices
+    )  # Beginner/Intermediate/Advanced
+    percentage = models.IntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.name} - {self.profile.user.email}"
+
+
+class Experience(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    profile = models.ForeignKey(
+        Profile, on_delete=models.CASCADE, related_name="experiences"
+    )
+
+    company = models.CharField(max_length=255)
+    role = models.CharField(max_length=255)
+    duration = models.CharField(max_length=100)
+
+    description_list = models.JSONField(default=list)  # bullet points
+    technologies = models.JSONField(default=list)  # list of tech names
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.role} at {self.company}"
+
+
+class Project(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    profile = models.ForeignKey(
+        Profile, on_delete=models.CASCADE, related_name="projects"
+    )
+
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    role = models.CharField(max_length=255)
+
+    tech_stack = models.JSONField(default=list)
+    github_link = models.URLField(blank=True, null=True)
+    live_link = models.URLField(blank=True, null=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title
+
+
+class Education(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    profile = models.ForeignKey(
+        Profile, on_delete=models.CASCADE, related_name="education"
+    )
+
+    institution = models.CharField(max_length=255)
+    degree = models.CharField(max_length=255)
+    field = models.CharField(max_length=255)
+    duration = models.CharField(max_length=100)
+    cgpa = models.CharField(max_length=10, blank=True, null=True)
+
+    start_year = models.IntegerField(blank=True, null=True)
+    end_year = models.IntegerField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.degree} - {self.institution}"
+
+
+class Certification(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    profile = models.ForeignKey(
+        Profile, on_delete=models.CASCADE, related_name="certifications"
+    )
+
+    name = models.CharField(max_length=255)
+    issuer = models.CharField(max_length=255)
+    completion_date = models.CharField(max_length=100)
+    certificate_file = models.URLField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.name} - {self.profile.user.email}"

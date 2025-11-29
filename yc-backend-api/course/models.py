@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
+
 class Course(models.Model):
     """
     Course model representing a complete learning course.
@@ -33,7 +34,10 @@ class Course(models.Model):
         ordering = ["category", "-created_at"]
 
     def __str__(self):
-        return f"{self.short_code} - {self.name}" if self.short_code else self.name
+        if self.short_code:
+            return f"{self.short_code}: {self.name}"
+        return self.name
+
 
 class Topic(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -65,6 +69,7 @@ class Topic(models.Model):
                 ).exclude(id=self.id).update(order_index=models.F("order_index") + 1)
 
         super().save(*args, **kwargs)
+
 
 class Subtopic(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -98,6 +103,7 @@ class Subtopic(models.Model):
 
         super().save(*args, **kwargs)
 
+
 class Video(models.Model):
     """
     Video model representing video content associated with a subtopic.
@@ -118,6 +124,7 @@ class Video(models.Model):
 
     def __str__(self):
         return f"{self.sub_topic.name} - {self.title}"
+
 
 class CodingProblem(models.Model):
     CATEGORY_CHOICES = [
@@ -192,9 +199,6 @@ class CodingProblem(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
-
-    
-
 
 
 class Quiz(models.Model):

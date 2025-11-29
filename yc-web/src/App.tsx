@@ -11,7 +11,7 @@ import Home from './pages/landing/Home';
 import About from './pages/landing/About';
 import Login from './pages/common/Login';
 import Register from './pages/common/Register';
-import Profile from './pages/common/Profile';
+import Profile from './pages/student/Profile';
 import Learn from './pages/student/Learn';
 import CodeManagement from './pages/instructor/CodeManagement';
 import NotFound from './pages/common/NotFound';

@@ -8,7 +8,7 @@ export interface User {
   username: string;
   role?: string;
   profile?: {
-    bio?: string;
+    about?: string;
     avatar?: string;
   };
 }

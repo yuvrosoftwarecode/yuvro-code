@@ -23,7 +23,7 @@ const Navigation: React.FC = () => {
       { label: 'Skill Test', path: '/student/skill-test' },
       { label: 'Mock Interview', path: '/student/mock-interview' },
       { label: 'Jobs', path: '/student/jobs' },
-      { label: 'Contest', path: '/student/contest' },
+      { label: 'Contests', path: '/student/contests' },
     ],
     admin: [
       { label: 'Dashboard', path: '/instructor/dashboard' },
@@ -48,7 +48,7 @@ const Navigation: React.FC = () => {
     recruiter: [
       { label: 'Dashboard', path: '/admin/dashboard' },
       { label: 'Jobs', path: '/admin/jobs' },
-      { label: 'Contests', path: '/admin/contests' },
+      { label: 'Contests', path: '/instructor/contests' },
     ],
   };
 

@@ -1,9 +1,8 @@
-from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import ContestViewSet
 
 router = DefaultRouter()
 
-router.register('', ContestViewSet, basename='contest')
+router.register(r'', ContestViewSet, basename='contest')
 
 urlpatterns = router.urls

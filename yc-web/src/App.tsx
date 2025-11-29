@@ -114,7 +114,7 @@ function App() {
               />
 
               <Route
-                path="/student/contest"
+                path="/student/contests"
                 element={
                   <ProtectedRoute allowedRoles={["student"]}>
                     <Contest />
@@ -260,16 +260,7 @@ function App() {
               <Route
                 path="/instructor/contests"
                 element={
-                  <ProtectedRoute allowedRoles={["admin", "instructor"]}>
-                    <OwnerContest />
-                  </ProtectedRoute>
-                }
-              />
-
-              <Route
-                path="/admin/contests"
-                element={
-                  <ProtectedRoute allowedRoles={["recruiter"]}>
+                  <ProtectedRoute allowedRoles={["admin", "instructor", "recruiter"]}>
                     <OwnerContest />
                   </ProtectedRoute>
                 }

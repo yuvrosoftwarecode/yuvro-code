@@ -7,7 +7,16 @@ from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 from django.contrib.auth import login
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
 from drf_spectacular.openapi import OpenApiTypes
-from .models import User, Profile
+from .models import (
+    User,
+    Profile,
+    SocialLinks,
+    Skill,
+    Experience,
+    Project,
+    Education,
+    Certification,
+)
 from .serializers import (
     CustomTokenObtainPairSerializer,
     UserRegistrationSerializer,
@@ -15,7 +24,14 @@ from .serializers import (
     UserSerializer,
     UserUpdateSerializer,
     ProfileSerializer,
+    SocialLinksSerializer,
+    SkillSerializer,
+    ExperienceSerializer,
+    ProjectSerializer,
+    EducationSerializer,
+    CertificationSerializer,
 )
+
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
@@ -178,43 +194,6 @@ class CustomTokenRefreshView(TokenRefreshView):
             raise InvalidToken(e.args[0])
 
 
-class UserProfileView(generics.RetrieveUpdateAPIView):
-    """User profile view for authenticated users."""
-
-    serializer_class = UserUpdateSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_object(self):
-        return self.request.user
-
-    def get(self, request, *args, **kwargs):
-        """Get user profile."""
-        user = self.get_object()
-        serializer = UserSerializer(user)
-        return Response(serializer.data)
-
-
-class ProfileDetailView(generics.RetrieveUpdateAPIView):
-    """Profile detail view for authenticated users."""
-
-    serializer_class = ProfileSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_object(self):
-        profile, created = Profile.objects.get_or_create(user=self.request.user)
-        return profile
-
-    def update(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-        return Response(serializer.data)
-
-    def put(self, request, *args, **kwargs):
-        return self.update(request, *args, **kwargs)
-
-
 @extend_schema(
     summary="Get Current User Info",
     description="Get information about the currently authenticated user.",
@@ -291,9 +270,6 @@ class ResetPasswordView(generics.GenericAPIView):
         return Response({"message": "Password reset successful. You may now login."})
 
 
-# User = get_user_model()
-
-
 @api_view(["GET"])
 @permission_classes([IsAdminUser])
 def admin_users(request):
@@ -323,3 +299,118 @@ class UsersListView(APIView):
         ]
 
         return Response(data)
+
+
+class UserProfileView(generics.RetrieveUpdateAPIView):
+    serializer_class = UserUpdateSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user
+
+
+class ProfileDetailView(generics.RetrieveUpdateAPIView):
+    serializer_class = ProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        profile, _ = Profile.objects.get_or_create(user=self.request.user)
+
+        # auto-create social links
+        if not hasattr(profile, "links"):
+            SocialLinks.objects.create(profile=profile)
+
+        return profile
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        updated_profile = serializer.save()
+
+        return Response(ProfileSerializer(updated_profile).data)
+
+
+class SocialLinksUpdateView(generics.UpdateAPIView):
+    serializer_class = SocialLinksSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        profile, _ = Profile.objects.get_or_create(user=self.request.user)
+        links, _ = SocialLinks.objects.get_or_create(profile=profile)
+        return links
+
+
+class SkillCreateView(generics.CreateAPIView):
+    serializer_class = SkillSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        profile, _ = Profile.objects.get_or_create(user=self.request.user)
+        serializer.save(profile=profile)
+
+
+class SkillUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Skill.objects.all()
+    serializer_class = SkillSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
+class ExperienceCreateView(generics.CreateAPIView):
+    serializer_class = ExperienceSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        profile, _ = Profile.objects.get_or_create(user=self.request.user)
+        serializer.save(profile=profile)
+
+
+class ExperienceUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Experience.objects.all()
+    serializer_class = ExperienceSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
+class ProjectCreateView(generics.CreateAPIView):
+    serializer_class = ProjectSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        profile, _ = Profile.objects.get_or_create(user=self.request.user)
+        serializer.save(profile=profile)
+
+
+class ProjectUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Project.objects.all()
+    serializer_class = ProjectSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
+class EducationCreateView(generics.CreateAPIView):
+    serializer_class = EducationSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        profile, _ = Profile.objects.get_or_create(user=self.request.user)
+        serializer.save(profile=profile)
+
+
+class EducationUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Education.objects.all()
+    serializer_class = EducationSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
+class CertificationCreateView(generics.CreateAPIView):
+    serializer_class = CertificationSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        profile, _ = Profile.objects.get_or_create(user=self.request.user)
+        serializer.save(profile=profile)
+
+
+class CertificationUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Certification.objects.all()
+    serializer_class = CertificationSerializer
+    permission_classes = [permissions.IsAuthenticated]

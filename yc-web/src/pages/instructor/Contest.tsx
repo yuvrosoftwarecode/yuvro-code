@@ -14,8 +14,6 @@ import Navigation from '@/components/Navigation';
 import SearchBar from '@/components/common/SearchBar';
 import { useAuth } from "@/contexts/AuthContext";
 
-
-
 interface Contest {
   id: string;
   title: string;
@@ -31,7 +29,7 @@ interface Contest {
   description: string;
 }
 
-const API_URL = import.meta.env.BACKEND_API_BASE_URL || 'http://localhost:8001/api/contest/';
+const API_URL = import.meta.env.BACKEND_API_BASE_URL || 'http://localhost:8001/api/contests/';
 
 function mapContestFromBackend(c: any): Contest {
   return {

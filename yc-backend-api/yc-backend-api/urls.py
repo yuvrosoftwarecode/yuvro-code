@@ -25,5 +25,5 @@ urlpatterns = [
     path("api/code/", include("code_executor.urls")),
     path("api/health/", health_check, name="health_check"),
     path("accounts/", include("allauth.urls")),
-    path("api/contest/", include("contest.urls")),
+    path("api/contests/", include("contest.urls")),
 ]

@@ -1,7 +1,7 @@
 // src/features/LearnCertify/LearnCertifyDashboard.tsx
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { apiClient } from "../../services/api";
+import restApiAuthUtil from "../../utils/RestApiAuthUtil";
 
 import ContinueLearningCard from "@/components/student/LearnCertify/ContinueLearning";
 import StatsGrid from "@/components/student/LearnCertify/StatsGrid";
@@ -30,11 +30,11 @@ const LearnCertifyDashboard: React.FC = () => {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const courseList = await apiClient["request"]<Course[]>("/course/courses/", { method: "GET" });
+        const courseList = await restApiAuthUtil.get<Course[]>("/course/courses/");
         const withTopics = await Promise.all(
           courseList.map(async (c) => {
             try {
-              const topics = await apiClient["request"]<any>(`/course/topics/?course=${c.id}`, { method: "GET" });
+              const topics = await restApiAuthUtil.get<any>(`/course/topics/?course=${c.id}`);
               return { ...c, topics };
             } catch {
               return { ...c, topics: [] };
@@ -50,7 +50,7 @@ const LearnCertifyDashboard: React.FC = () => {
 
     const fetchStats = async () => {
       try {
-        const s = await apiClient["request"]("/course/stats/", { method: "GET" });
+        const s = await restApiAuthUtil.get("/course/stats/");
         setStats(s as Stats);
       } catch (err) {
         console.error("Failed to fetch stats", err);
@@ -59,7 +59,7 @@ const LearnCertifyDashboard: React.FC = () => {
 
     const fetchContinue = async () => {
       try {
-        const c = await apiClient["request"]("/course/continue/", { method: "GET" });
+        const c = await restApiAuthUtil.get("/course/continue/");
         const cp = c as ContinueProgress;
         setContinueProgress({
           course: cp.course || "Python",
@@ -74,7 +74,7 @@ const LearnCertifyDashboard: React.FC = () => {
 
     const fetchProgressMap = async () => {
       try {
-        const list = await apiClient["request"]<{ course: string; percent: number }[]>("/course/progress/", { method: "GET" });
+        const list = await restApiAuthUtil.get<{ course: string; percent: number }[]>("/course/progress/");
         const map: CourseProgressMap = {};
         if (Array.isArray(list)) {
           list.forEach((p) => { map[p.course] = p.percent ?? 0; });
@@ -100,7 +100,7 @@ const LearnCertifyDashboard: React.FC = () => {
     databases: courses.filter(c => c.category === "databases"),
     ai_tools: courses.filter(c => c.category === "ai_tools"),
   };
-  
+
   const getIconFor = (category: string) => {
     switch (category) {
       case "fundamentals": return <Binary className="w-5 h-5 text-blue-600" />;

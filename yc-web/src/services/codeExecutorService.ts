@@ -1,4 +1,5 @@
-import api from './api';
+import restApiAuthUtil from '../utils/RestApiAuthUtil';
+import restApiUtil from '../utils/RestApiUtil';
 
 export interface CodeSubmission {
   id: number;
@@ -26,7 +27,7 @@ export interface CodeExecutionRequest {
   coding_problem_id: string;
 }
 
-// TestCase interface removed - using plain objects from course API
+
 
 export interface PlagiarismReport {
   id: number;
@@ -62,39 +63,24 @@ export interface ExecutionResult extends CodeSubmission {
 class CodeExecutorService {
   private codeExecutorBaseURL = import.meta.env.VITE_CODE_EXECUTOR_URL || 'http://localhost:8002';
 
-  // Run code directly via FastAPI service (no saving to database)
   async runCode(request: { code: string; language: string; test_cases: any[]; problem_title?: string }): Promise<ExecutionResult> {
     try {
-      const response = await fetch(`${this.codeExecutorBaseURL}/execute-with-tests`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          code: request.code,
-          language: request.language,
-          test_cases: request.test_cases.map(tc => ({
-            input_data: tc.input_data || tc.input || '',
-            expected_output: tc.expected_output || tc.expected || '',
-            weight: tc.weight || 1
-          })),
-          timeout: 10
-        })
+      const data = await restApiUtil.post(`${this.codeExecutorBaseURL}/execute-with-tests`, {
+        code: request.code,
+        language: request.language,
+        test_cases: request.test_cases.map(tc => ({
+          input_data: tc.input_data || tc.input || '',
+          expected_output: tc.expected_output || tc.expected || '',
+          weight: tc.weight || 1
+        })),
+        timeout: 10
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
-      }
-
-      const data = await response.json();
-      
-      // Transform FastAPI response to match Django ExecutionResult format
       const executionResult = data.execution_result || {};
       const testResults = data.test_results || [];
-      
+
       return {
-        id: 0, // Temporary ID since not saved to database
+        id: 0,
         coding_problem: '',
         problem_title: request.problem_title || 'Quick Run',
         problem_description: '',
@@ -132,39 +118,31 @@ class CodeExecutorService {
     }
   }
 
-  // Submit solution via Django API (saves to database and calls FastAPI)
   async submitSolution(request: CodeExecutionRequest & { test_cases: any[] }): Promise<ExecutionResult> {
     try {
-      const response = await api.post('/code/submissions/execute/', request);
-      return response; // The response IS the data, not response.data
+      return await restApiAuthUtil.post('/code/submissions/execute/', request);
     } catch (error) {
       console.error('Django submission failed:', error);
       throw new Error(`Solution submission failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
-  // Legacy method for backward compatibility
   async executeCode(request: CodeExecutionRequest): Promise<ExecutionResult> {
     return this.submitSolution(request);
   }
 
   async getSubmissions(codingProblemId?: string): Promise<CodeSubmission[]> {
-    const params = codingProblemId ? { coding_problem_id: codingProblemId } : {};
-    const response = await api.get('/code/submissions/', { params });
-    return response;
+    const params = codingProblemId ? { coding_problem_id: codingProblemId } : undefined;
+    return restApiAuthUtil.get('/code/submissions/', { params });
   }
 
   async getSubmission(id: number): Promise<CodeSubmission> {
-    const response = await api.get(`/code/submissions/${id}/`);
-    return response;
+    return restApiAuthUtil.get(`/code/submissions/${id}/`);
   }
 
-  // Remove getTestCases method - test cases now come from course API
-
   async getPlagiarismReports(minSimilarity?: number): Promise<PlagiarismReport[]> {
-    const params = minSimilarity ? { min_similarity: minSimilarity } : {};
-    const response = await api.get('/code/plagiarism/', { params });
-    return response;
+    const params = minSimilarity ? { min_similarity: minSimilarity.toString() } : undefined;
+    return restApiAuthUtil.get('/code/plagiarism/', { params });
   }
 }
 

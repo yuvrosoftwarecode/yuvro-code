@@ -85,19 +85,14 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
 
 // Initialize state from localStorage
 const getInitialState = (): AuthState => {
-  const savedAuth = localStorage.getItem('auth');
-  if (savedAuth) {
-    try {
-      const parsed = JSON.parse(savedAuth);
-      return {
-        user: parsed.user,
-        token: parsed.token,
-        isLoading: false,
-        isAuthenticated: !!parsed.token,
-      };
-    } catch (error) {
-      console.error('Error parsing auth from localStorage:', error);
-    }
+  const accessToken = localStorage.getItem('access');
+  if (accessToken) {
+    return {
+      user: null, // Will be loaded from authService
+      token: accessToken,
+      isLoading: false,
+      isAuthenticated: true,
+    };
   }
   return {
     user: null,
@@ -117,39 +112,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, getInitialState());
 
   useEffect(() => {
-    if (state.isAuthenticated) {
-      localStorage.setItem('auth', JSON.stringify({
-        user: state.user,
-        token: state.token
-      }));
-      if (state.token) {
-        localStorage.setItem('access', state.token);
-        authService.setAuthToken(state.token);
-      }
+    if (state.isAuthenticated && state.token) {
+      localStorage.setItem('access', state.token);
+      authService.setAuthToken(state.token);
     } else {
-      localStorage.removeItem('auth');
       localStorage.removeItem('access');
       localStorage.removeItem('refresh');
     }
-  }, [state.isAuthenticated, state.user, state.token]);
+  }, [state.isAuthenticated, state.token]);
 
   useEffect(() => {
-    const savedAuth = localStorage.getItem('auth');
     const accessToken = localStorage.getItem('access');
     
-    if (savedAuth && accessToken) {
-      try {
-        const { token, user } = JSON.parse(savedAuth);
-        if (token && user) {
-          authService.setAuthToken(token);
-          dispatch({ type: 'LOGIN_SUCCESS', payload: { user, token } });
-        }
-      } catch (error) {
-        console.error('Error parsing auth from localStorage:', error);
-        localStorage.removeItem('auth');
-      }
-    } else if (accessToken) {
-      // If we have access token but no auth data, initialize from storage
+    if (accessToken) {
+      authService.setAuthToken(accessToken);
+      // Initialize from storage and get user data
       authService.initializeFromStorage();
     }
   }, []);

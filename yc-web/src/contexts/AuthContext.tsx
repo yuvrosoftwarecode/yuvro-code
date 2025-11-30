@@ -122,15 +122,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         user: state.user,
         token: state.token
       }));
-      if (state.token) authService.setAuthToken(state.token);
+      if (state.token) {
+        localStorage.setItem('access', state.token);
+        authService.setAuthToken(state.token);
+      }
     } else {
       localStorage.removeItem('auth');
+      localStorage.removeItem('access');
+      localStorage.removeItem('refresh');
     }
   }, [state.isAuthenticated, state.user, state.token]);
 
   useEffect(() => {
     const savedAuth = localStorage.getItem('auth');
-    if (savedAuth) {
+    const accessToken = localStorage.getItem('access');
+    
+    if (savedAuth && accessToken) {
       try {
         const { token, user } = JSON.parse(savedAuth);
         if (token && user) {
@@ -141,6 +148,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.error('Error parsing auth from localStorage:', error);
         localStorage.removeItem('auth');
       }
+    } else if (accessToken) {
+      // If we have access token but no auth data, initialize from storage
+      authService.initializeFromStorage();
     }
   }, []);
 

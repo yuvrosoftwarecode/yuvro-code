@@ -1,16 +1,12 @@
-/**
- * OpenTelemetry configuration for React frontend
- */
+
 import { WebTracerProvider } from '@opentelemetry/sdk-trace-web';
 import { getWebAutoInstrumentations } from '@opentelemetry/auto-instrumentations-web';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-otlp-http';
-// Note: Resource and SemanticResourceAttributes may not be available in browser environment
 import { trace, SpanStatusCode } from '@opentelemetry/api';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
 import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-web';
 import { logger } from './logging';
 
-// Check if OpenTelemetry is enabled
 const isOtelEnabled = import.meta.env.VITE_OTEL_ENABLED === 'true';
 const otlpUrl = import.meta.env.VITE_OTEL_EXPORTER_OTLP_ENDPOINT || 'http://localhost:4318/v1/traces';
 
@@ -20,7 +16,6 @@ console.log('OTLP Trace Exporter URL:', otlpUrl);
 let tracer: any;
 
 if (isOtelEnabled) {
-  // Create OTLP exporter
   const exporter = new OTLPTraceExporter({
     url: otlpUrl,
     headers: {
@@ -28,12 +23,10 @@ if (isOtelEnabled) {
     },
   });
 
-  // Create tracer provider with span processor
   const provider = new WebTracerProvider({
     spanProcessors: [new BatchSpanProcessor(exporter)]
   });
 
-  // Register the provider
   provider.register();
 
   // Set global environment variables for auto-instrumentations
@@ -69,16 +62,15 @@ if (isOtelEnabled) {
     ],
   });
 
-  // Get tracer instance
   tracer = trace.getTracer('yc-web', '1.0.0');
 } else {
   // Create a no-op tracer when OpenTelemetry is disabled
   tracer = {
     startSpan: () => ({
-      setStatus: () => {},
-      setAttributes: () => {},
-      recordException: () => {},
-      end: () => {},
+      setStatus: () => { },
+      setAttributes: () => { },
+      recordException: () => { },
+      end: () => { },
     }),
   };
 }
@@ -89,13 +81,13 @@ if (isOtelEnabled) {
 export function createSpan(name: string, attributes?: Record<string, string | number | boolean>) {
   if (!isOtelEnabled) {
     return {
-      setStatus: () => {},
-      setAttributes: () => {},
-      recordException: () => {},
-      end: () => {},
+      setStatus: () => { },
+      setAttributes: () => { },
+      recordException: () => { },
+      end: () => { },
     };
   }
-  
+
   return tracer.startSpan(name, {
     attributes: {
       'component': 'yc-web',
@@ -114,10 +106,10 @@ export function withTracing<T extends (...args: any[]) => any>(
 ): T {
   return ((...args: any[]) => {
     const span = createSpan(name, attributes);
-    
+
     try {
       const result = fn(...args);
-      
+
       // Handle promises
       if (result && typeof result.then === 'function') {
         return result
@@ -128,24 +120,24 @@ export function withTracing<T extends (...args: any[]) => any>(
           })
           .catch((error: any) => {
             span.recordException(error);
-            span.setStatus({ 
-              code: SpanStatusCode.ERROR, 
-              message: error.message 
+            span.setStatus({
+              code: SpanStatusCode.ERROR,
+              message: error.message
             });
             span.end();
             throw error;
           });
       }
-      
+
       // Handle synchronous results
       span.setStatus({ code: SpanStatusCode.OK });
       span.end();
       return result;
     } catch (error: any) {
       span.recordException(error);
-      span.setStatus({ 
-        code: SpanStatusCode.ERROR, 
-        message: error.message 
+      span.setStatus({
+        code: SpanStatusCode.ERROR,
+        message: error.message
       });
       span.end();
       throw error;
@@ -153,19 +145,12 @@ export function withTracing<T extends (...args: any[]) => any>(
   }) as T;
 }
 
-/**
- * Track user actions
- */
 export function trackUserAction(action: string, details?: Record<string, any>) {
   const span = createSpan(`user.${action}`, {
     'user.action': action,
     'user.id': localStorage.getItem('userId') || 'anonymous',
     ...details,
   });
-  
-  // Log the user action
-  logger.logUserAction(action, details);
-  
   // Auto-end the span after a short delay for user actions
   setTimeout(() => {
     span.setStatus({ code: SpanStatusCode.OK });
@@ -181,77 +166,60 @@ export function trackApiCall(method: string, url: string, status?: number, durat
     'http.method': method,
     'http.url': url,
   };
-  
+
   if (status !== undefined) {
     attributes['http.status_code'] = status;
   }
-  
+
   if (duration !== undefined) {
     attributes['http.duration_ms'] = duration;
   }
-  
+
   const span = createSpan(`api.${method.toLowerCase()}`, attributes);
-  
-  // Log the API call
-  if (status !== undefined && duration !== undefined) {
-    logger.logApiCall(method, url, status, duration);
-  }
-  
   if (status && status >= 400) {
-    span.setStatus({ 
-      code: SpanStatusCode.ERROR, 
-      message: `HTTP ${status}` 
+    span.setStatus({
+      code: SpanStatusCode.ERROR,
+      message: `HTTP ${status}`
     });
   } else {
     span.setStatus({ code: SpanStatusCode.OK });
   }
-  
+
   span.end();
 }
 
-/**
- * Track code execution events
- */
 export function trackCodeExecution(language: string, success: boolean, duration?: number, error?: string) {
   const attributes: Record<string, string | number | boolean> = {
     'code.language': language,
     'code.success': success,
   };
-  
+
   if (duration !== undefined) {
     attributes['code.duration_ms'] = duration;
   }
-  
+
   const span = createSpan('code.execution', attributes);
-  
-  // Log the code execution
-  logger.logCodeExecution(language, success, duration, error);
-  
+
   if (!success && error) {
+    logger.logCodeExecution(language, success, duration, error);
     span.recordException(new Error(error));
-    span.setStatus({ 
-      code: SpanStatusCode.ERROR, 
-      message: error 
+    span.setStatus({
+      code: SpanStatusCode.ERROR,
+      message: error
     });
   } else {
     span.setStatus({ code: SpanStatusCode.OK });
   }
-  
+
   span.end();
 }
 
-/**
- * Track navigation events
- */
 export function trackNavigation(from: string, to: string) {
   const span = createSpan('navigation', {
     'navigation.from': from,
     'navigation.to': to,
   });
-  
-  // Log the navigation
-  logger.logNavigation(from, to);
-  
+
   span.setStatus({ code: SpanStatusCode.OK });
   span.end();
 }

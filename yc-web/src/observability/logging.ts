@@ -18,11 +18,13 @@ class Logger {
   private service: string;
   private userId?: string;
   private sessionId: string;
+  private logLevel: LogEntry['level'];
 
   constructor() {
     this.service = 'yc-web';
     this.sessionId = this.generateSessionId();
     this.userId = localStorage.getItem('userId') || undefined;
+    this.logLevel = (import.meta.env.VITE_LOG_LEVEL as LogEntry['level']) || 'info';
   }
 
   private generateSessionId(): string {
@@ -43,7 +45,16 @@ class Logger {
     };
   }
 
+  private shouldLog(level: LogEntry['level']): boolean {
+    const levels = { debug: 0, info: 1, warn: 2, error: 3 };
+    return levels[level] >= levels[this.logLevel];
+  }
+
   private async sendLog(entry: LogEntry): Promise<void> {
+    if (!this.shouldLog(entry.level)) {
+      return;
+    }
+
     try {
       // Send to console for development
       const consoleMethod = entry.level === 'warn' ? 'warn' : entry.level === 'error' ? 'error' : 'log';

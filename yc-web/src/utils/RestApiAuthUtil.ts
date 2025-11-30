@@ -23,8 +23,8 @@ class RestApiAuthUtil extends RestApiUtil {
 
     clearAuthToken() {
         this.token = null;
-        const keysToRemove = ['access', 'refresh'];
-        keysToRemove.forEach(key => localStorage.removeItem(key));
+        localStorage.removeItem('access');
+        localStorage.removeItem('refresh');
     }
 
     isAuthenticated(): boolean {
@@ -55,7 +55,7 @@ class RestApiAuthUtil extends RestApiUtil {
         try {
             console.log('Attempting to refresh token...');
             const response = await super.post<{ access: string; refresh?: string }>('/auth/token/refresh/', { refresh: refreshToken });
-            
+
             localStorage.setItem('access', response.access);
             if (response.refresh) {
                 localStorage.setItem('refresh', response.refresh);
@@ -94,10 +94,10 @@ class RestApiAuthUtil extends RestApiUtil {
         } catch (error) {
             if (error instanceof ApiError && error.status === 401) {
                 // Don't attempt token refresh for auth endpoints (login, register, etc.)
-                const isAuthEndpoint = endpoint.includes('/auth/login') || 
-                                     endpoint.includes('/auth/register') || 
-                                     endpoint.includes('/auth/token/refresh');
-                
+                const isAuthEndpoint = endpoint.includes('/auth/login') ||
+                    endpoint.includes('/auth/register') ||
+                    endpoint.includes('/auth/token/refresh');
+
                 if (isAuthEndpoint) {
                     // For auth endpoints, just throw the error without trying to refresh
                     throw error;

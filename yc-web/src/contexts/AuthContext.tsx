@@ -1,6 +1,7 @@
 import { createContext, useContext, useReducer, useEffect } from 'react';
 import type { ReactNode } from 'react';
-import { apiClient, ApiError } from '../services/api';
+import authService from '../services/authService';
+import { ApiError } from '../utils/RestApiUtil';
 
 export interface User {
   id: number;
@@ -121,7 +122,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         user: state.user,
         token: state.token
       }));
-      if (state.token) apiClient.setAuthToken(state.token);
+      if (state.token) authService.setAuthToken(state.token);
     } else {
       localStorage.removeItem('auth');
     }
@@ -133,7 +134,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       try {
         const { token, user } = JSON.parse(savedAuth);
         if (token && user) {
-          apiClient.setAuthToken(token);
+          authService.setAuthToken(token);
           dispatch({ type: 'LOGIN_SUCCESS', payload: { user, token } });
         }
       } catch (error) {
@@ -145,19 +146,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // -- Login --
   const login = async (email: string, password: string): Promise<void> => {
-  dispatch({ type: 'LOGIN_START' });
-  try {
-    const response = await apiClient.login(email, password);
-    
-    dispatch({
-      type: 'LOGIN_SUCCESS',
-      payload: { user: response.user, token: response.access },
-    });
-  } catch (error) {
-    dispatch({ type: 'LOGIN_FAILURE' });
-    throw error;
-  }
-};
+    dispatch({ type: 'LOGIN_START' });
+    try {
+      const response = await authService.login(email, password);
+
+      dispatch({
+        type: 'LOGIN_SUCCESS',
+        payload: { user: response.user, token: response.access },
+      });
+    } catch (error) {
+      dispatch({ type: 'LOGIN_FAILURE' });
+      throw error;
+    }
+  };
 
 
   const loginWithGoogle = async (): Promise<void> => {
@@ -177,11 +178,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   ): Promise<void> => {
     dispatch({ type: 'LOGIN_START' });
     try {
-      const response = await apiClient.register({ 
-        email, 
-        username, 
-        password, 
-        password_confirm: password 
+      const response = await authService.register({
+        email,
+        username,
+        password,
+        password_confirm: password
       });
       dispatch({
         type: 'LOGIN_SUCCESS',
@@ -194,7 +195,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = (): void => {
-    apiClient.logoutUser().finally(() => {
+    authService.logoutUser().finally(() => {
       dispatch({ type: 'LOGOUT' });
     });
   };

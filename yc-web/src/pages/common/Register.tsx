@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { ApiError } from '../../services/api';
+import { ApiError } from '../../utils/RestApiUtil';
 
 const Register: React.FC = () => {
   const [formData, setFormData] = useState({

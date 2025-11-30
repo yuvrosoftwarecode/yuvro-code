@@ -1,27 +1,4 @@
-// src/services/courseService.ts
-
-const API_BASE =
-  import.meta.env.BACKEND_API_BASE_URL || "http://127.0.0.1:8001/api";
-
-// ------------------------------------------------------------
-// Auth Header Helper
-// ------------------------------------------------------------
-function getAuthHeader(): Record<string, string> {
-  const token = localStorage.getItem("token") || localStorage.getItem("access");
-  if (token) {
-    return { Authorization: `Bearer ${token}` };
-  }
-  return {};
-}
-
-function buildHeaders(extra?: Record<string, string>): HeadersInit {
-  const auth = getAuthHeader();
-  return { ...auth, ...(extra || {}) };
-}
-
-// ------------------------------------------------------------
-// Types (Backend-matched)
-// ------------------------------------------------------------
+import restApiAuthUtil from '../utils/RestApiAuthUtil';
 export interface Subtopic {
   id: string;
   topic: string;
@@ -54,7 +31,7 @@ export interface Course {
   id: string | number;
   short_code?: string;
   name?: string;
-  title?: string; // For compatibility with LearnAndCertify component
+  title?: string;
   category: string;
   level?: string;
   duration?: number;
@@ -67,76 +44,23 @@ export interface Course {
   topics: TopicBasic[];
 }
 
-// MARK VIDEO AS READ
 export const markVideoAsRead = async (videoId: string) => {
-  const res = await fetch(`${API_BASE}/course/videos/${videoId}/mark-read/`, {
-    method: "POST",
-    headers: buildHeaders({ "Content-Type": "application/json" }),
-  });
-  if (!res.ok) throw new Error("Failed to mark video as read");
-  return res.json();
+  return restApiAuthUtil.post(`/course/videos/${videoId}/mark-read/`);
 };
 
-// ------------------------------------------------------------
-// Fetch All Courses
-// ------------------------------------------------------------
 export async function fetchCourses(category?: string): Promise<Course[]> {
-  const url = new URL(`${API_BASE}/course/courses/`);
-  if (category) url.searchParams.set("category", category);
-
-  const res = await fetch(url.toString(), {
-    headers: buildHeaders({ "Content-Type": "application/json" }),
-  });
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || err.message || "Failed to fetch courses");
-  }
-
-  return res.json();
+  const params = category ? { category } : undefined;
+  return restApiAuthUtil.get('/course/courses/', { params });
 }
 
-// ------------------------------------------------------------
-// Fetch Single Course (with nested topics)
-// ------------------------------------------------------------
 export async function fetchCourseById(courseId: string): Promise<Course> {
-  const url = `${API_BASE}/course/courses/${courseId}/`;
-
-  const res = await fetch(url, {
-    headers: buildHeaders({ "Content-Type": "application/json" }),
-  });
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || err.message || "Failed to fetch course");
-  }
-
-  return res.json();
+  return restApiAuthUtil.get(`/course/courses/${courseId}/`);
 }
 
-// ------------------------------------------------------------
-// Fetch Topics by Course (basic topics only)
-// ------------------------------------------------------------
-export async function fetchTopicsByCourse(
-  courseId: string
-): Promise<TopicBasic[]> {
-  const url = `${API_BASE}/course/topics/?course=${courseId}`;
-
-  const res = await fetch(url, {
-    headers: buildHeaders({ "Content-Type": "application/json" }),
-  });
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || err.message || "Failed to fetch topics");
-  }
-
-  return res.json();
+export async function fetchTopicsByCourse(courseId: string): Promise<TopicBasic[]> {
+  return restApiAuthUtil.get('/course/topics/', { params: { course: courseId } });
 }
 
-// ------------------------------------------------------------
-// Combined Course Structure (Uses nested serializer)
-// ------------------------------------------------------------
 export async function fetchCourseStructure(courseId: string) {
   const course = await fetchCourseById(courseId);
   return {
@@ -145,127 +69,44 @@ export async function fetchCourseStructure(courseId: string) {
   };
 }
 
-// ------------------------------------------------------------
-// Course CRUD
-// ------------------------------------------------------------
 export async function createCourse(courseData: any) {
-  const res = await fetch(`${API_BASE}/course/courses/`, {
-    method: "POST",
-    headers: buildHeaders({ "Content-Type": "application/json" }),
-    body: JSON.stringify(courseData),
-  });
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || "Failed to create course");
-  }
-
-  return res.json();
+  return restApiAuthUtil.post('/course/courses/', courseData);
 }
 
 export async function updateCourse(
   courseId: string,
   payload: Partial<{ name: string; short_code: string | null; category: string }>
 ) {
-  const res = await fetch(`${API_BASE}/course/courses/${courseId}/`, {
-    method: "PATCH",
-    headers: buildHeaders({ "Content-Type": "application/json" }),
-    body: JSON.stringify(payload),
-  });
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || err.message || "Failed to update course");
-  }
-
-  return res.json();
+  return restApiAuthUtil.patch(`/course/courses/${courseId}/`, payload);
 }
 
 export async function deleteCourse(courseId: string) {
-  const res = await fetch(`${API_BASE}/course/courses/${courseId}/`, {
-    method: "DELETE",
-    headers: buildHeaders({ "Content-Type": "application/json" }),
-  });
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || err.message || "Failed to delete course");
-  }
-
+  await restApiAuthUtil.delete(`/course/courses/${courseId}/`);
   return true;
 }
 
-
-// ------------------------------------------------------------
-// Topic CRUD
-// ------------------------------------------------------------
 export async function createTopic(payload: {
   name: string;
   course: string;
   order_index?: number;
 }) {
-  const res = await fetch(`${API_BASE}/course/topics/`, {
-    method: "POST",
-    headers: buildHeaders({ "Content-Type": "application/json" }),
-    body: JSON.stringify(payload),
-  });
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || err.message || "Failed to create topic");
-  }
-
-  return res.json();
+  return restApiAuthUtil.post('/course/topics/', payload);
 }
 
 export async function updateTopic(
   topicId: string,
   payload: Partial<{ name: string; order_index: number }>
 ) {
-  const res = await fetch(`${API_BASE}/course/topics/${topicId}/`, {
-    method: "PUT",
-    headers: buildHeaders({ "Content-Type": "application/json" }),
-    body: JSON.stringify(payload),
-  });
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || err.message || "Failed to update topic");
-  }
-
-  return res.json();
+  return restApiAuthUtil.put(`/course/topics/${topicId}/`, payload);
 }
 
 export async function deleteTopic(topicId: string) {
-  const res = await fetch(`${API_BASE}/course/topics/${topicId}/`, {
-    method: "DELETE",
-    headers: buildHeaders({ "Content-Type": "application/json" }),
-  });
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || err.message || "Failed to delete topic");
-  }
-
+  await restApiAuthUtil.delete(`/course/topics/${topicId}/`);
   return true;
 }
 
-// ------------------------------------------------------------
-// Subtopic CRUD
-// ------------------------------------------------------------
 export async function fetchSubtopicsByTopic(topicId: string) {
-  const url = `${API_BASE}/course/subtopics/?topic=${topicId}`;
-
-  const res = await fetch(url, {
-    headers: buildHeaders({ "Content-Type": "application/json" }),
-  });
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || err.message || "Failed to fetch subtopics");
-  }
-
-  return res.json();
+  return restApiAuthUtil.get('/course/subtopics/', { params: { topic: topicId } });
 }
 
 export async function createSubtopic(payload: {
@@ -274,243 +115,89 @@ export async function createSubtopic(payload: {
   order_index?: number;
   content?: string;
 }) {
-  const res = await fetch(`${API_BASE}/course/subtopics/`, {
-    method: "POST",
-    headers: buildHeaders({ "Content-Type": "application/json" }),
-    body: JSON.stringify(payload),
-  });
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || err.message || "Failed to create subtopic");
-  }
-
-  return res.json();
+  return restApiAuthUtil.post('/course/subtopics/', payload);
 }
 
 export async function updateSubtopic(
   subtopicId: string,
   payload: Partial<{ name: string; order_index: number; content?: string }>
 ) {
-  const res = await fetch(`${API_BASE}/course/subtopics/${subtopicId}/`, {
-    method: "PUT",
-    headers: buildHeaders({ "Content-Type": "application/json" }),
-    body: JSON.stringify(payload),
-  });
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || err.message || "Failed to update subtopic");
-  }
-
-  return res.json();
+  return restApiAuthUtil.put(`/course/subtopics/${subtopicId}/`, payload);
 }
 
 export async function deleteSubtopic(subtopicId: string) {
-  const res = await fetch(`${API_BASE}/course/subtopics/${subtopicId}/`, {
-    method: "DELETE",
-    headers: { "Content-Type": "application/json", ...getAuthHeader() },
-  });
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || err.message || "Failed to delete subtopic");
-  }
-
+  await restApiAuthUtil.delete(`/course/subtopics/${subtopicId}/`);
   return true;
 }
-// -----------------------------
-// VIDEO CRUD
-// -----------------------------
 
 export const fetchVideosBySubtopic = async (subtopicId: string) => {
-  const res = await fetch(`${API_BASE}/course/videos/?sub_topic=${subtopicId}`, { 
-    headers: getAuthHeader(), 
-  });
-  if (!res.ok) throw new Error("Failed to fetch videos");
-  return res.json();
+  return restApiAuthUtil.get('/course/videos/', { params: { sub_topic: subtopicId } });
 };
 
 export const createVideo = async (payload: any) => {
-  const res = await fetch(`${API_BASE}/course/videos/`, {
-    method: "POST",
-    headers: {
-      ...getAuthHeader(),
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) throw new Error("Failed to create video");
-  return res.json();
+  return restApiAuthUtil.post('/course/videos/', payload);
 };
 
 export const updateVideo = async (id: string, payload: any) => {
-  const res = await fetch(`${API_BASE}/course/videos/${id}/`, {
-    method: "PUT",
-    headers: {
-      ...getAuthHeader(),
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) throw new Error("Failed to update video");
-  return res.json();
+  return restApiAuthUtil.put(`/course/videos/${id}/`, payload);
 };
 
 export const deleteVideo = async (id: string) => {
-  const res = await fetch(`${API_BASE}/course/videos/${id}/`, {
-    method: "DELETE",
-    headers: getAuthHeader(),
-  });
-  if (!res.ok) throw new Error("Failed to delete video");
+  await restApiAuthUtil.delete(`/course/videos/${id}/`);
   return true;
 };
 
-
-// QUIZZES ----------------------------
-// --------------------------------
-// QUIZ CRUD (same pattern as videos)
-// --------------------------------
-
 export const fetchQuizzesBySubtopic = async (subtopicId: string) => {
-  const res = await fetch(`${API_BASE}/course/quizzes/?sub_topic=${subtopicId}`, {
-    headers: getAuthHeader(),
-  });
-  if (!res.ok) throw new Error("Failed to fetch quizzes");
-  return res.json();
+  return restApiAuthUtil.get('/course/quizzes/', { params: { sub_topic: subtopicId } });
 };
 
 export const createQuiz = async (payload: any) => {
-  const res = await fetch(`${API_BASE}/course/quizzes/`, {
-    method: "POST",
-    headers: {
-      ...getAuthHeader(),
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) throw new Error("Failed to create quiz");
-  return res.json();
+  return restApiAuthUtil.post('/course/quizzes/', payload);
 };
 
 export const updateQuiz = async (id: string, payload: any) => {
-  const res = await fetch(`${API_BASE}/course/quizzes/${id}/`, {
-    method: "PUT",
-    headers: {
-      ...getAuthHeader(),
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) throw new Error("Failed to update quiz");
-  return res.json();
+  return restApiAuthUtil.put(`/course/quizzes/${id}/`, payload);
 };
 
 export const deleteQuiz = async (id: string) => {
-  const res = await fetch(`${API_BASE}/course/quizzes/${id}/`, {
-    method: "DELETE",
-    headers: getAuthHeader(),
-  });
-  if (!res.ok) throw new Error("Failed to delete quiz");
+  await restApiAuthUtil.delete(`/course/quizzes/${id}/`);
   return true;
 };
 
-// -----------------------------
-// CODING PROBLEMS CRUD
-// -----------------------------
-
-// GET all problems for a subtopic
 export const fetchCodingProblemsBySubtopic = async (subtopicId: string) => {
-  const res = await fetch(`${API_BASE}/course/coding-problems/?sub_topic=${subtopicId}`, {
-    headers: getAuthHeader(),
-  });
-  if (!res.ok) throw new Error("Failed to fetch coding problems");
-  return res.json();
+  return restApiAuthUtil.get('/course/coding-problems/', { params: { sub_topic: subtopicId } });
 };
 
-// CREATE a new coding problem
 export const createCodingProblem = async (payload: any) => {
-  const res = await fetch(`${API_BASE}/course/coding-problems/`, {
-    method: "POST",
-    headers: {
-      ...getAuthHeader(),
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) throw new Error("Failed to create coding problem");
-  return res.json();
+  return restApiAuthUtil.post('/course/coding-problems/', payload);
 };
 
-// UPDATE a coding problem
 export const updateCodingProblem = async (id: string, payload: any) => {
-  const res = await fetch(`${API_BASE}/course/coding-problems/${id}/`, {
-    method: "PUT",
-    headers: {
-      ...getAuthHeader(),
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) throw new Error("Failed to update coding problem");
-  return res.json();
+  return restApiAuthUtil.put(`/course/coding-problems/${id}/`, payload);
 };
 
-// DELETE a coding problem
 export const deleteCodingProblem = async (id: string) => {
-  const res = await fetch(`${API_BASE}/course/coding-problems/${id}/`, {
-    method: "DELETE",
-    headers: getAuthHeader(),
-  });
-  if (!res.ok) throw new Error("Failed to delete coding problem");
+  await restApiAuthUtil.delete(`/course/coding-problems/${id}/`);
   return true;
 };
 
-// NOTES CRUD
 export const fetchNotesBySubtopic = async (subtopicId: string) => {
-  const res = await fetch(`${API_BASE}/course/notes/?sub_topic=${subtopicId}`, {
-    headers: getAuthHeader(),
-  });
-  if (!res.ok) throw new Error("Failed to fetch notes");
-  return res.json();
+  return restApiAuthUtil.get('/course/notes/', { params: { sub_topic: subtopicId } });
 };
 
 export const createNote = async (payload: any) => {
-  const res = await fetch(`${API_BASE}/course/notes/`, {
-    method: "POST",
-    headers: {
-      ...getAuthHeader(),
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) throw new Error("Failed to create note");
-  return res.json();
+  return restApiAuthUtil.post('/course/notes/', payload);
 };
 
 export const updateNote = async (id: string, payload: any) => {
-  const res = await fetch(`${API_BASE}/course/notes/${id}/`, {
-    method: "PATCH",
-    headers: {
-      ...getAuthHeader(),
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) throw new Error("Failed to update note");
-  return res.json();
+  return restApiAuthUtil.patch(`/course/notes/${id}/`, payload);
 };
 
 export const deleteNote = async (id: string) => {
-  const res = await fetch(`${API_BASE}/course/notes/${id}/`, {
-    method: "DELETE",
-    headers: getAuthHeader(),
-  });
-  if (!res.ok) throw new Error("Failed to delete note");
+  await restApiAuthUtil.delete(`/course/notes/${id}/`);
   return true;
 };
 
-// Default export with commonly used functions
 const courseService = {
   getCourses: fetchCourses,
   getCourse: fetchCourseById,
@@ -546,287 +233,109 @@ const courseService = {
 
 export default courseService;
 
-// ------------------------------------------------------------
-// SKILL TEST — QUIZZES (Topic Level + category=skill_test)
-// ------------------------------------------------------------
-
-// Fetch MCQs for Skill Test (category=skill_test)
 export const fetchSkillTestQuizzesByTopic = async (topicId: string) => {
-  const url = `${API_BASE}/course/quizzes/?topic=${topicId}&category=skill_test`;
-
-  const res = await fetch(url, {
-    headers: getAuthHeader(),
-  });
-
-  if (!res.ok) throw new Error("Failed to fetch skill test quizzes");
-  return res.json();
+  return restApiAuthUtil.get('/course/quizzes/', { params: { topic: topicId, category: 'skill_test' } });
 };
 
-// Create Skill Test MCQ
 export const createSkillTestQuiz = async (payload: any) => {
-  const res = await fetch(`${API_BASE}/course/quizzes/`, {
-    method: "POST",
-    headers: {
-      ...getAuthHeader(),
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-
-  if (!res.ok) throw new Error("Failed to create skill test quiz");
-  return res.json();
+  return restApiAuthUtil.post('/course/quizzes/', payload);
 };
 
-// Update Skill Test MCQ
 export const updateSkillTestQuiz = async (id: string, payload: any) => {
-  const res = await fetch(`${API_BASE}/course/quizzes/${id}/`, {
-    method: "PATCH",
-    headers: {
-      ...getAuthHeader(),
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-
-  if (!res.ok) throw new Error("Failed to update skill test quiz");
-  return res.json();
+  return restApiAuthUtil.patch(`/course/quizzes/${id}/`, payload);
 };
 
-// Delete Skill Test MCQ
 export const deleteSkillTestQuiz = async (id: string) => {
-  const res = await fetch(`${API_BASE}/course/quizzes/${id}/`, {
-    method: "DELETE",
-    headers: getAuthHeader(),
-  });
-
-  if (!res.ok) throw new Error("Failed to delete skill test quiz");
+  await restApiAuthUtil.delete(`/course/quizzes/${id}/`);
   return true;
 };
 
-
-// ------------------------------------------------------------
-// SKILL TEST — CODING PROBLEMS (Topic Level + category=skill_test)
-// ------------------------------------------------------------
-
-// Fetch Coding Problems (Skill Test)
 export const fetchSkillTestCodingProblemsByTopic = async (topicId: string) => {
-  const url = `${API_BASE}/course/coding-problems/?topic=${topicId}&category=skill_test`;
-
-  const res = await fetch(url, {
-    headers: getAuthHeader(),
-  });
-
-  if (!res.ok) throw new Error("Failed to fetch skill test coding problems");
-  return res.json();
+  return restApiAuthUtil.get('/course/coding-problems/', { params: { topic: topicId, category: 'skill_test' } });
 };
 
-// Create Skill Test Coding Problem
 export const createSkillTestCodingProblem = async (payload: any) => {
-  const res = await fetch(`${API_BASE}/course/coding-problems/`, {
-    method: "POST",
-    headers: {
-      ...getAuthHeader(),
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-
-  if (!res.ok) throw new Error("Failed to create skill test coding problem");
-  return res.json();
+  return restApiAuthUtil.post('/course/coding-problems/', payload);
 };
 
-// Update Skill Test Coding Problem
 export const updateSkillTestCodingProblem = async (id: string, payload: any) => {
-  const res = await fetch(`${API_BASE}/course/coding-problems/${id}/`, {
-    method: "PATCH",
-    headers: {
-      ...getAuthHeader(),
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-
-  if (!res.ok) throw new Error("Failed to update skill test coding problem");
-  return res.json();
+  return restApiAuthUtil.patch(`/course/coding-problems/${id}/`, payload);
 };
 
-// Delete Skill Test Coding Problem
 export const deleteSkillTestCodingProblem = async (id: string) => {
-  const res = await fetch(`${API_BASE}/course/coding-problems/${id}/`, {
-    method: "DELETE",
-    headers: getAuthHeader(),
-  });
-
-  if (!res.ok) throw new Error("Failed to delete skill test coding problem");
+  await restApiAuthUtil.delete(`/course/coding-problems/${id}/`);
   return true;
 };
 
-
-// ---------------------------------------------
-// PRACTICE QUESTIONS —  CODING
-// ---------------------------------------------
-
-// Fetch coding problems filtered by topic & category=practice
 export async function fetchPracticeCodingProblemsByTopic(topicId: string) {
-  const res = await fetch(
-    `${API_BASE}/course/coding-problems/?topic=${topicId}&category=practice`,
-    { headers: getAuthHeader() }
-  );
-  if (!res.ok) throw new Error("Failed to fetch practice coding problems");
-  return res.json();
+  return restApiAuthUtil.get('/course/coding-problems/', { params: { topic: topicId, category: 'practice' } });
 }
 
-// Create new practice coding problem
 export async function createPracticeCodingProblem(payload: any) {
-  const res = await fetch(`${API_BASE}/course/coding-problems/`, {
-    method: "POST",
-    headers: { ...getAuthHeader(), "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) throw new Error("Failed to create practice problem");
-  return res.json();
+  return restApiAuthUtil.post('/course/coding-problems/', payload);
 }
 
-// Update practice coding problem
 export async function updatePracticeCodingProblem(id: string, payload: any) {
-  const res = await fetch(`${API_BASE}/course/coding-problems/${id}/`, {
-    method: "PUT",
-    headers: { ...getAuthHeader(), "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) throw new Error("Failed to update practice problem");
-  return res.json();
+  return restApiAuthUtil.put(`/course/coding-problems/${id}/`, payload);
 }
 
-// Delete practice problem
 export async function deletePracticeCodingProblem(id: string) {
-  const res = await fetch(`${API_BASE}/course/coding-problems/${id}/`, {
-    method: "DELETE",
-    headers: getAuthHeader(),
-  });
-  if (!res.ok) throw new Error("Failed to delete practice problem");
+  await restApiAuthUtil.delete(`/course/coding-problems/${id}/`);
   return true;
 }
 
-// Fetch instructors of a course
 export async function fetchCourseInstructors(courseId: string) {
-  const res = await fetch(`${API_BASE}/course/courses/${courseId}/instructors/`, {
-    headers: getAuthHeader()
-  });
-
-  if (!res.ok) throw new Error("Failed to fetch instructors");
-  return res.json();
+  return restApiAuthUtil.get(`/course/courses/${courseId}/instructors/`);
 }
 
-// Add instructor to course
 export async function addInstructorToCourse(courseId: string, instructorId: string) {
-  const res = await fetch(`${API_BASE}/course/courses/${courseId}/add_instructor/`, {
-    method: "POST",
-    headers: {
-      ...getAuthHeader(),
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ instructor_id: instructorId }),
-  });
-
-  if (!res.ok) throw new Error("Failed to add instructor");
-  return res.json();
+  return restApiAuthUtil.post(`/course/courses/${courseId}/add_instructor/`, { instructor_id: instructorId });
 }
 
-// Remove instructor
 export async function removeInstructorFromCourse(courseId: string, instructorId: string) {
-  const res = await fetch(`${API_BASE}/course/courses/${courseId}/remove_instructor/`, {
-    method: "POST",
-    headers: {
-      ...getAuthHeader(),
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ instructor_id: instructorId }),
-  });
-
-  if (!res.ok) throw new Error("Failed to remove instructor");
-  return res.json();
+  return restApiAuthUtil.post(`/course/courses/${courseId}/remove_instructor/`, { instructor_id: instructorId });
 }
 
 export async function fetchAllInstructors() {
-  const res = await fetch(`${API_BASE}/auth/users/?role=instructor`, {
-    headers: getAuthHeader(),
-  });
-
-  if (!res.ok) throw new Error("Failed to fetch instructors");
-  return res.json();
+  return restApiAuthUtil.get('/auth/users/', { params: { role: 'instructor' } });
 }
 
-// Fetch Skill Test Questions (MCQ + Coding) for a Topic
 export async function fetchSkillTestQuestions(topicId: string) {
-
   function safeParseOptions(raw: any): string[] {
-  if (!raw) return [];
-
-  // If already array
-  if (Array.isArray(raw)) {
-    return raw.map(String);
-  }
-
-  // If it's an object → convert values to array
-  if (typeof raw === "object") {
-    try {
-      return Object.values(raw).map(String);
-    } catch {
-      return [];
+    if (!raw) return [];
+    if (Array.isArray(raw)) {
+      return raw.map(String);
     }
+    if (typeof raw === "object") {
+      try {
+        return Object.values(raw).map(String);
+      } catch {
+        return [];
+      }
+    }
+    if (typeof raw !== "string") {
+      raw = String(raw);
+    }
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed.map(String);
+    } catch {}
+    try {
+      const fixed = raw.replace(/'/g, '"');
+      const parsed = JSON.parse(fixed);
+      if (Array.isArray(parsed)) return parsed.map(String);
+    } catch {}
+    return raw.split(/[,|;]/).map((s: string) => s.trim()).filter(Boolean);
   }
 
-  // If it's not a string → convert it
-  if (typeof raw !== "string") {
-    raw = String(raw);
-  }
-
-  // Try JSON parse
-  try {
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed)) return parsed.map(String);
-  } catch {}
-
-  // Try single-quote JSON
-  try {
-    const fixed = raw.replace(/'/g, '"');
-    const parsed = JSON.parse(fixed);
-    if (Array.isArray(parsed)) return parsed.map(String);
-  } catch {}
-
-  // Fallback: split by common separators
-  return raw.split(/[,|;]/).map(s => s.trim()).filter(Boolean);
-}
-
-  const headers = {
-    ...getAuthHeader(),
-    "Content-Type": "application/json",
-  };
-
-  // Fetch quizzes
-  const quizRes = await fetch(
-    `${API_BASE}/course/quizzes/?topic=${topicId}&category=skill_test`,
-    { headers }
-  );
-
-  if (!quizRes.ok) throw new Error("Failed to fetch skill test quizzes");
-  const quizzes = await quizRes.json();
-
-  // Fetch coding problems
-  const codingRes = await fetch(
-    `${API_BASE}/course/coding-problems/?topic=${topicId}&category=skill_test`,
-    { headers }
-  );
-
-  if (!codingRes.ok) throw new Error("Failed to fetch coding questions");
-  const coding = await codingRes.json();
+  const quizzes = await restApiAuthUtil.get('/course/quizzes/', { params: { topic: topicId, category: 'skill_test' } });
+  const coding = await restApiAuthUtil.get('/course/coding-problems/', { params: { topic: topicId, category: 'skill_test' } });
 
   const mcqQuestions = quizzes.map((q: any) => ({
     id: q.id,
     type: "mcq",
     question: q.question,
-    options: safeParseOptions(q.options),   // << FIXED HERE
+    options: safeParseOptions(q.options),
     multipleCorrect: q.multiple_correct ?? false,
     marks: 2,
   }));

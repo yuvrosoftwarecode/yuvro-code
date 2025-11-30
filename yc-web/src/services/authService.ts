@@ -19,33 +19,52 @@ class AuthService {
     restApiAuthUtil.setAuthToken(token);
   }
 
+  isAuthenticated(): boolean {
+    return restApiAuthUtil.isAuthenticated();
+  }
+
+  getAuthToken(): string | null {
+    return restApiAuthUtil.getAuthToken();
+  }
+
+  async refreshToken(): Promise<boolean> {
+    return restApiAuthUtil.forceRefreshToken();
+  }
+
+  initializeFromStorage(): void {
+    const token = localStorage.getItem('access');
+    if (token) {
+      restApiAuthUtil.setAuthToken(token);
+    }
+  }
+
   async login(email: string, password: string): Promise<LoginResponse> {
     const response = await restApiAuthUtil.post<LoginResponse>('/auth/login/', { email, password });
-    
+
     localStorage.setItem('access', response.access);
     localStorage.setItem('refresh', response.refresh);
     restApiAuthUtil.setAuthToken(response.access);
-    
+
     return response;
   }
 
   async register(data: RegisterRequest): Promise<LoginResponse> {
     const response = await restApiAuthUtil.post<LoginResponse>('/auth/register/', data);
-    
+
     localStorage.setItem('access', response.access);
     localStorage.setItem('refresh', response.refresh);
     restApiAuthUtil.setAuthToken(response.access);
-    
+
     return response;
   }
 
   async loginWithGoogle(token: string): Promise<LoginResponse> {
     const response = await restApiAuthUtil.post<LoginResponse>('/auth/google/', { token });
-    
+
     localStorage.setItem('access', response.access);
     localStorage.setItem('refresh', response.refresh);
     restApiAuthUtil.setAuthToken(response.access);
-    
+
     return response;
   }
 

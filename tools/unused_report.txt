@@ -1,0 +1,86 @@
+Repository scanned: C:\Users\kadal\Desktop\Yuvro-code\yuvro-code
+
+Total source files: 293
+
+Candidate unused files: 39
+
+
+Potentially unused files (heuristic):
+
+C:\Users\kadal\Desktop\Yuvro-code\yuvro-code\yc-backend-api\authentication\migrations\0006_alter_skill_level.py  (basename occurrences across repo: 0)
+
+C:\Users\kadal\Desktop\Yuvro-code\yuvro-code\yc-backend-api\code_executor\migrations\0002_refactor_to_coding_problem.py  (basename occurrences across repo: 0)
+
+C:\Users\kadal\Desktop\Yuvro-code\yuvro-code\yc-backend-api\contest\migrations\0003_alter_contest_created_by.py  (basename occurrences across repo: 0)
+
+C:\Users\kadal\Desktop\Yuvro-code\yuvro-code\yc-backend-api\core\management\commands\setup_local_testing.py  (basename occurrences across repo: 0)
+
+C:\Users\kadal\Desktop\Yuvro-code\yuvro-code\yc-backend-api\course\migrations\0011_learnprogress_coursecontinue.py  (basename occurrences across repo: 0)
+
+C:\Users\kadal\Desktop\Yuvro-code\yuvro-code\yc-code-executor\services\plagiarism_detector.py  (basename occurrences across repo: 0)
+
+C:\Users\kadal\Desktop\Yuvro-code\yuvro-code\yc-code-executor\services\security_manager.py  (basename occurrences across repo: 0)
+
+C:\Users\kadal\Desktop\Yuvro-code\yuvro-code\yc-code-executor\test_service.py  (basename occurrences across repo: 0)
+
+C:\Users\kadal\Desktop\Yuvro-code\yuvro-code\yc-web\postcss.config.js  (basename occurrences across repo: 0)
+
+C:\Users\kadal\Desktop\Yuvro-code\yuvro-code\yc-web\src\components\__tests__\LoadingSpinner.test.tsx  (basename occurrences across repo: 0)
+
+C:\Users\kadal\Desktop\Yuvro-code\yuvro-code\yc-web\src\components\ui\drawer.tsx  (basename occurrences across repo: 0)
+
+C:\Users\kadal\Desktop\Yuvro-code\yuvro-code\yc-web\src\contexts\__tests__\AuthContext.test.tsx  (basename occurrences across repo: 0)
+
+C:\Users\kadal\Desktop\Yuvro-code\yuvro-code\yc-web\src\pages\__tests__\Landing.test.tsx  (basename occurrences across repo: 0)
+
+C:\Users\kadal\Desktop\Yuvro-code\yuvro-code\yc-web\tailwind.config.js  (basename occurrences across repo: 0)
+
+C:\Users\kadal\Desktop\Yuvro-code\yuvro-code\yc-web\vite.config.ts  (basename occurrences across repo: 0)
+
+C:\Users\kadal\Desktop\Yuvro-code\yuvro-code\yc-web\vitest.config.ts  (basename occurrences across repo: 0)
+
+C:\Users\kadal\Desktop\Yuvro-code\yuvro-code\tools\find_unused_files.py  (basename occurrences across repo: 1)
+
+C:\Users\kadal\Desktop\Yuvro-code\yuvro-code\yc-backend-api\authentication\migrations\0001_initial_with_uuid.py  (basename occurrences across repo: 1)
+
+C:\Users\kadal\Desktop\Yuvro-code\yuvro-code\yc-backend-api\authentication\migrations\0002_user_role.py  (basename occurrences across repo: 1)
+
+C:\Users\kadal\Desktop\Yuvro-code\yuvro-code\yc-backend-api\authentication\migrations\0003_profile_gender.py  (basename occurrences across repo: 1)
+
+C:\Users\kadal\Desktop\Yuvro-code\yuvro-code\yc-backend-api\authentication\migrations\0004_auto_20251115_1548.py  (basename occurrences across repo: 1)
+
+C:\Users\kadal\Desktop\Yuvro-code\yuvro-code\yc-backend-api\authentication\migrations\0005_rename_bio_profile_about_and_more.py  (basename occurrences across repo: 1)
+
+C:\Users\kadal\Desktop\Yuvro-code\yuvro-code\yc-backend-api\contest\migrations\0002_alter_contest_duration.py  (basename occurrences across repo: 1)
+
+C:\Users\kadal\Desktop\Yuvro-code\yuvro-code\yc-backend-api\course\migrations\0008_alter_course_category_and_more.py  (basename occurrences across repo: 1)
+
+C:\Users\kadal\Desktop\Yuvro-code\yuvro-code\yc-backend-api\course\migrations\0008_codingproblem_category_codingproblem_topic_and_more.py  (basename occurrences across repo: 1)
+
+C:\Users\kadal\Desktop\Yuvro-code\yuvro-code\yc-backend-api\course\migrations\0009_merge_20251121_1350.py  (basename occurrences across repo: 1)
+
+C:\Users\kadal\Desktop\Yuvro-code\yuvro-code\yc-backend-api\course\migrations\0010_remove_course_assigned_admin_courseinstructor_and_more.py  (basename occurrences across repo: 1)
+
+C:\Users\kadal\Desktop\Yuvro-code\yuvro-code\yc-web\eslint.config.js  (basename occurrences across repo: 1)
+
+C:\Users\kadal\Desktop\Yuvro-code\yuvro-code\yc-web\src\components\student\LearnCertify\CatergorySection.tsx  (basename occurrences across repo: 1)
+
+C:\Users\kadal\Desktop\Yuvro-code\yuvro-code\yc-web\src\components\student\LearnCertify\Searchbar.tsx  (basename occurrences across repo: 1)
+
+C:\Users\kadal\Desktop\Yuvro-code\yuvro-code\yc-web\src\components\ui\aspect-ratio.tsx  (basename occurrences across repo: 1)
+
+C:\Users\kadal\Desktop\Yuvro-code\yuvro-code\yc-web\src\components\ui\breadcrumb.tsx  (basename occurrences across repo: 1)
+
+C:\Users\kadal\Desktop\Yuvro-code\yuvro-code\yc-web\src\components\ui\input-otp.tsx  (basename occurrences across repo: 1)
+
+C:\Users\kadal\Desktop\Yuvro-code\yuvro-code\yc-web\src\components\ui\multi-select.tsx  (basename occurrences across repo: 1)
+
+C:\Users\kadal\Desktop\Yuvro-code\yuvro-code\yc-web\src\components\ui\pagination.tsx  (basename occurrences across repo: 1)
+
+C:\Users\kadal\Desktop\Yuvro-code\yuvro-code\yc-web\src\components\ui\slider.tsx  (basename occurrences across repo: 1)
+
+C:\Users\kadal\Desktop\Yuvro-code\yuvro-code\yc-web\src\components\ui\toggle-group.tsx  (basename occurrences across repo: 1)
+
+C:\Users\kadal\Desktop\Yuvro-code\yuvro-code\yc-web\src\services\contestService.ts  (basename occurrences across repo: 1)
+
+C:\Users\kadal\Desktop\Yuvro-code\yuvro-code\yc-web\src\utils\passwordStrength.ts  (basename occurrences across repo: 1)

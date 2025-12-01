@@ -2,6 +2,8 @@ from rest_framework import serializers
 
 from .models import (
     Course,
+    CourseContinue,
+    LearnProgress,
     Topic,
     Subtopic,
     Video,
@@ -102,7 +104,6 @@ class CourseSerializer(serializers.ModelSerializer):
         Validate short_code uniqueness if provided.
         """
         if value:
-            # Check if another course with this short_code exists (excluding current instance)
             queryset = Course.objects.filter(short_code=value)
             if self.instance:
                 queryset = queryset.exclude(pk=self.instance.pk)
@@ -168,7 +169,7 @@ class QuizSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "created_at", "updated_at"]
 
-    def validate(self, data):
+    def validate(self, data): # type: ignore
         category = data.get("category")
         topic = data.get("topic")
         sub_topic = data.get("sub_topic")
@@ -223,7 +224,7 @@ class CodingProblemSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "created_at", "updated_at"]
 
-    def validate(self, data):
+    def validate(self, data): # type: ignore
         category = data.get("category")
         topic = data.get("topic")
         sub_topic = data.get("sub_topic")
@@ -286,3 +287,27 @@ class NoteSerializer(serializers.ModelSerializer):
         if not value or not value.strip():
             raise serializers.ValidationError("Content cannot be empty.")
         return value
+
+class LearnProgressSerializer(serializers.ModelSerializer):
+    subtopic_name = serializers.CharField(source="subtopic.name", read_only=True)
+    topic_id = serializers.UUIDField(source="subtopic.topic.id", read_only=True)
+    
+    class Meta:
+        model = LearnProgress
+        fields = ["id", "user", "subtopic", "subtopic_name", "topic_id", "completed", "updated_at",]
+        read_only_fields = ["id", "updated_at", "user"]
+        
+class CourseContinueSerializer(serializers.ModelSerializer):
+    last_subtopic_name = serializers.CharField(
+        source="last_subtopic.name",
+        read_only=True
+    )
+    course_name = serializers.CharField(
+        source="course.name",
+        read_only=True
+    )
+    
+    class Meta:
+        model = CourseContinue
+        fields = ["id", "user", "course", "course_name", "list_subtopic", "last_subtopic_name", "updated_at",]
+        read_only_fields = ["id", "updated_at", "user"]

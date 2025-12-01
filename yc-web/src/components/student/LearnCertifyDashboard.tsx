@@ -2,10 +2,11 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import restApiAuthUtil from "../../utils/RestApiAuthUtil";
+import { fetchTopicsByCourse } from '@/services/courseService';
 
 import ContinueLearningCard from "@/components/student/LearnCertify/ContinueLearning";
 import StatsGrid from "@/components/student/LearnCertify/StatsGrid";
-import SearchBar from "@/components/student/LearnCertify/Searchbar";
+import SearchBar from "@/components/common/SearchBar";
 import CategorySection from "@/components/student/LearnCertify/CatergorySection";
 
 import { Binary, Code, Database, Sparkles, FileText, Flame, Award } from "lucide-react";
@@ -21,7 +22,8 @@ const LearnCertifyDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<Stats>({ lessons_completed: 0, time_spent: "0h", avg_progress: 0 });
   const [continueProgress, setContinueProgress] = useState<ContinueProgress>({
-    course: "Python",
+    course_id: "",
+    course_name: "Python",
     lesson: 0,
     total_lessons: 0,
     percent: 0,
@@ -34,7 +36,7 @@ const LearnCertifyDashboard: React.FC = () => {
         const withTopics = await Promise.all(
           courseList.map(async (c) => {
             try {
-              const topics = await restApiAuthUtil.get<any>(`/course/topics/?course=${c.id}`);
+              const topics = await fetchTopicsByCourse(String(c.id));
               return { ...c, topics };
             } catch {
               return { ...c, topics: [] };
@@ -50,7 +52,7 @@ const LearnCertifyDashboard: React.FC = () => {
 
     const fetchStats = async () => {
       try {
-        const s = await restApiAuthUtil.get("/course/stats/");
+        const s = await restApiAuthUtil.get("/course/std/stats/");
         setStats(s as Stats);
       } catch (err) {
         console.error("Failed to fetch stats", err);
@@ -59,10 +61,11 @@ const LearnCertifyDashboard: React.FC = () => {
 
     const fetchContinue = async () => {
       try {
-        const c = await restApiAuthUtil.get("/course/continue/");
+        const c = await restApiAuthUtil.get("/course/std/continue_learning/");
         const cp = c as ContinueProgress;
         setContinueProgress({
-          course: cp.course || "Python",
+          course_id: cp.course_id || "",
+          course_name: cp.course_name || "Python",
           lesson: cp.lesson || 0,
           total_lessons: cp.total_lessons || 0,
           percent: cp.percent || 0,
@@ -74,10 +77,10 @@ const LearnCertifyDashboard: React.FC = () => {
 
     const fetchProgressMap = async () => {
       try {
-        const list = await restApiAuthUtil.get<{ course: string; percent: number }[]>("/course/progress/");
+        const list = await restApiAuthUtil.get<{ course_id: string; percent: number }[]>("/course/std/progress/");
         const map: CourseProgressMap = {};
         if (Array.isArray(list)) {
-          list.forEach((p) => { map[p.course] = p.percent ?? 0; });
+          list.forEach((p) => { map[p.course_id] = p.percent ?? 0; });
         }
         setProgressMap(map);
       } catch (err) {
@@ -86,19 +89,59 @@ const LearnCertifyDashboard: React.FC = () => {
       }
     };
 
-    Promise.all([fetchCourses(), fetchStats(), fetchContinue(), fetchProgressMap()])
-      .finally(() => setLoading(false));
+    const refetchData = async () => {
+      await Promise.all([fetchStats(), fetchContinue(), fetchProgressMap()]);
+    };
+
+    const loadAll = async () => {
+      try {
+        await Promise.all([fetchCourses(), fetchStats(), fetchContinue(), fetchProgressMap()]);
+        setContinueProgress((prev) => {
+          const course = courses.find((c) => c.id === prev.course_id);
+          return {
+            ...prev,
+            course_name: course?.name || prev.course_name || "Python",
+          };
+        });
+      } catch (err) {
+        console.error('Error loading dashboard data', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadAll();
+
+    const handleFocus = () => {
+      refetchData();
+    };
+
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
   }, []);
 
   const handleStartLearning = (courseId: string) => {
     navigate(`/student/learn/${courseId}`);
   };
 
-  const grouped = {
-    fundamentals: courses.filter(c => c.category === "fundamentals"),
-    programming_languages: courses.filter(c => c.category === "programming_languages"),
-    databases: courses.filter(c => c.category === "databases"),
-    ai_tools: courses.filter(c => c.category === "ai_tools"),
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+  const filteredCourses = normalizedQuery
+    ? courses.filter((c) => {
+        if (c.name && c.name.toLowerCase().includes(normalizedQuery)) return true;
+        if ((c as any).description && (c as any).description.toLowerCase().includes(normalizedQuery)) return true;
+        if (Array.isArray((c as any).topics)) {
+          const topics: any[] = (c as any).topics;
+          if (topics.some((t) => (t.name || '').toLowerCase().includes(normalizedQuery))) return true;
+        }
+        return false;
+      })
+    : courses;
+
+  const groupedFiltered = {
+    fundamentals: filteredCourses.filter((c) => c.category === "fundamentals"),
+    programming_languages: filteredCourses.filter((c) => c.category === "programming_languages"),
+    databases: filteredCourses.filter((c) => c.category === "databases"),
+    ai_tools: filteredCourses.filter((c) => c.category === "ai_tools"),
   };
 
   const getIconFor = (category: string) => {
@@ -169,18 +212,22 @@ const LearnCertifyDashboard: React.FC = () => {
 
 
         {/* Category sections */}
-        {Object.entries(grouped).map(([key, list]) =>
-          list.length > 0 ? (
-            <div key={key} className="flex mb-8 gap-6">
-              <CategorySection
-                title={key.replace("_", " ").replace(/\b\w/g, c => c.toUpperCase())}
-                icon={getIconFor(key)}
-                courses={list}
-                progressMap={progressMap}
-                onStartLearning={handleStartLearning}
-              />
-            </div>
-          ) : null
+        {normalizedQuery && filteredCourses.length === 0 ? (
+          <div className="py-8 text-center text-gray-600">No courses match "{searchQuery}"</div>
+        ) : (
+          Object.entries(groupedFiltered).map(([key, list]) =>
+            list.length > 0 ? (
+              <div key={key} className="flex mb-8 gap-6">
+                <CategorySection
+                  title={key.replace("_", " ").replace(/\b\w/g, c => c.toUpperCase())}
+                  icon={getIconFor(key)}
+                  courses={list}
+                  progressMap={progressMap}
+                  onStartLearning={handleStartLearning}
+                />
+              </div>
+            ) : null
+          )
         )}
 
         <div className="mt-8 p-0 bg-gradient-to-r from-yellow-100/60 via-orange-100/40 to-blue-100/30 border border-yellow-200 rounded-2xl shadow flex flex-col items-center justify-center">

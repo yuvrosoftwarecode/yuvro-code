@@ -4,6 +4,7 @@ import Navigation from "../../components/Navigation";
 import StudentVideos from "./StudentVideos";
 import StudentQuiz from "./StudentQuiz";
 import StudentNotes  from "./StudentNotes";
+import restApiAuthUtil from "../../utils/RestApiAuthUtil";
 import { toast } from "sonner";
 import { ChevronDown, ChevronRight, ChevronLeft } from "lucide-react";
 import {
@@ -12,6 +13,7 @@ import {
   fetchSubtopicsByTopic,
   Course as CourseType} from "@/services/courseService";
 import { Check } from "lucide-react";
+import ProgressBar from "@/components/ui/ProgressBar";
 import { PlayCircle, HelpCircle, StickyNote } from "lucide-react";
 
 type Topic = {
@@ -54,10 +56,27 @@ const CourseDetail: React.FC = () => {
     "videos" | "quizzes" | "code-editor" | "notes" | "markAsRead"
   >("videos");
 
-  const handleMarkAsRead = () => {
+  const handleMarkAsRead = async () => {
     if (!selectedSubtopic) return;
-    setReadMap((prev) => ({ ...prev, [selectedSubtopic.id]: true }));
-    toast.success(`Marked '${selectedSubtopic.name}' as read!`);
+    
+    try {
+      await restApiAuthUtil.post("/course/std/mark_complete/", {
+        subtopic_id: selectedSubtopic.id,
+      });
+      
+      setReadMap((prev) => ({ ...prev, [selectedSubtopic.id]: true }));
+      toast.success(`Marked '${selectedSubtopic.name}' as read!`);
+    } catch (err) {
+      toast.error("Failed to mark as read");
+      console.error(err);
+    }
+  };
+
+  const getTopicProgress = (topicId: string): number => {
+    const subs = subtopicsMap[topicId] || [];
+    if (subs.length === 0) return 0;
+    const completed = subs.filter((s) => readMap[s.id]).length;
+    return Math.round((completed / subs.length) * 100);
   };
       
   useEffect(() => {
@@ -80,7 +99,34 @@ const CourseDetail: React.FC = () => {
       t.forEach((topic) => (expanded[topic.id] = false));
       setExpandedTopics(expanded);
 
-      setSubtopicsMap({});
+      // Fetch all subtopics upfront for progress calculation
+      const allSubtopics: Record<string, Subtopic[]> = {};
+      try {
+        for (const topic of t) {
+          const subs = await fetchSubtopicsByTopic(topic.id);
+          allSubtopics[topic.id] = subs as Subtopic[];
+        }
+        setSubtopicsMap(allSubtopics);
+      } catch (err) {
+        console.warn("Could not fetch subtopics", err);
+        setSubtopicsMap({});
+      }
+
+      try {
+        const response = await restApiAuthUtil.get<{ completed_subtopic_ids: string[] }>(
+          `/course/std/completed_subtopics/?course_id=${courseId}`
+        );
+        const completedIds = response.completed_subtopic_ids || [];
+        const newReadMap: Record<string, boolean> = {};
+        completedIds.forEach((id) => {
+          newReadMap[id] = true;
+        });
+        setReadMap(newReadMap);
+      } catch (err) {
+        console.warn("Could not fetch completed subtopics", err);
+        setReadMap({});
+      }
+
       setSelectedSubtopic(null);
     } catch (err) {
       toast.error("Failed to load course");
@@ -100,7 +146,10 @@ const CourseDetail: React.FC = () => {
     if (!isOpen && !subtopicsMap[topicId]) {
       try {
         const subs = await fetchSubtopicsByTopic(topicId);
-        setSubtopicsMap((prev) => ({ ...prev, [topicId]: subs }));
+        setSubtopicsMap((prev) => {
+          const updated: Record<string, Subtopic[]> = { ...prev, [topicId]: subs as Subtopic[] };
+          return updated;
+        });
       } catch (err) {
         toast.error("Failed to load subtopics");
       }
@@ -172,7 +221,7 @@ const CourseDetail: React.FC = () => {
                   const expanded = expandedTopics[topic.id];
                   const subs = subtopicsMap[topic.id] || [];
                   const allRead = subs.length > 0 && subs.every((s) => readMap[s.id]);
-                  const progress = Math.floor(Math.random() * 100);
+                  const progress = getTopicProgress(topic.id);
                   return (
                     <div key={topic.id} className="border border-gray-200 rounded p-4 bg-white">
                       {/* Topic header */}
@@ -190,14 +239,13 @@ const CourseDetail: React.FC = () => {
                           </span>
                         )}
                       </div>
-                      {/* Dummy progress bar */}
                       <div className="mt-2 w-full">
-                        <div className="h-2 bg-gray-200 rounded-full">
-                          <div
-                            className="h-2 bg-green-400 rounded-full transition-all"
-                            style={{ width: `${progress}%` }}
-                          ></div>
-                        </div>
+                        <ProgressBar
+                          value={progress}
+                          height={10}
+                          trackClassName="bg-gray-200"
+                          barClassName={`bg-green-400`}
+                        />
                         <div className="text-xs text-gray-500 mt-1">Progress: {progress}%</div>
                       </div>
 

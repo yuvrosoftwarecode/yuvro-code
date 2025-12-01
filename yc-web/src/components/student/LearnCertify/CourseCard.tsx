@@ -2,7 +2,7 @@
 import React from "react";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
+import ProgressBar from "@/components/ui/ProgressBar";
 
 interface Props {
   id: string;
@@ -39,10 +39,12 @@ const CourseCard: React.FC<Props> = ({ id, icon, title, description, progress, o
           <span className="text-xs text-gray-500">Progress</span>
           <span className="text-xs font-semibold text-blue-600">{progress}%</span>
         </div>
-        <div className="w-full bg-gradient-to-r from-blue-200 to-cyan-200 rounded-full h-3 mb-6 shadow-inner">
-          <div className="bg-gradient-to-r from-blue-500 to-cyan-500 h-3 rounded-full transition-all duration-300" style={{ width: `${progress || 50}%` }} />
-        </div>
-
+        <ProgressBar
+          value={progress}
+          height={12}
+          trackClassName="bg-gradient-to-r from-blue-100 to-cyan-100 shadow-inner"
+          barClassName="bg-gradient-to-r from-blue-500 to-cyan-500"
+        />
         <Button
           size="sm"
           className="w-full rounded-lg bg-gradient-to-r from-blue-500 to-cyan-500 text-white hover:opacity-90 transition-opacity shadow-md mt-2 font-semibold tracking-wide"

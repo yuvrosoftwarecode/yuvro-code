@@ -345,7 +345,7 @@ class CourseInstructor(models.Model):
         from django.core.exceptions import ValidationError
 
         # Only users with instructor/admin roles can be linked
-        if self.instructor.role not in ["instructor", "admin"]:
+        if self.instructor.role not in ["instructor", "admin"]: # type: ignore
             raise ValidationError(
                 "Only instructors or admins can be assigned to a course."
             )
@@ -353,3 +353,47 @@ class CourseInstructor(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()  # Validate before saving
         super().save(*args, **kwargs)
+
+class LearnProgress(models.Model):
+    """
+    Tracks which subtopic a user has completed inside
+    """
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="learn_progress"
+    )
+    
+    subtopic = models.ForeignKey(
+        Subtopic,
+        on_delete=models.CASCADE,
+        related_name="progress_records"
+    )
+    completed = models.BooleanField(default=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ("user", "subtopic")
+        ordering = ["-updated_at"]
+        
+    def __str__(self):
+        return f"{self.user.username} - {self.subtopic.name} ({'Done' if self.completed else 'Pending'}) "
+    
+class CourseContinue(models.Model):
+    """
+    Stores the last subtopic the user viewed inside a course,
+    used to power 'Continue Learning
+    """
+    
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="continue_learning")
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="continue_records")
+    last_subtopic = models.ForeignKey(Subtopic, null=True, blank=True, on_delete=models.SET_NULL, related_name="last_viewed_by")
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ("user", "course")
+        ordering = ["-updated_at"]
+        
+    def __str__(self):
+        return f"{self.user.username} - {self.course.name}"
+    

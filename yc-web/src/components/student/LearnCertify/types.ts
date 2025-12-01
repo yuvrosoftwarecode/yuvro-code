@@ -19,7 +19,8 @@ export interface Stats {
 }
 
 export interface ContinueProgress {
-  course: string;
+  course_id: string;  // UUID
+  course_name?: string;  // Display name
   lesson: number;
   total_lessons: number;
   percent: number;

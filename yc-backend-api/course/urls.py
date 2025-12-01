@@ -8,6 +8,7 @@ from .views import (
     QuizViewSet,
     CodingProblemViewSet,
     NoteViewSet,
+    ProgressViewSet,
 )
 
 # Create a router and register our viewsets with it
@@ -19,6 +20,7 @@ router.register(r"videos", VideoViewSet)
 router.register(r"quizzes", QuizViewSet)
 router.register(r"coding-problems", CodingProblemViewSet)
 router.register(r"notes", NoteViewSet)
+router.register(r"std", ProgressViewSet, basename="student-progress")
 
 # The API URLs are now determined automatically by the router
 urlpatterns = [

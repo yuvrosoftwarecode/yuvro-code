@@ -5,8 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { ChevronLeft, ChevronRight, Code2, Target, CheckCircle2 } from 'lucide-react';
 import {
   fetchTopicsByCourse,
-  fetchSubtopicsByTopic,
-  fetchCodingProblemsBySubtopic,
+  fetchPracticeQuestions,
 } from '@/services/courseService';
 import type { Course, Topic, CodingProblem } from '@/pages/student/CodePractice';
 import { toast } from 'sonner';
@@ -25,13 +24,7 @@ interface BackendTopic {
   order_index: number;
 }
 
-interface BackendCodingProblem {
-  id: string;
-  title: string;
-  description: string;
-  test_cases_basic: any[];
-  test_cases_advanced: any[];
-}
+
 
 const TopicSelection = ({
   course,
@@ -80,29 +73,21 @@ const TopicSelection = ({
   const loadProblems = async (topicId: string) => {
     setProblemsLoading(true);
     try {
-      const subtopics = await fetchSubtopicsByTopic(topicId);
+      // Fetch practice questions (coding problems) for this topic
+      const questions = await fetchPracticeQuestions(topicId);
 
-      const collected: CodingProblem[] = [];
+      // Filter for coding questions only and transform to CodingProblem format
+      const codingQuestions = questions.filter(q => q.type === 'coding');
 
-      for (const sub of subtopics) {
-        try {
-          const res = await fetchCodingProblemsBySubtopic(sub.id);
-
-          collected.push(
-            ...res.map((p: BackendCodingProblem) => ({
-              id: p.id,
-              title: p.title,
-              difficulty: ['Easy', 'Medium', 'Hard'][Math.floor(Math.random() * 3)],
-              score: Math.floor(Math.random() * 30) + 10,
-              description: p.description,
-              test_cases_basic: p.test_cases_basic || [],
-              test_cases_advanced: p.test_cases_advanced || [],
-            }))
-          );
-        } catch (err) {
-          console.error(err);
-        }
-      }
+      const collected: CodingProblem[] = codingQuestions.map((q) => ({
+        id: q.id,
+        title: q.title,
+        difficulty: q.difficulty || (['Easy', 'Medium', 'Hard'][Math.floor(Math.random() * 3)] as 'Easy' | 'Medium' | 'Hard'),
+        score: q.marks || (Math.floor(Math.random() * 30) + 10),
+        description: q.content,
+        test_cases_basic: q.test_cases_basic || [],
+        test_cases_advanced: q.test_cases_advanced || [],
+      }));
 
       setProblems(collected);
     } catch (error) {
@@ -169,19 +154,17 @@ const TopicSelection = ({
               <button
                 key={topic.id}
                 onClick={() => onTopicSelect(topic)}
-                className={`w-full text-left p-3 rounded-lg transition ${
-                  selectedTopic?.id === topic.id
-                    ? 'bg-black text-white'
-                    : 'hover:bg-gray-100 text-gray-800'
-                }`}
+                className={`w-full text-left p-3 rounded-lg transition ${selectedTopic?.id === topic.id
+                  ? 'bg-black text-white'
+                  : 'hover:bg-gray-100 text-gray-800'
+                  }`}
               >
                 <div className="font-medium">{topic.name}</div>
                 <div
-                  className={`text-xs ${
-                    selectedTopic?.id === topic.id
-                      ? 'text-white'
-                      : 'text-gray-500'
-                  }`}
+                  className={`text-xs ${selectedTopic?.id === topic.id
+                    ? 'text-white'
+                    : 'text-gray-500'
+                    }`}
                 >
                   {topic.problemCount} problems
                 </div>

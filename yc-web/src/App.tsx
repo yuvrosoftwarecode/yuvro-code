@@ -21,8 +21,8 @@ import ResetPassword from './pages/common/ResetPassword';
 import ForgotPassword from './pages/common/ForgotPassword';
 import InstructorDashboard from './pages/instructor/Dashboard';
 import Courses from './pages/instructor/Courses';
-import LearnAndCertify  from './pages/instructor/LearnAndCertify';
-import CourseEdit from './components/instructor/learn/CourseEdit';
+import LearnAndCertify from './pages/instructor/LearnAndCertify';
+import CourseManage from './components/instructor/courses/CourseManage';
 import Jobs from './pages/instructor/Jobs';
 import Users from './pages/instructor/Users';
 import StudentDashboard from './pages/student/StudentDashboard';
@@ -32,11 +32,9 @@ import MockInterview from './pages/student/MockInterview';
 import StudentJobs from './pages/student/Jobs';
 import Contest from './pages/student/Contest';
 import CodePractice from './pages/student/CodePractice';
-import { Toaster } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/toaster";
 import ErrorBoundary from './components/ErrorBoundary';
 import DashboardRedirect from './components/DashboardRedirect';
-import InstructorSkillTest from './pages/instructor/SkillTest';
-import PracticeQuestions from './pages/instructor/PracticeQuestions';
 import OwnerContest from './pages/instructor/Contest';
 
 function App() {
@@ -86,14 +84,7 @@ function App() {
                 }
               />
 
-              <Route
-                path="/student/skill-test"
-                element={
-                  <ProtectedRoute allowedRoles={["student"]}>
-                    <SkillTest />
-                  </ProtectedRoute>
-                }
-              />
+
 
               <Route
                 path="/student/mock-interview"
@@ -132,6 +123,15 @@ function App() {
               />
 
               <Route
+                path="/student/skill-test"
+                element={
+                  <ProtectedRoute allowedRoles={["student"]}>
+                    <SkillTest />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
                 path="/instructor/dashboard"
                 element={
                   <ProtectedRoute allowedRoles={["admin", "instructor", "recruiter"]}>
@@ -159,10 +159,10 @@ function App() {
               />
 
               <Route
-                path="/instructor/learn/:id"
+                path="/instructor/courses/:id/manage"
                 element={
                   <ProtectedRoute allowedRoles={["admin", "instructor"]}>
-                    <CourseEdit />
+                    <CourseManage />
                   </ProtectedRoute>
                 }
               />
@@ -212,23 +212,7 @@ function App() {
                 }
               />
 
-              <Route
-                path="/instructor/practice-questions"
-                element={
-                  <ProtectedRoute allowedRoles={["admin", "instructor"]}>
-                    <PracticeQuestions />
-                  </ProtectedRoute>
-                }
-              />
 
-              <Route
-                path="/instructor/skill-test"
-                element={
-                  <ProtectedRoute allowedRoles={["admin", "instructor"]}>
-                    <InstructorSkillTest />
-                  </ProtectedRoute>
-                }
-              />
 
               <Route
                 path="/instructor/settings"
@@ -270,7 +254,7 @@ function App() {
               <Route path="/404" element={<NotFound />} />
               <Route path="*" element={<Navigate to="/404" replace />} />
             </Routes>
-            <Toaster position="top-right" />
+            <Toaster />
           </div>
         </Router>
       </AuthProvider>

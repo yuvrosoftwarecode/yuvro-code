@@ -1,19 +1,19 @@
 from rest_framework import serializers
 from .models import CodeSubmission, PlagiarismReport
-from course.models import CodingProblem
+from course.models import Question
 
 
 class CodeSubmissionSerializer(serializers.ModelSerializer):
-    problem_title = serializers.CharField(source="coding_problem.title", read_only=True)
+    problem_title = serializers.CharField(source="question.title", read_only=True)
     problem_description = serializers.CharField(
-        source="coding_problem.description", read_only=True
+        source="question.content", read_only=True
     )
 
     class Meta:
         model = CodeSubmission
         fields = [
             "id",
-            "coding_problem",
+            "question",
             "problem_title",
             "problem_description",
             "code",
@@ -51,7 +51,7 @@ class CodeSubmissionSerializer(serializers.ModelSerializer):
 class CodeExecutionRequestSerializer(serializers.Serializer):
     code = serializers.CharField()
     language = serializers.ChoiceField(choices=CodeSubmission.LANGUAGE_CHOICES)
-    coding_problem_id = serializers.UUIDField()
+    question_id = serializers.UUIDField()
     test_cases = serializers.ListField(
         child=serializers.DictField(),
         required=False,

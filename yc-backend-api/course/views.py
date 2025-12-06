@@ -8,10 +8,9 @@ from .models import (
     Topic,
     Subtopic,
     Video,
-    Quiz,
-    CodingProblem,
     Note,
     CourseInstructor,
+    Question,
 )
 from .serializers import (
     CourseSerializer,
@@ -20,9 +19,8 @@ from .serializers import (
     TopicBasicSerializer,
     SubtopicSerializer,
     VideoSerializer,
-    QuizSerializer,
-    CodingProblemSerializer,
     NoteSerializer,
+    QuestionSerializer,
 )
 from django.contrib.auth import get_user_model
 
@@ -293,161 +291,7 @@ class VideoViewSet(viewsets.ModelViewSet):
         return Response({"error": "Not allowed"}, status=403)
 
 
-# =====================================================
-#   QUIZZES
-# =====================================================
-class QuizViewSet(viewsets.ModelViewSet):
-    queryset = Quiz.objects.select_related("topic", "sub_topic")
-    serializer_class = QuizSerializer
-    permission_classes = [permissions.IsAuthenticated]
 
-    def get_queryset(self):
-        qs = Quiz.objects.select_related("topic", "sub_topic")
-
-        user = self.request.user
-        if user.role == "instructor":
-            qs = qs.filter(
-                topic__course_id__in=CourseInstructor.objects.filter(
-                    instructor=user
-                ).values_list("course_id", flat=True)
-            ) | qs.filter(
-                sub_topic__topic__course_id__in=CourseInstructor.objects.filter(
-                    instructor=user
-                ).values_list("course_id", flat=True)
-            )
-
-        if cid := self.request.query_params.get("category"):
-            qs = qs.filter(category=cid)
-        if tid := self.request.query_params.get("topic"):
-            qs = qs.filter(topic_id=tid)
-        if sid := self.request.query_params.get("sub_topic"):
-            qs = qs.filter(sub_topic_id=sid)
-
-        return qs
-
-    def create(self, request, *a, **kw):
-        user = request.user
-
-        # quiz linked to topic?
-        topic_id = request.data.get("topic")
-        subtopic_id = request.data.get("sub_topic")
-
-        course = None
-        if topic_id:
-            course = get_object_or_404(Topic, id=topic_id).course
-        if subtopic_id:
-            course = get_object_or_404(Subtopic, id=subtopic_id).topic.course
-
-        if user.role == "admin" or (
-            user.role == "instructor" and instructor_assigned(user, course)
-        ):
-            return super().create(request, *a, **kw)
-
-        return Response({"error": "Not allowed"}, status=403)
-
-    def update(self, request, *a, **kw):
-        quiz = self.get_object()
-        course = quiz.topic.course if quiz.topic else quiz.sub_topic.topic.course
-        user = request.user
-
-        if user.role == "admin" or (
-            user.role == "instructor" and instructor_assigned(user, course)
-        ):
-            return super().update(request, *a, **kw)
-
-        return Response({"error": "Not allowed"}, status=403)
-
-    def destroy(self, request, *a, **kw):
-        quiz = self.get_object()
-        course = quiz.topic.course if quiz.topic else quiz.sub_topic.topic.course
-        user = request.user
-
-        if user.role == "admin" or (
-            user.role == "instructor" and instructor_assigned(user, course)
-        ):
-            return super().destroy(request, *a, **kw)
-
-        return Response({"error": "Not allowed"}, status=403)
-
-
-# =====================================================
-#   CODING PROBLEMS
-# =====================================================
-class CodingProblemViewSet(viewsets.ModelViewSet):
-    queryset = CodingProblem.objects.select_related("topic", "sub_topic")
-    serializer_class = CodingProblemSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        qs = CodingProblem.objects.select_related("topic", "sub_topic")
-        user = self.request.user
-
-        if user.role == "instructor":
-            qs = qs.filter(
-                topic__course_id__in=CourseInstructor.objects.filter(
-                    instructor=user
-                ).values_list("course_id", flat=True)
-            ) | qs.filter(
-                sub_topic__topic__course_id__in=CourseInstructor.objects.filter(
-                    instructor=user
-                ).values_list("course_id", flat=True)
-            )
-
-        if cid := self.request.query_params.get("category"):
-            qs = qs.filter(category=cid)
-        if tid := self.request.query_params.get("topic"):
-            qs = qs.filter(topic_id=tid)
-        if sid := self.request.query_params.get("sub_topic"):
-            qs = qs.filter(sub_topic_id=sid)
-
-        return qs
-
-    def create(self, request, *a, **kw):
-        user = request.user
-
-        topic_id = request.data.get("topic")
-        sub_id = request.data.get("sub_topic")
-
-        course = None
-        if topic_id:
-            course = get_object_or_404(Topic, id=topic_id).course
-        if sub_id:
-            course = get_object_or_404(Subtopic, id=sub_id).topic.course
-
-        if user.role == "admin" or (
-            user.role == "instructor" and instructor_assigned(user, course)
-        ):
-            return super().create(request, *a, **kw)
-
-        return Response({"error": "Not allowed"}, status=403)
-
-    def update(self, request, *a, **kw):
-        problem = self.get_object()
-        course = (
-            problem.topic.course if problem.topic else problem.sub_topic.topic.course
-        )
-        user = request.user
-
-        if user.role == "admin" or (
-            user.role == "instructor" and instructor_assigned(user, course)
-        ):
-            return super().update(request, *a, **kw)
-
-        return Response({"error": "Not allowed"}, status=403)
-
-    def destroy(self, request, *a, **kw):
-        problem = self.get_object()
-        course = (
-            problem.topic.course if problem.topic else problem.sub_topic.topic.course
-        )
-        user = request.user
-
-        if user.role == "admin" or (
-            user.role == "instructor" and instructor_assigned(user, course)
-        ):
-            return super().destroy(request, *a, **kw)
-
-        return Response({"error": "Not allowed"}, status=403)
 
 
 # =====================================================
@@ -518,3 +362,134 @@ class NoteViewSet(viewsets.ModelViewSet):
             return Response({"error": "Not allowed"}, status=403)
 
         return super().destroy(request, *a, **kw)
+
+
+# =====================================================
+#   QUESTION BANK
+# =====================================================
+class QuestionViewSet(viewsets.ModelViewSet):
+    queryset = Question.objects.select_related("course", "topic", "subtopic", "created_by")
+    serializer_class = QuestionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        from django.db import models
+        
+        qs = Question.objects.select_related("course", "topic", "subtopic", "created_by")
+        user = self.request.user
+
+        # Filter by user role
+        if user.role == "instructor":
+            # Instructors can only see questions from courses they're assigned to
+            assigned_course_ids = CourseInstructor.objects.filter(
+                instructor=user
+            ).values_list("course_id", flat=True)
+            
+            qs = qs.filter(
+                models.Q(course_id__in=assigned_course_ids) |
+                models.Q(topic__course_id__in=assigned_course_ids) |
+                models.Q(subtopic__topic__course_id__in=assigned_course_ids)
+            )
+
+        # Filter by query parameters
+        course_id = self.request.query_params.get("course")
+        topic_id = self.request.query_params.get("topic")
+        subtopic_id = self.request.query_params.get("subtopic")
+        question_type = self.request.query_params.get("type")
+        difficulty = self.request.query_params.get("difficulty")
+        level = self.request.query_params.get("level")
+        categories = self.request.query_params.get("categories")
+
+        if course_id:
+            qs = qs.filter(course_id=course_id)
+        if topic_id:
+            qs = qs.filter(topic_id=topic_id)
+        if subtopic_id:
+            qs = qs.filter(subtopic_id=subtopic_id)
+        if question_type:
+            qs = qs.filter(type=question_type)
+        if difficulty:
+            qs = qs.filter(difficulty=difficulty)
+        if level:
+            qs = qs.filter(level=level)
+        if categories:
+            # Filter questions that contain the specified category
+            qs = qs.filter(categories__contains=[categories])
+
+        return qs
+
+    def create(self, request, *args, **kwargs):
+        user = request.user
+        
+        # Get the course for permission checking
+        course = None
+        level = request.data.get("level")
+        
+        if level == "course":
+            course_id = request.data.get("course")
+            course = get_object_or_404(Course, id=course_id) if course_id else None
+        elif level == "topic":
+            topic_id = request.data.get("topic")
+            topic = get_object_or_404(Topic, id=topic_id) if topic_id else None
+            course = topic.course if topic else None
+        elif level == "subtopic":
+            subtopic_id = request.data.get("subtopic")
+            subtopic = get_object_or_404(Subtopic, id=subtopic_id) if subtopic_id else None
+            course = subtopic.topic.course if subtopic else None
+
+        # Check permissions
+        if not course:
+            return Response({"error": "Invalid course/topic/subtopic"}, status=400)
+            
+        if user.role == "admin" or (
+            user.role == "instructor" and instructor_assigned(user, course)
+        ):
+            return super().create(request, *args, **kwargs)
+
+        return Response({"error": "Not allowed"}, status=403)
+
+    def update(self, request, *args, **kwargs):
+        question = self.get_object()
+        user = request.user
+        
+        # Get the course for permission checking
+        course = None
+        if question.course:
+            course = question.course
+        elif question.topic:
+            course = question.topic.course
+        elif question.subtopic:
+            course = question.subtopic.topic.course
+
+        if not course:
+            return Response({"error": "Invalid question association"}, status=400)
+
+        if user.role == "admin" or (
+            user.role == "instructor" and instructor_assigned(user, course)
+        ):
+            return super().update(request, *args, **kwargs)
+
+        return Response({"error": "Not allowed"}, status=403)
+
+    def destroy(self, request, *args, **kwargs):
+        question = self.get_object()
+        user = request.user
+        
+        # Get the course for permission checking
+        course = None
+        if question.course:
+            course = question.course
+        elif question.topic:
+            course = question.topic.course
+        elif question.subtopic:
+            course = question.subtopic.topic.course
+
+        if not course:
+            return Response({"error": "Invalid question association"}, status=400)
+
+        if user.role == "admin" or (
+            user.role == "instructor" and instructor_assigned(user, course)
+        ):
+            return super().destroy(request, *args, **kwargs)
+
+        return Response({"error": "Not allowed"}, status=403)

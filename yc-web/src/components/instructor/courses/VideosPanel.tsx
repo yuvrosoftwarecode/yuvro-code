@@ -130,54 +130,80 @@ const VideosPanel = ({ subtopic }: { subtopic: any }) => {
   };
 
   return (
-    <div>
+    <div className="p-6 space-y-6">
       {/* HEADER */}
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold">Videos</h3>
-        <Button onClick={openCreateModal} className="flex gap-2">
-          <Plus size={16} /> Add Video
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-slate-900">Videos</h3>
+        <Button 
+          onClick={openCreateModal} 
+          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2.5 shadow-md hover:shadow-lg transition-all"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Add Video
         </Button>
       </div>
 
       {/* LIST */}
       {loading ? (
-        <div className="text-sm text-muted-foreground">Loading...</div>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-slate-500">Loading videos...</div>
+        </div>
       ) : videos.length === 0 ? (
-        <div className="text-sm text-muted-foreground">No videos yet</div>
+        <div className="text-center py-12">
+          <div className="p-4 bg-slate-100 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+            <Plus className="w-8 h-8 text-slate-400" />
+          </div>
+          <h4 className="text-lg font-medium text-slate-700 mb-2">No videos yet</h4>
+          <p className="text-slate-500 mb-4">Start by adding your first video to this subtopic</p>
+          <Button onClick={openCreateModal} variant="outline">
+            <Plus className="w-4 h-4 mr-2" />
+            Add First Video
+          </Button>
+        </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {videos.map((v) => (
             <div
               key={v.id}
-              className="border p-3 rounded flex items-center justify-between"
+              className="bg-white border border-slate-200 rounded-lg p-4 hover:shadow-md transition-shadow"
             >
-              <div>
-                <div className="font-medium">{v.title}</div>
-                <a
-                  href={v.video_link}
-                  target="_blank"
-                  className="text-xs text-blue-600 underline"
-                >
-                  {v.video_link}
-                </a>
-              </div>
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <h4 className="font-medium text-slate-900 mb-2">{v.title}</h4>
+                  <a
+                    href={v.video_link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-blue-600 hover:text-blue-800 underline break-all"
+                  >
+                    {v.video_link}
+                  </a>
+                  {v.ai_context && (
+                    <p className="text-sm text-slate-600 mt-2 bg-slate-50 p-2 rounded">
+                      <span className="font-medium">AI Context:</span> {v.ai_context}
+                    </p>
+                  )}
+                </div>
 
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => openEditModal(v)}
-                >
-                  <Edit size={16} />
-                </Button>
+                <div className="flex gap-2 ml-4">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => openEditModal(v)}
+                    className="hover:bg-blue-50 hover:text-blue-600"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </Button>
 
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onClick={() => setConfirmDeleteId(v.id)}
-                >
-                  <Trash size={16} />
-                </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setConfirmDeleteId(v.id)}
+                    className="hover:bg-red-50 hover:text-red-600"
+                  >
+                    <Trash className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
             </div>
           ))}
@@ -193,22 +219,34 @@ const VideosPanel = ({ subtopic }: { subtopic: any }) => {
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-3 py-2">
+          <div className="space-y-4 py-4">
             <div>
-              <Label>Title</Label>
-              <Input value={title} onChange={(e) => setTitle(e.target.value)} />
+              <Label className="text-sm font-medium text-slate-700">Title</Label>
+              <Input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Enter video title"
+                className="mt-1"
+              />
             </div>
 
             <div>
-              <Label>Video URL</Label>
-              <Input value={link} onChange={(e) => setLink(e.target.value)} />
+              <Label className="text-sm font-medium text-slate-700">Video URL</Label>
+              <Input
+                value={link}
+                onChange={(e) => setLink(e.target.value)}
+                placeholder="https://youtube.com/watch?v=..."
+                className="mt-1"
+              />
             </div>
 
             <div>
-              <Label>AI Context (optional)</Label>
+              <Label className="text-sm font-medium text-slate-700">AI Context <span className="text-slate-500">(optional)</span></Label>
               <Input
                 value={context}
                 onChange={(e) => setContext(e.target.value)}
+                placeholder="Additional context for AI processing"
+                className="mt-1"
               />
             </div>
           </div>

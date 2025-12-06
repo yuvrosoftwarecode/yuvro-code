@@ -2,8 +2,10 @@ import React, { useEffect, useState } from "react";
 import { fetchNotesBySubtopic, createNote, updateNote, deleteNote } from "@/services/courseService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Trash, Edit, Plus } from "lucide-react";
+import { Trash, Edit, Plus, FileText } from "lucide-react";
 import { toast } from "sonner";
 
 const NotesManager = ({ subtopicId }) => {
@@ -79,31 +81,61 @@ const NotesManager = ({ subtopicId }) => {
   if (loading) return <div>Loading notes...</div>;
 
   return (
-    <div className="space-y-4">
-      <Button onClick={openCreateModal} className="flex items-center gap-2">
-        <Plus size={16} /> Add Note
-      </Button>
+    <div className="p-6 space-y-6">
+      {/* HEADER */}
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-slate-900">Notes</h3>
+        <Button onClick={openCreateModal} className="bg-blue-600 hover:bg-blue-700">
+          <Plus className="w-4 h-4 mr-2" />
+          Add Note
+        </Button>
+      </div>
 
-      <div className="space-y-3">
-        {notes.length === 0 && (
-          <div className="text-sm text-muted-foreground">No notes available.</div>
-        )}
-
-        {notes.map((note) => (
-          <div key={note.id} className="border rounded p-3 flex justify-between items-center">
-            <div className="whitespace-pre-wrap">{note.content}</div>
-
-            <div className="flex gap-2">
-              <Button variant="ghost" size="sm" onClick={() => openEditModal(note)}>
-                <Edit size={16} />
-              </Button>
-
-              <Button variant="destructive" size="sm" onClick={() => removeNote(note.id)}>
-                <Trash size={16} />
-              </Button>
+      {/* NOTES LIST */}
+      <div className="space-y-4">
+        {notes.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="p-4 bg-slate-100 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+              <FileText className="w-8 h-8 text-slate-400" />
             </div>
+            <h4 className="text-lg font-medium text-slate-700 mb-2">No notes yet</h4>
+            <p className="text-slate-500 mb-4">Create your first note to document this subtopic</p>
+            <Button onClick={openCreateModal} variant="outline">
+              <Plus className="w-4 h-4 mr-2" />
+              Add First Note
+            </Button>
           </div>
-        ))}
+        ) : (
+          notes.map((note) => (
+            <div key={note.id} className="bg-white border border-slate-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+              <div className="flex justify-between items-start">
+                <div className="flex-1 pr-4">
+                  <div className="whitespace-pre-wrap text-slate-700 leading-relaxed">{note.content}</div>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => openEditModal(note)}
+                    className="hover:bg-blue-50 hover:text-blue-600"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </Button>
+
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => removeNote(note.id)}
+                    className="hover:bg-red-50 hover:text-red-600"
+                  >
+                    <Trash className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       {/* Modal */}
@@ -115,11 +147,21 @@ const NotesManager = ({ subtopicId }) => {
             </DialogTitle>
           </DialogHeader>
 
-          <textarea
-            className="border rounded w-full p-2 h-40"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-          />
+          <div className="space-y-4 py-4">
+            <div>
+              <Label className="text-sm font-medium text-slate-700">Note Content</Label>
+              <Textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder="Enter your note content here..."
+                rows={8}
+                className="resize-none mt-1"
+              />
+              <p className="text-xs text-slate-500 mt-1">
+                You can use line breaks and formatting in your notes
+              </p>
+            </div>
+          </div>
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsModalOpen(false)}>

@@ -12,7 +12,7 @@ from .serializers import (
     PlagiarismReportSerializer,
 )
 from .services import CodeExecutorService, TestCaseService, PlagiarismService
-from course.models import CodingProblem
+from course.models import Question
 
 
 class CodeExecutorViewSet(viewsets.ModelViewSet):
@@ -39,17 +39,17 @@ class CodeExecutorViewSet(viewsets.ModelViewSet):
         data = serializer.validated_data
 
         try:
-            coding_problem = CodingProblem.objects.get(id=data["coding_problem_id"])
-        except CodingProblem.DoesNotExist:
+            question = Question.objects.get(id=data["question_id"], type='coding')
+        except Question.DoesNotExist:
             return Response(
-                {"error": "Coding problem not found"}, status=status.HTTP_404_NOT_FOUND
+                {"error": "Coding question not found"}, status=status.HTTP_404_NOT_FOUND
             )
 
         with transaction.atomic():
             # Create submission
             submission = CodeSubmission.objects.create(
                 user=request.user,
-                coding_problem=coding_problem,
+                question=question,
                 code=data["code"],
                 language=data["language"],
                 status="running",
@@ -132,17 +132,17 @@ class CodeExecutorViewSet(viewsets.ModelViewSet):
         data = serializer.validated_data
 
         try:
-            coding_problem = CodingProblem.objects.get(id=data["coding_problem_id"])
-        except CodingProblem.DoesNotExist:
+            question = Question.objects.get(id=data["question_id"], type='coding')
+        except Question.DoesNotExist:
             return Response(
-                {"error": "Coding problem not found"}, status=status.HTTP_404_NOT_FOUND
+                {"error": "Coding question not found"}, status=status.HTTP_404_NOT_FOUND
             )
 
         try:
             # Create a temporary submission object (not saved to DB)
             temp_submission = CodeSubmission(
                 user=request.user,
-                coding_problem=coding_problem,
+                question=question,
                 code=data["code"],
                 language=data["language"],
             )
@@ -165,7 +165,7 @@ class CodeExecutorViewSet(viewsets.ModelViewSet):
             # Return results without saving to database
             return Response(
                 {
-                    "problem_title": coding_problem.title,
+                    "problem_title": question.title,
                     "code": data["code"],
                     "language": data["language"],
                     "status": "completed" if test_results["success"] else "error",
@@ -190,7 +190,7 @@ class CodeExecutorViewSet(viewsets.ModelViewSet):
     @extend_schema(
         parameters=[
             OpenApiParameter(
-                "coding_problem_id", str, description="Filter by coding problem ID"
+                "question_id", str, description="Filter by coding question ID"
             )
         ],
         description="Get user's code submissions",
@@ -199,9 +199,9 @@ class CodeExecutorViewSet(viewsets.ModelViewSet):
         """List user's submissions with optional filtering"""
         queryset = self.get_queryset()
 
-        coding_problem_id = request.query_params.get("coding_problem_id")
-        if coding_problem_id:
-            queryset = queryset.filter(coding_problem_id=coding_problem_id)
+        question_id = request.query_params.get("question_id")
+        if question_id:
+            queryset = queryset.filter(question_id=question_id)
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)

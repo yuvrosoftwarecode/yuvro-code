@@ -4,10 +4,9 @@ from .models import (
     Topic,
     Subtopic,
     Video,
-    CodingProblem,
-    Quiz,
     Note,
     CourseInstructor,
+    Question,
 )
 
 
@@ -93,109 +92,40 @@ class VideoAdmin(admin.ModelAdmin):
     ordering = ["sub_topic", "created_at"]
 
 
-# ------------------ CODING PROBLEM ADMIN ------------------
-@admin.register(CodingProblem)
-class CodingProblemAdmin(admin.ModelAdmin):
-    list_display = [
-        "title",
-        "category",
-        "topic",
-        "sub_topic",
-        "created_at",
-        "updated_at",
-    ]
-
-    list_filter = [
-        "category",
-        "topic",
-        "sub_topic__topic__course",
-        "sub_topic__topic",
-        "created_at",
-    ]
-
-    search_fields = [
-        "title",
-        "description",
-        "category",
-        "topic__name",
-        "sub_topic__name",
-    ]
-
+# ------------------ QUESTION ADMIN ------------------
+@admin.register(Question)
+class QuestionAdmin(admin.ModelAdmin):
+    list_display = ["id", "type", "title", "level", "difficulty", "marks", "created_by", "created_at"]
+    list_filter = ["type", "level", "difficulty", "categories", "created_at"]
+    search_fields = ["title", "content"]
+    ordering = ["-created_at"]
     readonly_fields = ["id", "created_at", "updated_at"]
-
-    fields = [
-        "title",
-        "category",
-        "topic",
-        "sub_topic",
-        "description",
-        "test_cases_basic",
-        "test_cases_advanced",
-        "id",
-        "created_at",
-        "updated_at",
-    ]
-
-    ordering = ["created_at"]
-
-
-# ------------------ QUIZ ADMIN ------------------
-@admin.register(Quiz)
-class QuizAdmin(admin.ModelAdmin):
-    list_display = [
-        "question_preview",
-        "category",
-        "topic",
-        "sub_topic",
-        "correct_answer_display",
-        "created_at",
-        "updated_at",
-    ]
-
-    list_filter = [
-        "category",
-        "topic",
-        "sub_topic__topic__course",
-        "sub_topic__topic",
-        "created_at",
-    ]
-
-    search_fields = [
-        "question",
-        "category",
-        "topic__name",
-        "sub_topic__name",
-        "sub_topic__topic__name",
-    ]
-
-    readonly_fields = ["id", "created_at", "updated_at"]
-
-    fields = [
-        "question",
-        "category",
-        "topic",
-        "sub_topic",
-        "options",
-        "correct_answer_index",
-        "id",
-        "created_at",
-        "updated_at",
-    ]
-
-    ordering = ["created_at"]
-
-    def question_preview(self, obj):
-        return obj.question[:50] + "..." if len(obj.question) > 50 else obj.question
-
-    question_preview.short_description = "Question"
-
-    def correct_answer_display(self, obj):
-        correct_text = obj.correct_answer
-        if correct_text:
-            return f"[{obj.correct_answer_index}] {correct_text}"
-        return f"Index: {obj.correct_answer_index}"
-
-    correct_answer_display.short_description = "Correct Answer"
+    
+    fieldsets = (
+        ("Basic Information", {
+            "fields": ("type", "title", "content", "level", "difficulty", "marks", "categories")
+        }),
+        ("Associations", {
+            "fields": ("course", "topic", "subtopic")
+        }),
+        ("MCQ Fields", {
+            "fields": ("mcq_options", "mcq_correct_answer_index"),
+            "classes": ("collapse",)
+        }),
+        ("Coding Fields", {
+            "fields": ("test_cases_basic", "test_cases_advanced"),
+            "classes": ("collapse",)
+        }),
+        ("Metadata", {
+            "fields": ("id", "created_by", "created_at", "updated_at"),
+            "classes": ("collapse",)
+        }),
+    )
+    
+    def save_model(self, request, obj, form, change):
+        if not change:  # Only set created_by on creation
+            obj.created_by = request.user
+        super().save_model(request, obj, form, change)
 
 
 # ------------------ NOTE ADMIN ------------------

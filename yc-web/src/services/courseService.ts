@@ -95,7 +95,7 @@ export async function createTopic(payload: {
 
 export async function updateTopic(
   topicId: string,
-  payload: Partial<{ name: string; order_index: number }>
+  payload: Partial<{ name: string; order_index: number; course: string }>
 ) {
   return restApiAuthUtil.put(`/course/topics/${topicId}/`, payload);
 }
@@ -120,7 +120,7 @@ export async function createSubtopic(payload: {
 
 export async function updateSubtopic(
   subtopicId: string,
-  payload: Partial<{ name: string; order_index: number; content?: string }>
+  payload: Partial<{ name: string; order_index: number; content?: string; topic: string }>
 ) {
   return restApiAuthUtil.put(`/course/subtopics/${subtopicId}/`, payload);
 }
@@ -147,39 +147,7 @@ export const deleteVideo = async (id: string) => {
   return true;
 };
 
-export const fetchQuizzesBySubtopic = async (subtopicId: string) => {
-  return restApiAuthUtil.get('/course/quizzes/', { params: { sub_topic: subtopicId } });
-};
 
-export const createQuiz = async (payload: any) => {
-  return restApiAuthUtil.post('/course/quizzes/', payload);
-};
-
-export const updateQuiz = async (id: string, payload: any) => {
-  return restApiAuthUtil.put(`/course/quizzes/${id}/`, payload);
-};
-
-export const deleteQuiz = async (id: string) => {
-  await restApiAuthUtil.delete(`/course/quizzes/${id}/`);
-  return true;
-};
-
-export const fetchCodingProblemsBySubtopic = async (subtopicId: string) => {
-  return restApiAuthUtil.get('/course/coding-problems/', { params: { sub_topic: subtopicId } });
-};
-
-export const createCodingProblem = async (payload: any) => {
-  return restApiAuthUtil.post('/course/coding-problems/', payload);
-};
-
-export const updateCodingProblem = async (id: string, payload: any) => {
-  return restApiAuthUtil.put(`/course/coding-problems/${id}/`, payload);
-};
-
-export const deleteCodingProblem = async (id: string) => {
-  await restApiAuthUtil.delete(`/course/coding-problems/${id}/`);
-  return true;
-};
 
 export const fetchNotesBySubtopic = async (subtopicId: string) => {
   return restApiAuthUtil.get('/course/notes/', { params: { sub_topic: subtopicId } });
@@ -197,6 +165,18 @@ export const deleteNote = async (id: string) => {
   await restApiAuthUtil.delete(`/course/notes/${id}/`);
   return true;
 };
+
+// Fetch questions with filters
+export async function getQuestions(filters: {
+  categories?: string;
+  type?: string;
+  difficulty?: string;
+  course?: string;
+  topic?: string;
+  subtopic?: string;
+}) {
+  return restApiAuthUtil.get('/course/questions/', { params: filters });
+}
 
 const courseService = {
   getCourses: fetchCourses,
@@ -217,71 +197,73 @@ const courseService = {
   createVideo,
   updateVideo,
   deleteVideo,
-  getQuizzes: fetchQuizzesBySubtopic,
-  createQuiz,
-  updateQuiz,
-  deleteQuiz,
-  getCodingProblems: fetchCodingProblemsBySubtopic,
-  createCodingProblem,
-  updateCodingProblem,
-  deleteCodingProblem,
   getNotes: fetchNotesBySubtopic,
   createNote,
   updateNote,
   deleteNote,
+  getQuestions,
 };
 
 export default courseService;
 
-export const fetchSkillTestQuizzesByTopic = async (topicId: string) => {
-  return restApiAuthUtil.get('/course/quizzes/', { params: { topic: topicId, category: 'skill_test' } });
-};
-
-export const createSkillTestQuiz = async (payload: any) => {
-  return restApiAuthUtil.post('/course/quizzes/', payload);
-};
-
-export const updateSkillTestQuiz = async (id: string, payload: any) => {
-  return restApiAuthUtil.patch(`/course/quizzes/${id}/`, payload);
-};
-
-export const deleteSkillTestQuiz = async (id: string) => {
-  await restApiAuthUtil.delete(`/course/quizzes/${id}/`);
-  return true;
-};
-
-export const fetchSkillTestCodingProblemsByTopic = async (topicId: string) => {
-  return restApiAuthUtil.get('/course/coding-problems/', { params: { topic: topicId, category: 'skill_test' } });
-};
-
-export const createSkillTestCodingProblem = async (payload: any) => {
-  return restApiAuthUtil.post('/course/coding-problems/', payload);
-};
-
-export const updateSkillTestCodingProblem = async (id: string, payload: any) => {
-  return restApiAuthUtil.patch(`/course/coding-problems/${id}/`, payload);
-};
-
-export const deleteSkillTestCodingProblem = async (id: string) => {
-  await restApiAuthUtil.delete(`/course/coding-problems/${id}/`);
-  return true;
-};
-
-export async function fetchPracticeCodingProblemsByTopic(topicId: string) {
-  return restApiAuthUtil.get('/course/coding-problems/', { params: { topic: topicId, category: 'practice' } });
+// Question Bank interfaces
+export interface Question {
+  id: string;
+  type: 'mcq' | 'coding' | 'descriptive';
+  title: string;
+  content: string;
+  level: 'course' | 'topic' | 'subtopic';
+  course?: string;
+  topic?: string;
+  subtopic?: string;
+  difficulty: 'easy' | 'medium' | 'hard';
+  marks: number;
+  categories: string[];
+  mcq_options?: string[];
+  mcq_correct_answer_index?: number;
+  test_cases_basic?: Array<{ input: string; expected_output: string }>;
+  test_cases_advanced?: Array<{ input: string; expected_output: string }>;
+  created_at: string;
+  updated_at: string;
+  created_by: string;
 }
 
-export async function createPracticeCodingProblem(payload: any) {
-  return restApiAuthUtil.post('/course/coding-problems/', payload);
-}
+// Question Bank functions (replacing old quiz and coding problem functions)
+export const fetchQuestionsByCategory = async (category: string, levelId: string, level: 'course' | 'topic' | 'subtopic'): Promise<Question[]> => {
+  const params: any = { categories: category };
+  if (level === 'course') params.course = levelId;
+  if (level === 'topic') params.topic = levelId;
+  if (level === 'subtopic') params.subtopic = levelId;
 
-export async function updatePracticeCodingProblem(id: string, payload: any) {
-  return restApiAuthUtil.put(`/course/coding-problems/${id}/`, payload);
-}
+  return restApiAuthUtil.get('/course/questions/', { params });
+};
 
-export async function deletePracticeCodingProblem(id: string) {
-  await restApiAuthUtil.delete(`/course/coding-problems/${id}/`);
-  return true;
+
+
+export const fetchLearnQuestions = async (subtopicId: string): Promise<Question[]> => {
+  return fetchQuestionsByCategory('learn', subtopicId, 'subtopic');
+};
+
+export const fetchPracticeQuestions = async (topicId: string): Promise<Question[]> => {
+  return fetchQuestionsByCategory('practice', topicId, 'topic');
+};
+
+export async function fetchSkillTestQuestions(topicId: string) {
+  const questions = await fetchQuestionsByCategory('skill_test', topicId, 'topic');
+
+  return questions.map((q: Question) => ({
+    id: q.id,
+    type: q.type,
+    question: q.title,
+    title: q.title,
+    content: q.content,
+    options: q.mcq_options || [],
+    correct_answer_index: q.mcq_correct_answer_index,
+    test_cases_basic: q.test_cases_basic || [],
+    test_cases_advanced: q.test_cases_advanced || [],
+    marks: q.marks || (q.type === 'coding' ? 10 : 2),
+    difficulty: q.difficulty,
+  }));
 }
 
 export async function fetchCourseInstructors(courseId: string) {
@@ -300,54 +282,27 @@ export async function fetchAllInstructors() {
   return restApiAuthUtil.get('/auth/users/', { params: { role: 'instructor' } });
 }
 
-export async function fetchSkillTestQuestions(topicId: string) {
-  function safeParseOptions(raw: any): string[] {
-    if (!raw) return [];
-    if (Array.isArray(raw)) {
-      return raw.map(String);
-    }
-    if (typeof raw === "object") {
-      try {
-        return Object.values(raw).map(String);
-      } catch {
-        return [];
-      }
-    }
-    if (typeof raw !== "string") {
-      raw = String(raw);
-    }
-    try {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) return parsed.map(String);
-    } catch {}
-    try {
-      const fixed = raw.replace(/'/g, '"');
-      const parsed = JSON.parse(fixed);
-      if (Array.isArray(parsed)) return parsed.map(String);
-    } catch {}
-    return raw.split(/[,|;]/).map((s: string) => s.trim()).filter(Boolean);
-  }
+// Question Bank API functions
+export async function fetchQuestionsByLevel(level: 'course' | 'topic' | 'subtopic', id: string) {
+  const params: any = {};
+  if (level === 'course') params.course = id;
+  if (level === 'topic') params.topic = id;
+  if (level === 'subtopic') params.subtopic = id;
 
-  const quizzes = await restApiAuthUtil.get('/course/quizzes/', { params: { topic: topicId, category: 'skill_test' } });
-  const coding = await restApiAuthUtil.get('/course/coding-problems/', { params: { topic: topicId, category: 'skill_test' } });
-
-  const mcqQuestions = quizzes.map((q: any) => ({
-    id: q.id,
-    type: "mcq",
-    question: q.question,
-    options: safeParseOptions(q.options),
-    multipleCorrect: q.multiple_correct ?? false,
-    marks: 2,
-  }));
-
-  const codingQuestions = coding.map((c: any) => ({
-    id: c.id,
-    type: "coding",
-    question: c.title,
-    test_cases_basic: c.test_cases_basic,
-    test_cases_advanced: c.test_cases_advanced,
-    marks: 10,
-  }));
-
-  return [...mcqQuestions, ...codingQuestions];
+  return restApiAuthUtil.get('/course/questions/', { params });
 }
+
+export async function createQuestion(payload: any) {
+  return restApiAuthUtil.post('/course/questions/', payload);
+}
+
+export async function updateQuestion(id: string, payload: any) {
+  return restApiAuthUtil.put(`/course/questions/${id}/`, payload);
+}
+
+export async function deleteQuestion(id: string) {
+  await restApiAuthUtil.delete(`/course/questions/${id}/`);
+  return true;
+}
+
+

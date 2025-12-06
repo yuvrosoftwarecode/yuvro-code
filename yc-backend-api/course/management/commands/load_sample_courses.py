@@ -215,82 +215,49 @@ class Command(BaseCommand):
     def _create_topic_level_questions(self, course, topic, topic_index):
         """
         For each Topic:
-        - 2 practice coding problems (category=practice, map to topic)
-        - 2 practice quizzes (category=practice, map to topic)
-        - 2 skill_test coding problems (category=skill_test, map to topic)
+        - Create basic topic-level questions for learning, practice, and skill tests
         """
-        sum_basic, sum_advanced = self._basic_test_cases("sum")
-        rev_basic, rev_advanced = self._basic_test_cases("reverse")
-
-        # ---- Practice coding problems (topic) ----
-        CodingProblem.objects.create(
-            category="practice",
-            topic=topic,
-            sub_topic=None,
-            title=f"{course.short_code} T{topic_index} Practice – Sum of N numbers",
-            description="Given N integers, print their sum.",
-            test_cases_basic=sum_basic,
-            test_cases_advanced=sum_advanced,
+        from course.models import Question
+        
+        # Create a simple practice coding question
+        Question.objects.get_or_create(
+            title=f"{course.short_code} T{topic_index} Practice - Basic Problem",
+            type="coding",
+            defaults={
+                'content': f"Write a function to solve a basic problem for {topic.name}.",
+                'level': 'topic',
+                'topic': topic,
+                'difficulty': 'easy',
+                'marks': 10,
+                'categories': ['practice'],
+                'test_cases_basic': [
+                    {'input': '5', 'expected_output': '5'}
+                ],
+                'test_cases_advanced': [
+                    {'input': '10', 'expected_output': '10'}
+                ]
+            }
         )
-
-        CodingProblem.objects.create(
-            category="practice",
-            topic=topic,
-            sub_topic=None,
-            title=f"{course.short_code} T{topic_index} Practice – Reverse words",
-            description="Given a string, reverse the words.",
-            test_cases_basic=rev_basic,
-            test_cases_advanced=rev_advanced,
-        )
-
-        # ---- Practice quizzes (topic) ----
-        Quiz.objects.create(
-            category="practice",
-            topic=topic,
-            sub_topic=None,
-            question=f"In {course.name}, Topic {topic_index}, what is the main outcome of the practice set?",
-            options=[
-                "Reinforce the concept through coding",
-                "Introduce a new unrelated concept",
-                "Only assess memorization",
-                "None of the above",
-            ],
-            correct_answer_index=0,
-        )
-
-        Quiz.objects.create(
-            category="practice",
-            topic=topic,
-            sub_topic=None,
-            question=f"Why is practicing Topic {topic_index} of {course.short_code} important?",
-            options=[
-                "It builds intuition through examples.",
-                "It replaces the need for theory.",
-                "It is optional and has no value.",
-                "It is only for grading.",
-            ],
-            correct_answer_index=0,
-        )
-
-        # ---- Skill Test coding problems (topic) ----
-        CodingProblem.objects.create(
-            category="skill_test",
-            topic=topic,
-            sub_topic=None,
-            title=f"{course.short_code} T{topic_index} Skill Test – Array operations",
-            description="Given an array, support queries like sum and max over a range.",
-            test_cases_basic=sum_basic,
-            test_cases_advanced=sum_advanced,
-        )
-
-        CodingProblem.objects.create(
-            category="skill_test",
-            topic=topic,
-            sub_topic=None,
-            title=f"{course.short_code} T{topic_index} Skill Test – String processing",
-            description="Given a string, check if it can be rearranged into a palindrome.",
-            test_cases_basic=rev_basic,
-            test_cases_advanced=rev_advanced,
+        
+        # Create a skill test question
+        Question.objects.get_or_create(
+            title=f"{course.short_code} T{topic_index} Skill Test - Assessment",
+            type="mcq",
+            defaults={
+                'content': f"What is the main concept covered in {topic.name}?",
+                'level': 'topic',
+                'topic': topic,
+                'difficulty': 'medium',
+                'marks': 5,
+                'categories': ['skill_test'],
+                'mcq_options': [
+                    'Concept A',
+                    'Concept B', 
+                    'Concept C',
+                    'All of the above'
+                ],
+                'mcq_correct_answer_index': 3
+            }
         )
 
     def _create_sample_data(self, instructor1, instructor2):
@@ -359,7 +326,7 @@ class Command(BaseCommand):
                         order_index=t_idx - 1,
                     )
 
-                    # Topic-level questions (practice + skill_test)
+                    # Topic-level questions (simplified)
                     self._create_topic_level_questions(course, topic, t_idx)
 
                     # ---------------------------------

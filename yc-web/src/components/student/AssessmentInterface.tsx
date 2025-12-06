@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Textarea } from '@/components/ui/textarea';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Button } from '../ui/button';
+import { Badge } from '../ui/badge';
+import { Progress } from '../ui/progress';
+import { Textarea } from '../ui/textarea';
+import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
+import { Checkbox } from '../ui/checkbox';
+import { Label } from '../ui/label';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,8 +17,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger
-} from '@/components/ui/alert-dialog';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+} from '../ui/alert-dialog';
+import { Alert, AlertDescription } from '../ui/alert';
 import {
   Clock,
   Flag,
@@ -34,8 +34,8 @@ import {
   EyeOff,
   Maximize
 } from 'lucide-react';
-import CodeEditor from '@/components/ui/code-editor';
-import { fetchSkillTestQuestions } from "@/services/courseService";
+import CodeEditor from '../CodeEditor';
+import courseService from '../../services/courseService';
 
 interface Assessment {
   id: string;
@@ -75,8 +75,29 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
   useEffect(() => {
     const load = async () => {
       try {
-        const q = await fetchSkillTestQuestions(assessment.topicId);
-        setQuestions(q);
+        const response = await courseService.getQuestions({
+          categories: 'skill_test',
+          course: assessment.topicId
+        });
+        const questions = response || [];
+        
+        // Transform questions to match the expected format
+        const transformedQuestions = questions.map((q: any) => ({
+          id: q.id,
+          type: q.type,
+          question: q.title,
+          title: q.title,
+          content: q.content,
+          options: q.mcq_options || [],
+          correct_answer_index: q.mcq_correct_answer_index,
+          test_cases_basic: q.test_cases_basic || [],
+          test_cases_advanced: q.test_cases_advanced || [],
+          marks: q.marks || (q.type === 'coding' ? 10 : 2),
+          difficulty: q.difficulty,
+          multipleCorrect: false // Default to single choice for MCQs
+        }));
+        
+        setQuestions(transformedQuestions);
       } catch (err) {
         console.error("Failed to load skill test questions", err);
       }

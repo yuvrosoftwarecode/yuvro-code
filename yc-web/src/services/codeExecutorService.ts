@@ -3,7 +3,7 @@ import restApiUtil from '../utils/RestApiUtil';
 
 export interface CodeSubmission {
   id: number;
-  coding_problem: string;
+  question: string;
   problem_title: string;
   problem_description: string;
   code: string;
@@ -24,7 +24,7 @@ export interface CodeSubmission {
 export interface CodeExecutionRequest {
   code: string;
   language: string;
-  coding_problem_id: string;
+  question_id: string;
 }
 
 
@@ -81,7 +81,7 @@ class CodeExecutorService {
 
       return {
         id: 0,
-        coding_problem: '',
+        question: '',
         problem_title: request.problem_title || 'Quick Run',
         problem_description: '',
         code: request.code,
@@ -131,8 +131,8 @@ class CodeExecutorService {
     return this.submitSolution(request);
   }
 
-  async getSubmissions(codingProblemId?: string): Promise<CodeSubmission[]> {
-    const params = codingProblemId ? { coding_problem_id: codingProblemId } : undefined;
+  async getSubmissions(questionId?: string): Promise<CodeSubmission[]> {
+    const params = questionId ? { question_id: questionId } : undefined;
     return restApiAuthUtil.get('/code/submissions/', { params });
   }
 

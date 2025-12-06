@@ -126,169 +126,10 @@ class Video(models.Model):
         return f"{self.sub_topic.name} - {self.title}"
 
 
-class CodingProblem(models.Model):
-    CATEGORY_CHOICES = [
-        ("learn_certify", "Learn & Certify"),
-        ("practice", "Practice Questions"),
-        ("skill_test", "Skill Test"),
-    ]
-
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-
-    topic = models.ForeignKey(
-        Topic,
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        related_name="coding_problems_topic",
-    )
-
-    sub_topic = models.ForeignKey(
-        Subtopic,
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        related_name="coding_problems",
-    )
-
-    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
-
-    title = models.CharField(max_length=255)
-    description = models.TextField()
-
-    test_cases_basic = models.JSONField(
-        help_text="Basic test cases visible to students"
-    )
-    test_cases_advanced = models.JSONField(
-        default=list, help_text="Advanced test cases"
-    )
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        ordering = ["created_at"]
-
-    def __str__(self):
-        name = self.sub_topic.name if self.sub_topic else (self.topic.name if self.topic else "")
-        return f"{name} - {self.title}"
-
-    def clean(self):
-        from django.core.exceptions import ValidationError
-
-        if self.category == "learn_certify":
-            if not self.sub_topic:
-                raise ValidationError(
-                    "Learn & Certify questions must belong to a Subtopic."
-                )
-            if self.topic:
-                raise ValidationError(
-                    "Learn & Certify questions cannot be linked to a Topic."
-                )
-
-        if self.category in ["practice", "skill_test"]:
-            if not self.topic:
-                raise ValidationError(
-                    "Practice/Skill Test questions must belong to a Topic."
-                )
-            if self.sub_topic:
-                raise ValidationError(
-                    "Practice/Skill Test questions cannot be linked to a Subtopic."
-                )
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        super().save(*args, **kwargs)
 
 
-class Quiz(models.Model):
-    CATEGORY_CHOICES = [
-        ("learn_certify", "Learn & Certify"),
-        ("practice", "Practice Questions"),
-        ("skill_test", "Skill Test"),
-    ]
 
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
-    topic = models.ForeignKey(
-        Topic,
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        related_name="quizzes_topic",
-    )
-
-    sub_topic = models.ForeignKey(
-        Subtopic,
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        related_name="quizzes",
-    )
-
-    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
-
-    question = models.TextField()
-    options = models.JSONField()
-    correct_answer_index = models.PositiveIntegerField()
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        ordering = ["created_at"]
-
-    def clean(self):
-        from django.core.exceptions import ValidationError
-
-        if self.options and self.correct_answer_index is not None:
-            if isinstance(self.options, list):
-                if self.correct_answer_index >= len(self.options):
-                    raise ValidationError(
-                        f"Correct answer index {self.correct_answer_index} is out of range. Options has {len(self.options)} items."
-                    )
-                if self.correct_answer_index < 0:
-                    raise ValidationError("Correct answer index must be non-negative.")
-
-        if self.category == "learn_certify":
-            if not self.sub_topic:
-                raise ValidationError(
-                    "Learn & Certify quizzes must belong to a Subtopic."
-                )
-            if self.topic:
-                raise ValidationError(
-                    "Learn & Certify quizzes cannot be linked to a Topic."
-                )
-
-        if self.category in ["practice", "skill_test"]:
-            if not self.topic:
-                raise ValidationError(
-                    "Practice/Skill Test quizzes must belong to a Topic."
-                )
-            if self.sub_topic:
-                raise ValidationError(
-                    "Practice/Skill Test quizzes cannot be linked to a Subtopic."
-                )
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        super().save(*args, **kwargs)
-
-    @property
-    def correct_answer(self):
-        """
-        Get the correct answer text based on the index.
-        """
-        if (
-            self.options
-            and isinstance(self.options, list)
-            and 0 <= self.correct_answer_index < len(self.options)
-        ):
-            return self.options[self.correct_answer_index]
-        return None
-
-    def __str__(self):
-        return f"{self.sub_topic.name} - {self.question[:50]}..." # type: ignore
 
 
 class Note(models.Model):
@@ -353,3 +194,137 @@ class CourseInstructor(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()  # Validate before saving
         super().save(*args, **kwargs)
+
+
+class Question(models.Model):
+    """
+    Unified Question Bank model for storing questions at different levels (course, topic, subtopic)
+    Supports MCQ, Coding, and Descriptive question types with multiple categories
+    """
+    QUESTION_TYPES = [
+        ("mcq", "Multiple Choice Question"),
+        ("coding", "Coding Problem"),
+        ("descriptive", "Descriptive Question"),
+    ]
+    
+    DIFFICULTY_LEVELS = [
+        ("easy", "Easy"),
+        ("medium", "Medium"),
+        ("hard", "Hard"),
+    ]
+    
+    QUESTION_LEVELS = [
+        ("course", "Course Level"),
+        ("topic", "Topic Level"),
+        ("subtopic", "Subtopic Level"),
+    ]
+    
+    QUESTION_CATEGORIES = [
+        ("learn", "Learn & Certify"),
+        ("practice", "Practice Questions"),
+        ("skill_test", "Skill Test"),
+        ("contest", "Contest"),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
+    # Question basic info
+    type = models.CharField(max_length=20, choices=QUESTION_TYPES)
+    title = models.CharField(max_length=500)
+    content = models.TextField()
+    
+    # Level and associations
+    level = models.CharField(max_length=20, choices=QUESTION_LEVELS)
+    course = models.ForeignKey(
+        Course,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="questions"
+    )
+    topic = models.ForeignKey(
+        Topic,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="questions"
+    )
+    subtopic = models.ForeignKey(
+        Subtopic,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="questions"
+    )
+    
+    # Question properties
+    difficulty = models.CharField(max_length=10, choices=DIFFICULTY_LEVELS, default="easy")
+    marks = models.PositiveIntegerField(default=1)
+    categories = models.JSONField(
+        default=list,
+        help_text="List of categories this question belongs to (learn, practice, skill_test, contest)"
+    )
+    
+    # MCQ specific fields
+    mcq_options = models.JSONField(null=True, blank=True, help_text="Options for MCQ questions")
+    mcq_correct_answer_index = models.PositiveIntegerField(null=True, blank=True, help_text="Index of correct answer for MCQ")
+    
+    # Coding specific fields
+    test_cases_basic = models.JSONField(null=True, blank=True, help_text="Basic test cases visible to students")
+    test_cases_advanced = models.JSONField(default=list, blank=True, help_text="Advanced test cases for evaluation")
+    
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="created_questions"
+    )
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["type", "level"]),
+            models.Index(fields=["difficulty"]),
+            models.Index(fields=["course", "topic", "subtopic"]),
+        ]
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        
+        # Validate level associations
+        if self.level == "course" and not self.course:
+            raise ValidationError("Course is required for course-level questions")
+        if self.level == "topic" and not self.topic:
+            raise ValidationError("Topic is required for topic-level questions")
+        if self.level == "subtopic" and not self.subtopic:
+            raise ValidationError("Subtopic is required for subtopic-level questions")
+            
+        # Validate categories
+        if self.categories:
+            valid_categories = [choice[0] for choice in self.QUESTION_CATEGORIES]
+            for category in self.categories:
+                if category not in valid_categories:
+                    raise ValidationError(f"Invalid category: {category}")
+            
+        # Validate MCQ fields
+        if self.type == "mcq":
+            if not self.mcq_options or not isinstance(self.mcq_options, list) or len(self.mcq_options) < 2:
+                raise ValidationError("MCQ questions must have at least 2 options")
+            if self.mcq_correct_answer_index is None:
+                raise ValidationError("MCQ questions must have a correct answer index")
+            if self.mcq_correct_answer_index >= len(self.mcq_options):
+                raise ValidationError("MCQ correct answer index is out of range")
+                
+        # Validate coding fields
+        if self.type == "coding":
+            if not self.test_cases_basic or not isinstance(self.test_cases_basic, list) or len(self.test_cases_basic) == 0:
+                raise ValidationError("Coding questions must have at least 1 basic test case")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.type.upper()}: {self.title[:50]}..."

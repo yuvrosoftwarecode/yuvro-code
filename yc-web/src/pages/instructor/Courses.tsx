@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Plus } from "lucide-react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Plus, BookOpen, Code, Database, Sparkles, Users, Calendar, Edit, Trash2 } from "lucide-react";
 
 import {
   fetchCourses,
@@ -54,6 +54,20 @@ const CATEGORY_LABELS: Record<Course["category"], string> = {
   programming_languages: "Programming Languages",
   databases: "Databases",
   ai_tools: "AI Tools",
+};
+
+const CATEGORY_ICONS: Record<Course["category"], any> = {
+  fundamentals: BookOpen,
+  programming_languages: Code,
+  databases: Database,
+  ai_tools: Sparkles,
+};
+
+const CATEGORY_COLORS: Record<Course["category"], string> = {
+  fundamentals: "bg-blue-50 border-blue-200 text-blue-700",
+  programming_languages: "bg-green-50 border-green-200 text-green-700",
+  databases: "bg-orange-50 border-orange-200 text-orange-700",
+  ai_tools: "bg-purple-50 border-purple-200 text-purple-700",
 };
 
 const Courses: React.FC = () => {
@@ -314,77 +328,149 @@ const Courses: React.FC = () => {
   // RENDER
   // --------------------------------------------------
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <Navigation />
-      <div className="max-w-6xl mx-auto p-6">
+      <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-semibold text-gray-800">Courses</h1>
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Courses</h1>
+            <p className="text-gray-600 mt-1">Manage your course content and structure</p>
+          </div>
 
           {user?.role === "admin" && (
             <Button
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 shadow-sm"
               onClick={() => setIsAddOpen(true)}
             >
               <Plus className="w-4 h-4" />
               Add Course
             </Button>
           )}
-
         </div>
 
-        {loading && <p className="text-gray-500">Loading courses...</p>}
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <div className="flex items-center gap-3 text-gray-500">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+              <span>Loading courses...</span>
+            </div>
+          </div>
+        )}
+
+        {!loading && courses.length === 0 && (
+          <div className="text-center py-12">
+            <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No courses yet</h3>
+            <p className="text-gray-500 mb-6">Get started by creating your first course</p>
+            {user?.role === "admin" && (
+              <Button
+                onClick={() => setIsAddOpen(true)}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Create Course
+              </Button>
+            )}
+          </div>
+        )}
 
         {!loading &&
-          Object.keys(groupedCourses).map((category) => (
-            <div key={category} className="mb-10">
-              <h2 className="text-lg font-semibold text-gray-700 mb-4">
-                {CATEGORY_LABELS[category as Course["category"]]}
-              </h2>
+          Object.keys(groupedCourses).map((category) => {
+            const CategoryIcon = CATEGORY_ICONS[category as Course["category"]];
+            return (
+              <div key={category} className="mb-12">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className={`p-2 rounded-lg ${CATEGORY_COLORS[category as Course["category"]]}`}>
+                    <CategoryIcon className="w-5 h-5" />
+                  </div>
+                  <h2 className="text-xl font-semibold text-gray-800">
+                    {CATEGORY_LABELS[category as Course["category"]]}
+                  </h2>
+                  <div className="flex-1 h-px bg-gray-200"></div>
+                  <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                    {groupedCourses[category].length} course{groupedCourses[category].length !== 1 ? 's' : ''}
+                  </span>
+                </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {groupedCourses[category].map((course: Course) => (
-                  <Card
-                    key={course.id}
-                    className="relative hover:shadow-md transition border border-gray-200"
-                  >
-                    <CardContent className="p-4">
-                      <h3 className="font-medium text-gray-800">
-                        {course.name}
-                      </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {groupedCourses[category].map((course: Course) => {
+                    const CategoryIcon = CATEGORY_ICONS[course.category];
+                    return (
+                      <Card
+                        key={course.id}
+                        className="group relative hover:shadow-lg hover:-translate-y-1 transition-all duration-200 border-0 shadow-sm bg-white overflow-hidden"
+                      >
+                        <CardHeader className="pb-3">
+                          <div className="flex items-start justify-between">
+                            <div className={`p-2 rounded-lg ${CATEGORY_COLORS[course.category]} group-hover:scale-110 transition-transform duration-200`}>
+                              <CategoryIcon className="w-4 h-4" />
+                            </div>
+                            {course.short_code && (
+                              <span className="text-xs font-mono bg-gray-100 text-gray-600 px-2 py-1 rounded-md">
+                                {course.short_code}
+                              </span>
+                            )}
+                          </div>
+                        </CardHeader>
 
-                      {course.short_code && (
-                        <p className="text-sm text-gray-500 mt-1">
-                          Code: {course.short_code}
-                        </p>
-                      )}
+                        <CardContent className="pt-0">
+                          <h3 className="font-semibold text-gray-900 mb-3 line-clamp-2 group-hover:text-blue-600 transition-colors">
+                            {course.name}
+                          </h3>
 
-                      {user?.role === "admin" && (
-                        <div className="mt-4 flex justify-between">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => openEditCourseModal(course)}
-                          >
-                            Edit
-                          </Button>
+                          <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
+                            <div className="flex items-center gap-1">
+                              <Users className="w-3 h-3" />
+                              <span>0 students</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Calendar className="w-3 h-3" />
+                              <span>0 topics</span>
+                            </div>
+                          </div>
 
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => setConfirmDelete(course.id)}
-                          >
-                            Delete
-                          </Button>
-                        </div>
-                      )}
+                          <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-3"
+                              onClick={() => navigate(`/instructor/courses/${course.id}/manage`)}
+                            >
+                              <BookOpen className="w-3 h-3 mr-1" />
+                              Manage
+                            </Button>
 
-                    </CardContent>
-                  </Card>
-                ))}
+                            {user?.role === "admin" && (
+                              <div className="flex gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-gray-600 hover:text-blue-600 hover:bg-blue-50 p-2"
+                                  onClick={() => openEditCourseModal(course)}
+                                >
+                                  <Edit className="w-3 h-3" />
+                                </Button>
+
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-gray-600 hover:text-red-600 hover:bg-red-50 p-2"
+                                  onClick={() => setConfirmDelete(course.id)}
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
       </div>
 
       {/* ---------------- Add Course Modal ---------------- */}

@@ -47,17 +47,6 @@ class Command(BaseCommand):
             else:
                 call_command("load_sample_courses", verbosity=1)
             self.stdout.write("")
-
-            # Setup sample test cases for code executor
-            self.stdout.write("🧪 Creating sample test cases...")
-            call_command("create_sample_test_cases", verbosity=1)
-            self.stdout.write("")
-
-            self.stdout.write(
-                self.style.SUCCESS(
-                    "🎉 Local testing environment setup completed successfully!"
-                )
-            )
         except Exception as e:
             self.stdout.write(self.style.ERROR(f"❌ Error during setup: {str(e)}"))
             raise e

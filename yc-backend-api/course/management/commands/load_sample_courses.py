@@ -9,8 +9,6 @@ from course.models import (
     Topic,
     Subtopic,
     Video,
-    CodingProblem,
-    Quiz,
     CourseInstructor,
 )
 
@@ -54,7 +52,7 @@ class Command(BaseCommand):
 
         if clear:
             self.stdout.write(self.style.WARNING("Clearing existing course data..."))
-            # Deleting Course cascades to Topic, Subtopic, Video, CodingProblem, Quiz, CourseInstructor
+            # Deleting Course cascades to Topic, Subtopic, Video, CourseInstructor
             Course.objects.all().delete()
             self.stdout.write(self.style.SUCCESS("Existing course data cleared."))
 
@@ -77,8 +75,6 @@ class Command(BaseCommand):
         self.stdout.write(f"- Topics: {Topic.objects.count()}")
         self.stdout.write(f"- Subtopics: {Subtopic.objects.count()}")
         self.stdout.write(f"- Videos: {Video.objects.count()}")
-        self.stdout.write(f"- Coding Problems: {CodingProblem.objects.count()}")
-        self.stdout.write(f"- Quizzes: {Quiz.objects.count()}")
         self.stdout.write(self.style.SUCCESS("\nDone! Sample course data created."))
 
     # ------------------------------------------------------------------
@@ -163,55 +159,7 @@ class Command(BaseCommand):
         sum_basic, sum_advanced = self._basic_test_cases("sum")
         rev_basic, rev_advanced = self._basic_test_cases("reverse")
 
-        CodingProblem.objects.create(
-            category="learn_certify",
-            topic=None,
-            sub_topic=subtopic,
-            title=f"{course.short_code} T{topic_index} S{sub_index} – Sum of two numbers",
-            description="Write a program that reads two integers and prints their sum.",
-            test_cases_basic=sum_basic,
-            test_cases_advanced=sum_advanced,
-        )
-
-        CodingProblem.objects.create(
-            category="learn_certify",
-            topic=None,
-            sub_topic=subtopic,
-            title=f"{course.short_code} T{topic_index} S{sub_index} – Reverse a string",
-            description="Write a program that reverses a given string.",
-            test_cases_basic=rev_basic,
-            test_cases_advanced=rev_advanced,
-        )
-
-        # ---- Learn & Certify Quizzes (sub_topic only) ----
-        Quiz.objects.create(
-            category="learn_certify",
-            topic=None,
-            sub_topic=subtopic,
-            question=f"In {course.name}, Topic {topic_index}, Subtopic {sub_index}, what does this subtopic primarily focus on?",
-            options=[
-                "Core concept explanation",
-                "Unrelated advanced topic",
-                "Project deployment steps only",
-                "None of the above",
-            ],
-            correct_answer_index=0,
-        )
-
-        Quiz.objects.create(
-            category="learn_certify",
-            topic=None,
-            sub_topic=subtopic,
-            question=f"Which statement is true for Topic {topic_index}, Subtopic {sub_index} in course {course.short_code}?",
-            options=[
-                "It introduces fundamentals with examples.",
-                "It covers only theory without examples.",
-                "It is not related to this course.",
-                "It only has coding problems and no theory.",
-            ],
-            correct_answer_index=0,
-        )
-
+        
     def _create_topic_level_questions(self, course, topic, topic_index):
         """
         For each Topic:
@@ -221,77 +169,6 @@ class Command(BaseCommand):
         """
         sum_basic, sum_advanced = self._basic_test_cases("sum")
         rev_basic, rev_advanced = self._basic_test_cases("reverse")
-
-        # ---- Practice coding problems (topic) ----
-        CodingProblem.objects.create(
-            category="practice",
-            topic=topic,
-            sub_topic=None,
-            title=f"{course.short_code} T{topic_index} Practice – Sum of N numbers",
-            description="Given N integers, print their sum.",
-            test_cases_basic=sum_basic,
-            test_cases_advanced=sum_advanced,
-        )
-
-        CodingProblem.objects.create(
-            category="practice",
-            topic=topic,
-            sub_topic=None,
-            title=f"{course.short_code} T{topic_index} Practice – Reverse words",
-            description="Given a string, reverse the words.",
-            test_cases_basic=rev_basic,
-            test_cases_advanced=rev_advanced,
-        )
-
-        # ---- Practice quizzes (topic) ----
-        Quiz.objects.create(
-            category="practice",
-            topic=topic,
-            sub_topic=None,
-            question=f"In {course.name}, Topic {topic_index}, what is the main outcome of the practice set?",
-            options=[
-                "Reinforce the concept through coding",
-                "Introduce a new unrelated concept",
-                "Only assess memorization",
-                "None of the above",
-            ],
-            correct_answer_index=0,
-        )
-
-        Quiz.objects.create(
-            category="practice",
-            topic=topic,
-            sub_topic=None,
-            question=f"Why is practicing Topic {topic_index} of {course.short_code} important?",
-            options=[
-                "It builds intuition through examples.",
-                "It replaces the need for theory.",
-                "It is optional and has no value.",
-                "It is only for grading.",
-            ],
-            correct_answer_index=0,
-        )
-
-        # ---- Skill Test coding problems (topic) ----
-        CodingProblem.objects.create(
-            category="skill_test",
-            topic=topic,
-            sub_topic=None,
-            title=f"{course.short_code} T{topic_index} Skill Test – Array operations",
-            description="Given an array, support queries like sum and max over a range.",
-            test_cases_basic=sum_basic,
-            test_cases_advanced=sum_advanced,
-        )
-
-        CodingProblem.objects.create(
-            category="skill_test",
-            topic=topic,
-            sub_topic=None,
-            title=f"{course.short_code} T{topic_index} Skill Test – String processing",
-            description="Given a string, check if it can be rearranged into a palindrome.",
-            test_cases_basic=rev_basic,
-            test_cases_advanced=rev_advanced,
-        )
 
     def _create_sample_data(self, instructor1, instructor2):
         """

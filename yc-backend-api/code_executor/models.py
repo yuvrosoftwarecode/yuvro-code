@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth import get_user_model
-from course.models import CodingProblem
+from course.models import Question
+
 
 User = get_user_model()
 
@@ -23,7 +24,7 @@ class CodeSubmission(models.Model):
     ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    coding_problem = models.ForeignKey(CodingProblem, on_delete=models.CASCADE)
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, limit_choices_to={'type': 'coding'})
     code = models.TextField()
     language = models.CharField(max_length=20, choices=LANGUAGE_CHOICES)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
@@ -42,7 +43,7 @@ class CodeSubmission(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self):
-        return f"{self.user.username} - {self.coding_problem.title} ({self.language})"
+        return f"{self.user.username} - {self.question.title} ({self.language})"
 
 
 class PlagiarismReport(models.Model):

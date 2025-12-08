@@ -5,9 +5,8 @@ from .views import (
     TopicViewSet,
     SubtopicViewSet,
     VideoViewSet,
-    QuizViewSet,
-    CodingProblemViewSet,
     NoteViewSet,
+    QuestionViewSet,
     ProgressViewSet,
 )
 
@@ -17,10 +16,10 @@ router.register(r"courses", CourseViewSet)
 router.register(r"topics", TopicViewSet)
 router.register(r"subtopics", SubtopicViewSet)
 router.register(r"videos", VideoViewSet)
-router.register(r"quizzes", QuizViewSet)
-router.register(r"coding-problems", CodingProblemViewSet)
 router.register(r"notes", NoteViewSet)
 router.register(r"std", ProgressViewSet, basename="student-progress")
+router.register(r"questions", QuestionViewSet)
+
 
 # The API URLs are now determined automatically by the router
 urlpatterns = [

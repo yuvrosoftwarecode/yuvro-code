@@ -105,6 +105,7 @@ setup:
 	@echo "Creating environment files..."
 	@cp yc-backend-api/.env.example yc-backend-api/.env 2>/dev/null || echo "Backend .env already exists"
 	@cp yc-web/.env.example yc-web/.env 2>/dev/null || echo "Frontend .env already exists"
+	docker compose exec backend python manage.py setup_local_testing
 	@echo "Setup complete! Run 'make dev' to start the application."
 
 setup-testing:
@@ -142,11 +143,9 @@ db-createsuperuser:
 	docker compose exec backend python manage.py createsuperuser
 
 db-reset:
+	@echo "Resetting database to initial state..."
 	docker compose down -v
 	docker compose up -d db
-	sleep 5
-	docker compose exec backend python manage.py migrate
-	docker compose up -d
 
 # Backend commands
 backend-shell:

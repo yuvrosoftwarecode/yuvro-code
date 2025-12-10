@@ -18,7 +18,7 @@ const Navigation: React.FC = () => {
   const roleTabs: Record<string, { label: string; path: string }[]> = {
     student: [
       { label: 'Dashboard', path: '/student/dashboard' },
-      { label: 'Learn/Certify', path: '/student/learn' },
+      { label: 'Learn', path: '/student/learn' },
       { label: 'Code Practice', path: '/student/code-practice' },
       { label: 'Skill Test', path: '/student/skill-test' },
       { label: 'Mock Interview', path: '/student/mock-interview' },
@@ -29,20 +29,14 @@ const Navigation: React.FC = () => {
       { label: 'Dashboard', path: '/instructor/dashboard' },
       { label: 'User Management', path: '/instructor/users' },
       { label: 'Courses', path: '/instructor/courses' },
-      { label: 'Code Management', path: '/instructor/code-management' },
-      { label: 'Learn/Certify', path: '/instructor/learn' },
       { label: 'Practice Questions', path: '/instructor/practice-questions' },
-      { label: 'Skill Test', path: '/instructor/skill-test' },
       { label: 'Jobs', path: '/instructor/jobs' },
       { label: 'Contests', path: '/instructor/contests' },
     ],
     instructor: [
       { label: 'Dashboard', path: '/instructor/dashboard' },
       { label: 'Courses', path: '/instructor/courses' },
-      { label: 'Code Management', path: '/instructor/code-management' },
-      { label: 'Learn/Certify', path: '/instructor/learn' },
       { label: 'Practice Questions', path: '/instructor/practice-questions' },
-      { label: 'Skill Test', path: '/instructor/skill-test' },
       { label: 'Contests', path: '/instructor/contests' },
     ],
     recruiter: [
@@ -119,8 +113,8 @@ const Navigation: React.FC = () => {
                     key={tab.path}
                     to={tab.path}
                     className={`inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground-700 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2 ${isActive
-                        ? 'bg-black text-white ring-1 ring-black'
-                        : 'text-gray-700 hover:text-black'
+                      ? 'bg-black text-white ring-1 ring-black'
+                      : 'text-gray-700 hover:text-black'
                       }`}
                   >
                     {tab.label}
@@ -226,8 +220,8 @@ const Navigation: React.FC = () => {
                   to={tab.path}
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={`block w-full inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-base font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground-700 focus-visible:ring-offset-2 h-10 px-3 py-2 ${isActive
-                      ? 'bg-black text-white'
-                      : 'text-gray-700 hover:text-black'
+                    ? 'bg-black text-white'
+                    : 'text-gray-700 hover:text-black'
                     }`}
                 >
                   {tab.label}

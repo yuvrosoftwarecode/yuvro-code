@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus } from "lucide-react";
+import { Plus, Edit, Trash2, BookOpen, Users } from "lucide-react";
 
 import {
   fetchCourses,
@@ -54,6 +54,13 @@ const CATEGORY_LABELS: Record<Course["category"], string> = {
   programming_languages: "Programming Languages",
   databases: "Databases",
   ai_tools: "AI Tools",
+};
+
+const CATEGORY_GRADIENTS: Record<Course["category"], string> = {
+  fundamentals: "from-blue-900 to-blue-700",
+  programming_languages: "from-purple-900 to-purple-700",
+  databases: "from-green-900 to-green-700",
+  ai_tools: "from-orange-900 to-orange-700",
 };
 
 const Courses: React.FC = () => {
@@ -316,69 +323,191 @@ const Courses: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
-      <div className="max-w-6xl mx-auto p-6">
+      <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-semibold text-gray-800">Courses</h1>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Course Management</h1>
+              <p className="text-gray-600 mt-2">
+                {user?.role === "admin" 
+                  ? "Create, edit, and manage all courses in the system" 
+                  : "Manage your assigned courses and content"
+                }
+              </p>
+            </div>
 
-          {user?.role === "admin" && (
-            <Button
-              className="flex items-center gap-2"
-              onClick={() => setIsAddOpen(true)}
-            >
-              <Plus className="w-4 h-4" />
-              Add Course
-            </Button>
-          )}
-
+            {user?.role === "admin" && (
+              <Button
+                className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white px-6 py-2"
+                onClick={() => setIsAddOpen(true)}
+              >
+                <Plus className="w-4 h-4" />
+                Add Course
+              </Button>
+            )}
+          </div>
         </div>
 
-        {loading && <p className="text-gray-500">Loading courses...</p>}
+        {loading && (
+          <div className="space-y-8">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="mb-12">
+                <div className="flex items-center mb-6">
+                  <div className="h-8 bg-gray-200 rounded w-48 animate-pulse"></div>
+                  <div className="ml-3 h-6 bg-gray-100 rounded-full w-20 animate-pulse"></div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {[1, 2, 3, 4].map((j) => (
+                    <div key={j} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                      {/* Header skeleton */}
+                      <div className="bg-gray-200 p-4">
+                        <div className="h-3 bg-gray-300 rounded w-20 mb-2 animate-pulse"></div>
+                        <div className="h-5 bg-gray-300 rounded w-3/4 animate-pulse"></div>
+                      </div>
+                      
+                      {/* Content skeleton */}
+                      <div className="p-4">
+                        <div className="flex gap-4 mb-4">
+                          <div className="h-3 bg-gray-100 rounded w-16 animate-pulse"></div>
+                          <div className="h-3 bg-gray-100 rounded w-12 animate-pulse"></div>
+                        </div>
+                        
+                        <div className="flex justify-between items-center">
+                          <div className="h-8 bg-gray-200 rounded-lg w-20 animate-pulse"></div>
+                          <div className="flex gap-1">
+                            <div className="h-8 w-8 bg-gray-100 rounded-lg animate-pulse"></div>
+                            <div className="h-8 w-8 bg-gray-100 rounded-lg animate-pulse"></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!loading && Object.keys(groupedCourses).length === 0 && (
+          <div className="text-center py-12">
+            <div className="text-gray-400 text-6xl mb-4">📚</div>
+            <h3 className="text-xl font-semibold text-gray-700 mb-2">No courses available</h3>
+            <p className="text-gray-500">
+              {user?.role === "admin" 
+                ? "Get started by creating your first course" 
+                : "No courses have been assigned to you yet"
+              }
+            </p>
+          </div>
+        )}
 
         {!loading &&
           Object.keys(groupedCourses).map((category) => (
-            <div key={category} className="mb-10">
-              <h2 className="text-lg font-semibold text-gray-700 mb-4">
-                {CATEGORY_LABELS[category as Course["category"]]}
-              </h2>
+            <div key={category} className="mb-12">
+              <div className="flex items-center mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">
+                  {CATEGORY_LABELS[category as Course["category"]]}
+                </h2>
+                <div className="ml-3 bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-sm font-medium">
+                  {groupedCourses[category].length} course{groupedCourses[category].length !== 1 ? 's' : ''}
+                </div>
+              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {groupedCourses[category].map((course: Course) => (
                   <Card
                     key={course.id}
-                    className="relative hover:shadow-md transition border border-gray-200"
+                    className="group relative overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-gray-200 hover:border-gray-300 bg-white rounded-xl"
                   >
-                    <CardContent className="p-4">
-                      <h3 className="font-medium text-gray-800">
-                        {course.name}
-                      </h3>
-
-                      {course.short_code && (
-                        <p className="text-sm text-gray-500 mt-1">
-                          Code: {course.short_code}
-                        </p>
-                      )}
-
-                      {user?.role === "admin" && (
-                        <div className="mt-4 flex justify-between">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => openEditCourseModal(course)}
-                          >
-                            Edit
-                          </Button>
-
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => setConfirmDelete(course.id)}
-                          >
-                            Delete
-                          </Button>
+                    <CardContent className="p-0">
+                      {/* Course Header with gradient */}
+                      <div className={`bg-gradient-to-r ${CATEGORY_GRADIENTS[course.category]} p-4 text-white relative overflow-hidden`}>
+                        {/* Subtle pattern overlay */}
+                        <div className="absolute inset-0 opacity-10">
+                          <div className="absolute inset-0" style={{
+                            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+                          }} />
                         </div>
-                      )}
+                        
+                        <div className="flex items-start justify-between relative z-10">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <BookOpen className="h-4 w-4 text-white/70" />
+                              <span className="text-xs font-medium text-white/70 uppercase tracking-wide">
+                                {CATEGORY_LABELS[course.category]}
+                              </span>
+                            </div>
+                            <h3 className="font-bold text-lg leading-tight mb-2 text-white">
+                              {course.name}
+                            </h3>
+                          </div>
+                          
+                          {course.short_code && (
+                            <div className="bg-white/20 backdrop-blur-sm px-2.5 py-1 rounded-full border border-white/30">
+                              <span className="text-xs font-bold text-white">
+                                {course.short_code}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
 
+                      {/* Course Content */}
+                      <div className="p-5">
+                        {/* Stats section */}
+                        <div className="flex items-center gap-6 text-sm text-gray-500 mb-5">
+                          <div className="flex items-center gap-1.5">
+                            <div className="h-2 w-2 bg-gray-300 rounded-full"></div>
+                            <span className="font-medium">Active</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <Users className="h-3.5 w-3.5" />
+                            <span>Multi-instructor</span>
+                          </div>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex items-center justify-between">
+                          {/* Manage Button - Left Side */}
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => navigate(`/instructor/learn/${course.id}`)}
+                            className="bg-black hover:bg-gray-800 text-white px-5 py-2.5 rounded-lg font-semibold transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm hover:shadow-md"
+                          >
+                            Manage
+                          </Button>
+
+                          {/* Edit/Delete Icons - Right Side */}
+                          {user?.role === "admin" && (
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openEditCourseModal(course)}
+                                className="h-9 w-9 p-0 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 hover:scale-110"
+                                title="Edit course"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setConfirmDelete(course.id)}
+                                className="h-9 w-9 p-0 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 hover:scale-110"
+                                title="Delete course"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Hover Effect Overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
                     </CardContent>
                   </Card>
                 ))}

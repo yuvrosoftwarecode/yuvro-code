@@ -4,8 +4,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useAuth, User } from "../../../contexts/AuthContext";
 import VideosPanel from "./VideosPanel";
 import QuizComponent from "./QuizComponent";
-import CodingProblemsManager from "@/components/instructor/learn/CodingProblemsManager";
-import NotesManager from "@/components/instructor/learn/NotesManager";
+import CodingProblemsManager from "@/components/instructor/courses/CodingProblemsManager";
+import NotesManager from "@/components/instructor/courses/NotesManager";
 import Navigation from "../../Navigation";
 
 import {
@@ -125,6 +125,13 @@ const CourseEdit: React.FC = () => {
   // Right-panel tab state
   const [rightTab, setRightTab] = useState<"videos" | "quizzes" | "coding" | "notes">("videos");
 
+  // Course editing state
+  const [editCourseValues, setEditCourseValues] = useState({
+    name: "",
+    short_code: "",
+    category: "fundamentals" as Category,
+  });
+
   // Load data
   useEffect(() => {
     loadCourse();
@@ -138,6 +145,11 @@ const CourseEdit: React.FC = () => {
     try {
       const c = await fetchCourseById(courseId);
       setCourse(c);
+      setEditCourseValues({
+        name: c.name,
+        short_code: c.short_code || "",
+        category: c.category,
+      });
 
       const t = await fetchTopicsByCourse(courseId);
       setTopics(t);
@@ -429,6 +441,24 @@ const CourseEdit: React.FC = () => {
             className="bg-white rounded-md shadow-sm flex flex-col"
             style={{ flexBasis: "30%", minWidth: 300, maxWidth: 560, height: "100%" }}
           >
+            {/* Course Header */}
+            <div className="p-4 border-b border-gray-200 bg-gray-50">
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  {course?.name || "Loading..."}
+                </h2>
+                {course?.short_code && (
+                  <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded">
+                    {course.short_code}
+                  </span>
+                )}
+              </div>
+              {course && (
+                <p className="text-sm text-gray-600">
+                  {CATEGORY_LABELS[course.category]}
+                </p>
+              )}
+            </div>
 
             <div className="p-4" style={{ flexBasis: "70%", overflowY: "auto" }}>
               
@@ -448,42 +478,53 @@ const CourseEdit: React.FC = () => {
                   const expanded = !!expandedTopics[topic.id];
                   const subs = subtopicsMap[topic.id] || [];
                   return (
-                    <div key={topic.id} className="border rounded p-3 bg-white">
+                    <div key={topic.id} className="border rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition-shadow">
                       <div className="flex items-center justify-between">
                         <div>
-                          <div className="font-medium">{topic.name}</div>
-                          <div className="text-xs text-muted-foreground">
+                          <div className="font-semibold text-gray-900">{topic.name}</div>
+                          <div className="text-xs text-gray-500 mt-1">
                             Order: {topic.order_index}
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2">
-                          <Button size="sm" variant="ghost" onClick={() => toggleExpandTopic(topic.id)}>
-                            {expanded ? <ChevronUp /> : <ChevronDown />}
+                        <div className="flex items-center gap-1">
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            onClick={() => toggleExpandTopic(topic.id)}
+                            className="h-8 w-8 p-0"
+                          >
+                            {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                           </Button>
-                          <Button size="sm" variant="ghost" onClick={() => openEditTopicModal(topic)}>
-                            <Edit />
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            onClick={() => openEditTopicModal(topic)}
+                            className="h-8 w-8 p-0 text-gray-600 hover:text-gray-900"
+                          >
+                            <Edit className="h-4 w-4" />
                           </Button>
                           <Button
                             size="sm"
-                            variant="destructive"
+                            variant="ghost"
                             onClick={() => setConfirmDelete({ type: "topic", id: topic.id })}
+                            className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
                           >
-                            <Trash />
+                            <Trash className="h-4 w-4" />
                           </Button>
                         </div>
                       </div>
 
                       {expanded && (
                         <div className="mt-3">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="text-sm font-medium">Subtopics ({subs.length})</div>
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="text-sm font-semibold text-gray-700">Subtopics ({subs.length})</div>
                             <Button
                               size="sm"
                               onClick={() => openCreateSubtopicModal(topic.id)}
-                              className="flex items-center gap-2"
+                              className="flex items-center gap-1 h-7 px-2 text-xs"
                             >
-                              <Plus /> Add
+                              <Plus className="h-3 w-3" /> Add
                             </Button>
                           </div>
 
@@ -495,9 +536,9 @@ const CourseEdit: React.FC = () => {
                             {subs.map((s) => (
                               <div
                                 key={s.id}
-                                className={`p-2 rounded border flex items-center justify-between cursor-pointer ${selectedSubtopic?.id === s.id
-                                  ? "bg-sky-50 border-sky-300"
-                                  : "bg-white"
+                                className={`p-3 rounded-lg border flex items-center justify-between cursor-pointer transition-all ${selectedSubtopic?.id === s.id
+                                  ? "bg-blue-50 border-blue-300 shadow-sm"
+                                  : "bg-gray-50 border-gray-200 hover:bg-gray-100"
                                   }`}
                                 onClick={() => {
                                   setSelectedSubtopic(s);
@@ -505,11 +546,11 @@ const CourseEdit: React.FC = () => {
                                 }}
                               >
                                 <div>
-                                  <div className="font-medium">{s.name}</div>
-                                  <div className="text-xs text-muted-foreground">Order: {s.order_index}</div>
+                                  <div className="font-medium text-gray-900">{s.name}</div>
+                                  <div className="text-xs text-gray-500 mt-1">Order: {s.order_index}</div>
                                 </div>
 
-                                <div className="flex gap-2">
+                                <div className="flex gap-1">
                                   <Button
                                     size="sm"
                                     variant="ghost"
@@ -517,19 +558,21 @@ const CourseEdit: React.FC = () => {
                                       e.stopPropagation();
                                       openEditSubtopicModal(s);
                                     }}
+                                    className="h-7 w-7 p-0 text-gray-600 hover:text-gray-900"
                                   >
-                                    <Edit />
+                                    <Edit className="h-3 w-3" />
                                   </Button>
 
                                   <Button
                                     size="sm"
-                                    variant="destructive"
+                                    variant="ghost"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       setConfirmDelete({ type: "subtopic", id: s.id });
                                     }}
+                                    className="h-7 w-7 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
                                   >
-                                    <Trash />
+                                    <Trash className="h-3 w-3" />
                                   </Button>
                                 </div>
                               </div>
@@ -551,36 +594,61 @@ const CourseEdit: React.FC = () => {
             style={{ flexBasis: "70%" }}
           >
             {/* Nav-2 (tabs) */}
-            <div className="border-b px-4 py-3 flex items-center justify-between">
-              <div className="flex gap-2">
-                <button
-                  className={`px-3 py-1 rounded-md text-sm ${rightTab === "videos" ? "bg-black text-white" : "text-gray-700 hover:bg-gray-100"}`}
-                  onClick={() => setRightTab("videos")}
-                >
-                  Videos
-                </button>
-                <button
-                  className={`px-3 py-1 rounded-md text-sm ${rightTab === "quizzes" ? "bg-black text-white" : "text-gray-700 hover:bg-gray-100"}`}
-                  onClick={() => setRightTab("quizzes")}
-                >
-                  Quizzes
-                </button>
-                <button
-                  className={`px-3 py-1 rounded-md text-sm ${rightTab === "coding" ? "bg-black text-white" : "text-gray-700 hover:bg-gray-100"}`}
-                  onClick={() => setRightTab("coding")}
-                >
-                  Coding Problems
-                </button>
-                <button
-                  className={`px-3 py-1 rounded-md text-sm ${rightTab === "notes" ? "bg-black text-white" : "text-gray-700 hover:bg-gray-100"}`}
-                  onClick={() => setRightTab("notes")}
-                >
-                  Notes
-                </button>
-              </div>
+            <div className="border-b border-gray-200 px-6 py-4 bg-gray-50">
+              <div className="flex items-center justify-between">
+                <div className="flex gap-1 bg-white rounded-lg p-1 border border-gray-200">
+                  <button
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                      rightTab === "videos" 
+                        ? "bg-black text-white shadow-sm" 
+                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                    }`}
+                    onClick={() => setRightTab("videos")}
+                  >
+                    Videos
+                  </button>
+                  <button
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                      rightTab === "quizzes" 
+                        ? "bg-black text-white shadow-sm" 
+                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                    }`}
+                    onClick={() => setRightTab("quizzes")}
+                  >
+                    Quizzes
+                  </button>
+                  <button
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                      rightTab === "coding" 
+                        ? "bg-black text-white shadow-sm" 
+                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                    }`}
+                    onClick={() => setRightTab("coding")}
+                  >
+                    Coding Problems
+                  </button>
+                  <button
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                      rightTab === "notes" 
+                        ? "bg-black text-white shadow-sm" 
+                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                    }`}
+                    onClick={() => setRightTab("notes")}
+                  >
+                    Notes
+                  </button>
+                </div>
 
-              <div className="text-sm text-muted-foreground">
-                {selectedSubtopic ? `Selected: ${selectedSubtopic.name}` : "No subtopic selected"}
+                <div className="text-sm text-gray-600">
+                  {selectedSubtopic ? (
+                    <span className="flex items-center gap-2">
+                      <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                      {selectedSubtopic.name}
+                    </span>
+                  ) : (
+                    "No subtopic selected"
+                  )}
+                </div>
               </div>
             </div>
 
@@ -588,9 +656,12 @@ const CourseEdit: React.FC = () => {
             <div className="p-6 flex-1 overflow-auto">
               {/* If selectedSubtopic is null, show a hint */}
               {!selectedSubtopic && (
-                <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground">
-                  <div className="text-lg font-medium mb-2">Select a subtopic on the left</div>
-                  <div className="text-sm">Then use these tabs to manage Videos / Quizzes / Coding Problems / Notes</div>
+                <div className="h-full flex flex-col items-center justify-center text-center">
+                  <div className="text-gray-400 text-6xl mb-4">📝</div>
+                  <div className="text-xl font-semibold text-gray-700 mb-2">Select a subtopic to get started</div>
+                  <div className="text-gray-500 max-w-md">
+                    Choose a subtopic from the left panel to manage its videos, quizzes, coding problems, and notes
+                  </div>
                 </div>
               )}
 

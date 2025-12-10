@@ -14,14 +14,13 @@ import Login from './pages/common/Login';
 import Register from './pages/common/Register';
 import Profile from './pages/student/Profile';
 import Learn from './pages/student/Learn';
-import CodeManagement from './pages/instructor/CodeManagement';
 import NotFound from './pages/common/NotFound';
 import ResetPassword from './pages/common/ResetPassword';
 import ForgotPassword from './pages/common/ForgotPassword';
 import InstructorDashboard from './pages/instructor/Dashboard';
 import Courses from './pages/instructor/Courses';
 import LearnAndCertify  from './pages/instructor/LearnAndCertify';
-import CourseEdit from './components/instructor/learn/CourseEdit';
+import CourseEdit from './components/instructor/courses/CourseEdit';
 import Jobs from './pages/instructor/Jobs';
 import Users from './pages/instructor/Users';
 import StudentDashboard from './pages/student/StudentDashboard';
@@ -34,8 +33,6 @@ import CodePractice from './pages/student/CodePractice';
 import { Toaster } from "@/components/ui/sonner";
 import ErrorBoundary from './components/ErrorBoundary';
 import DashboardRedirect from './components/DashboardRedirect';
-import InstructorSkillTest from './pages/instructor/SkillTest';
-import PracticeQuestions from './pages/instructor/PracticeQuestions';
 import OwnerContest from './pages/instructor/Contest';
 import RecruiterJobs from "./pages/recruiter/Jobs";
 import AddJob from "./components/student/AddJob";
@@ -184,16 +181,6 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-
-              <Route
-                path="/instructor/code-management"
-                element={
-                  <ProtectedRoute allowedRoles={["admin", "instructor"]}>
-                    <CodeManagement />
-                  </ProtectedRoute>
-                }
-              />
-
               <Route
                 path="/instructor/jobs"
                 element={
@@ -226,24 +213,6 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={["admin", "instructor"]}>
                     <div>Students Management</div>
-                  </ProtectedRoute>
-                }
-              />
-
-              <Route
-                path="/instructor/practice-questions"
-                element={
-                  <ProtectedRoute allowedRoles={["admin", "instructor"]}>
-                    <PracticeQuestions />
-                  </ProtectedRoute>
-                }
-              />
-
-              <Route
-                path="/instructor/skill-test"
-                element={
-                  <ProtectedRoute allowedRoles={["admin", "instructor"]}>
-                    <InstructorSkillTest />
                   </ProtectedRoute>
                 }
               />

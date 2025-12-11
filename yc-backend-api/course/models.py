@@ -48,6 +48,7 @@ class Topic(models.Model):
 
     class Meta:
         ordering = ["order_index"]
+        unique_together = [["course", "name"]]  # Prevent duplicate topic names within a course
 
     def save(self, *args, **kwargs):
         if self.order_index is None:
@@ -81,6 +82,7 @@ class Subtopic(models.Model):
 
     class Meta:
         ordering = ["order_index"]
+        unique_together = [["topic", "name"]]  # Prevent duplicate subtopic names within a topic
 
     def save(self, *args, **kwargs):
         if self.order_index is None:
@@ -246,7 +248,8 @@ class Question(models.Model):
     Supports MCQ, Coding, and Descriptive question types with multiple categories
     """
     QUESTION_TYPES = [
-        ("mcq", "Multiple Choice Question"),
+        ("mcq_single", "MCQ - Single Answer"),
+        ("mcq_multiple", "MCQ - Multiple Answers"),
         ("coding", "Coding Problem"),
         ("descriptive", "Descriptive Question"),
     ]
@@ -264,7 +267,7 @@ class Question(models.Model):
     ]
     
     QUESTION_CATEGORIES = [
-        ("learn", "Learn & Certify"),
+        ("learn", "Learn"),
         ("practice", "Practice Questions"),
         ("skill_test", "Skill Test"),
         ("contest", "Contest"),
@@ -310,8 +313,11 @@ class Question(models.Model):
     )
     
     # MCQ specific fields
-    mcq_options = models.JSONField(null=True, blank=True, help_text="Options for MCQ questions")
-    mcq_correct_answer_index = models.PositiveIntegerField(null=True, blank=True, help_text="Index of correct answer for MCQ")
+    mcq_options = models.JSONField(
+        null=True, 
+        blank=True, 
+        help_text="Options for MCQ questions with answer info. Format: [{'text': 'Option 1', 'is_correct': True}, {'text': 'Option 2', 'is_correct': False}]"
+    )
     
     # Coding specific fields
     test_cases_basic = models.JSONField(null=True, blank=True, help_text="Basic test cases visible to students")
@@ -353,13 +359,32 @@ class Question(models.Model):
                     raise ValidationError(f"Invalid category: {category}")
             
         # Validate MCQ fields
-        if self.type == "mcq":
+        if self.type in ["mcq_single", "mcq_multiple"]:
             if not self.mcq_options or not isinstance(self.mcq_options, list) or len(self.mcq_options) < 2:
                 raise ValidationError("MCQ questions must have at least 2 options")
-            if self.mcq_correct_answer_index is None:
-                raise ValidationError("MCQ questions must have a correct answer index")
-            if self.mcq_correct_answer_index >= len(self.mcq_options):
-                raise ValidationError("MCQ correct answer index is out of range")
+            
+            # Validate option structure and ensure at least one correct answer
+            correct_count = 0
+            for i, option in enumerate(self.mcq_options):
+                if not isinstance(option, dict):
+                    raise ValidationError(f"Option {i+1} must be a dictionary with 'text' and 'is_correct' keys")
+                if 'text' not in option or 'is_correct' not in option:
+                    raise ValidationError(f"Option {i+1} must have 'text' and 'is_correct' keys")
+                if not isinstance(option['text'], str) or not option['text'].strip():
+                    raise ValidationError(f"Option {i+1} text must be a non-empty string")
+                if not isinstance(option['is_correct'], bool):
+                    raise ValidationError(f"Option {i+1} 'is_correct' must be a boolean")
+                if option['is_correct']:
+                    correct_count += 1
+            
+            if correct_count == 0:
+                raise ValidationError("MCQ questions must have at least one correct answer")
+            
+            # Validate single vs multiple answer constraints
+            if self.type == "mcq_single" and correct_count > 1:
+                raise ValidationError("Single-answer MCQ questions can only have one correct answer")
+            elif self.type == "mcq_multiple" and correct_count < 2:
+                raise ValidationError("Multiple-answer MCQ questions must have at least 2 correct answers")
                 
         # Validate coding fields
         if self.type == "coding":

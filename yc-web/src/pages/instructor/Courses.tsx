@@ -330,8 +330,8 @@ const Courses: React.FC = () => {
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Course Management</h1>
               <p className="text-gray-600 mt-2">
-                {user?.role === "admin" 
-                  ? "Create, edit, and manage all courses in the system" 
+                {user?.role === "admin"
+                  ? "Create, edit, and manage all courses in the system"
                   : "Manage your assigned courses and content"
                 }
               </p>
@@ -365,14 +365,14 @@ const Courses: React.FC = () => {
                         <div className="h-3 bg-gray-300 rounded w-20 mb-2 animate-pulse"></div>
                         <div className="h-5 bg-gray-300 rounded w-3/4 animate-pulse"></div>
                       </div>
-                      
+
                       {/* Content skeleton */}
                       <div className="p-4">
                         <div className="flex gap-4 mb-4">
                           <div className="h-3 bg-gray-100 rounded w-16 animate-pulse"></div>
                           <div className="h-3 bg-gray-100 rounded w-12 animate-pulse"></div>
                         </div>
-                        
+
                         <div className="flex justify-between items-center">
                           <div className="h-8 bg-gray-200 rounded-lg w-20 animate-pulse"></div>
                           <div className="flex gap-1">
@@ -394,8 +394,8 @@ const Courses: React.FC = () => {
             <div className="text-gray-400 text-6xl mb-4">📚</div>
             <h3 className="text-xl font-semibold text-gray-700 mb-2">No courses available</h3>
             <p className="text-gray-500">
-              {user?.role === "admin" 
-                ? "Get started by creating your first course" 
+              {user?.role === "admin"
+                ? "Get started by creating your first course"
                 : "No courses have been assigned to you yet"
               }
             </p>
@@ -429,7 +429,7 @@ const Courses: React.FC = () => {
                             backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
                           }} />
                         </div>
-                        
+
                         <div className="flex items-start justify-between relative z-10">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
@@ -442,7 +442,7 @@ const Courses: React.FC = () => {
                               {course.name}
                             </h3>
                           </div>
-                          
+
                           {course.short_code && (
                             <div className="bg-white/20 backdrop-blur-sm px-2.5 py-1 rounded-full border border-white/30">
                               <span className="text-xs font-bold text-white">
@@ -473,7 +473,7 @@ const Courses: React.FC = () => {
                           <Button
                             variant="default"
                             size="sm"
-                            onClick={() => navigate(`/instructor/learn/${course.id}`)}
+                            onClick={() => navigate(`/instructor/courses/${course.id}/manage`)}
                             className="bg-black hover:bg-gray-800 text-white px-5 py-2.5 rounded-lg font-semibold transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm hover:shadow-md"
                           >
                             Manage

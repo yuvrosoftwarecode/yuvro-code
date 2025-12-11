@@ -187,7 +187,6 @@ class QuestionSerializer(serializers.ModelSerializer):
             "marks",
             "categories",
             "mcq_options",
-            "mcq_correct_answer_index",
             "test_cases_basic",
             "test_cases_advanced",
             "created_at",
@@ -220,24 +219,29 @@ class QuestionSerializer(serializers.ModelSerializer):
                     raise serializers.ValidationError(f"Invalid category: {category}")
         
         # Validate MCQ specific fields
-        if question_type == "mcq":
+        if question_type in ["mcq_single", "mcq_multiple"]:
             mcq_options = data.get("mcq_options")
-            mcq_correct_answer_index = data.get("mcq_correct_answer_index")
             
             if not mcq_options or not isinstance(mcq_options, list) or len(mcq_options) < 2:
                 raise serializers.ValidationError("MCQ questions must have at least 2 options")
                 
-            # Filter out empty options
-            valid_options = [opt for opt in mcq_options if opt and opt.strip()]
-            if len(valid_options) < 2:
-                raise serializers.ValidationError("MCQ questions must have at least 2 non-empty options")
-                
-            if mcq_correct_answer_index is None:
-                raise serializers.ValidationError("MCQ questions must have a correct answer index")
-                
-            # Validate correct answer index
-            if mcq_correct_answer_index < 0 or mcq_correct_answer_index >= len(valid_options):
-                raise serializers.ValidationError("MCQ correct answer index is out of range")
+            # Validate that each option has required fields
+            for i, option in enumerate(mcq_options):
+                if not isinstance(option, dict):
+                    raise serializers.ValidationError(f"MCQ option {i+1} must be an object with 'text' and 'is_correct' fields")
+                if not option.get("text", "").strip():
+                    raise serializers.ValidationError(f"MCQ option {i+1} text cannot be empty")
+                if "is_correct" not in option:
+                    raise serializers.ValidationError(f"MCQ option {i+1} must have 'is_correct' field")
+            
+            # Validate that at least one option is marked as correct
+            correct_options = [opt for opt in mcq_options if opt.get("is_correct")]
+            if not correct_options:
+                raise serializers.ValidationError("MCQ questions must have at least one correct answer")
+            
+            # For single answer MCQ, ensure only one correct answer
+            if question_type == "mcq_single" and len(correct_options) > 1:
+                raise serializers.ValidationError("Single answer MCQ questions can only have one correct answer")
                     
         # Validate coding specific fields
         if question_type == "coding":

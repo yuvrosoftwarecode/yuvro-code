@@ -5,6 +5,8 @@ import { useAuth, User } from "../../../contexts/AuthContext";
 import VideosPanel from "./VideosPanel";
 import NotesManager from "@/components/instructor/courses/NotesManager";
 import QuestionBankManager from "@/components/instructor/courses/QuestionBankManager";
+import RoleSidebar from "../../common/RoleSidebar";
+import RoleHeader from "../../common/RoleHeader";
 import Navigation from "../../Navigation";
 
 import {
@@ -156,13 +158,14 @@ const CourseEdit: React.FC = () => {
 
     try {
       const c = await fetchCourseById(courseId);
+      console.log('Loaded course data:', c);
       setCourse(c);
-      
+
       // Initialize edit form with course data
       setEditCourseValues({
-        name: c.name,
+        name: c.name || "",
         short_code: c.short_code || "",
-        category: c.category,
+        category: c.category || "fundamentals",
       });
 
       const t = await fetchTopicsByCourse(courseId);
@@ -445,304 +448,307 @@ const CourseEdit: React.FC = () => {
   if (!courseId) return <div className="min-h-screen flex items-center justify-center">No course selected</div>;
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20">
-      <Navigation />
-      {/* Main content */}
-      <div className="flex-1 overflow-hidden">
-        <div className="h-full w-full px-4 py-6 flex gap-6">
-          {/* Left Sidebar - Course Structure */}
-          <div className="w-[480px] bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 flex flex-col overflow-hidden">
-            {/* Sidebar Header */}
-            <div className="p-6 border-b border-slate-200/60 bg-gradient-to-r from-slate-50 to-blue-50/50">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <Layers3 className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-slate-900">{course?.name || 'Loading...'}</h3>
-                    <p className="text-sm text-slate-600">Course Structure</p>
+    <div className="min-h-screen bg-gray-50">
+      <div className="flex">
+        <RoleSidebar />
+        <div className="flex-1">
+          <RoleHeader
+            title={course?.name ? course.name : 'Loading Course...'}
+            subtitle={course ? `Category: ${CATEGORY_LABELS[course.category] || course.category}${course.short_code ? ` • Code: ${course.short_code}` : ''}` : 'Loading course details...'}
+          />
+
+          {/* Main content */}
+          <div className="p-6">
+            <div className="h-full w-full px-4 py-6 flex gap-6">
+              {/* Left Sidebar - Course Structure */}
+              <div className="w-[360px] bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 flex flex-col overflow-hidden">
+                {/* Sidebar Header */}
+                <div className="p-4 border-b border-slate-200/60 bg-gradient-to-r from-amber-50 to-orange-50/50">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="p-2 bg-amber-100 rounded-lg">
+                        <Layers3 className="w-4 h-4 text-amber-600" />
+                      </div>
+                      <div>
+                        <h3 className="text-base font-semibold text-slate-900">Course Structure</h3>
+                        <p className="text-xs text-slate-600">Topics & Subtopics</p>
+                      </div>
+                    </div>
+                    <Button
+                      onClick={openCreateTopicModal}
+                      size="sm"
+                      className="bg-amber-600 hover:bg-amber-700 text-white shadow-sm text-xs px-2 py-1"
+                    >
+                      <Plus className="w-3 h-3 mr-1" />
+                      Add
+                    </Button>
                   </div>
                 </div>
-                <Button
-                  onClick={openCreateTopicModal}
-                  size="sm"
-                  className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Topic
-                </Button>
-              </div>
-            </div>
 
-            {/* Topics List */}
-            <ScrollArea className="flex-1 p-4">
-              <div className="space-y-3">
-                {topics.length === 0 && (
-                  <div className="text-center py-12">
-                    <BookOpen className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                    <p className="text-slate-500 font-medium">No topics yet</p>
-                    <p className="text-sm text-slate-400 mt-1">Create your first topic to get started</p>
-                  </div>
-                )}
-
-                {topics.map((topic) => {
-                  const expanded = !!expandedTopics[topic.id];
-                  const subs = subtopicsMap[topic.id] || [];
-                  const isSelected = selectedTopic?.id === topic.id;
-
-                  return (
-                    <div
-                      key={topic.id}
-                      className={`group backdrop-blur-sm border rounded-xl p-4 hover:shadow-md transition-all duration-200 cursor-pointer ${
-                        isSelected
-                          ? "bg-blue-50/80 border-blue-200 shadow-sm"
-                          : "bg-white/70 border-slate-200/60"
-                      }`}
-                      onClick={async () => {
-                        if (isSelected && !selectedSubtopic) {
-                          // If already selected but no subtopic is selected, toggle collapse/expand
-                          await toggleExpandTopic(topic.id);
-                        } else if (isSelected && selectedSubtopic) {
-                          // If already selected and a subtopic is selected, just clear subtopic selection
-                          setSelectedSubtopic(null);
-                          setRightTab("questions");
-                        } else {
-                          // If not selected, select and expand
-                          setSelectedTopic(topic);
-                          setSelectedSubtopic(null);
-                          setRightTab("questions");
-                          // Auto-expand the topic if not already expanded
-                          if (!expanded) {
-                            await toggleExpandTopic(topic.id);
-                          }
-                        }
-                      }}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <div
-                            className={`font-semibold transition-colors ${
-                              isSelected
-                                ? "text-blue-700"
-                                : "text-slate-900 group-hover:text-blue-700"
-                            }`}
-                          >
-                            {topic.name}
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleExpandTopic(topic.id);
-                            }}
-                            className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
-                          >
-                            {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openEditTopicModal(topic);
-                            }}
-                            className="h-8 w-8 p-0 hover:bg-amber-50 hover:text-amber-600"
-                          >
-                            <Edit3 className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setConfirmDelete({ type: "topic", id: topic.id });
-                            }}
-                            className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
+                {/* Topics List */}
+                <ScrollArea className="flex-1 p-3">
+                  <div className="space-y-3">
+                    {topics.length === 0 && (
+                      <div className="text-center py-12">
+                        <BookOpen className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                        <p className="text-slate-500 font-medium">No topics yet</p>
+                        <p className="text-sm text-slate-400 mt-1">Create your first topic to get started</p>
                       </div>
+                    )}
 
-                      {expanded && (
-                        <div className="mt-4 pt-4 border-t border-slate-200/60">
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-                              <Layers3 className="w-4 h-4" />
-                              Subtopics
+                    {topics.map((topic) => {
+                      const expanded = !!expandedTopics[topic.id];
+                      const subs = subtopicsMap[topic.id] || [];
+                      const isSelected = selectedTopic?.id === topic.id;
+
+                      return (
+                        <div
+                          key={topic.id}
+                          className={`group backdrop-blur-sm border rounded-lg p-3 hover:shadow-md transition-all duration-200 cursor-pointer ${isSelected
+                            ? "bg-amber-50/80 border-amber-200 shadow-sm"
+                            : "bg-white/70 border-slate-200/60"
+                            }`}
+                          onClick={async () => {
+                            if (isSelected && !selectedSubtopic) {
+                              // If already selected but no subtopic is selected, toggle collapse/expand
+                              await toggleExpandTopic(topic.id);
+                            } else if (isSelected && selectedSubtopic) {
+                              // If already selected and a subtopic is selected, just clear subtopic selection
+                              setSelectedSubtopic(null);
+                              setRightTab("questions");
+                            } else {
+                              // If not selected, select and expand
+                              setSelectedTopic(topic);
+                              setSelectedSubtopic(null);
+                              setRightTab("questions");
+                              // Auto-expand the topic if not already expanded
+                              if (!expanded) {
+                                await toggleExpandTopic(topic.id);
+                              }
+                            }
+                          }}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <div
+                                className={`font-medium text-sm transition-colors ${isSelected
+                                  ? "text-amber-700"
+                                  : "text-slate-900 group-hover:text-amber-700"
+                                  }`}
+                              >
+                                {topic.name}
+                              </div>
                             </div>
-                            <Button
-                              size="sm"
-                              onClick={() => openCreateSubtopicModal(topic.id)}
-                              variant="outline"
-                              className="h-7 text-xs border-blue-200 text-blue-600 hover:bg-blue-50"
-                            >
-                              <Plus className="w-3 h-3 mr-1" />
-                              Add
-                            </Button>
+
+                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleExpandTopic(topic.id);
+                                }}
+                                className="h-6 w-6 p-0 hover:bg-amber-50 hover:text-amber-600"
+                              >
+                                {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openEditTopicModal(topic);
+                                }}
+                                className="h-6 w-6 p-0 hover:bg-amber-50 hover:text-amber-600"
+                              >
+                                <Edit3 className="w-3 h-3" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setConfirmDelete({ type: "topic", id: topic.id });
+                                }}
+                                className="h-6 w-6 p-0 hover:bg-red-50 hover:text-red-600"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
+                            </div>
                           </div>
 
-                          <div className="space-y-2">
-                            {subs.length === 0 && (
-                              <div className="text-center py-6">
-                                <FileText className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                                <p className="text-xs text-slate-500">No subtopics yet</p>
+                          {expanded && (
+                            <div className="mt-3 pt-3 border-t border-slate-200/60">
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="text-xs font-medium text-slate-700 flex items-center gap-1">
+                                  <Layers3 className="w-3 h-3" />
+                                  Subtopics
+                                </div>
+                                <Button
+                                  size="sm"
+                                  onClick={() => openCreateSubtopicModal(topic.id)}
+                                  variant="outline"
+                                  className="h-6 text-xs border-amber-200 text-amber-600 hover:bg-amber-50 px-2"
+                                >
+                                  <Plus className="w-2 h-2 mr-1" />
+                                  Add
+                                </Button>
                               </div>
-                            )}
 
-                            {subs.map((s) => (
-                              <div
-                                key={s.id}
-                                className={`group p-3 rounded-lg border cursor-pointer transition-all duration-200 ${
-                                  selectedSubtopic?.id === s.id
-                                    ? "bg-blue-50 border-blue-200 shadow-sm"
-                                    : "bg-white/50 border-slate-200/60 hover:bg-white hover:shadow-sm"
-                                }`}
-                                onClick={(e) => {
-                                  e.stopPropagation(); // Prevent event bubbling to parent topic
-                                  setSelectedSubtopic(s);
-                                  // Also set the selected topic
-                                  const parentTopic = topics.find(topic => topic.id === s.topic);
-                                  setSelectedTopic(parentTopic || null);
-                                  setRightTab("videos");
-                                }}
-                              >
-                                <div className="flex items-center justify-between">
-                                  <div className="flex-1">
-                                    <div className={`font-medium text-sm ${selectedSubtopic?.id === s.id ? "text-blue-900" : "text-slate-800"}`}>
-                                      {s.name}
+                              <div className="space-y-2">
+                                {subs.length === 0 && (
+                                  <div className="text-center py-6">
+                                    <FileText className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                                    <p className="text-xs text-slate-500">No subtopics yet</p>
+                                  </div>
+                                )}
+
+                                {subs.map((s) => (
+                                  <div
+                                    key={s.id}
+                                    className={`group p-2 rounded-md border cursor-pointer transition-all duration-200 ${selectedSubtopic?.id === s.id
+                                      ? "bg-amber-50 border-amber-200 shadow-sm"
+                                      : "bg-white/50 border-slate-200/60 hover:bg-white hover:shadow-sm"
+                                      }`}
+                                    onClick={(e) => {
+                                      e.stopPropagation(); // Prevent event bubbling to parent topic
+                                      setSelectedSubtopic(s);
+                                      // Also set the selected topic
+                                      const parentTopic = topics.find(topic => topic.id === s.topic);
+                                      setSelectedTopic(parentTopic || null);
+                                      setRightTab("videos");
+                                    }}
+                                  >
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex-1">
+                                        <div className={`font-medium text-xs ${selectedSubtopic?.id === s.id ? "text-amber-900" : "text-slate-800"}`}>
+                                          {s.name}
+                                        </div>
+                                      </div>
+
+                                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            openEditSubtopicModal(s);
+                                          }}
+                                          className="h-5 w-5 p-0 hover:bg-amber-50 hover:text-amber-600"
+                                        >
+                                          <Edit3 className="w-2.5 h-2.5" />
+                                        </Button>
+
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setConfirmDelete({ type: "subtopic", id: s.id });
+                                          }}
+                                          className="h-5 w-5 p-0 hover:bg-red-50 hover:text-red-600"
+                                        >
+                                          <Trash2 className="w-2.5 h-2.5" />
+                                        </Button>
+                                      </div>
                                     </div>
                                   </div>
-
-                                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        openEditSubtopicModal(s);
-                                      }}
-                                      className="h-6 w-6 p-0 hover:bg-amber-100 hover:text-amber-600"
-                                    >
-                                      <Edit3 className="w-3 h-3" />
-                                    </Button>
-
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setConfirmDelete({ type: "subtopic", id: s.id });
-                                      }}
-                                      className="h-6 w-6 p-0 hover:bg-red-100 hover:text-red-600"
-                                    >
-                                      <Trash2 className="w-3 h-3" />
-                                    </Button>
-                                  </div>
-                                </div>
+                                ))}
                               </div>
-                            ))}
-                          </div>
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </ScrollArea>
-          </div>
-
-          {/* Right Panel - Content Management */}
-          <div className="flex-1 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 flex flex-col overflow-hidden">
-            {/* Content Header */}
-            <div className="p-6 border-b border-slate-200/60 bg-gradient-to-r from-slate-50 to-indigo-50/50">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold text-slate-900">Content Management</h3>
-                  <p className="text-sm text-slate-600 mt-1">
-                    {selectedSubtopic ? `Editing: ${selectedSubtopic.name}` : "Select a subtopic to manage content"}
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  {/* Videos and Notes tabs - only show when subtopic is selected */}
-                  {selectedSubtopic && (
-                    <>
-                      <button
-                        className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-sm transition-all shadow-sm ${
-                          rightTab === "videos"
-                            ? "bg-blue-600 text-white shadow-md hover:bg-blue-700"
-                            : "text-slate-700 bg-white border border-slate-200 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300"
-                        }`}
-                        onClick={() => setRightTab("videos")}
-                      >
-                        <Video className="w-4 h-4" />
-                        Videos
-                      </button>
-                      <button
-                        className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-sm transition-all shadow-sm ${
-                          rightTab === "notes"
-                            ? "bg-blue-600 text-white shadow-md hover:bg-blue-700"
-                            : "text-slate-700 bg-white border border-slate-200 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300"
-                        }`}
-                        onClick={() => setRightTab("notes")}
-                      >
-                        <FileText className="w-4 h-4" />
-                        Notes
-                      </button>
-                    </>
-                  )}
-
-                  {/* Question Bank - always visible */}
-                  <button
-                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-sm cursor-pointer transition-all shadow-sm ${
-                      rightTab === "questions"
-                        ? "bg-blue-600 text-white shadow-md hover:bg-blue-700"
-                        : "text-slate-700 bg-white border border-slate-200 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300"
-                    }`}
-                    onClick={() => setRightTab("questions")}
-                  >
-                    <FileQuestion className="w-4 h-4" />
-                    Question Bank
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Content Area */}
-            <div className="flex-1 overflow-auto">
-              {rightTab === "questions" ? (
-                <QuestionBankManager
-                  course={course}
-                  selectedTopic={selectedTopic}
-                  selectedSubtopic={selectedSubtopic}
-                  topics={topics}
-                />
-              ) : rightTab === "videos" && selectedSubtopic ? (
-                <VideosPanel subtopic={selectedSubtopic} />
-              ) : rightTab === "notes" && selectedSubtopic ? (
-                <NotesManager subtopicId={selectedSubtopic.id} />
-              ) : (
-                <div className="h-full flex flex-col items-center justify-center text-center p-12">
-                  <div className="p-4 bg-slate-100 rounded-full mb-6">
-                    <BookOpen className="w-12 h-12 text-slate-400" />
+                      );
+                    })}
                   </div>
-                  <h3 className="text-xl font-semibold text-slate-700 mb-2">
-                    {!selectedSubtopic ? "Select a Subtopic" : "Content Not Available"}
-                  </h3>
-                  <p className="text-slate-500 max-w-md">
-                    {!selectedSubtopic
-                      ? "Choose a subtopic from the course structure on the left to start managing its content, videos, and notes."
-                      : "This content type is not available for the current selection."
-                    }
-                  </p>
+                </ScrollArea>
+              </div>
+
+              {/* Right Panel - Content Management */}
+              <div className="flex-1 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 flex flex-col overflow-hidden">
+                {/* Content Header */}
+                <div className="p-6 border-b border-slate-200/60 bg-gradient-to-r from-slate-50 to-indigo-50/50">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-semibold text-slate-900">Content Management</h3>
+                      <p className="text-sm text-slate-600 mt-1">
+                        {selectedSubtopic ? `Editing: ${selectedSubtopic.name}` : "Select a subtopic to manage content"}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {/* Videos and Notes tabs - only show when subtopic is selected */}
+                      {selectedSubtopic && (
+                        <>
+                          <button
+                            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-sm transition-all shadow-sm ${rightTab === "videos"
+                              ? "bg-amber-600 text-white shadow-md hover:bg-amber-700"
+                              : "text-slate-700 bg-white border border-slate-200 hover:bg-amber-50 hover:text-amber-700 hover:border-amber-300"
+                              }`}
+                            onClick={() => setRightTab("videos")}
+                          >
+                            <Video className="w-4 h-4" />
+                            Videos
+                          </button>
+                          <button
+                            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-sm transition-all shadow-sm ${rightTab === "notes"
+                              ? "bg-amber-600 text-white shadow-md hover:bg-amber-700"
+                              : "text-slate-700 bg-white border border-slate-200 hover:bg-amber-50 hover:text-amber-700 hover:border-amber-300"
+                              }`}
+                            onClick={() => setRightTab("notes")}
+                          >
+                            <FileText className="w-4 h-4" />
+                            Notes
+                          </button>
+                        </>
+                      )}
+
+                      {/* Question Bank - always visible */}
+                      <button
+                        className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-sm cursor-pointer transition-all shadow-sm ${rightTab === "questions"
+                          ? "bg-amber-600 text-white shadow-md hover:bg-amber-700"
+                          : "text-slate-700 bg-white border border-slate-200 hover:bg-amber-50 hover:text-amber-700 hover:border-amber-300"
+                          }`}
+                        onClick={() => setRightTab("questions")}
+                      >
+                        <FileQuestion className="w-4 h-4" />
+                        Question Bank
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              )}
+
+                {/* Content Area */}
+                <div className="flex-1 overflow-auto">
+                  {rightTab === "questions" ? (
+                    <QuestionBankManager
+                      course={course}
+                      selectedTopic={selectedTopic}
+                      selectedSubtopic={selectedSubtopic}
+                      topics={topics}
+                    />
+                  ) : rightTab === "videos" && selectedSubtopic ? (
+                    <VideosPanel subtopic={selectedSubtopic} />
+                  ) : rightTab === "notes" && selectedSubtopic ? (
+                    <NotesManager subtopicId={selectedSubtopic.id} />
+                  ) : (
+                    <div className="h-full flex flex-col items-center justify-center text-center p-12">
+                      <div className="p-4 bg-slate-100 rounded-full mb-6">
+                        <BookOpen className="w-12 h-12 text-slate-400" />
+                      </div>
+                      <h3 className="text-xl font-semibold text-slate-700 mb-2">
+                        {!selectedSubtopic ? "Select a Subtopic" : "Content Not Available"}
+                      </h3>
+                      <p className="text-slate-500 max-w-md">
+                        {!selectedSubtopic
+                          ? "Choose a subtopic from the course structure on the left to start managing its content, videos, and notes."
+                          : "This content type is not available for the current selection."
+                        }
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -832,7 +838,7 @@ const CourseEdit: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div >
+    </div>
   );
 };
 

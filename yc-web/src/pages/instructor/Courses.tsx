@@ -32,7 +32,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
-import Navigation from "../../components/Navigation";
+import RoleSidebar from "../../components/common/RoleSidebar";
+import RoleHeader from "../../components/common/RoleHeader";
 import { toast } from "sonner";
 import { MultiSelect } from "@/components/ui/multi-select";
 
@@ -320,34 +321,34 @@ const Courses: React.FC = () => {
   // --------------------------------------------------
   // RENDER
   // --------------------------------------------------
+  const headerActions = (
+    <Button onClick={() => setIsAddOpen(true)} className="bg-orange-500 hover:bg-orange-600">
+      <Plus className="h-4 w-4 mr-2" />
+      Add Course
+    </Button>
+  );
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navigation />
-      <div className="max-w-7xl mx-auto p-6">
-        {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Course Management</h1>
-              <p className="text-gray-600 mt-2">
-                {user?.role === "admin"
-                  ? "Create, edit, and manage all courses in the system"
-                  : "Manage your assigned courses and content"
-                }
-              </p>
-            </div>
+      <div className="flex">
+        {/* Sidebar */}
+        <RoleSidebar />
 
-            {user?.role === "admin" && (
-              <Button
-                className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white px-6 py-2"
-                onClick={() => setIsAddOpen(true)}
-              >
-                <Plus className="w-4 h-4" />
-                Add Course
-              </Button>
-            )}
-          </div>
-        </div>
+        {/* Main Content */}
+        <div className="flex-1">
+          {/* Header */}
+          <RoleHeader 
+            title="Course Management"
+            subtitle={user?.role === "admin"
+              ? "Create, edit, and manage all courses in the system"
+              : "Manage your assigned courses and content"
+            }
+            actions={headerActions}
+          />
+
+          <div className="p-6">
+
+
 
         {loading && (
           <div className="space-y-8">
@@ -527,86 +528,144 @@ const Courses: React.FC = () => {
           }
         }}
       >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add New Course</DialogTitle>
-          </DialogHeader>
+        <DialogContent className="sm:max-w-[500px] p-0 max-h-[90vh] overflow-y-auto">
+          {/* Header with gradient background */}
+          <div className="bg-gradient-to-r from-amber-600 to-amber-700 px-6 py-4">
+            <DialogHeader className="space-y-0">
+              <div className="flex items-center gap-3">
+                <div className="bg-white/20 p-2 rounded-lg">
+                  <Plus className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <DialogTitle className="text-xl font-semibold text-white">
+                    Create New Course
+                  </DialogTitle>
+                  <p className="text-amber-100 text-sm mt-1">
+                    Add a new course to your curriculum
+                  </p>
+                </div>
+              </div>
+            </DialogHeader>
+          </div>
 
-          <div className="space-y-4 py-2">
-            <div>
-              <Label>Course Name</Label>
+          {/* Form Content */}
+          <div className="px-6 py-6 space-y-6">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                <BookOpen className="h-4 w-4" />
+                Course Name
+                <span className="text-red-500">*</span>
+              </Label>
               <Input
-                placeholder="Enter course name"
+                placeholder="e.g., Introduction to Python Programming"
                 value={newCourse.name}
                 onChange={(e) =>
                   setNewCourse({ ...newCourse, name: e.target.value })
                 }
+                className="h-11 border-gray-300 focus:border-amber-500 focus:ring-amber-500"
               />
             </div>
 
-            <div>
-              <Label>Short Code (optional)</Label>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                <span className="text-xs bg-gray-100 px-2 py-1 rounded font-mono">#</span>
+                Short Code
+                <span className="text-xs text-gray-500">(optional)</span>
+              </Label>
               <Input
-                placeholder="EX: PY101"
+                placeholder="e.g., PY101, JS-BASICS"
                 value={newCourse.short_code}
                 onChange={(e) =>
                   setNewCourse({ ...newCourse, short_code: e.target.value })
                 }
+                className="h-11 border-gray-300 focus:border-amber-500 focus:ring-amber-500"
               />
+              <p className="text-xs text-gray-500">
+                A short identifier for easy reference
+              </p>
             </div>
 
-            <div>
-              <Label>Category</Label>
-              <Select
-                onValueChange={(value) =>
-                  setNewCourse({ ...newCourse, category: value })
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                <div className="h-4 w-4 bg-gradient-to-br from-purple-400 to-purple-600 rounded"></div>
+                Category
+                <span className="text-red-500">*</span>
+              </Label>
+              <select
+                value={newCourse.category}
+                onChange={(e) =>
+                  setNewCourse({ ...newCourse, category: e.target.value })
                 }
+                className="h-11 w-full border border-gray-300 rounded-md px-3 py-2 focus:border-amber-500 focus:ring-amber-500 focus:outline-none"
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-
-                <SelectContent>
-                  <SelectItem value="fundamentals">Fundamentals</SelectItem>
-                  <SelectItem value="programming_languages">
-                    Programming Languages
-                  </SelectItem>
-                  <SelectItem value="databases">Databases</SelectItem>
-                  <SelectItem value="ai_tools">AI Tools</SelectItem>
-                </SelectContent>
-              </Select>
+                <option value="">Choose a category</option>
+                <option value="fundamentals">Fundamentals</option>
+                <option value="programming_languages">Programming Languages</option>
+                <option value="databases">Databases</option>
+                <option value="ai_tools">AI Tools</option>
+              </select>
             </div>
 
-            <div>
-              <Label>Instructors (optional)</Label>
-              <MultiSelect
-                options={availableInstructors.map((inst) => ({
-                  value: inst.id,
-                  label: `${inst.username} (${inst.email})`,
-                }))}
-                selected={selectedInstructors}
-                onChange={setSelectedInstructors}
-                placeholder="Select instructors"
-              />
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Instructors
+                <span className="text-xs text-gray-500">(optional)</span>
+              </Label>
+              <select
+                multiple
+                value={selectedInstructors}
+                onChange={(e) => {
+                  const values = Array.from(e.target.selectedOptions, option => option.value);
+                  setSelectedInstructors(values);
+                }}
+                className="h-32 w-full border border-gray-300 rounded-md px-3 py-2 focus:border-amber-500 focus:ring-amber-500 focus:outline-none"
+              >
+                {availableInstructors.map((inst) => (
+                  <option key={inst.id} value={inst.id}>
+                    {inst.username} ({inst.email})
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-500">
+                You can assign instructors now or later
+              </p>
             </div>
           </div>
 
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setIsAddOpen(false);
-                setNewCourse({ name: "", short_code: "", category: "" });
-                setSelectedInstructors([]);
-              }}
-            >
-              Cancel
-            </Button>
-
-            <Button disabled={saving} onClick={handleCreateCourse}>
-              {saving ? "Saving..." : "Create Course"}
-            </Button>
-          </DialogFooter>
+          {/* Footer */}
+          <div className="bg-gray-50 px-6 py-4 border-t">
+            <DialogFooter className="gap-3">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsAddOpen(false);
+                  setNewCourse({ name: "", short_code: "", category: "" });
+                  setSelectedInstructors([]);
+                }}
+                className="px-6"
+              >
+                Cancel
+              </Button>
+              <Button 
+                disabled={saving || !newCourse.name.trim() || !newCourse.category} 
+                onClick={handleCreateCourse}
+                className="px-6 bg-amber-600 hover:bg-amber-700 text-white"
+              >
+                {saving ? (
+                  <div className="flex items-center gap-2">
+                    <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    Creating...
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Plus className="h-4 w-4" />
+                    Create Course
+                  </div>
+                )}
+              </Button>
+            </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -615,29 +674,94 @@ const Courses: React.FC = () => {
         open={!!confirmDelete}
         onOpenChange={() => setConfirmDelete(null)}
       >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Course</DialogTitle>
-          </DialogHeader>
+        <DialogContent className="sm:max-w-[450px] p-0 overflow-hidden">
+          {/* Header */}
+          <div className="bg-gradient-to-r from-red-500 to-red-600 px-6 py-4">
+            <DialogHeader className="space-y-0">
+              <div className="flex items-center gap-3">
+                <div className="bg-white/20 p-2 rounded-lg">
+                  <Trash2 className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <DialogTitle className="text-xl font-semibold text-white">
+                    Delete Course
+                  </DialogTitle>
+                  <p className="text-red-100 text-sm mt-1">
+                    This action cannot be undone
+                  </p>
+                </div>
+              </div>
+            </DialogHeader>
+          </div>
 
-          <p>Are you sure you want to delete this course?</p>
-          <p className="text-sm text-muted-foreground mt-2">
-            This action cannot be undone.
-          </p>
+          {/* Content */}
+          <div className="px-6 py-6">
+            <div className="flex items-start gap-4">
+              <div className="bg-red-50 p-3 rounded-full">
+                <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Are you absolutely sure?
+                </h3>
+                <p className="text-gray-600 mb-3">
+                  This will permanently delete the course and all associated content including:
+                </p>
+                <ul className="text-sm text-gray-500 space-y-1 mb-4">
+                  <li className="flex items-center gap-2">
+                    <div className="h-1.5 w-1.5 bg-gray-400 rounded-full"></div>
+                    All course materials and resources
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="h-1.5 w-1.5 bg-gray-400 rounded-full"></div>
+                    Student progress and submissions
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="h-1.5 w-1.5 bg-gray-400 rounded-full"></div>
+                    Instructor assignments
+                  </li>
+                </ul>
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                  <p className="text-sm text-amber-800">
+                    <strong>Warning:</strong> This action cannot be reversed. Please be certain before proceeding.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirmDelete(null)}>
-              Cancel
-            </Button>
-
-            <Button
-              variant="destructive"
-              disabled={deleting}
-              onClick={handleDelete}
-            >
-              {deleting ? "Deleting..." : "Delete"}
-            </Button>
-          </DialogFooter>
+          {/* Footer */}
+          <div className="bg-gray-50 px-6 py-4 border-t">
+            <DialogFooter className="gap-3">
+              <Button 
+                variant="outline" 
+                onClick={() => setConfirmDelete(null)}
+                className="px-6"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                disabled={deleting}
+                onClick={handleDelete}
+                className="px-6 bg-red-600 hover:bg-red-700"
+              >
+                {deleting ? (
+                  <div className="flex items-center gap-2">
+                    <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    Deleting...
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Trash2 className="h-4 w-4" />
+                    Delete Course
+                  </div>
+                )}
+              </Button>
+            </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -653,88 +777,143 @@ const Courses: React.FC = () => {
           }
         }}
       >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Course</DialogTitle>
-          </DialogHeader>
+        <DialogContent className="sm:max-w-[500px] p-0 max-h-[90vh] overflow-y-auto">
+          {/* Header with gradient background */}
+          <div className="bg-gradient-to-r from-amber-600 to-amber-700 px-6 py-4">
+            <DialogHeader className="space-y-0">
+              <div className="flex items-center gap-3">
+                <div className="bg-white/20 p-2 rounded-lg">
+                  <Edit className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <DialogTitle className="text-xl font-semibold text-white">
+                    Edit Course
+                  </DialogTitle>
+                  <p className="text-amber-100 text-sm mt-1">
+                    Update course information and settings
+                  </p>
+                </div>
+              </div>
+            </DialogHeader>
+          </div>
 
-          <div className="space-y-4 py-2">
-            <div>
-              <Label>Course Name</Label>
+          {/* Form Content */}
+          <div className="px-6 py-6 space-y-6">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                <BookOpen className="h-4 w-4" />
+                Course Name
+                <span className="text-red-500">*</span>
+              </Label>
               <Input
                 value={newCourse.name}
                 onChange={(e) =>
                   setNewCourse({ ...newCourse, name: e.target.value })
                 }
+                className="h-11 border-gray-300 focus:border-amber-500 focus:ring-amber-500"
               />
             </div>
 
-            <div>
-              <Label>Short Code</Label>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                <span className="text-xs bg-gray-100 px-2 py-1 rounded font-mono">#</span>
+                Short Code
+              </Label>
               <Input
                 value={newCourse.short_code}
                 onChange={(e) =>
                   setNewCourse({ ...newCourse, short_code: e.target.value })
                 }
+                className="h-11 border-gray-300 focus:border-amber-500 focus:ring-amber-500"
               />
             </div>
 
-            <div>
-              <Label>Category</Label>
-              <Select
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                <div className="h-4 w-4 bg-gradient-to-br from-purple-400 to-purple-600 rounded"></div>
+                Category
+                <span className="text-red-500">*</span>
+              </Label>
+              <select
                 value={newCourse.category}
-                onValueChange={(val) =>
-                  setNewCourse({ ...newCourse, category: val })
+                onChange={(e) =>
+                  setNewCourse({ ...newCourse, category: e.target.value })
                 }
+                className="h-11 w-full border border-gray-300 rounded-md px-3 py-2 focus:border-amber-500 focus:ring-amber-500 focus:outline-none"
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-
-                <SelectContent>
-                  <SelectItem value="fundamentals">Fundamentals</SelectItem>
-                  <SelectItem value="programming_languages">
-                    Programming Languages
-                  </SelectItem>
-                  <SelectItem value="databases">Databases</SelectItem>
-                  <SelectItem value="ai_tools">AI Tools</SelectItem>
-                </SelectContent>
-              </Select>
+                <option value="">Select category</option>
+                <option value="fundamentals">Fundamentals</option>
+                <option value="programming_languages">Programming Languages</option>
+                <option value="databases">Databases</option>
+                <option value="ai_tools">AI Tools</option>
+              </select>
             </div>
 
-            <div>
-              <Label>Instructors</Label>
-              <MultiSelect
-                options={availableInstructors.map((inst) => ({
-                  value: inst.id,
-                  label: `${inst.username} (${inst.email})`,
-                }))}
-                selected={editSelectedInstructors}
-                onChange={setEditSelectedInstructors}
-                placeholder="Select instructors"
-              />
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Instructors
+              </Label>
+              <select
+                multiple
+                value={editSelectedInstructors}
+                onChange={(e) => {
+                  const values = Array.from(e.target.selectedOptions, option => option.value);
+                  setEditSelectedInstructors(values);
+                }}
+                className="h-32 w-full border border-gray-300 rounded-md px-3 py-2 focus:border-amber-500 focus:ring-amber-500 focus:outline-none"
+              >
+                {availableInstructors.map((inst) => (
+                  <option key={inst.id} value={inst.id}>
+                    {inst.username} ({inst.email})
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-500">
+                Manage instructor assignments for this course
+              </p>
             </div>
           </div>
 
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setIsEditOpen(false);
-                setEditCourseId(null);
-                setEditSelectedInstructors([]);
-                setEditInitialInstructors([]);
-              }}
-            >
-              Cancel
-            </Button>
-            <Button disabled={saving} onClick={handleUpdateCourse}>
-              {saving ? "Saving..." : "Save Changes"}
-            </Button>
-          </DialogFooter>
+          {/* Footer */}
+          <div className="bg-gray-50 px-6 py-4 border-t">
+            <DialogFooter className="gap-3">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsEditOpen(false);
+                  setEditCourseId(null);
+                  setEditSelectedInstructors([]);
+                  setEditInitialInstructors([]);
+                }}
+                className="px-6"
+              >
+                Cancel
+              </Button>
+              <Button 
+                disabled={saving || !newCourse.name.trim() || !newCourse.category} 
+                onClick={handleUpdateCourse}
+                className="px-6 bg-amber-600 hover:bg-amber-700 text-white"
+              >
+                {saving ? (
+                  <div className="flex items-center gap-2">
+                    <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    Saving...
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Edit className="h-4 w-4" />
+                    Save Changes
+                  </div>
+                )}
+              </Button>
+            </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
-    </div>
+          </div>
+        </div>
+      </div>
   );
 };
 

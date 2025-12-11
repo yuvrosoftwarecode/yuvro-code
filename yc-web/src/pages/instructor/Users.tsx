@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { debugTokens, clearAllTokens, validateTokenFormat } from '../../utils/tokenDebug';
-import Navigation from '../../components/Navigation';
+import RoleSidebar from '../../components/common/RoleSidebar';
+import RoleHeader from '../../components/common/RoleHeader';
 
 interface User {
     id: string;
@@ -107,32 +108,26 @@ const Users: React.FC = () => {
         );
     }
 
+    const headerActions = (
+        <button
+            onClick={() => setShowAddUser(true)}
+            className="bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors"
+        >
+            + Add New User
+        </button>
+    );
+
     return (
         <div className="min-h-screen bg-gray-50">
-            <Navigation />
-            {/* Header */}
-            <div className="bg-white shadow">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="py-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
-                                <p className="mt-1 text-sm text-gray-500">
-                                    Manage system users and their roles
-                                </p>
-                            </div>
-                            <button
-                                onClick={() => setShowAddUser(true)}
-                                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
-                            >
-                                + Add New User
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="flex">
+                <RoleSidebar />
+                <div className="flex-1">
+                    <RoleHeader 
+                        title="User Management"
+                        subtitle="Manage system users and their roles"
+                        actions={headerActions}
+                    />
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Tabs */}
                 <div className="mb-6">
                     <nav className="flex space-x-8">
@@ -248,6 +243,8 @@ const Users: React.FC = () => {
                         </p>
                     </div>
                 )}
+                    </div>
+                </div>
             </div>
 
             {/* Add User Modal (placeholder) */}

@@ -36,6 +36,7 @@ import { Toaster } from "@/components/ui/sonner";
 import ErrorBoundary from './components/ErrorBoundary';
 import DashboardRedirect from './components/DashboardRedirect';
 import OwnerContest from './pages/instructor/Contest';
+import ContestEdit from './components/instructor/contests/ContestEdit';
 import RecruiterJobs from "./pages/recruiter/Jobs";
 import AddJob from "./components/student/AddJob";
 import JobFiltersSidebar from "@/components/student/jobs/ApplicationTracker";
@@ -262,6 +263,15 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={["admin", "instructor", "recruiter"]}>
                     <OwnerContest />
+                  </ProtectedRoute>
+                }
+              />
+              
+              <Route
+                path="/instructor/contests/:contestId/manage"
+                element={
+                  <ProtectedRoute allowedRoles={["admin", "instructor", "recruiter"]}>
+                    <ContestEdit />
                   </ProtectedRoute>
                 }
               />

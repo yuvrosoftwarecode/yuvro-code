@@ -93,6 +93,9 @@ const Navigation: React.FC = () => {
 
   if (!isAuthenticated) return null;
 
+  // Only show navigation for students
+  if (role !== 'student') return null;
+
   return (
     <nav className="bg-white shadow sticky top-0 z-50">
       <div className="w-full mx-auto px-2 sm:px-3 lg:px-4">

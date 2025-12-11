@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { Plus, Pencil, Trash, Eye } from "lucide-react";
-import Navigation from "../../components/Navigation";
-import {fetchJobs, createJob, updateJob, deleteJobById } from "../../services/jobsapi";
+import { Plus, Pencil, Trash, Eye, ClipboardList, Filter } from "lucide-react";
+import { fetchJobs, createJob, updateJob, deleteJobById } from "../../services/jobsapi";
+import AssessmentInterface from "../../components/student/AssessmentInterface";
+import RoleSidebar from "../../components/common/RoleSidebar";
+import RoleHeader from "../../components/common/RoleHeader";
 
 
 interface Job {
@@ -11,10 +13,10 @@ interface Job {
   location: string;
   work_type: string;
   salary: string;
-  applicants: number;
+  applicants?: number;
   status: string;
   job_type?: string;
-  experience_level?: BigInteger;
+  experience_level?: number;
   description: string,
   skills?: string;
 }
@@ -41,6 +43,16 @@ const Jobs: React.FC = () => {
   const [deleteJobId, setDeleteJobId] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Assessment states
+  const [showAssessment, setShowAssessment] = useState(false);
+  const [showAssessmentConfig, setShowAssessmentConfig] = useState(false);
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [assessmentConfig, setAssessmentConfig] = useState({
+    duration: 60,
+    totalQuestions: 10,
+    topicId: "1"
+  });
+
   useEffect(() => {
     loadJobs();
   }, []);
@@ -63,16 +75,16 @@ const Jobs: React.FC = () => {
   const openAddModal = () => {
     setIsEditing(false);
     setFormData({
-    title: "",
-    company: "",
-    location: "",
-    work_type: "Remote",
-    salary: "",
-    experience_level: 0,
-    job_type: "",
-    description: "",
-    skills: "",
-    status: "Active",
+      title: "",
+      company: "",
+      location: "",
+      work_type: "Remote",
+      salary: "",
+      experience_level: 0,
+      job_type: "",
+      description: "",
+      skills: "",
+      status: "Active",
     });
     setIsModalOpen(true);
   };
@@ -87,9 +99,9 @@ const Jobs: React.FC = () => {
       work_type: job.work_type,
       salary: job.salary,
       status: job.status,
-      job_type: job.job_type,
-      experience_level: job.experience_level,
-      skills: job.skills,
+      job_type: job.job_type || "",
+      experience_level: job.experience_level || 0,
+      skills: job.skills || "",
       description: job.description,
     });
     setIsModalOpen(true);
@@ -148,26 +160,79 @@ const Jobs: React.FC = () => {
     setDeleteJobId(null);
   };
 
+  // Assessment handlers
+  const openAssessmentConfig = (job: Job) => {
+    setSelectedJob(job);
+    setAssessmentConfig({
+      duration: 60,
+      totalQuestions: 10,
+      topicId: "1"
+    });
+    setShowAssessmentConfig(true);
+  };
+
+  const startAssessment = () => {
+    setShowAssessmentConfig(false);
+    setShowAssessment(true);
+  };
+
+  const handleAssessmentComplete = (stats?: { answeredCount: number; totalQuestions: number; timeSpent: number }) => {
+    console.log("Assessment completed:", stats);
+    setShowAssessment(false);
+    setSelectedJob(null);
+    // Here you can save the assessment results to your backend
+  };
+
+  const handleAssessmentBack = () => {
+    setShowAssessment(false);
+    setSelectedJob(null);
+  };
+
+  const closeAssessmentConfig = () => {
+    setShowAssessmentConfig(false);
+    setSelectedJob(null);
+  };
+
+  const headerActions = (
+    <>
+      <button className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+        <Filter className="h-4 w-4" />
+        <span>Filter</span>
+      </button>
+      <button
+        onClick={openAddModal}
+        className="flex items-center space-x-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
+      >
+        <Plus className="h-4 w-4" />
+        <span>Post New Job</span>
+      </button>
+    </>
+  );
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navigation />
+      <div className="flex">
+        {/* Sidebar */}
+        <RoleSidebar />
 
-      <div className="container mx-auto p-6">
-        {/* Top Section */}
-        <div className="flex justify-between items-center mb-6">
-          <input
-            type="text"
-            placeholder="Search jobs..."
-            className="w-2/3 border px-4 py-2 rounded"
+        {/* Main Content */}
+        <div className="flex-1">
+          {/* Header */}
+          <RoleHeader 
+            title="Job Management Dashboard"
+            subtitle="Manage your job recruitment pipeline"
+            actions={headerActions}
           />
 
-          <button
-            onClick={openAddModal}
-            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-          >
-            <Plus size={18} /> Post New Job
-          </button>
-        </div>
+          <div className="p-6">
+            {/* Search Section */}
+            <div className="mb-6">
+              <input
+                type="text"
+                placeholder="Search jobs..."
+                className="w-full max-w-md border border-gray-300 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              />
+            </div>
 
         <h2 className="text-2xl font-bold mb-4">Job Listings</h2>
         <p className="text-gray-600 mb-6">{jobs.length} job(s) found</p>
@@ -181,6 +246,7 @@ const Jobs: React.FC = () => {
                 <th className="p-3 text-left">Location</th>
                 <th className="p-3 text-left">Applicants</th>
                 <th className="p-3 text-left">Status</th>
+                <th className="p-3 text-left">Assessment</th>
                 <th className="p-3 text-left">Actions</th>
               </tr>
             </thead>
@@ -192,18 +258,27 @@ const Jobs: React.FC = () => {
                   <td className="p-3">{job.company}</td>
                   <td className="p-3">{job.location}</td>
                   <td className="p-3 flex items-center gap-1">
-                    <Eye size={18} /> {job.applicants}
+                    <Eye size={18} /> {job.applicants || 0}
                   </td>
                   <td className="p-3">
                     <span
-                      className={`px-3 py-1 rounded text-sm ${
-                        job.status === "Active"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-700"
-                      }`}
+                      className={`px-3 py-1 rounded text-sm ${job.status === "Active"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-red-100 text-red-700"
+                        }`}
                     >
                       {job.status}
                     </span>
+                  </td>
+
+                  <td className="p-3">
+                    <button
+                      onClick={() => openAssessmentConfig(job)}
+                      className="flex items-center gap-2 bg-purple-600 text-white px-3 py-1 rounded text-sm hover:bg-purple-700"
+                    >
+                      <ClipboardList size={14} />
+                      Create Assessment
+                    </button>
                   </td>
 
                   <td className="p-3 flex gap-3 text-gray-600">
@@ -279,8 +354,8 @@ const Jobs: React.FC = () => {
                   <div>
                     <label>Work Type</label>
                     <select
-                      name="workType"
-                      value={formData.workType}
+                      name="work_type"
+                      value={formData.work_type}
                       onChange={handleChange}
                       className="w-full border px-3 py-2 rounded mt-1"
                     >
@@ -317,18 +392,18 @@ const Jobs: React.FC = () => {
                   </div>
 
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label> Description</label>
-                    <input
-                      type="text"
-                      name="description"
-                      value={formData.description}
-                      onChange={handleChange}
-                      className="w-full border px-3 py-2 rounded mt-1"
-                      placeholder="e.g., Fresher"
-                    />
-                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label> Description</label>
+                      <input
+                        type="text"
+                        name="description"
+                        value={formData.description}
+                        onChange={handleChange}
+                        className="w-full border px-3 py-2 rounded mt-1"
+                        placeholder="e.g., Fresher"
+                      />
+                    </div>
                   </div>
 
                   <div>
@@ -415,6 +490,119 @@ const Jobs: React.FC = () => {
           </div>
         )}
 
+        {/* Assessment Configuration Modal */}
+        {showAssessmentConfig && selectedJob && (
+          <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center">
+            <div className="bg-white p-6 rounded shadow-lg w-96">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold">Configure Assessment</h2>
+                <button onClick={closeAssessmentConfig}>✖</button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Job Position</label>
+                  <input
+                    type="text"
+                    value={selectedJob.title}
+                    disabled
+                    className="w-full border px-3 py-2 rounded bg-gray-100"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Duration (minutes)</label>
+                  <select
+                    value={assessmentConfig.duration}
+                    onChange={(e) => setAssessmentConfig({ ...assessmentConfig, duration: parseInt(e.target.value) })}
+                    className="w-full border px-3 py-2 rounded"
+                  >
+                    <option value={30}>30 minutes</option>
+                    <option value={45}>45 minutes</option>
+                    <option value={60}>60 minutes</option>
+                    <option value={90}>90 minutes</option>
+                    <option value={120}>120 minutes</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Number of Questions</label>
+                  <select
+                    value={assessmentConfig.totalQuestions}
+                    onChange={(e) => setAssessmentConfig({ ...assessmentConfig, totalQuestions: parseInt(e.target.value) })}
+                    className="w-full border px-3 py-2 rounded"
+                  >
+                    <option value={5}>5 questions</option>
+                    <option value={10}>10 questions</option>
+                    <option value={15}>15 questions</option>
+                    <option value={20}>20 questions</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Topic/Skill Area</label>
+                  <select
+                    value={assessmentConfig.topicId}
+                    onChange={(e) => setAssessmentConfig({ ...assessmentConfig, topicId: e.target.value })}
+                    className="w-full border px-3 py-2 rounded"
+                  >
+                    <option value="1">JavaScript Fundamentals</option>
+                    <option value="2">React Development</option>
+                    <option value="3">Node.js Backend</option>
+                    <option value="4">Python Programming</option>
+                    <option value="5">Data Structures & Algorithms</option>
+                  </select>
+                </div>
+
+                <div className="bg-blue-50 p-3 rounded">
+                  <h4 className="font-medium text-blue-800 mb-2">Assessment Preview</h4>
+                  <ul className="text-sm text-blue-700 space-y-1">
+                    <li>• Duration: {assessmentConfig.duration} minutes</li>
+                    <li>• Questions: {assessmentConfig.totalQuestions} mixed (MCQ + Coding)</li>
+                    <li>• Proctored with camera monitoring</li>
+                    <li>• Auto-submit on time completion</li>
+                  </ul>
+                </div>
+
+                <div className="flex justify-end gap-4 mt-6">
+                  <button
+                    onClick={closeAssessmentConfig}
+                    className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={startAssessment}
+                    className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
+                  >
+                    Start Assessment
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Assessment Interface */}
+        {showAssessment && selectedJob && (
+          <div className="fixed inset-0 bg-white z-50">
+            <AssessmentInterface
+              assessment={{
+                id: selectedJob.id.toString(),
+                title: `${selectedJob.title} - Skill Assessment`,
+                course: selectedJob.company,
+                duration: assessmentConfig.duration,
+                totalQuestions: assessmentConfig.totalQuestions,
+                topicId: assessmentConfig.topicId
+              }}
+              onComplete={handleAssessmentComplete}
+              onBack={handleAssessmentBack}
+            />
+          </div>
+        )}
+
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -2,8 +2,9 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import Navigation from "../../components/Navigation";
 import StudentVideos from "./StudentVideos";
-import StudentQuiz from "./StudentQuiz";
-import StudentNotes  from "./StudentNotes";
+import StudentQuizEmbed from "./StudentQuizEmbed";
+import StudentCodingEmbed from "./StudentCodingEmbed";
+import StudentNotes from "./StudentNotes";
 import restApiAuthUtil from "../../utils/RestApiAuthUtil";
 import { toast } from "sonner";
 import { ChevronDown, ChevronRight, ChevronLeft } from "lucide-react";
@@ -11,10 +12,11 @@ import {
   fetchCourseById,
   fetchTopicsByCourse,
   fetchSubtopicsByTopic,
-  Course as CourseType} from "@/services/courseService";
+  Course as CourseType
+} from "@/services/courseService";
 import { Check } from "lucide-react";
 import ProgressBar from "@/components/ui/ProgressBar";
-import { PlayCircle, HelpCircle, StickyNote } from "lucide-react";
+import { PlayCircle, HelpCircle, StickyNote, Code } from "lucide-react";
 
 type Topic = {
   id: string;
@@ -53,17 +55,17 @@ const CourseDetail: React.FC = () => {
   );
 
   const [rightTab, setRightTab] = useState<
-    "videos" | "quizzes" | "code-editor" | "notes" | "markAsRead"
+    "videos" | "quizzes" | "coding" | "notes" | "markAsRead"
   >("videos");
 
   const handleMarkAsRead = async () => {
     if (!selectedSubtopic) return;
-    
+
     try {
       await restApiAuthUtil.post("/course/std/mark_complete/", {
         subtopic_id: selectedSubtopic.id,
       });
-      
+
       setReadMap((prev) => ({ ...prev, [selectedSubtopic.id]: true }));
       toast.success(`Marked '${selectedSubtopic.name}' as read!`);
     } catch (err) {
@@ -78,7 +80,7 @@ const CourseDetail: React.FC = () => {
     const completed = subs.filter((s) => readMap[s.id]).length;
     return Math.round((completed / subs.length) * 100);
   };
-      
+
   useEffect(() => {
     loadPage();
   }, [courseId]);
@@ -95,18 +97,31 @@ const CourseDetail: React.FC = () => {
       const t = await fetchTopicsByCourse(courseId);
       setTopics(t);
 
-      const expanded: Record<string, boolean> = {};
-      t.forEach((topic) => (expanded[topic.id] = false));
-      setExpandedTopics(expanded);
-
       // Fetch all subtopics upfront for progress calculation
       const allSubtopics: Record<string, Subtopic[]> = {};
+      let firstSubtopic: Subtopic | null = null;
+      let firstTopicId: string | null = null;
+
       try {
         for (const topic of t) {
           const subs = await fetchSubtopicsByTopic(topic.id);
           allSubtopics[topic.id] = subs as Subtopic[];
+
+          // Set first topic and subtopic
+          if (!firstSubtopic && Array.isArray(subs) && subs.length > 0) {
+            firstSubtopic = subs[0] as Subtopic;
+            firstTopicId = topic.id;
+          }
         }
         setSubtopicsMap(allSubtopics);
+
+        // Auto-expand first topic and select first subtopic
+        if (firstTopicId && firstSubtopic) {
+          const newExpanded: Record<string, boolean> = {};
+          t.forEach((topic) => (newExpanded[topic.id] = topic.id === firstTopicId));
+          setExpandedTopics(newExpanded);
+          setSelectedSubtopic(firstSubtopic);
+        }
       } catch (err) {
         console.warn("Could not fetch subtopics", err);
         setSubtopicsMap({});
@@ -126,8 +141,6 @@ const CourseDetail: React.FC = () => {
         console.warn("Could not fetch completed subtopics", err);
         setReadMap({});
       }
-
-      setSelectedSubtopic(null);
     } catch (err) {
       toast.error("Failed to load course");
     } finally {
@@ -255,11 +268,10 @@ const CourseDetail: React.FC = () => {
                           {subs.map((s) => (
                             <div
                               key={s.id}
-                              className={`p-2 rounded border border-gray-200 cursor-pointer flex items-center justify-between ${
-                                selectedSubtopic?.id === s.id
-                                  ? "bg-sky-50 border-sky-300"
-                                  : "bg-white"
-                              }`}
+                              className={`p-2 rounded border border-gray-200 cursor-pointer flex items-center justify-between ${selectedSubtopic?.id === s.id
+                                ? "bg-sky-50 border-sky-300"
+                                : "bg-white"
+                                }`}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setSelectedSubtopic(s);
@@ -309,16 +321,16 @@ const CourseDetail: React.FC = () => {
               {[
                 { key: "videos", label: "Videos", icon: <PlayCircle /> },
                 { key: "quizzes", label: "Quizzes", icon: <HelpCircle /> },
+                { key: "coding", label: "Coding", icon: <Code /> },
                 { key: "notes", label: "Notes", icon: <StickyNote /> },
                 { key: "markAsRead", label: "Mark as Read" }
               ].map((tab) => (
                 <button
                   key={tab.key}
-                  className={`px-4 py-2 rounded-md text-sm flex items-center gap-2 ${
-                    rightTab === tab.key
-                      ? "bg-gray-300 text-black"
-                      : "text-gray-700 hover:bg-gray-100"
-                  }`}
+                  className={`px-4 py-2 rounded-md text-sm flex items-center gap-2 ${rightTab === tab.key
+                    ? "bg-gray-300 text-black"
+                    : "text-gray-700 hover:bg-gray-100"
+                    }`}
                   onClick={() => setRightTab(tab.key as any)}
                 >
                   {tab.icon}
@@ -344,7 +356,8 @@ const CourseDetail: React.FC = () => {
             ) : (
               <>
                 {rightTab === "videos" && <StudentVideos subtopicId={selectedSubtopic.id} />}
-                {rightTab === "quizzes" && <StudentQuiz subtopicId={selectedSubtopic.id} />}
+                {rightTab === "quizzes" && <StudentQuizEmbed subtopicId={selectedSubtopic.id} />}
+                {rightTab === "coding" && <StudentCodingEmbed subtopicId={selectedSubtopic.id} />}
                 {rightTab === "notes" && <StudentNotes subtopicId={selectedSubtopic.id} />}
                 {rightTab === "markAsRead" && (
                   <div className="flex flex-col items-center justify-center h-full">

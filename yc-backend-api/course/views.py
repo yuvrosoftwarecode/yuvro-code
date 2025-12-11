@@ -11,6 +11,8 @@ from .models import (
     Note,
     CourseInstructor,
     Question,
+    LearnProgress,
+    CourseContinue,
 )
 from .serializers import (
     CourseSerializer,

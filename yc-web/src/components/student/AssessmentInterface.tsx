@@ -35,7 +35,7 @@ import {
   Maximize
 } from 'lucide-react';
 import CodeEditor from '@/components/ui/code-editor';
-import { fetchSkillTestQuestions } from "@/services/courseService";
+import { fetchQuestions } from "@/services/questionService";
 
 interface Assessment {
   id: string;
@@ -48,10 +48,10 @@ interface Assessment {
 
 interface Question {
   id: string;
-  type: 'mcq' | 'coding' | 'descriptive';
-  question: string;
-  options?: string[];
-  multipleCorrect?: boolean;
+  type: 'mcq_single' | 'mcq_multiple' | 'coding' | 'descriptive';
+  title: string;
+  content: string;
+  mcq_options?: { text: string; is_correct: boolean }[];
   marks: number;
   test_cases_basic?: any;
   test_cases_advanced?: any;
@@ -75,8 +75,25 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
   useEffect(() => {
     const load = async () => {
       try {
-        const q = await fetchSkillTestQuestions(assessment.topicId);
-        setQuestions(q);
+        // Fetch both MCQ and coding questions for skill test
+        const [mcqQuestions, codingQuestions] = await Promise.all([
+          fetchQuestions({
+            topic: assessment.topicId,
+            categories: 'skill_test',
+            type: 'mcq_single'
+          }),
+          fetchQuestions({
+            topic: assessment.topicId,
+            categories: 'skill_test',
+            type: 'coding'
+          })
+        ]);
+
+        // Combine and shuffle questions
+        const allQuestions = [...mcqQuestions, ...codingQuestions];
+        const shuffledQuestions = allQuestions.sort(() => 0.5 - Math.random());
+        
+        setQuestions(shuffledQuestions);
       } catch (err) {
         console.error("Failed to load skill test questions", err);
       }
@@ -98,7 +115,7 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
   const [tabSwitchAlert, setTabSwitchAlert] = useState(false);
   const [showTabSwitchDialog, setShowTabSwitchDialog] = useState(false);
   const [showNavigationDialog, setShowNavigationDialog] = useState(false);
-  const [pendingNavigation, setPendingNavigation] = useState<() => void | null>(null);
+  const [pendingNavigation, setPendingNavigation] = useState<(() => void) | null>(null);
   const [isCodeEditorFullscreen, setIsCodeEditorFullscreen] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -279,45 +296,62 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
 
   const renderQuestion = (question: Question) => {
     switch (question.type) {
-      case 'mcq':
+      case 'mcq_single':
         return (
           <div className="space-y-3">
-            {question.multipleCorrect ? (
-              <div className="space-y-3">
-                {question.options?.map((option, index) => (
-                  <div key={index} className="flex items-center space-x-3">
-                    <Checkbox
-                      id={`option-${index}`}
-                      checked={answers[question.id]?.includes(option) || false}
-                      onCheckedChange={(checked) => {
-                        const current = answers[question.id] || [];
-                        const newAns = checked
-                          ? [...current, option]
-                          : current.filter((a: string) => a !== option);
-                        handleAnswerChange(question.id, newAns);
-                      }}
-                    />
-                    <Label htmlFor={`option-${index}`} className="flex-1 cursor-pointer">
-                      {option}
-                    </Label>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <RadioGroup
-                value={answers[question.id] || ''}
-                onValueChange={(value) => handleAnswerChange(question.id, value)}
-              >
-                {question.options?.map((option, index) => (
-                  <div key={index} className="flex items-center space-x-3">
-                    <RadioGroupItem value={option} id={`option-${index}`} />
-                    <Label htmlFor={`option-${index}`} className="flex-1 cursor-pointer">
-                      {option}
-                    </Label>
-                  </div>
-                ))}
-              </RadioGroup>
-            )}
+            <RadioGroup
+              value={answers[question.id] || ''}
+              onValueChange={(value) => handleAnswerChange(question.id, value)}
+            >
+              {question.mcq_options?.map((option, index) => (
+                <div key={index} className="flex items-center space-x-3">
+                  <RadioGroupItem value={option.text} id={`option-${index}`} />
+                  <Label htmlFor={`option-${index}`} className="flex-1 cursor-pointer">
+                    {option.text}
+                  </Label>
+                </div>
+              ))}
+            </RadioGroup>
+
+            {/* Explanation */}
+            <div className="mt-4">
+              <Label htmlFor={`explanation-${question.id}`} className="text-sm font-medium">
+                Explain your answer (required)
+              </Label>
+              <Textarea
+                id={`explanation-${question.id}`}
+                placeholder="Explain why you chose this answer..."
+                value={explanations[question.id] || ''}
+                onChange={(e) => handleExplanationChange(question.id, e.target.value)}
+                className="mt-2 min-h-20"
+              />
+            </div>
+          </div>
+        );
+
+      case 'mcq_multiple':
+        return (
+          <div className="space-y-3">
+            <div className="space-y-3">
+              {question.mcq_options?.map((option, index) => (
+                <div key={index} className="flex items-center space-x-3">
+                  <Checkbox
+                    id={`option-${index}`}
+                    checked={answers[question.id]?.includes(option.text) || false}
+                    onCheckedChange={(checked) => {
+                      const current = answers[question.id] || [];
+                      const newAns = checked
+                        ? [...current, option.text]
+                        : current.filter((a: string) => a !== option.text);
+                      handleAnswerChange(question.id, newAns);
+                    }}
+                  />
+                  <Label htmlFor={`option-${index}`} className="flex-1 cursor-pointer">
+                    {option.text}
+                  </Label>
+                </div>
+              ))}
+            </div>
 
             {/* Explanation */}
             <div className="mt-4">
@@ -628,7 +662,6 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div>
-
                       <div className="flex items-center space-x-2 mb-2">
                         <Badge variant="outline">
                           Question {currentQuestion + 1} of {questions.length}
@@ -639,8 +672,12 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
                         <Badge variant="outline">{currentQuestionData.type}</Badge>
                       </div>
 
-                      <CardTitle>{currentQuestionData.question}</CardTitle>
-
+                      <CardTitle>{currentQuestionData.title}</CardTitle>
+                      
+                      {/* Question Content */}
+                      <div className="mt-4 prose prose-sm max-w-none">
+                        <div dangerouslySetInnerHTML={{ __html: currentQuestionData.content }} />
+                      </div>
                     </div>
 
                     <Button

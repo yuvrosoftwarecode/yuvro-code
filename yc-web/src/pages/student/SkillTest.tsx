@@ -1,8 +1,6 @@
 // src/pages/student/SkillTest.tsx
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
-import { useAuth } from "@/contexts/AuthContext";
 
 import CourseSelection from "@/components/student/skill-test/CourseSelection";
 import TopicSidebar from "@/components/student/skill-test/TopicSidebar";
@@ -15,9 +13,8 @@ import AssessmentInterface from "@/components/student/AssessmentInterface";
 import {
   fetchCourses,
   fetchTopicsByCourse,
-  fetchSkillTestQuizzesByTopic,
-  fetchSkillTestCodingProblemsByTopic,
 } from "@/services/courseService";
+import { fetchQuestions } from "@/services/questionService";
 import { toast } from "sonner";
 
 // -------------------- Types for this page --------------------
@@ -76,9 +73,6 @@ const COLORS = [
 ];
 
 const SkillTest: React.FC = () => {
-  const { user } = useAuth();
-  const navigate = useNavigate();
-
   // -------------------- State --------------------
 
   const [courses, setCourses] = useState<Course[]>([]);
@@ -134,10 +128,18 @@ const SkillTest: React.FC = () => {
       // Optional: you could add a separate loading state for tests
       setTests([]);
 
-      // Fetch all skill test MCQs + coding problems for this topic
+      // Fetch all skill test MCQs + coding problems for this topic using question service
       const [quizzes, codingProblems] = await Promise.all([
-        fetchSkillTestQuizzesByTopic(topic.id),
-        fetchSkillTestCodingProblemsByTopic(topic.id),
+        fetchQuestions({
+          topic: topic.id,
+          categories: 'skill_test',
+          type: 'mcq_single'
+        }),
+        fetchQuestions({
+          topic: topic.id,
+          categories: 'skill_test',
+          type: 'coding'
+        })
       ]);
 
       const quizCount = Array.isArray(quizzes) ? quizzes.length : 0;
@@ -174,66 +176,76 @@ const SkillTest: React.FC = () => {
 
   // -------------------- Handlers --------------------
 
-  const handleCourseSelect = async (course: UiCourse) => {
-  setSelectedCourse(course);
-  setSelectedTopic(null);
-  setSelectedTest(null);
-  setSidebarOpen(true);
-  setCurrentView("tests");
+  const handleCourseSelect = async (course: Course) => {
+    setSelectedCourse(course);
+    setSelectedTopic(null);
+    setSelectedTest(null);
+    setSidebarOpen(true);
+    setCurrentView("tests");
 
-  try {
-    // Fetch topics
-    const backendTopics = await fetchTopicsByCourse(course.id);
+    try {
+      // Fetch topics
+      const backendTopics = await fetchTopicsByCourse(course.id);
 
-    const uiTopics: UiTopic[] = backendTopics.map((t: any) => ({
-      id: t.id,
-      name: t.name,
-      progress: 0,
-      completed: false,
-    }));
+      const uiTopics: Topic[] = backendTopics.map((t: any) => ({
+        id: t.id,
+        name: t.name,
+        progress: 0,
+        completed: false,
+      }));
 
-    // Update course topics
-    setCourses(prev =>
-      prev.map(c =>
-        c.id === course.id ? { ...c, topics: uiTopics } : c
-      )
-    );
+      // Update course topics
+      setCourses(prev =>
+        prev.map(c =>
+          c.id === course.id ? { ...c, topics: uiTopics } : c
+        )
+      );
 
-    setSelectedCourse(prev =>
-      prev ? { ...prev, topics: uiTopics } : prev
-    );
+      setSelectedCourse(prev =>
+        prev ? { ...prev, topics: uiTopics } : prev
+      );
 
-    setSelectedTopic(uiTopics[0] || null);
+      setSelectedTopic(uiTopics[0] || null);
 
-    // ***** NOW BUILD DYNAMIC SKILL TESTS *****
-    const dynamicTests: UiTest[] = [];
+      // ***** NOW BUILD DYNAMIC SKILL TESTS *****
+      const dynamicTests: Test[] = [];
 
-    for (const topic of uiTopics) {
-      const quizzes = await fetchSkillTestQuizzesByTopic(topic.id);
-      const coding = await fetchSkillTestCodingProblemsByTopic(topic.id);
+      for (const topic of uiTopics) {
+        const [quizzes, coding] = await Promise.all([
+          fetchQuestions({
+            topic: topic.id,
+            categories: 'skill_test',
+            type: 'mcq_single'
+          }),
+          fetchQuestions({
+            topic: topic.id,
+            categories: 'skill_test',
+            type: 'coding'
+          })
+        ]);
 
-      const totalQuestions = quizzes.length + coding.length;
+        const totalQuestions = quizzes.length + coding.length;
 
-      // If a topic has no skill test questions, skip it
-      if (totalQuestions === 0) continue;
+        // If a topic has no skill test questions, skip it
+        if (totalQuestions === 0) continue;
 
-      dynamicTests.push({
-        id: `${course.id}-${topic.id}-skilltest`,
-        title: `${topic.name} Skill Test`,
-        difficulty: "Medium",
-        questions: totalQuestions,
-        duration: 45,
-        topicId: topic.id,
-      });
+        dynamicTests.push({
+          id: `${course.id}-${topic.id}-skilltest`,
+          title: `${topic.name} Skill Test`,
+          difficulty: "Medium",
+          questions: totalQuestions,
+          duration: 45,
+          topicId: topic.id,
+        });
+      }
+
+      setTests(dynamicTests);
+    } catch (err) {
+      console.error("Failed to load topics or tests", err);
+      toast.error("Failed to load topics or tests");
     }
-
-    setTests(dynamicTests);
-  } catch (err) {
-    console.error("Failed to load topics or tests", err);
-    toast.error("Failed to load topics or tests");
-  }
-};
-;
+  };
+  ;
 
   const handleTopicSelect = (topic: Topic) => {
     setSelectedTopic(topic);

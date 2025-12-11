@@ -1,14 +1,14 @@
 // src/components/student/skill-test/TopicSidebar.tsx
-import type { UiCourse, UiTopic } from '@/pages/student/SkillTest';
+import type { Course, Topic } from '@/pages/student/SkillTest';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface TopicSidebarProps {
-  course: UiCourse;
-  selectedTopic: UiTopic | null;
-  onTopicSelect: (topic: UiTopic) => void;
+  course: Course;
+  selectedTopic: Topic | null;
+  onTopicSelect: (topic: Topic) => void;
   isOpen: boolean;
   onToggle: () => void;
 }

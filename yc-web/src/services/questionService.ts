@@ -301,3 +301,20 @@ export const validateQuestion = (data: CreateQuestionData): string[] => {
 
   return errors;
 };
+
+// Utility function to get random questions for quiz
+export const fetchRandomQuestions = async (
+  filters: QuestionFilters,
+  count: number = 5
+): Promise<Question[]> => {
+  try {
+    const allQuestions = await fetchQuestions(filters);
+    
+    // Shuffle and return random questions
+    const shuffled = allQuestions.sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, count);
+  } catch (error) {
+    console.error('Error fetching random questions:', error);
+    throw error;
+  }
+};

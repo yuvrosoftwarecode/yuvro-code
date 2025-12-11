@@ -8,6 +8,7 @@ import {
   fetchSubtopicsByTopic,
   fetchCodingProblemsBySubtopic,
 } from '@/services/courseService';
+import { fetchQuestions } from '@/services/questionService';
 import type { Course, Topic, CodingProblem } from '@/pages/student/CodePractice';
 import { toast } from 'sonner';
 
@@ -52,15 +53,35 @@ const TopicSelection = ({
       try {
         const fetchedTopics = await fetchTopicsByCourse(course.id);
 
-        const transformedTopics: Topic[] = fetchedTopics.map((topic: BackendTopic) => ({
-          id: topic.id,
-          name: topic.name,
-          problemCount: Math.floor(Math.random() * 30) + 10,
-          order_index: topic.order_index,
-        }));
+        // Get problem counts for each topic
+        const topicsWithCounts = await Promise.all(
+          fetchedTopics.map(async (topic: BackendTopic) => {
+            try {
+              const questions = await fetchQuestions({
+                topic: topic.id,
+                categories: 'practice',
+                type: 'coding'
+              });
+              return {
+                id: topic.id,
+                name: topic.name,
+                problemCount: questions.length,
+                order_index: topic.order_index,
+              };
+            } catch (error) {
+              console.error(`Failed to load problem count for topic ${topic.id}:`, error);
+              return {
+                id: topic.id,
+                name: topic.name,
+                problemCount: 0,
+                order_index: topic.order_index,
+              };
+            }
+          })
+        );
 
         setTopics(
-          transformedTopics.sort((a, b) => a.order_index - b.order_index)
+          topicsWithCounts.sort((a, b) => a.order_index - b.order_index)
         );
       } catch (error) {
         toast.error('Failed to load topics');
@@ -72,50 +93,60 @@ const TopicSelection = ({
     loadTopics();
   }, [course.id]);
 
-  // Load problems when topic changes
+  // Load problems when topic or difficulty changes
   useEffect(() => {
     if (selectedTopic) loadProblems(selectedTopic.id);
-  }, [selectedTopic]);
+  }, [selectedTopic, difficulty]);
 
   const loadProblems = async (topicId: string) => {
     setProblemsLoading(true);
     try {
-      const subtopics = await fetchSubtopicsByTopic(topicId);
+      // Prepare filters for question service
+      const filters: any = {
+        topic: topicId,
+        categories: 'practice',
+        type: 'coding'
+      };
 
-      const collected: CodingProblem[] = [];
-
-      for (const sub of subtopics) {
-        try {
-          const res = await fetchCodingProblemsBySubtopic(sub.id);
-
-          collected.push(
-            ...res.map((p: BackendCodingProblem) => ({
-              id: p.id,
-              title: p.title,
-              difficulty: ['Easy', 'Medium', 'Hard'][Math.floor(Math.random() * 3)],
-              score: Math.floor(Math.random() * 30) + 10,
-              description: p.description,
-              test_cases_basic: p.test_cases_basic || [],
-              test_cases_advanced: p.test_cases_advanced || [],
-            }))
-          );
-        } catch (err) {
-          console.error(err);
-        }
+      // Add difficulty filter if not 'All'
+      if (difficulty !== 'All') {
+        filters.difficulty = difficulty.toLowerCase();
       }
 
-      setProblems(collected);
+      // Load questions from question service with category 'practice' and type 'coding'
+      const questions = await fetchQuestions(filters);
+
+      // Transform questions to CodingProblem format
+      const transformedProblems: CodingProblem[] = questions.map((q) => ({
+        id: q.id,
+        title: q.title,
+        difficulty: q.difficulty === 'easy' ? 'Easy' : 
+                   q.difficulty === 'medium' ? 'Medium' : 'Hard',
+        score: q.marks,
+        description: q.content,
+        test_cases_basic: q.test_cases_basic?.map(tc => ({
+          input_data: tc.input,
+          expected_output: tc.expected_output,
+          weight: 1
+        })) || [],
+        test_cases_advanced: q.test_cases_advanced?.map(tc => ({
+          input_data: tc.input,
+          expected_output: tc.expected_output,
+          weight: 1
+        })) || [],
+      }));
+
+      setProblems(transformedProblems);
     } catch (error) {
+      console.error('Failed to load problems:', error);
       toast.error('Failed to load problems');
     } finally {
       setProblemsLoading(false);
     }
   };
 
-  const filteredProblems =
-    difficulty === 'All'
-      ? problems
-      : problems.filter((p) => p.difficulty === difficulty);
+  // Problems are already filtered by the server based on difficulty
+  const filteredProblems = problems;
 
   // Difficulty badge colors (pure Tailwind)
   const difficultyColors = {

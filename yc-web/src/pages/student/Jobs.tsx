@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import Navigation from '../../components/Navigation';
 
 import {
   fetchFilteredJobs,
@@ -12,11 +13,8 @@ import JobFilters from "@/components/student/jobs/JobFilters";
 import JobCard from "@/components/student/jobs/JobCard";
 import JobDetail from "@/components/student/jobs/JobDetail";
 import ApplicationTracker from "@/components/student/jobs/ApplicationTracker";
-
-import studentNavigationConfig from "@/config/studentNavigation";
 import { Button } from "@/components/ui/button";
 import { FileText, X } from "lucide-react";
-
 
 const safeArray = (value: any): string[] => {
   if (Array.isArray(value)) return value;
@@ -62,27 +60,32 @@ const safeCompanyInfo = (value: any) => {
   return { about: "No company information available.", size: "N/A", domain: "N/A", website: "", name: "Unknown" };
 };
 
-
 const normalizeJob = (job: any): JobType => ({
   ...job,
   skills: safeArray(job.skills),
   responsibilities: safeArray(job.responsibilities),
   required_skills: safeArray(job.required_skills),
   preferred_skills: safeArray(job.preferred_skills),
-  requiredSkills: safeArray(job.required_skills),  
-  preferredSkills: safeArray(job.preferred_skills),  
+  requiredSkills: safeArray(job.required_skills),
+  preferredSkills: safeArray(job.preferred_skills),
   benefits: safeArray(job.benefits),
   company_info: job.company_info || { about: "", size: "N/A", domain: "", website: "", name: job.company || "Unknown" },
-  companyInfo: job.company_info || { about: "", size: "N/A", domain: "", website: "", name: job.company || "Unknown" },  
+  companyInfo: job.company_info || { about: "", size: "N/A", domain: "", website: "", name: job.company || "Unknown" },
   salary: job.salary ? Number(job.salary) : 0,
-  workType: job.work_type || job.workType,  
+  workType: job.work_type || job.workType,
   experienceLevel: job.experience_level || job.experienceLevel,
   jobType: job.job_type || job.jobType,
 });
 
-
 const Jobs = () => {
   const navigate = useNavigate();
+
+  const menuItems = [
+    { id: 1, label: "Dashboard", onClick: () => navigate("/dashboard") },
+    { id: 2, label: "Jobs", onClick: () => navigate("/jobs") },
+    { id: 3, label: "Profile", onClick: () => navigate("/profile") },
+    { id: 4, label: "Settings", onClick: () => navigate("/settings") },
+  ];
 
   const [jobs, setJobs] = useState<JobType[]>([]);
   const [filteredJobs, setFilteredJobs] = useState<JobType[]>([]);
@@ -107,15 +110,11 @@ const Jobs = () => {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed.postedDate) && parsed.postedDate.length === 1 && parsed.postedDate[0] === 'Last 24 hours') {
           parsed.postedDate = [];
-          try {
-            localStorage.setItem(FILTERS_KEY, JSON.stringify(parsed));
-          } catch (err) {
-          }
+          try { localStorage.setItem(FILTERS_KEY, JSON.stringify(parsed)); } catch {}
         }
         return parsed;
       }
-    } catch (err) {
-    }
+    } catch (err) {}
     return defaultFilters;
   });
 
@@ -129,18 +128,13 @@ const Jobs = () => {
       if (JSON.stringify(toSave) !== JSON.stringify(filters || defaultFilters)) {
         setFilters(toSave);
       }
-    } catch (err) {
-    }
+    } catch {}
   }, [filters]);
 
   const [selectedJob, setSelectedJob] = useState<JobType | null>(null);
   const [showTracker, setShowTracker] = useState(false);
-
   const [savedJobs, setSavedJobs] = useState<number[]>([]);
   const [appliedJobs, setAppliedJobs] = useState<number[]>([]);
-
-  const menuItems = studentNavigationConfig.getMenuItems(navigate, "jobs");
-
 
   const INITIAL_FETCH_FLAG = 'yc_jobs_fetched_v1';
   const isInitialRef = useRef(true);
@@ -162,23 +156,15 @@ const Jobs = () => {
     let cancelled = false;
 
     const doFetch = async () => {
-      if (jobs.length === 0) {
-        setLoading(true);
-      }
+      if (jobs.length === 0) setLoading(true);
       try {
         const payload = mapFiltersToPayload(filters || {});
-        const payloadStr = JSON.stringify(payload || {});
-        console.log('[Jobs] Filter change detected. Payload:', payload);
-        if (lastPayloadRef.current === payloadStr) {
-          console.log('[Jobs] Payload unchanged, skipping fetch');
-          return;
-        }
+        const payloadStr = JSON.stringify(payload);
+        if (lastPayloadRef.current === payloadStr) return;
         lastPayloadRef.current = payloadStr;
-        console.log('[Jobs] Fetching filtered jobs...');
         const data = await fetchFilteredJobs(payload);
         const normalized = data.map(normalizeJob);
         if (cancelled) return;
-        console.log('[Jobs] Received', normalized.length, 'jobs');
         setJobs(normalized);
         setFilteredJobs(normalized);
         (window as any)[INITIAL_FETCH_FLAG] = true;
@@ -189,34 +175,24 @@ const Jobs = () => {
       }
     };
 
-
     if (isInitialRef.current) {
       isInitialRef.current = false;
       if ((window as any)[INITIAL_FETCH_FLAG]) return;
     }
 
     doFetch();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [filters]);
 
-
-
   const handleJobSelect = (job: JobType) => setSelectedJob(job);
-
   const handleSaveJob = (jobId: number) => {
-    setSavedJobs((prev) =>
-      prev.includes(jobId) ? prev.filter((id) => id !== jobId) : [...prev, jobId]
-    );
+    setSavedJobs((prev) => prev.includes(jobId) ? prev.filter((id) => id !== jobId) : [...prev, jobId]);
   };
-
   const handleApply = (jobId: string | number) => {
     const id = typeof jobId === 'string' ? Number(jobId) : jobId;
     if (Number.isNaN(id)) return;
-    setAppliedJobs((prev) => (prev.includes(id as number) ? prev : [...prev, id as number]));
+    setAppliedJobs((prev) => (prev.includes(id) ? prev : [...prev, id]));
   };
-
   const handleAddJob = async (formData: any) => {
     try {
       formData.skills = safeArray(formData.skills);
@@ -229,7 +205,6 @@ const Jobs = () => {
 
       const newJob = await createJob(formData);
       if (!newJob) return;
-
       const normalized = normalizeJob(newJob);
       setJobs((prev) => [...prev, normalized]);
       setFilteredJobs((prev) => [...prev, normalized]);
@@ -247,12 +222,10 @@ const Jobs = () => {
       <Header showMenu={true} menuItems={menuItems} />
 
       <div className="flex h-[calc(100vh-64px)]">
-   
         <div className="w-80 border-r border-border bg-card overflow-y-auto">
           <JobFilters onFilterChange={setFilters} initialFilters={filters} />
         </div>
 
-    
         <div className="flex-1 overflow-y-auto">
           <div className="p-6">
             <div className="flex items-center justify-between mb-6">
@@ -286,7 +259,6 @@ const Jobs = () => {
           </div>
         </div>
 
-   
         {selectedJob && !showTracker && (
           <div className="w-[600px] border-l border-border bg-card overflow-y-auto">
             <JobDetail
@@ -295,18 +267,13 @@ const Jobs = () => {
               onApply={handleApply}
               isApplied={appliedJobs.includes(selectedJob.id)}
               similarJobs={filteredJobs
-                .filter(
-                  (j) =>
-                    j.id !== selectedJob.id &&
-                    safeArray(j.skills).some((skill) => safeArray(selectedJob.skills).includes(skill))
-                )
+                .filter((j) => j.id !== selectedJob.id && safeArray(j.skills).some((skill) => safeArray(selectedJob.skills).includes(skill)))
                 .slice(0, 3)}
               onSelectSimilar={handleJobSelect}
             />
           </div>
         )}
 
-        
         {showTracker && (
           <div className="w-[600px] border-l border-border bg-card overflow-y-auto">
             <div className="sticky top-0 z-10 bg-card border-b border-border p-4 flex items-center justify-between">
@@ -325,4 +292,3 @@ const Jobs = () => {
 };
 
 export default Jobs;
-

@@ -6,7 +6,6 @@ import {
 } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
-// Initialize OpenTelemetry
 import './observability/telemetry';
 import Landing from './pages/landing/Landing';
 import Home from './pages/landing/Home';
@@ -35,16 +34,13 @@ import CodePractice from './pages/student/CodePractice';
 import { Toaster } from "@/components/ui/sonner";
 import ErrorBoundary from './components/ErrorBoundary';
 import DashboardRedirect from './components/DashboardRedirect';
-<<<<<<< HEAD
 import InstructorSkillTest from './pages/instructor/SkillTest';
 import PracticeQuestions from './pages/instructor/PracticeQuestions';
 import OwnerContest from './pages/instructor/Contest';
-=======
 import RecruiterJobs from "./pages/recruiter/Jobs";
 import AddJob from "./components/student/AddJob";
 import JobFiltersSidebar from "@/components/student/jobs/ApplicationTracker";
 
->>>>>>> 7d78b66 (feat(jobs): add jobs in Frontend)
 
 function App() {
   return (
@@ -53,7 +49,6 @@ function App() {
         <Router>
           <div className="App">
             <Routes>
-              {/* Public routes */}
               <Route path="/" element={<Home />} />
               <Route path="/landing" element={<Landing />} />
               <Route path="/about" element={<About />} />

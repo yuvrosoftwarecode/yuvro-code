@@ -1,6 +1,9 @@
 import axios, { AxiosError, AxiosInstance } from "axios";
 
-const API_BASE = import.meta.env.VITE_BACKEND_API_BASE_URL || "http://127.0.0.1:8001/api";
+const API_BASE =
+  import.meta.env.VITE_BACKEND_API_BASE_URL ||
+  "http://127.0.0.1:8001/api";
+
 
 function getAccessToken() {
   return localStorage.getItem("access");
@@ -17,6 +20,7 @@ function clearTokens() {
   localStorage.removeItem("refresh");
 }
 
+
 export async function refreshAccessToken(): Promise<string | null> {
   const refresh = getRefreshToken();
   if (!refresh) return null;
@@ -24,6 +28,7 @@ export async function refreshAccessToken(): Promise<string | null> {
   try {
     const res = await axios.post(`${API_BASE}/token/refresh/`, { refresh });
     const { access, refresh: newRefresh } = res.data;
+
     saveTokens(access, newRefresh);
     return access;
   } catch {
@@ -32,18 +37,21 @@ export async function refreshAccessToken(): Promise<string | null> {
   }
 }
 
+
 const api: AxiosInstance = axios.create({
   baseURL: API_BASE,
   headers: { "Content-Type": "application/json" },
 });
 
+
 api.interceptors.request.use((config: any) => {
-  const token = localStorage.getItem('access') || localStorage.getItem('token');
+  const token = getAccessToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
+
 
 api.interceptors.response.use(
   (res) => res,
@@ -52,8 +60,8 @@ api.interceptors.response.use(
 
     if (err.response?.status === 401 && !original._retry && getRefreshToken()) {
       original._retry = true;
-      const newToken = await refreshAccessToken();
 
+      const newToken = await refreshAccessToken();
       if (newToken) {
         original.headers.Authorization = `Bearer ${newToken}`;
         return api(original);
@@ -64,15 +72,32 @@ api.interceptors.response.use(
   }
 );
 
+
 function normalizeArray(field: any): string[] {
   if (!field) return [];
-  if (Array.isArray(field)) return field.flatMap((i) => (typeof i === "string" ? i.split(",").map((x) => x.trim()) : []));
-  if (typeof field === "string") return field.split(",").map((x) => x.trim());
+  if (Array.isArray(field)) {
+    return field.flatMap((i) =>
+      typeof i === "string" ? i.split(",").map((x) => x.trim()) : []
+    );
+  }
+  if (typeof field === "string") {
+    return field.split(",").map((x) => x.trim());
+  }
   return [];
 }
 
+
 function normalizeCompanyInfo(info: any) {
-  if (!info) return { about: "No company information available.", size: "N/A", domain: "N/A", website: "", name: "Unknown" };
+  if (!info) {
+    return {
+      about: "No company information available.",
+      size: "N/A",
+      domain: "N/A",
+      website: "",
+      name: "Unknown",
+    };
+  }
+
   if (typeof info === "string") {
     try {
       const parsed = JSON.parse(info);
@@ -84,9 +109,16 @@ function normalizeCompanyInfo(info: any) {
         name: parsed.name || "Unknown",
       };
     } catch {
-      return { about: info, size: "N/A", domain: "N/A", website: "", name: "Unknown" };
+      return {
+        about: info,
+        size: "N/A",
+        domain: "N/A",
+        website: "",
+        name: "Unknown",
+      };
     }
   }
+
   if (typeof info === "object") {
     return {
       about: info.about || "No company information available.",
@@ -96,7 +128,14 @@ function normalizeCompanyInfo(info: any) {
       name: info.name || "Unknown",
     };
   }
-  return { about: "No company information available.", size: "N/A", domain: "N/A", website: "", name: "Unknown" };
+
+  return {
+    about: "No company information available.",
+    size: "N/A",
+    domain: "N/A",
+    website: "",
+    name: "Unknown",
+  };
 }
 
 export interface Job {
@@ -128,6 +167,7 @@ export interface Job {
   created_at?: string;
 }
 
+
 export async function fetchJobs(): Promise<Job[]> {
   try {
     const res = await api.get("/jobs/");
@@ -149,21 +189,16 @@ export async function fetchJobs(): Promise<Job[]> {
 export async function fetchFilteredJobs(filters: any = {}): Promise<Job[]> {
   try {
     const res = await api.post("/jobs/filter/", filters);
-    console.log('[jobsapi] Raw response from /jobs/filter/:', res.data);
-    const result = res.data.map((j: any) => {
-      const normalized = {
-        ...j,
-        skills: normalizeArray(j.skills),
-        responsibilities: normalizeArray(j.responsibilities),
-        required_skills: normalizeArray(j.required_skills),
-        preferred_skills: normalizeArray(j.preferred_skills),
-        benefits: normalizeArray(j.benefits),
-        company_info: normalizeCompanyInfo(j.company_info),
-      };
-      console.log('[jobsapi] Normalized job:', normalized.title, '- company_info:', normalized.company_info);
-      return normalized;
-    });
-    return result;
+
+    return res.data.map((j: any) => ({
+      ...j,
+      skills: normalizeArray(j.skills),
+      responsibilities: normalizeArray(j.responsibilities),
+      required_skills: normalizeArray(j.required_skills),
+      preferred_skills: normalizeArray(j.preferred_skills),
+      benefits: normalizeArray(j.benefits),
+      company_info: normalizeCompanyInfo(j.company_info),
+    }));
   } catch (err: any) {
     console.error("fetchFilteredJobs error:", err.response?.data || err.message);
     return [];
@@ -182,6 +217,7 @@ export async function createJob(data: any): Promise<Job | null> {
       benefits: normalizeArray(data.benefits),
       company_info: normalizeCompanyInfo(data.company_info),
     };
+
     const res = await api.post("/jobs/", payload);
     return res.data;
   } catch (err) {
@@ -202,6 +238,7 @@ export async function updateJob(id: number, data: any): Promise<Job | null> {
       benefits: normalizeArray(data.benefits),
       company_info: normalizeCompanyInfo(data.company_info),
     };
+
     const res = await api.patch(`/jobs/${id}/`, payload);
     return res.data;
   } catch (err) {

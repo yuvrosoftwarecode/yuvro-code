@@ -1,4 +1,5 @@
 
+import("@opentelemetry/sdk-trace-web")
 import { WebTracerProvider } from '@opentelemetry/sdk-trace-web';
 import { getWebAutoInstrumentations } from '@opentelemetry/auto-instrumentations-web';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-otlp-http';

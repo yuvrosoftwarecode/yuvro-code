@@ -447,12 +447,12 @@ const QuestionBankManager: React.FC<QuestionBankManagerProps> = ({
         </div>
 
         {/* Tabs */}
-        <div className="flex space-x-1 bg-slate-100 p-1 rounded-lg">
+        <div className="flex space-x-1 bg-amber-50 p-1 rounded-lg border border-amber-200">
           <button
             onClick={() => setActiveTab('create')}
             className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'create'
-              ? 'bg-white text-slate-900 shadow-sm'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+              ? 'bg-amber-600 text-white shadow-sm'
+              : 'text-amber-700 hover:text-amber-800 hover:bg-amber-100'
               }`}
           >
             <Plus className="w-4 h-4" />
@@ -461,8 +461,8 @@ const QuestionBankManager: React.FC<QuestionBankManagerProps> = ({
           <button
             onClick={() => setActiveTab('questions')}
             className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'questions'
-              ? 'bg-white text-slate-900 shadow-sm'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+              ? 'bg-amber-600 text-white shadow-sm'
+              : 'text-amber-700 hover:text-amber-800 hover:bg-amber-100'
               }`}
           >
             <FileQuestion className="w-4 h-4" />
@@ -586,7 +586,7 @@ const QuestionBankManager: React.FC<QuestionBankManagerProps> = ({
                           size="sm"
                           variant="ghost"
                           onClick={() => openEditForm(question)}
-                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          className="text-amber-600 hover:text-amber-700 hover:bg-amber-50"
                         >
                           <Edit3 className="w-4 h-4" />
                         </Button>
@@ -610,20 +610,20 @@ const QuestionBankManager: React.FC<QuestionBankManagerProps> = ({
 
       {/* Create New Question Tab */}
       {activeTab === 'create' && (
-        <Card className="border-2 border-blue-200 bg-blue-50/30">
+        <Card className="border-2 border-amber-200 bg-amber-50/30">
           <CardContent className="p-6">
             <div className="space-y-6">
               {/* Form Header */}
-              <div className="border-b border-blue-200 pb-4">
+              <div className="border-b border-amber-200 pb-4">
                 <div className="flex items-center gap-3">
                   {editingQuestion ? (
                     <>
-                      <Edit3 className="w-5 h-5 text-blue-600" />
+                      <Edit3 className="w-5 h-5 text-amber-600" />
                       <h4 className="text-lg font-semibold text-slate-900">Edit Question</h4>
                     </>
                   ) : (
                     <>
-                      <Plus className="w-5 h-5 text-green-600" />
+                      <Plus className="w-5 h-5 text-amber-600" />
                       <h4 className="text-lg font-semibold text-slate-900">Create New Question</h4>
                     </>
                   )}
@@ -720,9 +720,9 @@ const QuestionBankManager: React.FC<QuestionBankManagerProps> = ({
               {/* Categories */}
               <div className="space-y-3">
                 <Label className="text-sm font-medium text-slate-700">Question Categories</Label>
-                <div className="flex flex-wrap gap-3 p-4 bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg border border-slate-200">
+                <div className="flex flex-wrap gap-3 p-4 bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg border border-amber-200">
                   {QUESTION_CATEGORIES.map(category => (
-                    <div key={category.value} className="flex items-center space-x-2 p-2 bg-white rounded-md border border-slate-200 hover:border-blue-300 transition-colors">
+                    <div key={category.value} className="flex items-center space-x-2 p-2 bg-white rounded-md border border-slate-200 hover:border-amber-300 transition-colors">
                       <Checkbox
                         id={`category-${category.value}`}
                         checked={formData.categories.includes(category.value)}
@@ -769,15 +769,15 @@ const QuestionBankManager: React.FC<QuestionBankManagerProps> = ({
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <Label className="text-sm font-medium text-slate-700">Answer Options</Label>
-                    <div className="flex items-center gap-2 text-xs text-slate-500 bg-blue-50 px-3 py-1 rounded-full border border-blue-200">
+                    <div className="flex items-center gap-2 text-xs text-slate-500 bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
                       {formData.type === 'mcq_single' ? (
                         <>
-                          <CheckCircle className="w-3 h-3 text-blue-600" />
+                          <CheckCircle className="w-3 h-3 text-amber-600" />
                           Select one correct answer
                         </>
                       ) : (
                         <>
-                          <CheckCircle className="w-3 h-3 text-green-600" />
+                          <CheckCircle className="w-3 h-3 text-amber-600" />
                           Select multiple correct answers
                         </>
                       )}
@@ -835,7 +835,7 @@ const QuestionBankManager: React.FC<QuestionBankManagerProps> = ({
                       size="sm"
                       variant="outline"
                       onClick={addMCQOption}
-                      className="w-full border-2 border-dashed border-slate-300 text-slate-600 hover:bg-slate-50 hover:border-slate-400 py-3"
+                      className="w-full border-2 border-dashed border-amber-300 text-amber-600 hover:bg-amber-50 hover:border-amber-400 py-3"
                     >
                       <Plus className="w-4 h-4 mr-2" />
                       Add Another Option
@@ -894,7 +894,7 @@ const QuestionBankManager: React.FC<QuestionBankManagerProps> = ({
                       size="sm"
                       variant="outline"
                       onClick={addTestCase}
-                      className="w-full border-dashed"
+                      className="w-full border-dashed border-amber-300 text-amber-600 hover:bg-amber-50 hover:border-amber-400"
                     >
                       <Plus className="w-4 h-4 mr-2" />
                       Add Test Case
@@ -908,7 +908,7 @@ const QuestionBankManager: React.FC<QuestionBankManagerProps> = ({
                 <Button onClick={handleCancel} variant="outline">
                   Cancel
                 </Button>
-                <Button onClick={handleSave} disabled={saving} className="min-w-24">
+                <Button onClick={handleSave} disabled={saving} className="min-w-24 bg-amber-600 hover:bg-amber-700 text-white">
                   {saving ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>

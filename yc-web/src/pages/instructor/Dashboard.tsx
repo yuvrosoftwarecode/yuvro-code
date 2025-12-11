@@ -1,5 +1,6 @@
 import { useAuth } from '../../contexts/AuthContext';
-import Navigation from '../../components/Navigation';
+import RoleSidebar from '../../components/common/RoleSidebar';
+import RoleHeader from '../../components/common/RoleHeader';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
@@ -70,19 +71,14 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navigation />
-      <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="bg-indigo-600 rounded-lg p-8 text-white">
-            <h1 className="text-3xl font-bold mb-2">
-              Welcome back, {user?.username || 'User'}! 👋
-            </h1>
-            <p className="text-indigo-100 text-lg">
-              Here's what's happening with your projects today.
-            </p>
-          </div>
-        </div>
+      <div className="flex">
+        <RoleSidebar />
+        <div className="flex-1">
+          <RoleHeader 
+            title={`Welcome back, ${user?.username || 'User'}! 👋`}
+            subtitle="Here's what's happening with your projects today."
+          />
+          <div className="p-6">
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -232,6 +228,8 @@ const Dashboard: React.FC = () => {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
           </div>
         </div>
       </div>

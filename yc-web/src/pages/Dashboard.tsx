@@ -1,8 +1,9 @@
 import { useAuth } from '../contexts/AuthContext';
 import Navigation from '../components/Navigation';
+import RoleSidebar from '../components/common/RoleSidebar';
+import RoleHeader from '../components/common/RoleHeader';
 
 const Dashboard: React.FC = () => {
-  const { user } = useAuth();
 
   const stats = [
     {
@@ -68,11 +69,42 @@ const Dashboard: React.FC = () => {
     },
   ];
 
+  const { user } = useAuth();
+  const isStudent = user?.role === 'student';
+
+  if (isStudent) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navigation />
+        <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+          {/* Student Dashboard Content */}
+          {renderDashboardContent()}
+        </div>
+      </div>
+    );
+  }
+
+  // Non-student roles use sidebar layout
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navigation />
+      <div className="flex">
+        <RoleSidebar />
+        <div className="flex-1">
+          <RoleHeader 
+            title="Dashboard"
+            subtitle="Overview of your activities and progress"
+          />
+          <div className="p-6">
+            {renderDashboardContent()}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 
-      <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+  function renderDashboardContent() {
+    return (
+      <>
         {/* Header */}
         <div className="mb-8">
           <div className="bg-indigo-600 rounded-lg p-8 text-white">
@@ -235,9 +267,9 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
         </div>
-      </div>
-    </div>
-  );
+      </>
+    );
+  }
 };
 
 export default Dashboard;

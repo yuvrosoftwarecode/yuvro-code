@@ -377,6 +377,7 @@ class QuestionViewSet(viewsets.ModelViewSet):
         difficulty = self.request.query_params.get("difficulty")
         level = self.request.query_params.get("level")
         categories = self.request.query_params.get("categories")
+        search = self.request.query_params.get("search")
 
         if course_id:
             qs = qs.filter(course_id=course_id)
@@ -388,11 +389,17 @@ class QuestionViewSet(viewsets.ModelViewSet):
             qs = qs.filter(type=question_type)
         if difficulty:
             qs = qs.filter(difficulty=difficulty)
-        if level:
+        if level and level != 'all':
             qs = qs.filter(level=level)
         if categories:
             # Filter questions that contain the specified category
             qs = qs.filter(categories__contains=[categories])
+        if search:
+            # Search in title and content fields
+            qs = qs.filter(
+                models.Q(title__icontains=search) |
+                models.Q(content__icontains=search)
+            )
 
         return qs
 

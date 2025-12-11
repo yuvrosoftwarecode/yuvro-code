@@ -351,3 +351,31 @@ export async function fetchSkillTestQuestions(topicId: string) {
 
   return [...mcqQuestions, ...codingQuestions];
 }
+
+// Question Bank Management Functions
+export async function fetchQuestionsByLevel(level: "course" | "topic" | "subtopic", id: string) {
+  const params: any = {};
+  
+  if (level === "course") {
+    params.course = id;
+  } else if (level === "topic") {
+    params.topic = id;
+  } else if (level === "subtopic") {
+    params.subtopic = id;
+  }
+  
+  return restApiAuthUtil.get('/course/questions/', { params });
+}
+
+export async function createQuestion(payload: any) {
+  return restApiAuthUtil.post('/course/questions/', payload);
+}
+
+export async function updateQuestion(questionId: string, payload: any) {
+  return restApiAuthUtil.put(`/course/questions/${questionId}/`, payload);
+}
+
+export async function deleteQuestion(questionId: string) {
+  await restApiAuthUtil.delete(`/course/questions/${questionId}/`);
+  return true;
+}

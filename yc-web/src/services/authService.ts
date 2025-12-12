@@ -79,11 +79,10 @@ class AuthService {
   async logoutUser(): Promise<void> {
     const refreshToken = localStorage.getItem('refresh');
     if (refreshToken) {
-      try {
-        await restApiAuthUtil.post('/auth/logout/', { refresh: refreshToken });
-      } catch (error) {
+      // Fire-and-forget backend logout
+      restApiAuthUtil.post('/auth/logout/', { refresh: refreshToken }).catch(error => {
         console.warn('Logout error:', error);
-      }
+      });
     }
     restApiAuthUtil.clearAuthToken();
     window.location.href = '/login';

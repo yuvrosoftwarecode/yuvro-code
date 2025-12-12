@@ -9,6 +9,36 @@ from decouple import config
 logger = logging.getLogger(__name__)
 
 
+def _apply_page_content_grounding(messages: List[Dict[str, str]], kwargs: Dict[str, Any]) -> List[Dict[str, str]]:
+    """If `page_content` is provided in kwargs, prepend a strict system prompt
+    that instructs the model to only use the provided SOURCE. This modifies
+    messages in-place (and removes page_content from kwargs).
+    """
+    page_content = None
+    if isinstance(kwargs, dict):
+        page_content = kwargs.pop("page_content", None)
+
+    if page_content:
+        # Truncate to a reasonable size to avoid token blowup
+        snippet = page_content if len(page_content) <= 4000 else page_content[:4000]
+        strict_prompt = (
+            "You are a helpful and friendly AI Tutor. You have access to the following context "
+            "from the current page the user is viewing (labeled SOURCE). \n"
+            "Use this SOURCE to answer the user's questions accurately. \n"
+            "If the answer is in the SOURCE, explain it clearly.\n"
+            "If the answer is not in the SOURCE, you may politely use your general knowledge to help, "
+            "but please mention that this information isn't explicitly on the current page.\n"
+            "Keep your tone encouraging and educational.\n\n"
+            "SOURCE:\n"
+            + snippet
+        )
+
+        # Prepend system message
+        messages.insert(0, {"role": "system", "content": strict_prompt})
+
+    return messages
+
+
 class AIServiceError(Exception):
     """Custom exception for AI service errors."""
 
@@ -72,6 +102,8 @@ class OpenAIService(BaseAIService):
     ) -> Dict[str, Any]:
         """Generate response using OpenAI API."""
         start_time = time.time()
+        # Apply grounding from page_content if provided
+        messages = _apply_page_content_grounding(messages, kwargs)
 
         try:
             response = self.client.chat.completions.create(
@@ -80,7 +112,7 @@ class OpenAIService(BaseAIService):
                 temperature=temperature,
                 max_tokens=max_tokens,
                 **kwargs,
-            )
+            ) # type: ignore
 
             end_time = time.time()
             response_time_ms = int((end_time - start_time) * 1000)
@@ -131,6 +163,9 @@ class AnthropicService(BaseAIService):
         """Generate response using Anthropic API."""
         start_time = time.time()
 
+        # Apply grounding from page_content if provided
+        messages = _apply_page_content_grounding(messages, kwargs)
+
         try:
             # Convert messages format for Anthropic
             anthropic_messages = []
@@ -178,7 +213,7 @@ class GeminiService(BaseAIService):
     Service for Google Gemini API integration.
     """
 
-    def __init__(self, api_key: str, model_name: str = "gemini-pro"):
+    def __init__(self, api_key: str, model_name: str = "gemini-2.5-flash"):
         super().__init__(api_key, model_name)
         try:
             import google.generativeai as genai
@@ -199,6 +234,9 @@ class GeminiService(BaseAIService):
     ) -> Dict[str, Any]:
         """Generate response using Gemini API."""
         start_time = time.time()
+
+        # Apply grounding from page_content if provided
+        messages = _apply_page_content_grounding(messages, kwargs)
 
         try:
             # Convert messages to Gemini format
@@ -273,6 +311,9 @@ class CohereService(BaseAIService):
         """Generate response using Cohere API."""
         start_time = time.time()
 
+        # Apply grounding from page_content if provided
+        messages = _apply_page_content_grounding(messages, kwargs)
+
         try:
             # Convert messages to Cohere chat format
             chat_history = []
@@ -324,10 +365,10 @@ class AIServiceFactory:
     """
 
     _services = {
-        "openai": OpenAIService,
-        "anthropic": AnthropicService,
+        # For now we only expose Gemini to the rest of the application.
+        # The other providers are kept in the file for future re-enablement.
+        # To re-enable a provider, add it back to this mapping.
         "gemini": GeminiService,
-        "cohere": CohereService,
     }
 
     @classmethod

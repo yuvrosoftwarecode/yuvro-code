@@ -8,14 +8,15 @@ import ContinueLearningCard from "@/components/student/LearnCertify/ContinueLear
 import StatsGrid from "@/components/student/LearnCertify/StatsGrid";
 import SearchBar from "@/components/common/SearchBar";
 import CategorySection from "@/components/student/LearnCertify/CatergorySection";
+import AIChatContainer from '@/components/student/LearnCertify/AIChatWidget/AIChatContainer';
 
-import { Binary, Code, Database, Sparkles, FileText, Flame, Award } from "lucide-react";
+import { Binary, Code, Database, Sparkles, FileText, Flame, Award, X } from "lucide-react";
 
 import type { Course, Stats, ContinueProgress, CourseProgressMap } from "@/components/student/LearnCertify/types";
 
 const LearnCertifyDashboard: React.FC = () => {
   const navigate = useNavigate();
-
+  const [showChat, setShowChat] = useState(false);
   const [courses, setCourses] = useState<Course[]>([]);
   const [progressMap, setProgressMap] = useState<CourseProgressMap>({});
   const [searchQuery, setSearchQuery] = useState("");
@@ -127,14 +128,14 @@ const LearnCertifyDashboard: React.FC = () => {
   const normalizedQuery = searchQuery.trim().toLowerCase();
   const filteredCourses = normalizedQuery
     ? courses.filter((c) => {
-        if (c.name && c.name.toLowerCase().includes(normalizedQuery)) return true;
-        if ((c as any).description && (c as any).description.toLowerCase().includes(normalizedQuery)) return true;
-        if (Array.isArray((c as any).topics)) {
-          const topics: any[] = (c as any).topics;
-          if (topics.some((t) => (t.name || '').toLowerCase().includes(normalizedQuery))) return true;
-        }
-        return false;
-      })
+      if (c.name && c.name.toLowerCase().includes(normalizedQuery)) return true;
+      if ((c as any).description && (c as any).description.toLowerCase().includes(normalizedQuery)) return true;
+      if (Array.isArray((c as any).topics)) {
+        const topics: any[] = (c as any).topics;
+        if (topics.some((t) => (t.name || '').toLowerCase().includes(normalizedQuery))) return true;
+      }
+      return false;
+    })
     : courses;
 
   const groupedFiltered = {
@@ -163,89 +164,126 @@ const LearnCertifyDashboard: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white px-8 py-1 pb-12">
-      <div className="max-w-[1600px] mx-auto space-y-8">
-        {/* Header + badges */}
-        <div className="space-y-6 pt-4">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight text-foreground">Learn & Certify</h1>
-              <p className="text-gray-600 py-2 text-sm">Continue your learning journey — unlock badges and grow your streak.</p>
+    <>
+      <div className="min-h-screen bg-white px-8 py-1 pb-12">
+        <div className="max-w-[1600px] mx-auto space-y-8">
+          {/* Header + badges */}
+          <div className="space-y-6 pt-4">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight text-foreground">Learn & Certify</h1>
+                <p className="text-gray-600 py-2 text-sm">Continue your learning journey — unlock badges and grow your streak.</p>
+              </div>
+
+              <div className="flex gap-3">
+                {/* Search bar */}
+                <div className="group relative">
+                  <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+                </div>
+
+                <div className="group relative">
+                  <div className="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-yellow-100/60 to-orange-100/40 rounded-full border border-yellow-200 shadow-sm">
+                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-yellow-200 text-yellow-700 text-lg shadow">
+                      <Flame className="w-4 h-4" />
+                    </span>
+                    <span className="text-sm font-bold text-gray-800">7-day streak</span>
+                  </div>
+                  <div className="absolute -bottom-9 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                    🔥 7-day streak
+                  </div>
+                </div>
+
+                <div className="group relative">
+                  <div className="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-blue-100/60 to-cyan-100/40 rounded-full border border-blue-200 shadow-sm">
+                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-blue-200 text-blue-700 text-lg shadow">
+                      <Award className="w-4 h-4" />
+                    </span>
+                    <span className="text-sm font-bold text-gray-800">12 badges</span>
+                  </div>
+                  <div className="absolute -bottom-9 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                    🏅 12 badges earned
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="flex gap-3">
-              {/* Search bar */}
-              <div className="group relative">
-                <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
-              </div>
+            <StatsGrid stats={stats} />
 
-              <div className="group relative">
-                <div className="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-yellow-100/60 to-orange-100/40 rounded-full border border-yellow-200 shadow-sm">
-                  <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-yellow-200 text-yellow-700 text-lg shadow">
-                    <Flame className="w-4 h-4" />
-                  </span>
-                  <span className="text-sm font-bold text-gray-800">7-day streak</span>
-                </div>
-                <div className="absolute -bottom-9 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
-                  🔥 7-day streak
-                </div>
-              </div>
+            <ContinueLearningCard continueProgress={continueProgress} onContinue={handleStartLearning} />
+          </div>
 
-              <div className="group relative">
-                <div className="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-blue-100/60 to-cyan-100/40 rounded-full border border-blue-200 shadow-sm">
-                  <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-blue-200 text-blue-700 text-lg shadow">
-                    <Award className="w-4 h-4" />
-                  </span>
-                  <span className="text-sm font-bold text-gray-800">12 badges</span>
+
+          {/* Category sections */}
+          {normalizedQuery && filteredCourses.length === 0 ? (
+            <div className="py-8 text-center text-gray-600">No courses match "{searchQuery}"</div>
+          ) : (
+            Object.entries(groupedFiltered).map(([key, list]) =>
+              list.length > 0 ? (
+                <div key={key} className="flex mb-8 gap-6">
+                  <CategorySection
+                    title={key.replace("_", " ").replace(/\b\w/g, c => c.toUpperCase())}
+                    icon={getIconFor(key)}
+                    courses={list}
+                    progressMap={progressMap}
+                    onStartLearning={handleStartLearning}
+                  />
                 </div>
-                <div className="absolute -bottom-9 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
-                  🏅 12 badges earned
-                </div>
-              </div>
+              ) : null
+            )
+          )}
+
+          <div className="mt-8 p-0 bg-gradient-to-r from-yellow-100/60 via-orange-100/40 to-blue-100/30 border border-yellow-200 rounded-2xl shadow flex flex-col items-center justify-center">
+            <div className="flex items-center gap-3 py-4">
+              <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-yellow-200 text-yellow-700 text-xl shadow">
+                🔥
+              </span>
+              <span className="font-bold text-lg text-gray-800">7-day streak</span>
+              <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-gray-200 text-gray-700 text-xl shadow">
+                🥈
+              </span>
             </div>
+            <p className="text-base text-center text-gray-700 pb-4">
+              Complete <span className="font-semibold text-blue-600">1 more lesson today</span> to earn a <span className="font-semibold text-yellow-700">silver badge!</span>
+            </p>
           </div>
-
-          <StatsGrid stats={stats} />
-
-          <ContinueLearningCard continueProgress={continueProgress} onContinue={handleStartLearning} />
-        </div>
-
-
-        {/* Category sections */}
-        {normalizedQuery && filteredCourses.length === 0 ? (
-          <div className="py-8 text-center text-gray-600">No courses match "{searchQuery}"</div>
-        ) : (
-          Object.entries(groupedFiltered).map(([key, list]) =>
-            list.length > 0 ? (
-              <div key={key} className="flex mb-8 gap-6">
-                <CategorySection
-                  title={key.replace("_", " ").replace(/\b\w/g, c => c.toUpperCase())}
-                  icon={getIconFor(key)}
-                  courses={list}
-                  progressMap={progressMap}
-                  onStartLearning={handleStartLearning}
-                />
-              </div>
-            ) : null
-          )
-        )}
-
-        <div className="mt-8 p-0 bg-gradient-to-r from-yellow-100/60 via-orange-100/40 to-blue-100/30 border border-yellow-200 rounded-2xl shadow flex flex-col items-center justify-center">
-          <div className="flex items-center gap-3 py-4">
-            <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-yellow-200 text-yellow-700 text-xl shadow">
-              🔥
-            </span>
-            <span className="font-bold text-lg text-gray-800">7-day streak</span>
-            <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-gray-200 text-gray-700 text-xl shadow">
-              🥈
-            </span>
-          </div>
-          <p className="text-base text-center text-gray-700 pb-4">
-            Complete <span className="font-semibold text-blue-600">1 more lesson today</span> to earn a <span className="font-semibold text-yellow-700">silver badge!</span>
-          </p>
         </div>
       </div>
-    </div>
+
+      {/* Chat toggle & Window */}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-4">
+
+        {/* Chat Window with Transition */}
+        <div
+          className={`transition-all duration-300 ease-in-out transform origin-bottom-right
+            ${showChat
+              ? 'opacity-100 scale-100 translate-y-0'
+              : 'opacity-0 scale-95 translate-y-4 pointer-events-none'
+            }
+          `}
+        >
+          <AIChatContainer className="w-[380px] h-[550px] max-h-[70vh] shadow-2xl" welcomeMessage="I can help you find courses or track your progress." />
+        </div>
+
+        {/* Toggle Button */}
+        <button
+          aria-label={showChat ? 'Close AI chat' : 'Open AI chat'}
+          onClick={() => setShowChat((s) => !s)}
+          className={`
+            group flex items-center justify-center w-14 h-14 rounded-full shadow-xl transition-all duration-300 hover:scale-105 active:scale-95
+            ${showChat
+              ? 'bg-red-500 text-white rotate-0'
+              : 'bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white ring-4 ring-blue-50/50' // Open state with premium gradient
+            }
+          `}
+        >
+          {showChat ? (
+            <X size={24} />
+          ) : (
+            <Sparkles size={24} className="animate-pulse" />
+          )}
+        </button>
+      </div>
+    </>
   );
 };
 

@@ -16,7 +16,9 @@ import {
 } from "@/services/courseService";
 import { Check } from "lucide-react";
 import ProgressBar from "@/components/ui/ProgressBar";
-import { PlayCircle, HelpCircle, StickyNote, Code } from "lucide-react";
+import { PlayCircle, HelpCircle, StickyNote, Code, Sparkles, X } from "lucide-react";
+import AIChatContainer from "./LearnCertify/AIChatWidget/AIChatContainer";
+import { v4 as uuidv4 } from 'uuid';
 
 type Topic = {
   id: string;
@@ -55,12 +57,36 @@ const CourseDetail: React.FC = () => {
   );
 
   const [rightTab, setRightTab] = useState<
-    "videos" | "quizzes" | "coding" | "notes" | "markAsRead"
+    "videos" | "quizzes" | "coding" | "notes"
   >("videos");
 
-  const handleMarkAsRead = async () => {
-    if (!selectedSubtopic) return;
 
+  const [chatSessionId, setChatSessionId] = useState<string>("");
+  const [marking, setMarking] = useState(false);
+
+  useEffect(() => {
+    if (courseId) {
+      setChatSessionId(`course-chat-${courseId}-${uuidv4()}`);
+    }
+  }, [courseId]);
+
+  const getCourseContext = () => {
+    let ctx = `Course: ${course?.name || 'Unknown'}.\n`;
+    const currentTopic = topics.find(t => expandedTopics[t.id]);
+    if (currentTopic) {
+      ctx += `Current Topic: ${currentTopic.name}.\n`;
+    }
+    if (selectedSubtopic) {
+      ctx += `Current Subtopic: ${selectedSubtopic.name}.\n`;
+      if (selectedSubtopic.content) ctx += `Content: ${selectedSubtopic.content}\n`;
+    }
+    ctx += `Current View: ${rightTab}.\n`;
+    return ctx;
+  };
+
+  const handleMarkAsRead = async () => {
+    if (!selectedSubtopic || marking) return;
+    setMarking(true);
     try {
       await restApiAuthUtil.post("/course/std/mark_complete/", {
         subtopic_id: selectedSubtopic.id,
@@ -71,6 +97,8 @@ const CourseDetail: React.FC = () => {
     } catch (err) {
       toast.error("Failed to mark as read");
       console.error(err);
+    } finally {
+      setMarking(false);
     }
   };
 
@@ -191,125 +219,153 @@ const CourseDetail: React.FC = () => {
       <div className="flex flex-1 h-[calc(100vh-64px)] overflow-hidden relative">
         {/* LEFT PANEL */}
         <div
-          className={`bg-white shadow-sm transition-all duration-300 flex flex-col relative`}
+          className={`bg-white shadow-sm transition-all duration-300 ease-in-out flex flex-col relative z-20 border-r border-gray-200`}
           style={{
             width: collapsed ? "70px" : "355px",
             minWidth: collapsed ? "70px" : "355px",
-            overflow: "auto",
+            overflow: "hidden", // Changed to hidden to prevent scrollbar flicker during transition
           }}
         >
-          {/* CONTENT AREA */}
-          {collapsed ? (
-            <div className="flex flex-col items-center h-full py-4 gap-4">
-              <div className="w-8 h-8 flex items-center justify-center text-2xl font-bold mb-2" title={course.name}>
-                🗂️
-              </div>
-              <div className="flex flex-col items-center gap-2 w-full">
-                {topics.map((topic) => (
-                  <div
-                    key={topic.id}
-                    className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-sm font-bold cursor-pointer border border-gray-300"
-                    title={topic.name}
-                    onClick={() => toggleExpandTopic(topic.id)}
-                  >
-                    {topic.name.charAt(0)}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="opacity-100 transition-opacity duration-200 px-4">
-              <div className="flex items-center gap-3 mb-4 py-2">
-                <span style={{ fontSize: "2em" }}>🗂️</span>
-                <span className="text-md font-semibold">{course.name}</span>
-              </div>
-
-              <p className="pt-0 text-gray-600 mt-[-15px]">Track your learning progress</p>
-              <hr className="my-4 border-gray-200" />
-
-              <h3 className="text-md font-semibold mb-2">Topics</h3>
-
-              <div className="space-y-3">
-                {topics.map((topic) => {
-                  const expanded = expandedTopics[topic.id];
-                  const subs = subtopicsMap[topic.id] || [];
-                  const allRead = subs.length > 0 && subs.every((s) => readMap[s.id]);
-                  const progress = getTopicProgress(topic.id);
-                  return (
-                    <div key={topic.id} className="border border-gray-200 rounded p-4 bg-white">
-                      {/* Topic header */}
+          {/* Scrollable content container */}
+          <div className="h-full overflow-y-auto overflow-x-hidden custom-scrollbar">
+            {/* CONTENT AREA */}
+            {collapsed ? (
+              <div className="flex flex-col items-center h-full py-6 gap-6 animate-fade-in">
+                <div className="w-10 h-10 flex items-center justify-center text-2xl font-bold mb-2 bg-gray-50 rounded-xl" title={course.name}>
+                  🗂️
+                </div>
+                <div className="flex flex-col items-center gap-3 w-full px-2">
+                  {topics.map((topic) => {
+                    const progress = getTopicProgress(topic.id);
+                    const isCompleted = progress === 100;
+                    return (
                       <div
-                        className="flex items-center justify-between cursor-pointer w-full"
-                        onClick={() => toggleExpandTopic(topic.id)}
+                        key={topic.id}
+                        className={`w-10 h-10 flex items-center justify-center rounded-full text-sm font-bold cursor-pointer border-2 shadow-sm transition-all
+                          ${isCompleted
+                            ? "bg-green-500 text-white border-gray-600 hover:bg-green-600"
+                            : "bg-white text-gray-700 border-transparent hover:border-gray-200 hover:bg-gray-50"
+                          }`}
+                        title={topic.name}
+                        onClick={() => {
+                          setCollapsed(false);
+                          if (!expandedTopics[topic.id]) {
+                            toggleExpandTopic(topic.id);
+                          }
+                        }}
                       >
-                        <div className="flex items-center">
-                          {expanded ? <ChevronDown className="w-4 h-4 mr-2" /> : <ChevronRight className="w-4 h-4 mr-2" />}
-                          <span className="font-medium truncate">{topic.name}</span>
-                        </div>
-                        {allRead && (
-                          <span className="flex items-center justify-center rounded-full bg-green-100 border border-green-400 w-6 h-6">
-                            <Check className="text-green-600 w-4 h-4" strokeWidth={3} />
-                          </span>
-                        )}
+                        {topic.name.charAt(0)}
                       </div>
-                      <div className="mt-2 w-full">
-                        <ProgressBar
-                          value={progress}
-                          height={10}
-                          trackClassName="bg-gray-200"
-                          barClassName={`bg-green-400`}
-                        />
-                        <div className="text-xs text-gray-500 mt-1">Progress: {progress}%</div>
-                      </div>
-
-                      {/* Subtopics */}
-                      {expanded && (
-                        <div className="mt-3 space-y-2">
-                          {subs.map((s) => (
-                            <div
-                              key={s.id}
-                              className={`p-2 rounded border border-gray-200 cursor-pointer flex items-center justify-between ${selectedSubtopic?.id === s.id
-                                ? "bg-sky-50 border-sky-300"
-                                : "bg-white"
-                                }`}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedSubtopic(s);
-                                setRightTab("videos");
-                              }}
-                            >
-                              <span className="font-medium">{s.name}</span>
-                              {readMap[s.id] && (
-                                <span className="flex items-center justify-center rounded-full bg-green-100 border border-green-400 w-6 h-6">
-                                  <Check className="text-green-600 w-4 h-4" strokeWidth={3} />
-                                </span>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          )}
+            ) : (
+              <div className="p-5 animate-fade-in opacity-100 transition-opacity duration-300">
+                <div className="flex items-center gap-3 mb-1">
+                  <div className="w-10 h-10 flex items-center justify-center text-xl bg-gray-100 rounded-lg">
+                    🗂️
+                  </div>
+                  <h2 className="text-xl font-bold text-gray-900 leading-tight line-clamp-2">{course.name}</h2>
+                </div>
+
+                <p className="text-sm text-gray-500 mb-5 ml-1">Track your learning progress</p>
+
+                <div className="h-px bg-gray-100 w-full mb-5" />
+
+                <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3 ml-1">Course Topics</h3>
+
+                <div className="space-y-3 pb-4">
+                  {topics.map((topic) => {
+                    const expanded = expandedTopics[topic.id];
+                    const subs = subtopicsMap[topic.id] || [];
+                    const allRead = subs.length > 0 && subs.every((s) => readMap[s.id]);
+                    const progress = getTopicProgress(topic.id);
+                    return (
+                      <div key={topic.id} className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow duration-200">
+                        {/* Topic header */}
+                        <div
+                          className={`flex items-center justify-between cursor-pointer w-full p-3 transition-colors ${expanded ? 'bg-gray-50' : 'bg-white hover:bg-gray-50'}`}
+                          onClick={() => toggleExpandTopic(topic.id)}
+                        >
+                          <div className="flex items-center gap-3 overflow-hidden">
+                            <div className={`p-1 rounded-full transition-transform duration-300 ${expanded ? 'bg-gray-200 rotate-90' : 'bg-transparent rotate-0'}`}>
+                              <ChevronRight className="w-4 h-4 text-gray-600" />
+                            </div>
+                            <span className="font-semibold text-gray-800 truncate text-sm">{topic.name}</span>
+                          </div>
+                          {allRead && (
+                            <span className="flex items-center justify-center rounded-full bg-green-500 text-white w-5 h-5 shadow-sm">
+                              <Check className="w-3 h-3" strokeWidth={4} />
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="px-3 pb-3 pt-0">
+                          <div className="flex items-center justify-between text-[10px] text-gray-400 mb-1 mt-1">
+                            <span>Progress</span>
+                            <span>{progress}%</span>
+                          </div>
+                          <ProgressBar
+                            value={progress}
+                            height={6}
+                            trackClassName="bg-gray-100 rounded-full"
+                            barClassName="bg-green-500 rounded-full"
+                          />
+                        </div>
+
+                        <div
+                          className={`transition-all duration-300 ease-in-out overflow-hidden ${expanded ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}
+                        >
+                          <div className="bg-gray-50 border-t border-gray-100 pb-2 pt-2">
+                            <div className="px-2 space-y-1">
+                              {subs.map((s) => (
+                                <div
+                                  key={s.id}
+                                  className={`group p-2.5 rounded-lg cursor-pointer flex items-center justify-between transition-all duration-200 ${selectedSubtopic?.id === s.id
+                                    ? "bg-white text-blue-700 shadow-sm border border-blue-100 ring-1 ring-blue-50"
+                                    : "text-gray-600 hover:bg-white hover:text-gray-900 hover:shadow-sm border border-transparent"
+                                    }`}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedSubtopic(s);
+                                    setRightTab("videos");
+                                  }}
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <div className={`w-1.5 h-1.5 rounded-full ${selectedSubtopic?.id === s.id ? 'bg-blue-500' : 'bg-gray-300 group-hover:bg-gray-400'}`} />
+                                    <span className="font-medium text-sm">{s.name}</span>
+                                  </div>
+                                  {readMap[s.id] && (
+                                    <Check className="text-green-500 w-4 h-4" />
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Divider chevron button */}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="fixed top-24 transform -translate-y-1/2 bg-white border border-gray-300 shadow rounded-full w-5 h-5 flex items-center justify-center hover:bg-gray-100 z-30"
+          className="absolute top-13 z-30 w-6 h-6 bg-white border border-gray-200 shadow-md rounded-full flex items-center justify-center hover:bg-gray-50 text-gray-500 hover:text-gray-900 transition-all duration-300 ease-in-out"
           style={{
-            left: `calc(${collapsed ? '70px' : '355px'} - 10px)`,
-            boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-            position: "fixed"
+            left: collapsed ? "58px" : "343px", // Sidebar width (70/355) - button width/2 (12)
           }}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {collapsed ? (
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-3 h-3" />
           ) : (
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="w-3 h-3" />
           )}
         </button>
 
@@ -322,8 +378,7 @@ const CourseDetail: React.FC = () => {
                 { key: "videos", label: "Videos", icon: <PlayCircle /> },
                 { key: "quizzes", label: "Quizzes", icon: <HelpCircle /> },
                 { key: "coding", label: "Coding", icon: <Code /> },
-                { key: "notes", label: "Notes", icon: <StickyNote /> },
-                { key: "markAsRead", label: "Mark as Read" }
+                { key: "notes", label: "Notes", icon: <StickyNote /> }
               ].map((tab) => (
                 <button
                   key={tab.key}
@@ -339,10 +394,35 @@ const CourseDetail: React.FC = () => {
               ))}
             </div>
 
-            <div className="flex items-center gap-2 text-sm bg-white border border-gray-300 shadow-sm rounded-full ml-4 mr-6 px-4 py-1 font-medium text-gray-700">
-              <span>
-                {selectedSubtopic ? selectedSubtopic.name : "No subtopic selected"}
-              </span>
+            <div className="flex items-center gap-4 ml-4 mr-6">
+              {selectedSubtopic && (
+                <button
+                  onClick={handleMarkAsRead}
+                  disabled={readMap[selectedSubtopic.id] || marking}
+                  className={`px-4 py-1.5 rounded-full text-sm font-semibold flex items-center gap-2 transition-all
+                      ${readMap[selectedSubtopic.id]
+                      ? "bg-green-100 text-green-700 border border-green-200 cursor-default"
+                      : "bg-blue-600 text-white hover:bg-blue-700 shadow-sm hover:shadow active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                    }
+                    `}
+                >
+                  {readMap[selectedSubtopic.id] ? (
+                    <>
+                      <Check size={16} strokeWidth={2.5} />
+                      Completed
+                    </>
+                  ) : (
+                    <>
+                      {marking ? 'Marking...' : 'Mark as Read'}
+                    </>
+                  )}
+                </button>
+              )}
+              <div className="flex items-center gap-2 text-sm bg-white border border-gray-300 shadow-sm rounded-full px-4 py-1 font-medium text-gray-700">
+                <span>
+                  {selectedSubtopic ? selectedSubtopic.name : "No subtopic selected"}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -355,26 +435,28 @@ const CourseDetail: React.FC = () => {
               </div>
             ) : (
               <>
-                {rightTab === "videos" && <StudentVideos subtopicId={selectedSubtopic.id} />}
+                {rightTab === "videos" &&
+                  <StudentVideos
+                    subtopicId={selectedSubtopic.id}
+                    courseName={course?.name || "Unknown"}
+                    topicName={topics.find(t => expandedTopics[t.id])?.name || "Topic"}
+                    subtopicName={selectedSubtopic.name}
+                    subtopicContent={selectedSubtopic.content}
+                    sessionId={chatSessionId}
+                    onNewSession={() => setChatSessionId(`course-chat-${courseId}-${uuidv4()}`)}
+                  />
+                }
                 {rightTab === "quizzes" && <StudentQuizEmbed subtopicId={selectedSubtopic.id} />}
                 {rightTab === "coding" && <StudentCodingEmbed subtopicId={selectedSubtopic.id} />}
                 {rightTab === "notes" && <StudentNotes subtopicId={selectedSubtopic.id} />}
-                {rightTab === "markAsRead" && (
-                  <div className="flex flex-col items-center justify-center h-full">
-                    <button
-                      className="bg-green-100 text-green-900 font-semibold border border-green-300 px-6 py-3 rounded-lg shadow hover:bg-green-200 transition-colors"
-                      onClick={handleMarkAsRead}
-                      disabled={!selectedSubtopic}
-                    >
-                      Mark '{selectedSubtopic?.name}' as Read
-                    </button>
-                  </div>
-                )}
+
               </>
             )}
           </div>
         </div>
       </div>
+
+
     </div>
   );
 };

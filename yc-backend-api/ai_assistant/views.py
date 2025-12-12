@@ -112,6 +112,7 @@ class ChatSessionViewSet(viewsets.ModelViewSet):
         message_content = validated_data["message"]
         temperature = validated_data.get("temperature")
         max_tokens = validated_data.get("max_tokens")
+        page_content = validated_data.get("page_content")
 
         try:
             with transaction.atomic():
@@ -159,6 +160,7 @@ class ChatSessionViewSet(viewsets.ModelViewSet):
                             messages=messages,
                             temperature=temperature,
                             max_tokens=max_tokens,
+                            page_content=page_content,
                         )
                     )
                 finally:
@@ -337,6 +339,7 @@ class ChatViewSet(viewsets.ViewSet):
             validated_data = serializer.validated_data
             ai_agent_id = validated_data["ai_agent_id"]
             message_content = validated_data["message"]
+            page_content = validated_data.get("page_content")
 
             try:
                 ai_agent = get_object_or_404(AIAgent, id=ai_agent_id, is_active=True)
@@ -372,6 +375,7 @@ class ChatViewSet(viewsets.ViewSet):
                             messages=messages,
                             temperature=temperature,
                             max_tokens=max_tokens,
+                            page_content=page_content,
                         )
                     )
                 finally:

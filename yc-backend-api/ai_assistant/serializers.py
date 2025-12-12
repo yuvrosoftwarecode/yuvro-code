@@ -219,6 +219,10 @@ class ChatRequestSerializer(serializers.Serializer):
     max_tokens = serializers.IntegerField(
         required=False, validators=[MinValueValidator(1), MaxValueValidator(100000)]
     )
+    # Optional grounding content from the webpage or source documents.
+    page_content = serializers.CharField(
+        max_length=20000, required=False, allow_blank=True
+    )
 
     def validate_message(self, value):
         """Validate message is not empty."""

@@ -219,10 +219,6 @@ class SubtopicViewSet(viewsets.ModelViewSet):
 
         return Response({"error": "Not allowed"}, status=403)
 
-
-# =====================================================
-#   VIDEOS
-# =====================================================
 class VideoViewSet(viewsets.ModelViewSet):
     queryset = Video.objects.select_related("sub_topic__topic__course")
     serializer_class = VideoSerializer

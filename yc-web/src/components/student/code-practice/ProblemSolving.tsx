@@ -1,23 +1,25 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ChevronLeft, Play, Send, BarChart3, Maximize2 } from 'lucide-react';
+import { ChevronLeft, Play, Send, Maximize2 } from 'lucide-react';
 import CodeEditor from '@/components/CodeEditor';
 import codeExecutorService from '@/services/codeExecutorService';
 import type { Course, Topic, CodingProblem } from '@/pages/student/CodePractice';
 import { ResizablePanel, ResizablePanelGroup, ResizableHandle } from '@/components/ui/resizable';
 import { toast } from 'sonner';
+import { Sparkles, X } from 'lucide-react';
+import { v4 as uuidv4 } from 'uuid';
+import AIChatContainer from '@/components/student/LearnCertify/AIChatWidget/AIChatContainer';
 
 interface ProblemSolvingProps {
   problem: CodingProblem;
   course: Course;
   topic: Topic;
   onBack: () => void;
-  onViewAnalytics: () => void;
 }
 
-const ProblemSolving = ({ problem, course, topic, onBack, onViewAnalytics }: ProblemSolvingProps) => {
+const ProblemSolving = ({ problem, course, topic, onBack }: ProblemSolvingProps) => {
   // Editor & code state
   const [code, setCode] = useState('');
   const [language, setLanguage] = useState('python');
@@ -30,10 +32,17 @@ const ProblemSolving = ({ problem, course, topic, onBack, onViewAnalytics }: Pro
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // UI state
-  const [editorOpen, setEditorOpen] = useState(false); 
+  const [editorOpen, setEditorOpen] = useState(false);
   const [isEditorMinimized, setIsEditorMinimized] = useState(false);
   const [isEditorFullscreen, setIsEditorFullscreen] = useState(false);
   const [showOutput, setShowOutput] = useState(false);
+  const [showAiChat, setShowAiChat] = useState(false);
+  // Generate a unique session key every time the problem is loaded to start fresh
+  const [chatSessionId, setChatSessionId] = useState(() => `chat-${problem.id}-${uuidv4()}`);
+
+  useEffect(() => {
+    setChatSessionId(`chat-${problem.id}-${uuidv4()}`);
+  }, [problem.id]);
 
   // keyboard shortcuts
   useEffect(() => {
@@ -56,14 +65,17 @@ const ProblemSolving = ({ problem, course, topic, onBack, onViewAnalytics }: Pro
     cpp: `// C++ template\n#include <bits/stdc++.h>\nusing namespace std;\nint main(){\n  return 0;\n}\n`,
   };
 
-  useEffect(() => {
-    setCode(templates[language] ?? templates.python);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const mounted = useRef(false);
 
   useEffect(() => {
-    // update code to template when language changes
+    // Initialize or update code template
     setCode(templates[language] ?? templates.python);
+
+    if (!mounted.current) {
+      mounted.current = true;
+      return;
+    }
+
     toast.success(`Switched to ${language} template`);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [language]);
@@ -73,10 +85,10 @@ const ProblemSolving = ({ problem, course, topic, onBack, onViewAnalytics }: Pro
     problem.difficulty === 'Easy'
       ? 'bg-green-50 text-green-700 border border-green-200'
       : problem.difficulty === 'Medium'
-      ? 'bg-yellow-50 text-yellow-700 border border-yellow-200'
-      : problem.difficulty === 'Hard'
-      ? 'bg-red-50 text-red-700 border border-red-200'
-      : 'bg-gray-50 text-gray-700 border border-gray-200';
+        ? 'bg-yellow-50 text-yellow-700 border border-yellow-200'
+        : problem.difficulty === 'Hard'
+          ? 'bg-red-50 text-red-700 border border-red-200'
+          : 'bg-gray-50 text-gray-700 border border-gray-200';
 
   const runCode = async () => {
     if (!code.trim()) return toast.error('Please write some code first');
@@ -177,6 +189,29 @@ const ProblemSolving = ({ problem, course, topic, onBack, onViewAnalytics }: Pro
     }
   }, []);
 
+  const getProblemContext = () => {
+    return `
+Problem: ${problem.title}
+Difficulty: ${problem.difficulty}
+Score: ${problem.score}
+
+Description:
+${problem.description}
+
+Input Format:
+${problem.inputFormat || 'N/A'}
+
+Output Format:
+${problem.outputFormat || 'N/A'}
+
+Examples:
+${(problem.examples || []).map(e => `Input: ${e.input}\nOutput: ${e.output}`).join('\n\n')}
+
+Current Code (${language}):
+${code}
+    `.trim();
+  };
+
   return (
     <div className={`${isEditorFullscreen ? 'h-screen bg-white' : 'container mx-auto px-4 py-3 max-w-9xl'}`}>
       {/* Breadcrumb */}
@@ -206,94 +241,102 @@ const ProblemSolving = ({ problem, course, topic, onBack, onViewAnalytics }: Pro
 
               <div className="flex items-center gap-3">
                 <Button
+                  onClick={() => setShowAiChat(!showAiChat)}
+                  className={`border border-gray-200 ${showAiChat ? 'bg-purple-50 text-purple-700 border-purple-200' : 'text-gray-700 hover:bg-gray-100'}`}
+                  variant="outline"
+                >
+                  {showAiChat ? <X className="h-4 w-4 mr-1" /> : <Sparkles className="h-4 w-4 mr-1" />}
+                  {showAiChat ? 'Close AI Help' : 'AI Help'}
+                </Button>
+                <Button
                   onClick={() => setEditorOpen(true)}
                   className="border border-gray-200 text-gray-700 hover:bg-gray-100"
                   variant="outline"
                 >
                   Open Code Editor
                 </Button>
-                <Button onClick={onViewAnalytics} variant="outline" className="!border-gray-300 text-gray-700">
-                  <BarChart3 className="h-4 w-4 mr-1" />
-                  Analytics
-                </Button>
               </div>
             </div>
           </CardHeader>
 
           <CardContent className="p-4 space-y-6">
-            <div className="space-y-6">
-              {/* Description */}
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-2">Description</h3>
-                <p className="text-gray-700 text-sm whitespace-pre-wrap">{problem.description}</p>
-              </div>
-
-              {/* Input format */}
-              {problem.inputFormat && (
+            {showAiChat ? (
+              <AIChatContainer className="w-full h-[600px] border-none shadow-none" contextGetter={getProblemContext} />
+            ) : (
+              <div className="space-y-6">
+                {/* Description */}
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">Input Format</h3>
-                  <p className="text-gray-700 text-sm whitespace-pre-wrap">{problem.inputFormat}</p>
+                  <h3 className="font-semibold text-gray-900 mb-2">Description</h3>
+                  <p className="text-gray-700 text-sm whitespace-pre-wrap">{problem.description}</p>
                 </div>
-              )}
 
-              {/* Output format */}
-              {problem.outputFormat && (
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">Output Format</h3>
-                  <p className="text-gray-700 text-sm">{problem.outputFormat}</p>
-                </div>
-              )}
+                {/* Input format */}
+                {problem.inputFormat && (
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-2">Input Format</h3>
+                    <p className="text-gray-700 text-sm whitespace-pre-wrap">{problem.inputFormat}</p>
+                  </div>
+                )}
 
-              {/* Examples */}
-              {problem.examples && problem.examples.length > 0 && (
+                {/* Output format */}
+                {problem.outputFormat && (
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-2">Output Format</h3>
+                    <p className="text-gray-700 text-sm">{problem.outputFormat}</p>
+                  </div>
+                )}
+
+                {/* Examples */}
+                {problem.examples && problem.examples.length > 0 && (
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-2">Examples</h3>
+                    <div className="space-y-3">
+                      {problem.examples.map((ex: any, idx: number) => (
+                        <div key={idx} className="bg-gray-50 p-4 rounded-lg shadow-sm">
+                          <div className="text-sm mb-1">
+                            <strong>Input:</strong> <code className="font-mono">{ex.input}</code>
+                          </div>
+                          <div className="text-sm">
+                            <strong>Output:</strong> <code className="font-mono">{ex.output}</code>
+                          </div>
+                          {ex.explanation && (
+                            <p className="text-gray-600 text-sm mt-2">
+                              <strong>Explanation:</strong> {ex.explanation}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Test cases (lovable style - no harsh borders) */}
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">Examples</h3>
-                  <div className="space-y-3">
-                    {problem.examples.map((ex: any, idx: number) => (
-                      <div key={idx} className="bg-gray-50 p-4 rounded-lg shadow-sm">
-                        <div className="text-sm mb-1">
-                          <strong>Input:</strong> <code className="font-mono">{ex.input}</code>
+                  <h3 className="font-semibold text-gray-900 mb-2">Test Cases</h3>
+                  <div className="space-y-4">
+                    {(problem.test_cases_basic || []).map((tc: any, i: number) => (
+                      <div key={i} className="bg-gray-50 p-4 rounded-lg shadow-sm">
+                        <div>
+                          <div className="text-sm font-medium text-gray-700 mb-1">Input:</div>
+                          <pre className="bg-gray-100 p-3 rounded-lg text-sm whitespace-pre-wrap overflow-x-auto">
+                            {typeof tc.input_data === 'string' ? tc.input_data : JSON.stringify(tc.input_data, null, 2)}
+                          </pre>
                         </div>
-                        <div className="text-sm">
-                          <strong>Output:</strong> <code className="font-mono">{ex.output}</code>
+
+                        <div className="mt-4">
+                          <div className="text-sm font-medium text-gray-700 mb-1">Expected Output:</div>
+                          <pre className="bg-gray-100 p-3 rounded-lg text-sm whitespace-pre-wrap overflow-x-auto">
+                            {typeof tc.expected_output === 'string'
+                              ? tc.expected_output
+                              : JSON.stringify(tc.expected_output, null, 2)}
+                          </pre>
                         </div>
-                        {ex.explanation && (
-                          <p className="text-gray-600 text-sm mt-2">
-                            <strong>Explanation:</strong> {ex.explanation}
-                          </p>
-                        )}
                       </div>
                     ))}
                   </div>
                 </div>
-              )}
-
-              {/* Test cases (lovable style - no harsh borders) */}
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-2">Test Cases</h3>
-                <div className="space-y-4">
-                  {(problem.test_cases_basic || []).map((tc: any, i: number) => (
-                    <div key={i} className="bg-gray-50 p-4 rounded-lg shadow-sm">
-                      <div>
-                        <div className="text-sm font-medium text-gray-700 mb-1">Input:</div>
-                        <pre className="bg-gray-100 p-3 rounded-lg text-sm whitespace-pre-wrap overflow-x-auto">
-                          {typeof tc.input_data === 'string' ? tc.input_data : JSON.stringify(tc.input_data, null, 2)}
-                        </pre>
-                      </div>
-
-                      <div className="mt-4">
-                        <div className="text-sm font-medium text-gray-700 mb-1">Expected Output:</div>
-                        <pre className="bg-gray-100 p-3 rounded-lg text-sm whitespace-pre-wrap overflow-x-auto">
-                          {typeof tc.expected_output === 'string'
-                            ? tc.expected_output
-                            : JSON.stringify(tc.expected_output, null, 2)}
-                        </pre>
-                      </div>
-                    </div>
-                  ))}
-                </div>
               </div>
-            </div>
+            )}
           </CardContent>
         </Card>
       )}
@@ -316,49 +359,71 @@ const ProblemSolving = ({ problem, course, topic, onBack, onViewAnalytics }: Pro
                         </div>
                       </div>
 
-                      <Button variant="ghost" size="sm" onClick={() => setEditorOpen(false)} className="gap-1 !border-none text-gray-700 hover:bg-gray-100">
-                        <ChevronLeft className="h-4 w-4 mr-1" /> Back
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => setShowAiChat(!showAiChat)}
+                          size="sm"
+                          className={`border border-gray-200 ${showAiChat ? 'bg-purple-50 text-purple-700 border-purple-200' : 'text-gray-700 hover:bg-gray-100'}`}
+                          variant="outline"
+                        >
+                          {showAiChat ? <X className="h-4 w-4 mr-1" /> : <Sparkles className="h-4 w-4 mr-1" />}
+                          {showAiChat ? 'Problem' : 'AI Buddy'}
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => setEditorOpen(false)} className="gap-1 !border-none text-gray-700 hover:bg-gray-100">
+                          <ChevronLeft className="h-4 w-4 mr-1" /> Back
+                        </Button>
+                      </div>
                     </div>
                   </CardHeader>
 
                   <CardContent className="flex-1 overflow-y-auto p-4">
-                    <div className="space-y-6">
-                      <p className="text-sm text-gray-700 whitespace-pre-wrap">{problem.description}</p>
+                    {showAiChat ? (
+                      <AIChatContainer
+                        className="w-full h-full"
+                        contextGetter={getProblemContext}
+                        welcomeMessage="I can help you understand this problem or debug your code."
+                        persistenceKey={chatSessionId}
+                        chatTitle={problem.title}
+                        onNewChat={() => setChatSessionId(`chat-${problem.id}-${uuidv4()}`)}
+                      />
+                    ) : (
+                      <div className="space-y-6">
+                        <p className="text-sm text-gray-700 whitespace-pre-wrap">{problem.description}</p>
 
-                      {problem.examples && problem.examples.length > 0 && (
+                        {problem.examples && problem.examples.length > 0 && (
+                          <div>
+                            <h4 className="font-semibold text-gray-900 mb-2">Examples</h4>
+                            <div className="space-y-3">
+                              {problem.examples.map((ex: any, idx: number) => (
+                                <div key={idx} className="bg-gray-50 p-3 rounded-lg shadow-sm">
+                                  <p><strong>Input:</strong> <code>{ex.input}</code></p>
+                                  <p><strong>Output:</strong> <code>{ex.output}</code></p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
                         <div>
-                          <h4 className="font-semibold text-gray-900 mb-2">Examples</h4>
+                          <h4 className="font-semibold text-gray-900 mb-2">Visible Test Cases</h4>
                           <div className="space-y-3">
-                            {problem.examples.map((ex: any, idx: number) => (
-                              <div key={idx} className="bg-gray-50 p-3 rounded-lg shadow-sm">
-                                <p><strong>Input:</strong> <code>{ex.input}</code></p>
-                                <p><strong>Output:</strong> <code>{ex.output}</code></p>
+                            {(problem.test_cases_basic || []).map((tc: any, i: number) => (
+                              <div key={i} className="bg-gray-50 p-3 rounded-lg shadow-sm">
+                                <p className="text-sm font-medium text-gray-700 mb-1">Input:</p>
+                                <pre className="bg-gray-100 p-2 rounded-lg text-sm overflow-x-auto whitespace-pre-wrap">
+                                  {typeof tc.input_data === 'string' ? tc.input_data : JSON.stringify(tc.input_data, null, 2)}
+                                </pre>
+
+                                <p className="text-sm mt-3 font-medium text-gray-700 mb-1">Expected Output:</p>
+                                <pre className="bg-gray-100 p-2 rounded-lg text-sm overflow-x-auto whitespace-pre-wrap">
+                                  {typeof tc.expected_output === 'string' ? tc.expected_output : JSON.stringify(tc.expected_output, null, 2)}
+                                </pre>
                               </div>
                             ))}
                           </div>
                         </div>
-                      )}
-
-                      <div>
-                        <h4 className="font-semibold text-gray-900 mb-2">Visible Test Cases</h4>
-                        <div className="space-y-3">
-                          {(problem.test_cases_basic || []).map((tc: any, i: number) => (
-                            <div key={i} className="bg-gray-50 p-3 rounded-lg shadow-sm">
-                              <p className="text-sm font-medium text-gray-700 mb-1">Input:</p>
-                              <pre className="bg-gray-100 p-2 rounded-lg text-sm overflow-x-auto whitespace-pre-wrap">
-                                {typeof tc.input_data === 'string' ? tc.input_data : JSON.stringify(tc.input_data, null, 2)}
-                              </pre>
-
-                              <p className="text-sm mt-3 font-medium text-gray-700 mb-1">Expected Output:</p>
-                              <pre className="bg-gray-100 p-2 rounded-lg text-sm overflow-x-auto whitespace-pre-wrap">
-                                {typeof tc.expected_output === 'string' ? tc.expected_output : JSON.stringify(tc.expected_output, null, 2)}
-                              </pre>
-                            </div>
-                          ))}
-                        </div>
                       </div>
-                    </div>
+                    )}
                   </CardContent>
                 </Card>
               </div>
@@ -380,7 +445,7 @@ const ProblemSolving = ({ problem, course, topic, onBack, onViewAnalytics }: Pro
             <ResizablePanel defaultSize={50} minSize={25}>
               <div className="h-full overflow-hidden pl-1">
                 <Card className="border border-gray-200 shadow-sm bg-white flex flex-col h-full overflow-hidden">
-                  
+
                   {/* Header */}
                   <CardHeader className="p-4 py-1 flex justify-between">
                     <CardTitle className="text-lg text-left text-gray-900">Solution
@@ -421,11 +486,6 @@ const ProblemSolving = ({ problem, course, topic, onBack, onViewAnalytics }: Pro
                             disabled={isSubmitting || isRunning}>
                             <Send className="h-4 w-4 mr-1" /> {isSubmitting ? 'Submitting…' : 'Submit'}
                           </Button>
-
-                          <Button onClick={onViewAnalytics} size="sm" variant="outline"
-                            className="ml-auto !border-gray-300 text-gray-700">
-                            <BarChart3 className="h-4 w-4 mr-1" /> Analytics
-                          </Button>
                         </div>
                       </div>
                     </ResizablePanel>
@@ -441,77 +501,77 @@ const ProblemSolving = ({ problem, course, topic, onBack, onViewAnalytics }: Pro
                     {showOutput && (
                       <ResizablePanel defaultSize={35} minSize={15} maxSize={70}>
                         <div className="h-full overflow-auto p-4">
-                            {output && (
-                              <>
-                                <h4 className="font-semibold text-gray-900 mb-2">Output</h4>
-                                <pre className="bg-gray-100 p-3 rounded-lg text-sm whitespace-pre-wrap overflow-auto">
-                                  {output}
-                                </pre>
-                              </>
-                            )}
+                          {output && (
+                            <>
+                              <h4 className="font-semibold text-gray-900 mb-2">Output</h4>
+                              <pre className="bg-gray-100 p-3 rounded-lg text-sm whitespace-pre-wrap overflow-auto">
+                                {output}
+                              </pre>
+                            </>
+                          )}
 
-                            {testResults && Array.isArray(testResults.results) && (
-                              <>
-                                <h4 className="font-semibold text-gray-900 mb-2">Test Results</h4>
-                                <div className="space-y-4">
-                                  {testResults.results.map((result: any, idx: number) => (
-                                    <div key={idx} className={`p-4 rounded-lg border ${result.passed ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
-                                      <div className="flex flex-wrap gap-4 mb-2">
-                                        <span className="font-medium text-gray-700">Test #{idx + 1}</span>
-                                        <span className={`px-2 py-1 rounded text-xs font-semibold ${result.passed ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{result.passed ? 'Passed' : 'Failed'}</span>
-                                        {result.execution_time !== undefined && (
-                                          <span className="text-xs text-gray-500">Time: {result.execution_time} ms</span>
-                                        )}
-                                      </div>
-                                      <div className="mb-2">
-                                        <span className="font-semibold text-gray-800">Input:</span>
-                                        <pre className="bg-gray-100 p-2 rounded text-sm whitespace-pre-wrap overflow-x-auto mt-1">{result.input_data}</pre>
-                                      </div>
-                                      <div className="mb-2">
-                                        <span className="font-semibold text-gray-800">Expected Output:</span>
-                                        <pre className="bg-gray-100 p-2 rounded text-sm whitespace-pre-wrap overflow-x-auto mt-1">{result.expected_output}</pre>
-                                      </div>
-                                      <div className="mb-2">
-                                        <span className="font-semibold text-gray-800">Actual Output:</span>
-                                        <pre className="bg-gray-100 p-2 rounded text-sm whitespace-pre-wrap overflow-x-auto mt-1">{result.actual_output}</pre>
-                                      </div>
-                                      <div className="mb-2">
-                                        <span className="font-semibold text-gray-800">Error Message:</span>
-                                        <pre className="bg-gray-100 p-2 rounded text-sm whitespace-pre-wrap overflow-x-auto mt-1">{result.error_message || 'N/A'}</pre>
-                                      </div>
+                          {testResults && Array.isArray(testResults.results) && (
+                            <>
+                              <h4 className="font-semibold text-gray-900 mb-2">Test Results</h4>
+                              <div className="space-y-4">
+                                {testResults.results.map((result: any, idx: number) => (
+                                  <div key={idx} className={`p-4 rounded-lg border ${result.passed ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+                                    <div className="flex flex-wrap gap-4 mb-2">
+                                      <span className="font-medium text-gray-700">Test #{idx + 1}</span>
+                                      <span className={`px-2 py-1 rounded text-xs font-semibold ${result.passed ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{result.passed ? 'Passed' : 'Failed'}</span>
+                                      {result.execution_time !== undefined && (
+                                        <span className="text-xs text-gray-500">Time: {result.execution_time} ms</span>
+                                      )}
                                     </div>
-                                  ))}
-                                </div>
-                              </>
-                            )}
-
-                            {executionMetrics && (
-                              <>
-                                <h4 className="font-semibold text-gray-900 mb-2">Execution Metrics</h4>
-                                <div className="p-4 rounded-lg border bg-blue-50 border-blue-200 mb-2">
-                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                    {executionMetrics.execution_time !== undefined && (
-                                      <div>
-                                        <span className="font-semibold text-gray-800">Execution Time:</span>
-                                        <span className="ml-2 text-sm text-gray-700">{executionMetrics.execution_time} ms</span>
-                                      </div>
-                                    )}
-                                    {executionMetrics.memory_usage !== undefined && (
-                                      <div>
-                                        <span className="font-semibold text-gray-800">Memory Usage:</span>
-                                        <span className="ml-2 text-sm text-gray-700">{executionMetrics.memory_usage} KB</span>
-                                      </div>
-                                    )}
-                                    {executionMetrics.status && (
-                                      <div>
-                                        <span className="font-semibold text-gray-800">Status:</span>
-                                        <span className="ml-2 text-sm text-gray-700">{executionMetrics.status}</span>
-                                      </div>
-                                    )}
+                                    <div className="mb-2">
+                                      <span className="font-semibold text-gray-800">Input:</span>
+                                      <pre className="bg-gray-100 p-2 rounded text-sm whitespace-pre-wrap overflow-x-auto mt-1">{result.input_data}</pre>
+                                    </div>
+                                    <div className="mb-2">
+                                      <span className="font-semibold text-gray-800">Expected Output:</span>
+                                      <pre className="bg-gray-100 p-2 rounded text-sm whitespace-pre-wrap overflow-x-auto mt-1">{result.expected_output}</pre>
+                                    </div>
+                                    <div className="mb-2">
+                                      <span className="font-semibold text-gray-800">Actual Output:</span>
+                                      <pre className="bg-gray-100 p-2 rounded text-sm whitespace-pre-wrap overflow-x-auto mt-1">{result.actual_output}</pre>
+                                    </div>
+                                    <div className="mb-2">
+                                      <span className="font-semibold text-gray-800">Error Message:</span>
+                                      <pre className="bg-gray-100 p-2 rounded text-sm whitespace-pre-wrap overflow-x-auto mt-1">{result.error_message || 'N/A'}</pre>
+                                    </div>
                                   </div>
+                                ))}
+                              </div>
+                            </>
+                          )}
+
+                          {executionMetrics && (
+                            <>
+                              <h4 className="font-semibold text-gray-900 mb-2">Execution Metrics</h4>
+                              <div className="p-4 rounded-lg border bg-blue-50 border-blue-200 mb-2">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                  {executionMetrics.execution_time !== undefined && (
+                                    <div>
+                                      <span className="font-semibold text-gray-800">Execution Time:</span>
+                                      <span className="ml-2 text-sm text-gray-700">{executionMetrics.execution_time} ms</span>
+                                    </div>
+                                  )}
+                                  {executionMetrics.memory_usage !== undefined && (
+                                    <div>
+                                      <span className="font-semibold text-gray-800">Memory Usage:</span>
+                                      <span className="ml-2 text-sm text-gray-700">{executionMetrics.memory_usage} KB</span>
+                                    </div>
+                                  )}
+                                  {executionMetrics.status && (
+                                    <div>
+                                      <span className="font-semibold text-gray-800">Status:</span>
+                                      <span className="ml-2 text-sm text-gray-700">{executionMetrics.status}</span>
+                                    </div>
+                                  )}
                                 </div>
-                              </>
-                            )}
+                              </div>
+                            </>
+                          )}
                         </div>
                       </ResizablePanel>
                     )}
@@ -520,7 +580,7 @@ const ProblemSolving = ({ problem, course, topic, onBack, onViewAnalytics }: Pro
               </div>
             </ResizablePanel>
           </ResizablePanelGroup>
-        </div>   
+        </div>
       )}
 
       {/* 3) Fullscreen editor mode */}

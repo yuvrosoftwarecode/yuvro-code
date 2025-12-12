@@ -94,7 +94,7 @@ const Navigation: React.FC = () => {
   if (!isAuthenticated) return null;
 
   return (
-    <nav className="bg-white shadow sticky top-0 z-50">
+    <nav className="bg-white shadow sticky top-0 z-[100]">
       <div className="w-full mx-auto px-2 sm:px-3 lg:px-4">
         <div className="flex justify-between items-center h-16">
           {/* Left: Logo + Tabs */}
@@ -183,7 +183,7 @@ const Navigation: React.FC = () => {
               </button>
 
               {isProfileMenuOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-lg py-2 border border-gray-100">
+                <div className="absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-lg py-2 border border-gray-100 z-[101]">
                   {profileMenu.map((item) => (
                     <Link
                       key={item.path}

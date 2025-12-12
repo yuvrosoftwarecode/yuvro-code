@@ -2,7 +2,6 @@
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { Code } from "lucide-react";
 import type { ContinueProgress } from "../LearnCertify/types";
 
@@ -12,13 +11,33 @@ interface Props {
 }
 
 const ContinueLearningCard: React.FC<Props> = ({ continueProgress, onContinue }) => {
+  const hasProgress = continueProgress.course_id && continueProgress.total_lessons > 0;
+
+  if (!hasProgress) {
+    return (
+      <Card className="border border-green-100 overflow-hidden bg-gradient-to-r from-green-500/10 via-emerald-500/10 to-teal-500/10 backdrop-blur-sm shadow-lg">
+        <div className="p-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+            <div className="flex-1">
+              <h3 className="text-xl font-bold mb-2 text-green-700">Start Your Journey</h3>
+              <p className="text-base text-gray-700 mb-4">Pick a course and start learning today!</p>
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <span>🚀 Ready to launch your career?</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
   return (
     <Card className="border border-blue-100 overflow-hidden bg-gradient-to-r from-blue-500/10 via-cyan-500/10 to-teal-500/10 backdrop-blur-sm shadow-lg">
       <div className="p-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
           <div className="flex-1">
             <h3 className="text-xl font-bold mb-2 text-blue-700">Continue Where You Left Off</h3>
-            <p className="text-base text-gray-700 mb-4">Resume your <span className="font-semibold text-blue-600">{continueProgress.course_name || "course"}</span> learning journey</p>
+            <p className="text-base text-gray-700 mb-4">Resume your <span className="font-semibold text-blue-600">{continueProgress.course_name || "Course"}</span> learning journey</p>
 
             <div className="flex items-center gap-4 text-sm mb-2">
               <div className="flex items-center gap-2">

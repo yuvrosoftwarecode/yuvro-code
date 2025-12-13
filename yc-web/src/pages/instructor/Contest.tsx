@@ -1,16 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Trophy, Users, Calendar, Clock, Building2, GraduationCap, Plus, Pencil, Trash2, Eye, FileText, Settings, CheckCircle, Code } from 'lucide-react';
+import { Trophy, Users, Calendar, Clock, Building2, GraduationCap, Pencil, Trash2, Eye, FileText, Code, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import RoleSidebar from '@/components/common/RoleSidebar';
 import RoleHeader from '@/components/common/RoleHeader';
 import SearchBar from '@/components/common/SearchBar';
-import QuestionBank from '@/components/common/QuestionBank';
 import { useAuth } from "@/contexts/AuthContext";
 import { contestService } from '@/services/contestService';
 import { fetchQuestionById, Question } from '@/services/questionService';
@@ -75,22 +73,8 @@ export default function OwnerContest() {
   const [contests, setContests] = useState<Contest[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTab, setSelectedTab] = useState('all');
-  const [currentView, setCurrentView] = useState<'list' | 'add' | 'edit' | 'view'>('list');
+  const [currentView, setCurrentView] = useState<'list' | 'view'>('list');
   const [selectedContest, setSelectedContest] = useState<Contest | null>(null);
-  const [currentFormTab, setCurrentFormTab] = useState('details');
-  const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
-  const [selectedQuestionsByType, setSelectedQuestionsByType] = useState({
-    mcq_single: [] as string[],
-    mcq_multiple: [] as string[],
-    coding: [] as string[],
-    descriptive: [] as string[]
-  });
-  const [randomQuestionsConfig, setRandomQuestionsConfig] = useState({
-    mcq_single: 0,
-    mcq_multiple: 0,
-    coding: 0,
-    descriptive: 0
-  });
   const [contestQuestions, setContestQuestions] = useState<{
     mcq_single: Question[];
     mcq_multiple: Question[];
@@ -106,77 +90,7 @@ export default function OwnerContest() {
   const { token } = useAuth();
   const navigate = useNavigate();
 
-  const categorizeQuestionsByType = async (questionIds: string[]) => {
-    if (questionIds.length === 0) {
-      return {
-        mcq_single: [],
-        mcq_multiple: [],
-        coding: [],
-        descriptive: []
-      };
-    }
 
-    try {
-      // Fetch question details to determine their types
-      const questionPromises = questionIds.map(id => fetchQuestionById(id));
-      const questions = await Promise.all(questionPromises);
-      
-      const categorized = {
-        mcq_single: [] as string[],
-        mcq_multiple: [] as string[],
-        coding: [] as string[],
-        descriptive: [] as string[]
-      };
-
-      questions.forEach(question => {
-        if (question.type === 'mcq_single') {
-          categorized.mcq_single.push(question.id);
-        } else if (question.type === 'mcq_multiple') {
-          categorized.mcq_multiple.push(question.id);
-        } else if (question.type === 'coding') {
-          categorized.coding.push(question.id);
-        } else if (question.type === 'descriptive') {
-          categorized.descriptive.push(question.id);
-        }
-      });
-
-      return categorized;
-    } catch (error) {
-      console.error('Failed to categorize questions:', error);
-      // Fallback: put all questions in mcq_single
-      return {
-        mcq_single: questionIds,
-        mcq_multiple: [],
-        coding: [],
-        descriptive: []
-      };
-    }
-  };
-
-  const handleQuestionsChange = async (questions: string[]) => {
-    setSelectedQuestions(questions);
-    
-    // Categorize questions by their actual types
-    const categorizedQuestions = await categorizeQuestionsByType(questions);
-    setSelectedQuestionsByType(categorizedQuestions);
-  };
-
-  const [formData, setFormData] = useState({
-    title: '',
-    organizer: '',
-    description: '',
-    type: 'company' as 'company' | 'college' | 'weekly' | 'monthly',
-    startDate: '',
-    endDate: '',
-    duration: '',
-    difficulty: 'Medium' as 'Easy' | 'Medium' | 'Hard',
-    instructions: '',
-    totalMarks: '100',
-    passingMarks: '60',
-    enableProctoring: true,
-    publishStatus: 'draft' as 'draft' | 'active' | 'inactive' | 'archived',
-    prize: ''
-  });
 
   const fetchContests = async () => {
     try {
@@ -194,60 +108,7 @@ export default function OwnerContest() {
     fetchContests();
   }, []);
 
-  const handleAddContest = async () => {
-    const payload = {
-      title: formData.title,
-      organizer: formData.organizer,
-      type: formData.type,
-      status: 'upcoming', // Default to upcoming for new contests
-      start_datetime: formData.startDate ? new Date(formData.startDate).toISOString() : undefined,
-      end_datetime: formData.endDate ? new Date(formData.endDate).toISOString() : undefined,
-      duration: formData.duration ? parseInt(formData.duration) * 60 : undefined,
-      prize: formData.prize,
-      difficulty: formData.difficulty.toLowerCase(),
-      description: formData.description,
-      questions_config: selectedQuestionsByType,
-      questions_random_config: randomQuestionsConfig,
-    };
 
-    try {
-      await contestService.createContest(payload);
-      toast.success('Contest added successfully');
-      fetchContests();
-      setCurrentView('list');
-      resetForm();
-    } catch (err) {
-      toast.error('Failed to add contest');
-    }
-  };
-
-  const handleEditContest = async () => {
-    if (!selectedContest) return;
-    const payload = {
-      title: formData.title,
-      organizer: formData.organizer,
-      type: formData.type,
-      start_datetime: formData.startDate ? new Date(formData.startDate).toISOString() : undefined,
-      end_datetime: formData.endDate ? new Date(formData.endDate).toISOString() : undefined,
-      duration: formData.duration ? parseInt(formData.duration) * 60 : undefined,
-      prize: formData.prize,
-      difficulty: formData.difficulty.toLowerCase(),
-      description: formData.description,
-      questions_config: selectedQuestionsByType,
-      questions_random_config: randomQuestionsConfig,
-    };
-
-    try {
-      await contestService.updateContest(selectedContest.id, payload);
-      toast.success('Contest updated successfully');
-      fetchContests();
-      setCurrentView('list');
-      setSelectedContest(null);
-      resetForm();
-    } catch (err) {
-      toast.error('Failed to update contest');
-    }
-  };
 
   const handleDeleteContest = async (id: string) => {
     try {
@@ -259,84 +120,16 @@ export default function OwnerContest() {
     }
   };
 
-  const resetForm = () => {
-    setFormData({
-      title: '',
-      organizer: '',
-      description: '',
-      type: 'company',
-      startDate: '',
-      endDate: '',
-      duration: '',
-      difficulty: 'Medium',
-      instructions: '',
-      totalMarks: '100',
-      passingMarks: '60',
-      enableProctoring: true,
-      publishStatus: 'draft',
-      prize: ''
-    });
-    setSelectedQuestions([]);
-    setSelectedQuestionsByType({
-      mcq_single: [],
-      mcq_multiple: [],
-      coding: [],
-      descriptive: []
-    });
-    setRandomQuestionsConfig({
-      mcq_single: 0,
-      mcq_multiple: 0,
-      coding: 0,
-      descriptive: 0
-    });
-    setCurrentFormTab('details');
-  };
+
 
   const openEditForm = (contest: Contest) => {
-    setSelectedContest(contest);
-    setCurrentView('edit');
-    setFormData({
-      title: contest.title,
-      organizer: contest.organizer,
-      type: contest.type,
-      startDate: contest.startDate || '',
-      endDate: contest.endDate || '',
-      duration: contest.duration.replace(' min', ''),
-      prize: contest.prize || '',
-      difficulty: contest.difficulty,
-      description: contest.description,
-      instructions: '',
-      totalMarks: '100',
-      passingMarks: '60',
-      enableProctoring: false,
-      publishStatus: 'draft'
-    });
-    const allQuestions = [
-      ...(contest.questions_config?.mcq_single || []),
-      ...(contest.questions_config?.mcq_multiple || []),
-      ...(contest.questions_config?.coding || []),
-      ...(contest.questions_config?.descriptive || [])
-    ];
-    setSelectedQuestions(allQuestions);
-    setSelectedQuestionsByType(contest.questions_config || {
-      mcq_single: [],
-      mcq_multiple: [],
-      coding: [],
-      descriptive: []
-    });
-    setRandomQuestionsConfig(contest.questions_random_config || {
-      mcq_single: 0,
-      mcq_multiple: 0,
-      coding: 0,
-      descriptive: 0
-    });
-    setCurrentFormTab('details');
+    // Navigate to the dedicated edit route
+    navigate(`/instructor/contests/${contest.id}/edit`);
   };
 
   const fetchContestQuestions = async (questionsConfig: Contest['questions_config']) => {
     if (!questionsConfig) return;
 
-    console.log('Questions config structure:', questionsConfig);
     setLoadingQuestions(true);
     try {
       const fetchedQuestions = {
@@ -357,11 +150,9 @@ export default function OwnerContest() {
 
       // Fetch questions for each type
       for (const [type, ids] of Object.entries(normalizedQuestionsConfig)) {
-        console.log(`Processing type: ${type}, ids:`, ids, 'isArray:', Array.isArray(ids));
-        
         // Handle different possible data structures
         let questionIdArray: string[] = [];
-        
+
         if (Array.isArray(ids)) {
           questionIdArray = ids;
         } else if (typeof ids === 'string') {
@@ -440,8 +231,6 @@ export default function OwnerContest() {
 
   const getHeaderTitle = () => {
     switch (currentView) {
-      case 'add': return 'Add New Contest';
-      case 'edit': return `Edit Contest: ${selectedContest?.title}`;
       case 'view': return `Contest Details: ${selectedContest?.title}`;
       default: return 'Contest Management';
     }
@@ -449,8 +238,6 @@ export default function OwnerContest() {
 
   const getHeaderSubtitle = () => {
     switch (currentView) {
-      case 'add': return 'Create a new coding contest for students';
-      case 'edit': return 'Modify contest details and settings';
       case 'view': return 'View contest information and details';
       default: return 'Create and manage coding contests for students';
     }
@@ -458,7 +245,7 @@ export default function OwnerContest() {
 
   const headerActions = currentView === 'list' ? (
     <button
-      onClick={() => setCurrentView('add')}
+      onClick={() => navigate('/instructor/contests/add')}
       className="bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors"
     >
       + Add Contest
@@ -468,7 +255,6 @@ export default function OwnerContest() {
       onClick={() => {
         setCurrentView('list');
         setSelectedContest(null);
-        resetForm();
       }}
       className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 transition-colors"
     >
@@ -581,380 +367,7 @@ export default function OwnerContest() {
               </>
             )}
 
-            {/* Add Contest Form */}
-            {(currentView === 'add' || currentView === 'edit') && (
-              <div className="bg-white shadow rounded-lg mb-6 p-6">
-                {/* Tabbed Interface */}
-                <Tabs value={currentFormTab} onValueChange={setCurrentFormTab} className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 mb-6 bg-gray-100 p-1 rounded-lg">
-                    <TabsTrigger
-                      value="details"
-                      className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md py-2 px-4 transition-all"
-                    >
-                      <Settings className="h-4 w-4" />
-                      Contest Details
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="questions"
-                      className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md py-2 px-4 transition-all"
-                    >
-                      <FileText className="h-4 w-4" />
-                      Questions ({Object.values(selectedQuestionsByType).flat().length + Object.values(randomQuestionsConfig).reduce((sum, count) => sum + count, 0)})
-                    </TabsTrigger>
-                  </TabsList>
 
-                  <TabsContent value="details" className="space-y-6">
-                    {/* Basic Information Card */}
-                    <Card className="border border-gray-200 shadow-sm">
-                      <CardHeader className="pb-4">
-                        <CardTitle className="text-lg font-semibold text-gray-900 flex items-center">
-                          <Trophy className="h-5 w-5 mr-2 text-blue-500" />
-                          Basic Information
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Contest Title *</label>
-                            <input
-                              type="text"
-                              value={formData.title}
-                              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                              placeholder="e.g., Weekly Coding Challenge"
-                              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Organizer *</label>
-                            <input
-                              type="text"
-                              value={formData.organizer}
-                              onChange={(e) => setFormData({ ...formData, organizer: e.target.value })}
-                              placeholder="e.g., Yuvro Platform"
-                              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                            />
-                          </div>
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                          <textarea
-                            value={formData.description}
-                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                            placeholder="Describe the contest focus and topics..."
-                            rows={3}
-                            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none"
-                          />
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Contest Type *</label>
-                            <select
-                              value={formData.type}
-                              onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
-                              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                            >
-                              <option value="company">Company Contest</option>
-                              <option value="college">College Contest</option>
-                            </select>
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Difficulty Level *</label>
-                            <select
-                              value={formData.difficulty}
-                              onChange={(e) => setFormData({ ...formData, difficulty: e.target.value as any })}
-                              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                            >
-                              <option value="Easy">Easy</option>
-                              <option value="Medium">Medium</option>
-                              <option value="Hard">Hard</option>
-                            </select>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    {/* Schedule & Duration Card */}
-                    <Card className="border border-gray-200 shadow-sm">
-                      <CardHeader className="pb-4">
-                        <CardTitle className="text-lg font-semibold text-gray-900 flex items-center">
-                          <Calendar className="h-5 w-5 mr-2 text-green-500" />
-                          Schedule & Duration
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Start Date *</label>
-                            <input
-                              type="datetime-local"
-                              value={formData.startDate}
-                              onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">End Date *</label>
-                            <input
-                              type="datetime-local"
-                              value={formData.endDate}
-                              onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Duration (minutes) *</label>
-                            <input
-                              type="number"
-                              value={formData.duration}
-                              onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                              placeholder="e.g., 120"
-                              min="1"
-                              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                            />
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    {/* Contest Settings Card */}
-                    <Card className="border border-gray-200 shadow-sm">
-                      <CardHeader className="pb-4">
-                        <CardTitle className="text-lg font-semibold text-gray-900 flex items-center">
-                          <Settings className="h-5 w-5 mr-2 text-orange-500" />
-                          Contest Settings
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Total Marks</label>
-                            <input
-                              type="number"
-                              value={formData.totalMarks}
-                              onChange={(e) => setFormData({ ...formData, totalMarks: e.target.value })}
-                              placeholder="100"
-                              min="1"
-                              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Passing Marks</label>
-                            <input
-                              type="number"
-                              value={formData.passingMarks}
-                              onChange={(e) => setFormData({ ...formData, passingMarks: e.target.value })}
-                              placeholder="60"
-                              min="1"
-                              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Publish Status</label>
-                            <select
-                              value={formData.publishStatus}
-                              onChange={(e) => setFormData({ ...formData, publishStatus: e.target.value as any })}
-                              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                            >
-                              <option value="draft">Draft</option>
-                              <option value="active">Active</option>
-                              <option value="inactive">Inactive</option>
-                              <option value="archived">Archived</option>
-                            </select>
-                          </div>
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Contest Instructions</label>
-                          <textarea
-                            value={formData.instructions}
-                            onChange={(e) => setFormData({ ...formData, instructions: e.target.value })}
-                            placeholder="Provide detailed instructions for participants..."
-                            rows={3}
-                            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none"
-                          />
-                        </div>
-
-                        <div className="flex items-center space-x-3">
-                          <div className="flex items-center">
-                            <input
-                              type="checkbox"
-                              id="enableProctoring"
-                              checked={formData.enableProctoring}
-                              onChange={(e) => setFormData({ ...formData, enableProctoring: e.target.checked })}
-                              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                            />
-                            <label htmlFor="enableProctoring" className="ml-2 text-sm font-medium text-gray-700">
-                              Enable Proctoring
-                            </label>
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            Monitor participants during the contest for suspicious activities
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    {/* Prize Information Card */}
-                    <Card className="border border-gray-200 shadow-sm">
-                      <CardHeader className="pb-4">
-                        <CardTitle className="text-lg font-semibold text-gray-900 flex items-center">
-                          <Trophy className="h-5 w-5 mr-2 text-yellow-500" />
-                          Prize Information
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Prize (Optional)</label>
-                          <input
-                            type="text"
-                            value={formData.prize}
-                            onChange={(e) => setFormData({ ...formData, prize: e.target.value })}
-                            placeholder="e.g., ₹50,000 or Certificate of Excellence"
-                            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                          />
-                          <p className="mt-1 text-sm text-gray-500">
-                            Specify the prize or recognition for contest winners
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </TabsContent>
-
-                  <TabsContent value="questions" className="space-y-6">
-                    {/* Questions Section */}
-                    <Card className="border border-gray-200 shadow-sm">
-                      <CardHeader className="pb-4">
-                        <CardTitle className="text-lg font-semibold text-gray-900 flex items-center">
-                          <FileText className="h-5 w-5 mr-2 text-purple-500" />
-                          Random Question Configuration                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-8">
-                        <div>
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-2">MCQ Single Choice</label>
-                              <input
-                                type="number"
-                                min="0"
-                                value={randomQuestionsConfig.mcq_single}
-                                onChange={(e) => setRandomQuestionsConfig({
-                                  ...randomQuestionsConfig,
-                                  mcq_single: parseInt(e.target.value) || 0
-                                })}
-                                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                                placeholder="0"
-                              />
-                              <p className="mt-1 text-xs text-gray-500">Number of single-choice MCQ questions</p>
-                            </div>
-
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-2">MCQ Multiple Choice</label>
-                              <input
-                                type="number"
-                                min="0"
-                                value={randomQuestionsConfig.mcq_multiple}
-                                onChange={(e) => setRandomQuestionsConfig({
-                                  ...randomQuestionsConfig,
-                                  mcq_multiple: parseInt(e.target.value) || 0
-                                })}
-                                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                                placeholder="0"
-                              />
-                              <p className="mt-1 text-xs text-gray-500">Number of multiple-choice MCQ questions</p>
-                            </div>
-
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-2">Coding Questions</label>
-                              <input
-                                type="number"
-                                min="0"
-                                value={randomQuestionsConfig.coding}
-                                onChange={(e) => setRandomQuestionsConfig({
-                                  ...randomQuestionsConfig,
-                                  coding: parseInt(e.target.value) || 0
-                                })}
-                                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                                placeholder="0"
-                              />
-                              <p className="mt-1 text-xs text-gray-500">Number of coding/programming questions</p>
-                            </div>
-
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-2">Descriptive Questions</label>
-                              <input
-                                type="number"
-                                min="0"
-                                value={randomQuestionsConfig.descriptive}
-                                onChange={(e) => setRandomQuestionsConfig({
-                                  ...randomQuestionsConfig,
-                                  descriptive: parseInt(e.target.value) || 0
-                                })}
-                                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                                placeholder="0"
-                              />
-                              <p className="mt-1 text-xs text-gray-500">Number of descriptive/essay questions</p>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Question Bank */}
-                        <div>
-                          <QuestionBank
-                            mode="selection"
-                            selectedQuestions={selectedQuestions}
-                            onQuestionsChange={handleQuestionsChange}
-                            allowMultipleSelection={true}
-                            filters={{ categories: 'contest' }}
-                            showSplitView={true}
-                          />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </TabsContent>
-
-                  {/* Action Buttons */}
-                  <div className="flex justify-between items-center pt-6 border-t border-gray-200">
-                    <div className="text-sm text-gray-600">
-                      <span>{Object.values(selectedQuestionsByType).flat().length} specific question{Object.values(selectedQuestionsByType).flat().length !== 1 ? 's' : ''} selected</span>
-                      <span className="mx-2">•</span>
-                      <span>{Object.values(randomQuestionsConfig).reduce((sum, count) => sum + count, 0)} random question{Object.values(randomQuestionsConfig).reduce((sum, count) => sum + count, 0) !== 1 ? 's' : ''} configured</span>
-                    </div>
-                    <div className="flex space-x-3">
-                      <button
-                        onClick={() => {
-                          setCurrentView('list');
-                          setSelectedContest(null);
-                          resetForm();
-                        }}
-                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (currentView === 'edit') {
-                            handleEditContest();
-                          } else if (currentFormTab === 'details') {
-                            setCurrentFormTab('questions');
-                          } else {
-                            handleAddContest();
-                          }
-                        }}
-                        className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
-                      >
-                        {currentView === 'edit'
-                          ? 'Update Contest'
-                          : currentFormTab === 'details'
-                            ? 'Next: Add Questions'
-                            : 'Create Contest'
-                        }
-                      </button>
-                    </div>
-                  </div>
-                </Tabs>
-              </div>
-            )}
 
             {/* View Contest Details */}
             {currentView === 'view' && selectedContest && (

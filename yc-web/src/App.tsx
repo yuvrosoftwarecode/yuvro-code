@@ -37,6 +37,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import DashboardRedirect from './components/DashboardRedirect';
 import OwnerContest from './pages/instructor/Contest';
 import ContestEdit from './components/instructor/contests/ContestEdit';
+import ContestForm from './components/instructor/contests/ContestForm';
 import InstructorMockInterview from './pages/instructor/MockInterview';
 import RecruiterJobs from "./pages/recruiter/Jobs";
 import AddJob from "./components/student/AddJob";
@@ -264,6 +265,24 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={["admin", "instructor", "recruiter"]}>
                     <OwnerContest />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/instructor/contests/add"
+                element={
+                  <ProtectedRoute allowedRoles={["admin", "instructor", "recruiter"]}>
+                    <ContestForm />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/instructor/contests/:contestId/edit"
+                element={
+                  <ProtectedRoute allowedRoles={["admin", "instructor", "recruiter"]}>
+                    <ContestForm />
                   </ProtectedRoute>
                 }
               />

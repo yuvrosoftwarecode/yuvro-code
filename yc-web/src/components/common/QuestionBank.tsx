@@ -71,31 +71,64 @@ export default function QuestionBank({
     fetchQuestionsData();
   }, [searchQuery, selectedType, filters]);
 
+  // Handle selectedQuestions changes - manage allSelectedQuestions
   useEffect(() => {
-    // When selectedQuestions prop changes (e.g., from parent component),
-    // update allSelectedQuestions with currently loaded questions that match
-    const currentSelected = questions.filter(q => selectedQuestions.includes(q.id));
-    
-    // Only update if we have new questions to add
-    if (currentSelected.length > 0) {
-      setAllSelectedQuestions(prev => {
-        // Merge with existing, avoiding duplicates
-        const existingIds = prev.map(q => q.id);
-        const newQuestions = currentSelected.filter(q => !existingIds.includes(q.id));
-        return [...prev, ...newQuestions];
-      });
-    }
-  }, [questions]);
+    const updateSelectedQuestions = async () => {
+      if (selectedQuestions.length === 0) {
+        setAllSelectedQuestions([]);
+        return;
+      }
 
-  // Clear allSelectedQuestions when selectedQuestions is empty
-  useEffect(() => {
-    if (selectedQuestions.length === 0) {
-      setAllSelectedQuestions([]);
-    } else {
-      // Remove questions that are no longer selected
-      setAllSelectedQuestions(prev => prev.filter(q => selectedQuestions.includes(q.id)));
-    }
-  }, [selectedQuestions]);
+      // Get questions that are already loaded (from current questions array)
+      const loadedSelected = questions.filter(q => selectedQuestions.includes(q.id));
+      
+      // Get questions that are already in allSelectedQuestions
+      const existingSelected = allSelectedQuestions.filter(q => selectedQuestions.includes(q.id));
+      
+      // Find questions that need to be fetched
+      const loadedIds = loadedSelected.map(q => q.id);
+      const existingIds = existingSelected.map(q => q.id);
+      const allKnownIds = [...new Set([...loadedIds, ...existingIds])];
+      const missingIds = selectedQuestions.filter(id => !allKnownIds.includes(id));
+      
+      let allSelected = [...loadedSelected];
+      
+      // Add existing questions that are still selected (avoid duplicates)
+      existingSelected.forEach(q => {
+        if (!allSelected.some(existing => existing.id === q.id)) {
+          allSelected.push(q);
+        }
+      });
+      
+      // Fetch missing questions if any
+      if (missingIds.length > 0) {
+        try {
+          const { fetchQuestionById } = await import('@/services/questionService');
+          const missingQuestions = await Promise.all(
+            missingIds.map(id => fetchQuestionById(id))
+          );
+          
+          // Add missing questions (avoid duplicates)
+          missingQuestions.forEach(q => {
+            if (!allSelected.some(existing => existing.id === q.id)) {
+              allSelected.push(q);
+            }
+          });
+        } catch (error) {
+          console.error('Failed to fetch missing questions:', error);
+        }
+      }
+      
+      // Set the final list, ensuring no duplicates and maintaining order
+      const uniqueSelected = allSelected.filter((question, index, self) => 
+        index === self.findIndex(q => q.id === question.id)
+      );
+      
+      setAllSelectedQuestions(uniqueSelected);
+    };
+
+    updateSelectedQuestions();
+  }, [selectedQuestions, questions]);
 
   // Drag functionality for resizing panels
   const handleMouseDown = (e: React.MouseEvent) => {

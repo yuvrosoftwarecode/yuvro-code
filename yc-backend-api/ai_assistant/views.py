@@ -5,7 +5,8 @@ from django.utils import timezone
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from authentication.permissions import IsAuthenticatedUser
+from authentication.permissions import IsOwnerOrReadOnly
 from .models import (
     AIAgent,
     ChatSession,
@@ -26,19 +27,6 @@ from .serializers import (
 from .services import AIServiceFactory, AIServiceError
 
 
-class IsOwnerOrReadOnly(permissions.BasePermission):
-    """
-    Custom permission to only allow owners of an object to edit it.
-    """
-
-    def has_object_permission(self, request, view, obj):
-        # Read permissions for any authenticated user
-        if request.method in permissions.SAFE_METHODS:
-            return True
-        # Write permissions only to the owner
-        return obj.user == request.user
-
-
 class AIAgentViewSet(viewsets.ReadOnlyModelViewSet):
     """
     ViewSet for AIAgent model - read-only for users.
@@ -46,7 +34,7 @@ class AIAgentViewSet(viewsets.ReadOnlyModelViewSet):
 
     queryset = AIAgent.objects.filter(is_active=True)
     serializer_class = AIAgentSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedUser]
 
     def get_queryset(self):
         """Filter agents by provider if specified."""
@@ -93,7 +81,7 @@ class ChatSessionViewSet(viewsets.ModelViewSet):
     ViewSet for ChatSession model.
     """
 
-    permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
+    permission_classes = [IsAuthenticatedUser, IsOwnerOrReadOnly]
 
     def get_queryset(self):
         """Return chat sessions for the current user."""
@@ -258,7 +246,7 @@ class ChatMessageViewSet(viewsets.ReadOnlyModelViewSet):
     """
 
     serializer_class = ChatMessageSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedUser]
 
     def get_queryset(self):
         """Return messages for chat sessions owned by the current user."""
@@ -271,7 +259,7 @@ class AIAgentUsageViewSet(viewsets.ReadOnlyModelViewSet):
     """
 
     serializer_class = AIAgentUsageSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedUser]
 
     def get_queryset(self):
         """Return usage stats for the current user."""
@@ -322,7 +310,7 @@ class AIAgentConfigurationViewSet(viewsets.ModelViewSet):
     """
 
     serializer_class = AIAgentConfigurationSerializer
-    permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
+    permission_classes = [IsAuthenticatedUser, IsOwnerOrReadOnly]
 
     def get_queryset(self):
         """Return configurations for the current user."""
@@ -338,7 +326,7 @@ class ChatViewSet(viewsets.ViewSet):
     ViewSet for chat operations that don't require a session.
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedUser]
 
     @action(detail=False, methods=["post"])
     def quick_chat(self, request):

@@ -40,6 +40,58 @@
       }
     },
     {
+      "email": "instructor_java@yuvro.com",
+      "username": "instructor_java",
+      "first_name": "Java",
+      "last_name": "Instructor",
+      "role": "instructor",
+      "password": "instructor123",
+      "is_staff": false,
+      "is_superuser": false,
+      "profile": {
+        "bio": "Java programming instructor with expertise in enterprise applications and object-oriented design."
+      }
+    },
+    {
+      "email": "instructor_mysql@yuvro.com",
+      "username": "instructor_mysql",
+      "first_name": "MySQL",
+      "last_name": "Instructor",
+      "role": "instructor",
+      "password": "instructor123",
+      "is_staff": false,
+      "is_superuser": false,
+      "profile": {
+        "bio": "Database instructor specializing in MySQL, SQL optimization, and relational database design."
+      }
+    },
+    {
+      "email": "instructor_mongodb@yuvro.com",
+      "username": "instructor_mongodb",
+      "first_name": "MongoDB",
+      "last_name": "Instructor",
+      "role": "instructor",
+      "password": "instructor123",
+      "is_staff": false,
+      "is_superuser": false,
+      "profile": {
+        "bio": "NoSQL database instructor with expertise in MongoDB, document databases, and big data solutions."
+      }
+    },
+    {
+      "email": "instructor_ai@yuvro.com",
+      "username": "instructor_ai",
+      "first_name": "AI",
+      "last_name": "Instructor",
+      "role": "instructor",
+      "password": "instructor123",
+      "is_staff": false,
+      "is_superuser": false,
+      "profile": {
+        "bio": "Artificial Intelligence instructor specializing in machine learning, deep learning, and intelligent agent systems."
+      }
+    },
+    {
       "email": "recruiter@yuvro.com",
       "username": "recruiter",
       "first_name": "Tech",

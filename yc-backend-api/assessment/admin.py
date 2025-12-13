@@ -1,0 +1,268 @@
+from django.contrib import admin
+from django.utils.html import format_html
+from .models import (
+    SkillTest, Contest, MockInterview, JobTest,
+    SkillTestSubmission, ContestSubmission, 
+    MockInterviewSubmission, JobTestSubmission
+)
+
+
+@admin.register(SkillTest)
+class SkillTestAdmin(admin.ModelAdmin):
+    list_display = ['title', 'course', 'topic', 'difficulty', 'publish_status', 'total_marks', 'created_at']
+    list_filter = ['difficulty', 'publish_status', 'course', 'created_at']
+    search_fields = ['title', 'description', 'course__name', 'topic__name']
+    readonly_fields = ['id', 'created_at', 'updated_at', 'total_attempts']
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('title', 'description', 'instructions')
+        }),
+        ('Course Integration', {
+            'fields': ('course', 'topic')
+        }),
+        ('Assessment Configuration', {
+            'fields': ('difficulty', 'duration', 'total_marks', 'passing_marks', 'questions_config')
+        }),
+        ('Publishing & Proctoring', {
+            'fields': ('publish_status', 'enable_proctoring')
+        }),
+        ('Metadata', {
+            'fields': ('id', 'created_by', 'created_at', 'updated_at', 'total_attempts'),
+            'classes': ('collapse',)
+        })
+    )
+    filter_horizontal = []
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('course', 'topic', 'created_by')
+
+
+@admin.register(Contest)
+class ContestAdmin(admin.ModelAdmin):
+    list_display = ['title', 'organizer', 'type', 'status', 'start_datetime', 'end_datetime', 'difficulty']
+    list_filter = ['type', 'status', 'difficulty', 'start_datetime']
+    search_fields = ['title', 'organizer', 'description']
+    readonly_fields = ['id', 'created_at', 'updated_at', 'total_attempts']
+    date_hierarchy = 'start_datetime'
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('title', 'description', 'instructions', 'organizer')
+        }),
+        ('Contest Configuration', {
+            'fields': ('type', 'status', 'difficulty', 'duration', 'total_marks', 'passing_marks')
+        }),
+        ('Schedule & Prize', {
+            'fields': ('start_datetime', 'end_datetime', 'prize')
+        }),
+        ('Questions & Publishing', {
+            'fields': ('questions_config', 'questions_random_config', 'publish_status', 'enable_proctoring')
+        }),
+        ('Metadata', {
+            'fields': ('id', 'created_by', 'created_at', 'updated_at', 'total_attempts'),
+            'classes': ('collapse',)
+        })
+    )
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('created_by')
+    
+    actions = ['update_contest_status']
+    
+    def update_contest_status(self, request, queryset):
+        updated = 0
+        for contest in queryset:
+            contest.update_status()
+            contest.save()
+            updated += 1
+        self.message_user(request, f'Updated status for {updated} contests.')
+    update_contest_status.short_description = "Update contest status"
+
+
+@admin.register(MockInterview)
+class MockInterviewAdmin(admin.ModelAdmin):
+    list_display = ['title', 'type', 'status', 'scheduled_datetime', 'difficulty']
+    list_filter = ['type', 'status', 'difficulty', 'scheduled_datetime']
+    search_fields = ['title', 'description']
+    readonly_fields = ['id', 'created_at', 'updated_at', 'total_attempts']
+    date_hierarchy = 'scheduled_datetime'
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('title', 'description', 'instructions')
+        }),
+        ('Interview Configuration', {
+            'fields': ('type', 'status', 'difficulty', 'duration', 'total_marks', 'passing_marks')
+        }),
+        ('Schedule', {
+            'fields': ('scheduled_datetime',)
+        }),
+        ('Questions & Publishing', {
+            'fields': ('questions_config', 'questions_random_config', 'publish_status', 'enable_proctoring')
+        }),
+        ('Metadata', {
+            'fields': ('id', 'created_by', 'created_at', 'updated_at', 'total_attempts'),
+            'classes': ('collapse',)
+        })
+    )
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('created_by')
+    
+    actions = ['update_interview_status']
+    
+    def update_interview_status(self, request, queryset):
+        updated = 0
+        for interview in queryset:
+            interview.update_status()
+            interview.save()
+            updated += 1
+        self.message_user(request, f'Updated status for {updated} interviews.')
+    update_interview_status.short_description = "Update interview status"
+
+
+@admin.register(JobTest)
+class JobTestAdmin(admin.ModelAdmin):
+    list_display = ['title', 'company_name', 'position_title', 'difficulty', 'publish_status']
+    list_filter = ['difficulty', 'publish_status', 'company_name', 'created_at']
+    search_fields = ['title', 'company_name', 'position_title', 'description']
+    readonly_fields = ['id', 'created_at', 'updated_at', 'total_attempts']
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('title', 'description', 'instructions')
+        }),
+        ('Job Details', {
+            'fields': ('company_name', 'position_title')
+        }),
+        ('Test Configuration', {
+            'fields': ('difficulty', 'duration', 'total_marks', 'passing_marks', 'questions_config', 'questions_random_config')
+        }),
+        ('Schedule & Publishing', {
+            'fields': ('start_datetime', 'end_datetime', 'publish_status', 'enable_proctoring')
+        }),
+        ('Metadata', {
+            'fields': ('id', 'created_by', 'created_at', 'updated_at', 'total_attempts'),
+            'classes': ('collapse',)
+        })
+    )
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('created_by')
+
+
+@admin.register(SkillTestSubmission)
+class SkillTestSubmissionAdmin(admin.ModelAdmin):
+    list_display = ['user', 'skill_test', 'status', 'marks', 'started_at', 'submitted_at']
+    list_filter = ['status', 'skill_test__course', 'started_at', 'submitted_at']
+    search_fields = ['user__username', 'user__email', 'skill_test__title']
+    readonly_fields = ['id', 'created_at', 'updated_at', 'started_at']
+    fieldsets = (
+        ('Submission Info', {
+            'fields': ('user', 'skill_test', 'status')
+        }),
+        ('Timing', {
+            'fields': ('started_at', 'submitted_at', 'completed_at')
+        }),
+        ('Results', {
+            'fields': ('marks',)
+        }),
+        ('Proctoring Data', {
+            'fields': ('proctoring_events', 'browser_info', 'ip_address', 'user_agent'),
+            'classes': ('collapse',)
+        }),
+        ('Metadata', {
+            'fields': ('id', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        })
+    )
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('user', 'skill_test')
+
+
+@admin.register(ContestSubmission)
+class ContestSubmissionAdmin(admin.ModelAdmin):
+    list_display = ['user', 'contest', 'status', 'marks', 'started_at', 'submitted_at']
+    list_filter = ['status', 'contest__type', 'started_at']
+    search_fields = ['user__username', 'user__email', 'contest__title']
+    readonly_fields = ['id', 'created_at', 'updated_at', 'started_at']
+    fieldsets = (
+        ('Submission Info', {
+            'fields': ('user', 'contest', 'status')
+        }),
+        ('Timing', {
+            'fields': ('started_at', 'submitted_at', 'completed_at')
+        }),
+        ('Results', {
+            'fields': ('marks',)
+        }),
+        ('Proctoring Data', {
+            'fields': ('proctoring_events', 'browser_info', 'ip_address', 'user_agent'),
+            'classes': ('collapse',)
+        }),
+        ('Metadata', {
+            'fields': ('id', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        })
+    )
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('user', 'contest')
+
+
+@admin.register(MockInterviewSubmission)
+class MockInterviewSubmissionAdmin(admin.ModelAdmin):
+    list_display = ['user', 'mock_interview', 'status', 'marks', 'started_at', 'submitted_at']
+    list_filter = ['status', 'mock_interview__type', 'started_at']
+    search_fields = ['user__username', 'user__email', 'mock_interview__title']
+    readonly_fields = ['id', 'created_at', 'updated_at', 'started_at']
+    fieldsets = (
+        ('Submission Info', {
+            'fields': ('user', 'mock_interview', 'status')
+        }),
+        ('Timing', {
+            'fields': ('started_at', 'submitted_at', 'completed_at')
+        }),
+        ('Results', {
+            'fields': ('marks',)
+        }),
+        ('Proctoring Data', {
+            'fields': ('proctoring_events', 'browser_info', 'ip_address', 'user_agent'),
+            'classes': ('collapse',)
+        }),
+        ('Metadata', {
+            'fields': ('id', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        })
+    )
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('user', 'mock_interview')
+
+
+@admin.register(JobTestSubmission)
+class JobTestSubmissionAdmin(admin.ModelAdmin):
+    list_display = ['user', 'job_test', 'status', 'marks', 'started_at', 'submitted_at']
+    list_filter = ['status', 'job_test__company_name', 'started_at']
+    search_fields = ['user__username', 'user__email', 'job_test__title', 'job_test__company_name']
+    readonly_fields = ['id', 'created_at', 'updated_at', 'started_at']
+    fieldsets = (
+        ('Submission Info', {
+            'fields': ('user', 'job_test', 'status')
+        }),
+        ('Timing', {
+            'fields': ('started_at', 'submitted_at', 'completed_at')
+        }),
+        ('Results', {
+            'fields': ('marks',)
+        }),
+        ('Proctoring Data', {
+            'fields': ('proctoring_events', 'browser_info', 'ip_address', 'user_agent'),
+            'classes': ('collapse',)
+        }),
+        ('Metadata', {
+            'fields': ('id', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        })
+    )
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('user', 'job_test')

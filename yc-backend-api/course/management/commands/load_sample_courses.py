@@ -1,264 +1,346 @@
-# course/management/commands/load_sample_courses.py
-import uuid
+import json
+import os
 from django.core.management.base import BaseCommand
-from django.db import transaction
 from django.contrib.auth import get_user_model
-
-from course.models import (
-    Course,
-    Topic,
-    Subtopic,
-    Video,
-    CourseInstructor,
-)
+from django.utils import timezone
+from datetime import timedelta
+from course.models import Course, Topic, Subtopic, Video, Question
+from assessment.models import SkillTest, Contest
 
 User = get_user_model()
 
 
 class Command(BaseCommand):
-    help = "Create rich sample data: courses, topics, subtopics, videos, quizzes, coding problems."
+    help = 'Load comprehensive sample courses with topics, subtopics, videos, notes, and questions from JSON file'
 
     def add_arguments(self, parser):
         parser.add_argument(
-            "--clear",
-            action="store_true",
-            help="Clear existing course data before loading",
+            '--clear',
+            action='store_true',
+            help='Clear existing data before loading new data',
         )
-
-    def _get_instructors(self):
-        """
-        Resolve the 2 instructors from your screenshot:
-        - instructor_python@yuvro.com
-        - instructor_ds@yuvro.com
-        """
-        emails = [
-            "instructor_python@yuvro.com",
-            "instructor_ds@yuvro.com",
-        ]
-        instructors = []
-        for email in emails:
-            try:
-                user = User.objects.get(email=email)
-            except User.DoesNotExist:
-                raise User.DoesNotExist(
-                    f"Required instructor with email '{email}' does not exist. "
-                    f"Create that user first."
-                )
-            instructors.append(user)
-        return instructors[0], instructors[1]
 
     def handle(self, *args, **options):
-        clear = options["clear"]
-
-        if clear:
-            self.stdout.write(self.style.WARNING("Clearing existing course data..."))
-            # Deleting Course cascades to Topic, Subtopic, Video, CourseInstructor
+        if options['clear']:
+            self.stdout.write('Clearing existing data...')
+            Question.objects.all().delete()
+            Video.objects.all().delete()
+            Subtopic.objects.all().delete()
+            Topic.objects.all().delete()
             Course.objects.all().delete()
-            self.stdout.write(self.style.SUCCESS("Existing course data cleared."))
+            SkillTest.objects.all().delete()
+            Contest.objects.all().delete()
+            self.stdout.write(self.style.SUCCESS('Existing data cleared.'))
 
+        # Load instructors from test users data
+        self.load_instructors()
+
+        # Load data from JSON file
+        json_file_path = os.path.join(os.path.dirname(__file__), '../../fixtures/sample_courses_data.json')
+        
         try:
-            instructor1, instructor2 = self._get_instructors()
-        except User.DoesNotExist as e:
-            self.stdout.write(self.style.ERROR(str(e)))
+            with open(json_file_path, 'r', encoding='utf-8') as file:
+                data = json.load(file)
+        except FileNotFoundError:
+            self.stdout.write(self.style.ERROR(f'JSON file not found at: {json_file_path}'))
+            return
+        except json.JSONDecodeError as e:
+            self.stdout.write(self.style.ERROR(f'Invalid JSON format: {e}'))
             return
 
-        self.stdout.write(
-            "Creating sample courses, topics, subtopics, and questions..."
-        )
-
-        with transaction.atomic():
-            self._create_sample_data(instructor1, instructor2)
-
-        # Summary
-        self.stdout.write("\nData Summary:")
-        self.stdout.write(f"- Courses: {Course.objects.count()}")
-        self.stdout.write(f"- Topics: {Topic.objects.count()}")
-        self.stdout.write(f"- Subtopics: {Subtopic.objects.count()}")
-        self.stdout.write(f"- Videos: {Video.objects.count()}")
-        self.stdout.write(self.style.SUCCESS("\nDone! Sample course data created."))
-
-    # ------------------------------------------------------------------
-    # INTERNAL HELPERS
-    # ------------------------------------------------------------------
-    def _youtube_link(self, course_short, topic_idx, sub_idx, video_idx):
-        """
-        You picked V2: YouTube-style placeholder links.
-        We can still make them look uniqueish per resource.
-        """
-        base_id = f"{course_short}-{topic_idx}-{sub_idx}-{video_idx}".replace(
-            "_", ""
-        ).replace("-", "")
-        # Just take a slice (YouTube IDs are 11 chars, but any string is fine here)
-        yt_id = (base_id or "samplevideo").lower()[:11]
-        return f"https://youtu.be/{yt_id or 'samplevideo'}"
-
-    def _basic_test_cases(self, label="sum"):
-        """
-        Return a small set of basic & advanced test cases.
-        This is reused for all coding problems.
-        """
-        if label == "sum":
-            basic = [
-                {
-                    "input": "2 3",
-                    "output": "5",
-                    "description": "Small positive numbers",
-                },
-                {"input": "10 0", "output": "10", "description": "Zero case"},
-            ]
-            advanced = [
-                {"input": "-5 12", "output": "7", "description": "Negative + positive"},
-                {
-                    "input": "1000000 1000000",
-                    "output": "2000000",
-                    "description": "Large numbers",
-                },
-            ]
-        else:
-            basic = [
-                {"input": "hello", "output": "olleh", "description": "Simple string"},
-                {"input": "abc", "output": "cba", "description": "Short string"},
-            ]
-            advanced = [
-                {"input": "racecar", "output": "racecar", "description": "Palindrome"},
-                {
-                    "input": "longerstring",
-                    "output": "gnirtSregnol".lower(),
-                    "description": "Long string",
-                },
-            ]
-        return basic, advanced
-
-    def _create_learn_certify_subtopic_content(
-        self,
-        course,
-        topic,
-        subtopic,
-        topic_index,
-        sub_index,
-    ):
-        """
-        For each Subtopic:
-        - 2 videos
-        - 2 learn_certify coding problems (map to sub_topic)
-        - 2 learn_certify quizzes (map to sub_topic)
-        """
-        # ---- Videos ----
-        for v_idx in range(1, 3):
-            title = f"{course.short_code} T{topic_index} S{sub_index} Video {v_idx}"
-            Video.objects.create(
-                sub_topic=subtopic,
-                title=title,
-                video_link=self._youtube_link(
-                    course.short_code, topic_index, sub_index, v_idx
-                ),
-                ai_context=f"Context for {title} in course {course.name}",
-            )
-
-        # ---- Learn & Certify Coding Problems (sub_topic only) ----
-        sum_basic, sum_advanced = self._basic_test_cases("sum")
-        rev_basic, rev_advanced = self._basic_test_cases("reverse")
-
+        self.stdout.write('Loading sample courses from JSON...')
         
-    def _create_topic_level_questions(self, course, topic, topic_index):
-        """
-        For each Topic:
-        - 2 practice coding problems (category=practice, map to topic)
-        - 2 practice quizzes (category=practice, map to topic)
-        - 2 skill_test coding problems (category=skill_test, map to topic)
-        """
-        sum_basic, sum_advanced = self._basic_test_cases("sum")
-        rev_basic, rev_advanced = self._basic_test_cases("reverse")
+        # Load courses and their content
+        self.load_courses_from_json(data)
+        
+        # Load assessments
+        self.load_assessments_from_json(data)
+        
+        self.stdout.write(self.style.SUCCESS('Successfully loaded all sample courses from JSON!'))
 
-    def _create_sample_data(self, instructor1, instructor2):
-        """
-        Core logic that creates:
-        - 4 categories
-        - 3 courses per category
-          - 1 owned by instructor1
-          - 1 owned by instructor2
-          - 1 shared by both
-        - Each course: 3 topics
-        - Each topic: 3 subtopics
-        - All required videos, quizzes, and coding problems.
-        """
-        categories = [
-            ("fundamentals", "CS Fundamentals"),
-            ("programming_languages", "Programming Languages"),
-            ("databases", "Database Systems"),
-            ("ai_tools", "AI Tools & Platforms"),
-        ]
+    def load_instructors(self):
+        """Load instructors from test users data"""
+        users_json_path = os.path.join(os.path.dirname(__file__), '../../../authentication/fixtures/test_users_data.json')
+        
+        try:
+            with open(users_json_path, 'r', encoding='utf-8') as file:
+                users_data = json.load(file)
+        except FileNotFoundError:
+            self.stdout.write(self.style.WARNING(f'Test users JSON file not found at: {users_json_path}'))
+            return
+        except json.JSONDecodeError as e:
+            self.stdout.write(self.style.ERROR(f'Invalid JSON format in users file: {e}'))
+            return
 
-        for category_key, category_name in categories:
-            self.stdout.write(f"\nCategory: {category_name} ({category_key})")
-
-            # Three ownership patterns:
-            ownership_patterns = [
-                ("A", [instructor1], "Only Python instructor"),
-                ("B", [instructor2], "Only DS instructor"),
-                ("C", [instructor1, instructor2], "Both instructors"),
-            ]
-
-            for idx, (suffix, owners, desc) in enumerate(ownership_patterns, start=1):
-                short_code = f"{category_key[:3].upper()}{suffix}"
-                course_name = f"{category_name} – Track {suffix}"
-
-                course, created = Course.objects.get_or_create(
-                    short_code=short_code,
+        for user_data in users_data.get('users', []):
+            if user_data.get('role') in ['instructor', 'admin']:
+                user, created = User.objects.get_or_create(
+                    email=user_data['email'],
                     defaults={
-                        "name": course_name,
-                        "category": category_key,
-                    },
+                        'username': user_data['username'],
+                        'first_name': user_data['first_name'],
+                        'last_name': user_data['last_name'],
+                        'role': user_data['role'],
+                        'is_staff': user_data.get('is_staff', False),
+                        'is_superuser': user_data.get('is_superuser', False)
+                    }
                 )
-
                 if created:
-                    self.stdout.write(f"  ✓ Created course: {course_name} [{desc}]")
+                    user.set_password(user_data['password'])
+                    user.save()
+                    self.stdout.write(f'✓ Created {user_data["role"]}: {user.email}')
+
+    def load_courses_from_json(self, data):
+        """Load courses, topics, subtopics, videos, and questions from JSON data"""
+        
+        for course_data in data.get('courses', []):
+            self.stdout.write(f'Loading course: {course_data["name"]}')
+            
+            # Get the instructor for this course
+            instructor_email = course_data.get('instructor_email')
+            instructor = None
+            if instructor_email:
+                try:
+                    instructor = User.objects.get(email=instructor_email)
+                except User.DoesNotExist:
+                    self.stdout.write(self.style.WARNING(f'Instructor {instructor_email} not found, skipping course assignment'))
+            
+            # Get or create course
+            course, created = Course.objects.get_or_create(
+                short_code=course_data['short_code'],
+                defaults={
+                    'name': course_data['name'],
+                    'category': course_data['category']
+                }
+            )
+            
+            if created:
+                self.stdout.write(f'✓ Created new course: {course.name}')
+            else:
+                self.stdout.write(f'→ Course already exists: {course.name}')
+            
+            # Add instructor if found and not already assigned
+            if instructor and instructor not in course.instructors.all():
+                course.instructors.add(instructor)
+                self.stdout.write(f'✓ Added instructor {instructor.email} to course {course.short_code}')
+            
+            # Create topics and subtopics
+            topic_map = {}  # To store topic references for questions
+            
+            for topic_data in course_data.get('topics', []):
+                topic, topic_created = Topic.objects.get_or_create(
+                    course=course,
+                    name=topic_data['name'],
+                    defaults={
+                        'order_index': topic_data['order_index']
+                    }
+                )
+                topic_map[topic_data['name']] = topic
+                
+                if topic_created:
+                    self.stdout.write(f'  ✓ Created topic: {topic.name}')
+                
+                # Create subtopics
+                for subtopic_data in topic_data.get('subtopics', []):
+                    subtopic, subtopic_created = Subtopic.objects.get_or_create(
+                        topic=topic,
+                        name=subtopic_data['name'],
+                        defaults={
+                            'content': subtopic_data['content'],
+                            'order_index': subtopic_data['order_index']
+                        }
+                    )
+                    
+                    if subtopic_created:
+                        self.stdout.write(f'    ✓ Created subtopic: {subtopic.name}')
+                    
+                    # Create videos for subtopic
+                    for video_data in subtopic_data.get('videos', []):
+                        video, video_created = Video.objects.get_or_create(
+                            sub_topic=subtopic,
+                            title=video_data['title'],
+                            defaults={
+                                'video_link': video_data['video_link'],
+                                'ai_context': video_data.get('ai_context', '')
+                            }
+                        )
+                        
+                        if video_created:
+                            self.stdout.write(f'      ✓ Created video: {video.title}')
+            
+            # Create questions for the course
+            if instructor:  # Only create questions if instructor exists
+                for question_data in course_data.get('questions', []):
+                    self.create_question(question_data, course, topic_map, instructor)
+            else:
+                self.stdout.write(self.style.WARNING(f'No instructor found for course {course.short_code}, skipping questions'))
+            
+            self.stdout.write(f'✓ Loaded course: {course.name}')
+
+    def create_question(self, question_data, course, topic_map, instructor):
+        """Create a question with proper associations"""
+        
+        # Fallback to admin if instructor is None
+        if not instructor:
+            instructor = User.objects.filter(role='admin').first()
+        
+        if not instructor:
+            self.stdout.write(self.style.WARNING('No instructor or admin found, skipping question creation'))
+            return
+        
+        # Determine question associations based on level
+        question_kwargs = {
+            'type': question_data['type'],
+            'title': question_data['title'],
+            'content': question_data['content'],
+            'level': question_data['level'],
+            'difficulty': question_data['difficulty'],
+            'marks': question_data['marks'],
+            'categories': question_data['categories'],
+            'created_by': instructor
+        }
+        
+        # Set course/topic/subtopic associations
+        if question_data['level'] == 'course':
+            question_kwargs['course'] = course
+        elif question_data['level'] == 'topic':
+            topic_name = question_data.get('topic_name')
+            if topic_name and topic_name in topic_map:
+                question_kwargs['topic'] = topic_map[topic_name]
+                question_kwargs['course'] = course
+        elif question_data['level'] == 'subtopic':
+            # For subtopic level, we'd need subtopic_name in the JSON
+            # For now, associate with course
+            question_kwargs['course'] = course
+        
+        # Add type-specific fields
+        if question_data['type'] in ['mcq_single', 'mcq_multiple']:
+            question_kwargs['mcq_options'] = question_data.get('mcq_options', [])
+        elif question_data['type'] == 'coding':
+            question_kwargs['test_cases_basic'] = question_data.get('test_cases_basic', [])
+            question_kwargs['test_cases_advanced'] = question_data.get('test_cases_advanced', [])
+        
+        # Check if question already exists to avoid duplicates
+        existing_question = Question.objects.filter(
+            title=question_kwargs['title'],
+            course=question_kwargs.get('course'),
+            topic=question_kwargs.get('topic')
+        ).first()
+        
+        if not existing_question:
+            Question.objects.create(**question_kwargs)
+            self.stdout.write(f'    ✓ Created question: {question_data["title"][:50]}...')
+        else:
+            self.stdout.write(f'    → Question already exists: {question_data["title"][:50]}...')
+
+    def load_assessments_from_json(self, data):
+        """Load skill tests and contests from JSON data"""
+        
+        assessments_data = data.get('assessments', {})
+        
+        # Create course mapping for quick lookup
+        course_map = {course.short_code: course for course in Course.objects.all()}
+        
+        # Load skill tests
+        for skill_test_data in assessments_data.get('skill_tests', []):
+            course_short_code = skill_test_data.get('course_short_code')
+            course = course_map.get(course_short_code)
+            
+            if course:
+                # Get the course instructor as creator
+                course_instructor = course.instructors.first()
+                if not course_instructor:
+                    # Fallback to admin user if no instructor found
+                    course_instructor = User.objects.filter(role='admin').first()
+                
+                if course_instructor:
+                    # Get questions for this course
+                    course_questions = list(
+                        Question.objects.filter(course=course).values_list('id', flat=True)[:5]
+                    )
+                    
+                    skill_test, skill_test_created = SkillTest.objects.get_or_create(
+                        title=skill_test_data['title'],
+                        course=course,
+                        defaults={
+                            'description': skill_test_data['description'],
+                            'instructions': skill_test_data['instructions'],
+                            'difficulty': skill_test_data['difficulty'],
+                            'duration': skill_test_data['duration'],
+                            'total_marks': skill_test_data['total_marks'],
+                            'passing_marks': skill_test_data['passing_marks'],
+                            'questions_config': {
+                                'mcq_single': [str(qid) for qid in course_questions[:2]],
+                                'mcq_multiple': [str(qid) for qid in course_questions[2:4]],
+                                'coding': [str(qid) for qid in course_questions[4:6]],
+                                'descriptive': [str(qid) for qid in course_questions[6:8]]
+                            },
+                            'publish_status': skill_test_data['publish_status'],
+                            'created_by': course_instructor
+                        }
+                    )
+                    
+                    if skill_test_created:
+                        self.stdout.write(f'✓ Created skill test: {skill_test_data["title"]}')
+                    else:
+                        self.stdout.write(f'→ Skill test already exists: {skill_test_data["title"]}')
                 else:
-                    self.stdout.write(
-                        f"  - Course already exists: {course_name} [{desc}]"
+                    self.stdout.write(self.style.WARNING(f'No instructor found for course {course_short_code}, skipping skill test'))
+        
+        # Load contests
+        for contest_data in assessments_data.get('contests', []):
+            course_short_code = contest_data.get('course_short_code')
+            course = course_map.get(course_short_code)
+            
+            if course:
+                # Get the course instructor as creator
+                course_instructor = course.instructors.first()
+                if not course_instructor:
+                    # Fallback to admin user if no instructor found
+                    course_instructor = User.objects.filter(role='admin').first()
+                
+                if course_instructor:
+                    # Get coding questions for this course
+                    coding_questions = list(
+                        Question.objects.filter(
+                            course=course, 
+                            type='coding'
+                        ).values_list('id', flat=True)[:3]
                     )
-
-                # Assign instructors via CourseInstructor
-                for inst in owners:
-                    CourseInstructor.objects.get_or_create(
+                    
+                    start_days = contest_data.get('start_days_from_now', 7)
+                    start_datetime = timezone.now() + timedelta(days=start_days)
+                    end_datetime = start_datetime + timedelta(minutes=contest_data['duration'])
+                    
+                    contest, contest_created = Contest.objects.get_or_create(
+                        title=contest_data['title'],
                         course=course,
-                        instructor=inst,
+                        defaults={
+                            'description': contest_data['description'],
+                            'instructions': contest_data['instructions'],
+                            'difficulty': contest_data['difficulty'],
+                            'duration': contest_data['duration'],
+                            'total_marks': contest_data['total_marks'],
+                            'passing_marks': contest_data['passing_marks'],
+                            'questions_config': {
+                                'mcq_single': [str(qid) for qid in coding_questions[:1]],
+                                'mcq_multiple': [str(qid) for qid in coding_questions[1:2]],
+                                'coding': [str(qid) for qid in coding_questions[2:4]],
+                                'descriptive': [str(qid) for qid in coding_questions[4:5]]
+                            },
+                            'organizer': contest_data['organizer'],
+                            'type': contest_data['type'],
+                            'start_datetime': start_datetime,
+                            'end_datetime': end_datetime,
+                            'prize': contest_data.get('prize', ''),
+                            'publish_status': contest_data['publish_status'],
+                            'created_by': course_instructor
+                        }
                     )
-
-                # ---------------------------------
-                # Create 3 topics for this course
-                # ---------------------------------
-                for t_idx in range(1, 4):
-                    topic_name = f"Topic {t_idx}: {category_name} Concept {t_idx}"
-                    topic = Topic.objects.create(
-                        course=course,
-                        name=topic_name,
-                        order_index=t_idx - 1,
-                    )
-
-                    # Topic-level questions (practice + skill_test)
-                    self._create_topic_level_questions(course, topic, t_idx)
-
-                    # ---------------------------------
-                    # Create 3 subtopics for this topic
-                    # ---------------------------------
-                    for s_idx in range(1, 4):
-                        subtopic_name = f"Subtopic {t_idx}.{s_idx}: Deep Dive {s_idx}"
-                        subtopic = Subtopic.objects.create(
-                            topic=topic,
-                            name=subtopic_name,
-                            content=(
-                                f"Content for {subtopic_name} in {course.name}. "
-                                f"This explains the concept with examples and notes."
-                            ),
-                            order_index=s_idx - 1,
-                        )
-
-                        # Subtopic-level content (videos + learn_certify Qs)
-                        self._create_learn_certify_subtopic_content(
-                            course, topic, subtopic, t_idx, s_idx
-                        )
-
-        self.stdout.write(
-            self.style.SUCCESS("\nSuccessfully created full sample dataset.")
-        )
+                    
+                    if contest_created:
+                        self.stdout.write(f'✓ Created contest: {contest_data["title"]}')
+                    else:
+                        self.stdout.write(f'→ Contest already exists: {contest_data["title"]}')
+                else:
+                    self.stdout.write(self.style.WARNING(f'No instructor found for course {course_short_code}, skipping contest'))

@@ -87,7 +87,7 @@ const sidebarItems: SidebarItem[] = [
     id: 'mock-interview',
     label: 'Mock Interview',
     icon: TrendingUp,
-    path: '/mock-interview',
+    path: '/instructor/mock-interview',
     roles: ['admin', 'instructor', 'recruiter']
   },
   {
@@ -117,13 +117,13 @@ const RoleSidebar: React.FC<RoleSidebarProps> = ({ className = '' }) => {
   const getPortalTitle = () => {
     switch (userRole) {
       case 'admin':
-        return 'ADMIN PORTAL';
+        return 'Yuvro Admin';
       case 'instructor':
-        return 'INSTRUCTOR PORTAL';
+        return 'Yuvro Instructor ';
       case 'recruiter':
-        return 'RECRUITER PORTAL';
+        return 'Yuvro Recruiter';
       default:
-        return 'PORTAL';
+        return 'Yuvro';
     }
   };
 

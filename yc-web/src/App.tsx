@@ -37,6 +37,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import DashboardRedirect from './components/DashboardRedirect';
 import OwnerContest from './pages/instructor/Contest';
 import ContestEdit from './components/instructor/contests/ContestEdit';
+import InstructorMockInterview from './pages/instructor/MockInterview';
 import RecruiterJobs from "./pages/recruiter/Jobs";
 import AddJob from "./components/student/AddJob";
 import JobFiltersSidebar from "@/components/student/jobs/ApplicationTracker";
@@ -60,7 +61,7 @@ function App() {
               <Route path="/student/jobs" element={<StudentJobs />} />
               <Route path="/recruiter/jobs" element={<RecruiterJobs />} />
               {/* <Route path="/" element={<JobList />} /> */}
-              <Route path="/add-job" element={<AddJob />} />  
+              <Route path="/add-job" element={<AddJob />} />
               <Route path="/student/JobFiltersSidebar" element={<JobFiltersSidebar />} />
 
 
@@ -166,14 +167,14 @@ function App() {
                 }
               />
 
-                <Route
-                  path="/recruiter/jobs"
-                  element={
-                    <ProtectedRoute allowedRoles={["recruiter"]}>
-                      <RecruiterJobs />
-                    </ProtectedRoute>
-                  }
-                />
+              <Route
+                path="/recruiter/jobs"
+                element={
+                  <ProtectedRoute allowedRoles={["recruiter"]}>
+                    <RecruiterJobs />
+                  </ProtectedRoute>
+                }
+              />
 
 
               <Route
@@ -207,7 +208,7 @@ function App() {
               <Route
                 path="/instructor/users"
                 element={
-                  <ProtectedRoute allowedRoles={["admin"]}>
+                  <ProtectedRoute allowedRoles={["admin", "instructor"]}>
                     <Users />
                   </ProtectedRoute>
                 }
@@ -266,12 +267,21 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-              
+
               <Route
                 path="/instructor/contests/:contestId/manage"
                 element={
                   <ProtectedRoute allowedRoles={["admin", "instructor", "recruiter"]}>
                     <ContestEdit />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/instructor/mock-interview"
+                element={
+                  <ProtectedRoute allowedRoles={["admin", "instructor", "recruiter"]}>
+                    <InstructorMockInterview />
                   </ProtectedRoute>
                 }
               />

@@ -12,7 +12,18 @@ export interface Contest {
   prize?: string;
   difficulty: string;
   description: string;
-  question_ids: number[];
+  questions_config: {
+    mcq_single: string[];
+    mcq_multiple: string[];
+    coding: string[];
+    descriptive: string[];
+  };
+  questions_random_config: {
+    mcq_single: number;
+    mcq_multiple: number;
+    coding: number;
+    descriptive: number;
+  };
   participants_count: number;
   created_by?: number;
   created_at: string;
@@ -39,12 +50,26 @@ export interface CreateContestData {
   organizer: string;
   type: string;
   status: string;
-  start_date: string;
-  end_date: string;
+  start_datetime?: string;
+  end_datetime?: string;
+  start_date?: string;
+  end_date?: string;
   duration?: number;
   prize?: string;
   difficulty: string;
   description: string;
+  questions_config?: {
+    mcq_single: string[];
+    mcq_multiple: string[];
+    coding: string[];
+    descriptive: string[];
+  };
+  questions_random_config?: {
+    mcq_single: number;
+    mcq_multiple: number;
+    coding: number;
+    descriptive: number;
+  };
 }
 
 export const contestService = {
@@ -92,13 +117,21 @@ export const contestService = {
     return restApiAuthUtil.get('/course/questions/', { params });
   },
 
-  async addQuestionToContest(contestId: string, questionId: number, currentQuestionIds: number[]): Promise<Contest> {
-    const updatedQuestionIds = [...currentQuestionIds, questionId];
-    return this.updateContest(contestId, { question_ids: updatedQuestionIds });
+  async addQuestionToContest(contestId: string, questionId: string, questionType: string, currentQuestionsConfig: Contest['questions_config']): Promise<Contest> {
+    const updatedQuestionsConfig = { ...currentQuestionsConfig };
+    if (!updatedQuestionsConfig[questionType as keyof typeof updatedQuestionsConfig]) {
+      updatedQuestionsConfig[questionType as keyof typeof updatedQuestionsConfig] = [];
+    }
+    updatedQuestionsConfig[questionType as keyof typeof updatedQuestionsConfig].push(questionId);
+    return this.updateContest(contestId, { questions_config: updatedQuestionsConfig });
   },
 
-  async removeQuestionFromContest(contestId: string, questionId: number, currentQuestionIds: number[]): Promise<Contest> {
-    const updatedQuestionIds = currentQuestionIds.filter(id => id !== questionId);
-    return this.updateContest(contestId, { question_ids: updatedQuestionIds });
+  async removeQuestionFromContest(contestId: string, questionId: string, questionType: string, currentQuestionsConfig: Contest['questions_config']): Promise<Contest> {
+    const updatedQuestionsConfig = { ...currentQuestionsConfig };
+    if (updatedQuestionsConfig[questionType as keyof typeof updatedQuestionsConfig]) {
+      updatedQuestionsConfig[questionType as keyof typeof updatedQuestionsConfig] = 
+        updatedQuestionsConfig[questionType as keyof typeof updatedQuestionsConfig].filter(id => id !== questionId);
+    }
+    return this.updateContest(contestId, { questions_config: updatedQuestionsConfig });
   },
 };

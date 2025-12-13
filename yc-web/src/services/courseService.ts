@@ -297,7 +297,23 @@ export async function removeInstructorFromCourse(courseId: string, instructorId:
 }
 
 export async function fetchAllInstructors() {
-  return restApiAuthUtil.get('/auth/users/', { params: { role: 'instructor' } });
+  try {
+    const response = await restApiAuthUtil.get('/auth/users/', { params: { role: 'instructor' } });
+    
+    // Handle both paginated and direct array responses
+    const instructors = response.results || response || [];
+    
+    return instructors;
+  } catch (error) {
+    console.error('Error fetching instructors:', error);
+    
+    // If it's a permission error (403), show a helpful message
+    if (error.status === 403) {
+      console.warn('Permission denied: Only admins can view instructor list');
+    }
+    
+    return [];
+  }
 }
 
 export async function fetchSkillTestQuestions(topicId: string) {

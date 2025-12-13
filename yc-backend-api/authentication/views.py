@@ -39,7 +39,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
-from rest_framework.permissions import IsAdminUser
+from authentication.permissions import IsAdminUser, IsAuthenticatedUser
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -160,7 +160,7 @@ def login_view(request):
     ],
 )
 @api_view(["POST"])
-@permission_classes([permissions.IsAuthenticated])
+@permission_classes([IsAuthenticatedUser])
 def logout_view(request):
     """User logout endpoint."""
     try:
@@ -200,7 +200,7 @@ class CustomTokenRefreshView(TokenRefreshView):
     responses=UserSerializer,
 )
 @api_view(["GET"])
-@permission_classes([permissions.IsAuthenticated])
+@permission_classes([IsAuthenticatedUser])
 def user_info_view(request):
     """Get current user information."""
     serializer = UserSerializer(request.user)
@@ -280,30 +280,114 @@ def admin_users(request):
 from django.contrib.auth import get_user_model
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework import generics, filters
+from rest_framework.decorators import action
+from rest_framework.pagination import PageNumberPagination
+from django.db.models import Q
+try:
+    from django_filters.rest_framework import DjangoFilterBackend
+except ImportError:
+    # Fallback if django-filter is not installed
+    DjangoFilterBackend = None
 
 User = get_user_model()
 
 
-class UsersListView(APIView):
-    def get(self, request):
-        role = request.GET.get("role")
+class UsersPagination(PageNumberPagination):
+    page_size = 20
+    page_size_query_param = 'page_size'
+    max_page_size = 100
 
-        users = User.objects.all()
 
+class UsersListCreateView(generics.ListCreateAPIView):
+    """
+    List all users with pagination and filtering, or create a new user.
+    Accessible by admin users for all operations.
+    Instructors can only list users with role 'instructor' (for course assignment).
+    """
+    queryset = User.objects.all().order_by('-date_joined')
+    serializer_class = UserSerializer
+    pagination_class = UsersPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter] + ([DjangoFilterBackend] if DjangoFilterBackend else [])
+    filterset_fields = ['role', 'is_active']
+    search_fields = ['username', 'email', 'first_name', 'last_name']
+    ordering_fields = ['date_joined', 'last_login', 'username', 'email']
+    ordering = ['-date_joined']
+
+    def get_permissions(self):
+        """
+        Instantiates and returns the list of permissions that this view requires.
+        """
+        if self.request.method == 'GET':
+            # For GET requests, allow instructors to access if they're filtering by role 'instructor'
+            role_filter = self.request.query_params.get('role', None)
+            if role_filter == 'instructor' and self.request.user.is_authenticated and self.request.user.is_instructor():
+                return [IsInstructorOrAdmin()]
+            else:
+                return [IsAdminUser()]
+        else:
+            # For POST (create user), only admins
+            return [IsAdminUser()]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        
+        # Additional filtering
+        role = self.request.query_params.get('role', None)
         if role:
-            users = users.filter(role=role)
+            queryset = queryset.filter(role=role)
+            
+        is_active = self.request.query_params.get('is_active', None)
+        if is_active is not None:
+            queryset = queryset.filter(is_active=is_active.lower() == 'true')
+            
+        search = self.request.query_params.get('search', None)
+        if search:
+            queryset = queryset.filter(
+                Q(username__icontains=search) |
+                Q(email__icontains=search) |
+                Q(first_name__icontains=search) |
+                Q(last_name__icontains=search)
+            )
+        
+        return queryset
 
-        data = [
-            {"id": u.id, "username": u.username, "email": u.email, "role": u.role}
-            for u in users
-        ]
 
-        return Response(data)
+class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    Retrieve, update or delete a user instance.
+    Only accessible by admin users.
+    """
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [IsAdminUser]
+
+
+class UserToggleStatusView(APIView):
+    """
+    Toggle user active status.
+    Only accessible by admin users.
+    """
+    permission_classes = [IsAdminUser]
+    
+    def patch(self, request, pk):
+        """Toggle user active status"""
+        try:
+            user = User.objects.get(pk=pk)
+            user.is_active = not user.is_active
+            user.save()
+            serializer = UserSerializer(user)
+            return Response(serializer.data)
+        except User.DoesNotExist:
+            return Response(
+                {"error": "User not found"}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
 
 
 class UserProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = UserUpdateSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticatedUser]
 
     def get_object(self):
         return self.request.user
@@ -311,7 +395,7 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
 
 class ProfileDetailView(generics.RetrieveUpdateAPIView):
     serializer_class = ProfileSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticatedUser]
 
     def get_object(self):
         profile, _ = Profile.objects.get_or_create(user=self.request.user)
@@ -333,7 +417,7 @@ class ProfileDetailView(generics.RetrieveUpdateAPIView):
 
 class SocialLinksUpdateView(generics.UpdateAPIView):
     serializer_class = SocialLinksSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticatedUser]
 
     def get_object(self):
         profile, _ = Profile.objects.get_or_create(user=self.request.user)
@@ -343,7 +427,7 @@ class SocialLinksUpdateView(generics.UpdateAPIView):
 
 class SkillCreateView(generics.CreateAPIView):
     serializer_class = SkillSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticatedUser]
 
     def perform_create(self, serializer):
         profile, _ = Profile.objects.get_or_create(user=self.request.user)
@@ -353,12 +437,12 @@ class SkillCreateView(generics.CreateAPIView):
 class SkillUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Skill.objects.all()
     serializer_class = SkillSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticatedUser]
 
 
 class ExperienceCreateView(generics.CreateAPIView):
     serializer_class = ExperienceSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticatedUser]
 
     def perform_create(self, serializer):
         profile, _ = Profile.objects.get_or_create(user=self.request.user)
@@ -368,12 +452,12 @@ class ExperienceCreateView(generics.CreateAPIView):
 class ExperienceUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Experience.objects.all()
     serializer_class = ExperienceSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticatedUser]
 
 
 class ProjectCreateView(generics.CreateAPIView):
     serializer_class = ProjectSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticatedUser]
 
     def perform_create(self, serializer):
         profile, _ = Profile.objects.get_or_create(user=self.request.user)
@@ -383,12 +467,12 @@ class ProjectCreateView(generics.CreateAPIView):
 class ProjectUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticatedUser]
 
 
 class EducationCreateView(generics.CreateAPIView):
     serializer_class = EducationSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticatedUser]
 
     def perform_create(self, serializer):
         profile, _ = Profile.objects.get_or_create(user=self.request.user)
@@ -398,12 +482,12 @@ class EducationCreateView(generics.CreateAPIView):
 class EducationUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Education.objects.all()
     serializer_class = EducationSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticatedUser]
 
 
 class CertificationCreateView(generics.CreateAPIView):
     serializer_class = CertificationSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticatedUser]
 
     def perform_create(self, serializer):
         profile, _ = Profile.objects.get_or_create(user=self.request.user)
@@ -413,4 +497,4 @@ class CertificationCreateView(generics.CreateAPIView):
 class CertificationUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Certification.objects.all()
     serializer_class = CertificationSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticatedUser]

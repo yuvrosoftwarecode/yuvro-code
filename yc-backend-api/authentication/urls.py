@@ -23,7 +23,9 @@ urlpatterns = [
         name="reset_password",
     ),
     path("admin-users/", admin_users, name="admin_users"),
-    path("users/", views.UsersListView.as_view(), name="users_list"),
+    path("users/", views.UsersListCreateView.as_view(), name="users_list"),
+    path("users/<uuid:pk>/", views.UserDetailView.as_view(), name="user_detail"),
+    path("users/<uuid:pk>/toggle-status/", views.UserToggleStatusView.as_view(), name="user_toggle_status"),
     path("profile/links/", views.SocialLinksUpdateView.as_view(), name="social_links"),
     path("skills/add/", views.SkillCreateView.as_view(), name="skill_add"),
     path(

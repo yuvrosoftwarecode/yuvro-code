@@ -1,22 +1,28 @@
-from rest_framework import viewsets, filters, status
+from rest_framework import viewsets, filters, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.utils import timezone
-from django.db.models import Q
-from .models import Contest
-from .serializers import ContestSerializer
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
-from .permissions import IsOwnerOrAdmin
+from django.db.models import Q, F
+from django.db import models
+from .models import (
+    Contest, MockInterview, JobTest, SkillTest,
+    ContestSubmission, MockInterviewSubmission, 
+    JobTestSubmission, SkillTestSubmission
+)
+from .serializers import (
+    ContestSerializer
+)
+from authentication.permissions import IsOwnerOrInstructorOrAdmin
+
 
 class ContestViewSet(viewsets.ModelViewSet):
     queryset = Contest.objects.all()
     serializer_class = ContestSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsOwnerOrInstructorOrAdmin]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     
-    search_fields =['title', 'organizer', 'description']
-    ordering_fields = ['start_date', 'participants_count', 'created_at']
-    permission_classes = [IsOwnerOrAdmin]
+    search_fields = ['title', 'organizer', 'description']
+    ordering_fields = ['start_datetime']
     
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
@@ -52,7 +58,7 @@ class ContestViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'], url_path="increment-participant")
     def increment_participant(self, request, pk=None):
         contest = self.get_object() 
-        contest.participants_count = models.F('participants_count') + 1
+        contest.participants_count = F('participants_count') + 1
         contest.save(update_fields=['participants_count'])
         contest.refresh_from_db()
         

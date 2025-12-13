@@ -1,7 +1,7 @@
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from authentication.permissions import IsAuthenticatedUser
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from django.db import transaction
 from django.conf import settings
@@ -19,7 +19,7 @@ class CodeExecutorViewSet(viewsets.ModelViewSet):
     """ViewSet for code execution and submission management"""
 
     serializer_class = CodeSubmissionSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedUser]
 
     def get_queryset(self):
         return CodeSubmission.objects.filter(user=self.request.user)
@@ -221,7 +221,7 @@ class PlagiarismViewSet(viewsets.ReadOnlyModelViewSet):
     """ViewSet for plagiarism reports (instructors only)"""
 
     serializer_class = PlagiarismReportSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedUser]
 
     def get_queryset(self):
         # Only instructors can view plagiarism reports

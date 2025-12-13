@@ -90,8 +90,8 @@ const getInitialState = (): AuthState => {
     return {
       user: null, // Will be loaded from authService
       token: accessToken,
-      isLoading: false,
-      isAuthenticated: true,
+      isLoading: true, // Set to true while we fetch user data
+      isAuthenticated: true, // Trust the token from localStorage
     };
   }
   return {
@@ -123,11 +123,36 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     const accessToken = localStorage.getItem('access');
-    
+
     if (accessToken) {
       authService.setAuthToken(accessToken);
-      // Initialize from storage and get user data
       authService.initializeFromStorage();
+
+      // Try to fetch current user data, but don't fail authentication if it fails
+      authService.getCurrentUser()
+        .then((user) => {
+          // Get the potentially refreshed token
+          const currentToken = authService.getAuthToken() || accessToken;
+          dispatch({
+            type: 'LOGIN_SUCCESS',
+            payload: { user, token: currentToken }
+          });
+        })
+        .catch((error) => {
+          console.error('Failed to get current user:', error);
+          // Only clear tokens if we get a definitive 401 after token refresh
+          if (error.status === 401 && error.message?.includes('Session expired')) {
+            // Authentication failed even after token refresh attempt
+            localStorage.removeItem('access');
+            localStorage.removeItem('refresh');
+            dispatch({ type: 'LOGIN_FAILURE' });
+          } else {
+            // For any other error (network, server error, etc.), keep the authentication
+            // but just stop loading. The user can still access the app.
+            console.warn('Could not fetch user data, but keeping authentication');
+            dispatch({ type: 'SET_LOADING', payload: false });
+          }
+        });
     }
   }, []);
 

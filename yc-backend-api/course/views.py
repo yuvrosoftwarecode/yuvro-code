@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.db import IntegrityError
 from django.shortcuts import get_object_or_404
+from authentication.permissions import CanManageCourses, IsAuthenticatedUser
 from .models import (
     Course,
     Topic,
@@ -33,16 +34,9 @@ def instructor_assigned(user, course):
     return CourseInstructor.objects.filter(instructor=user, course=course).exists()
 
 
-class IsAdminOrReadOnly(permissions.BasePermission):
-    def has_permission(self, request, view):
-        if request.method in permissions.SAFE_METHODS:
-            return request.user and request.user.is_authenticated
-        return request.user and request.user.is_authenticated and request.user.is_staff
-
-
 class CourseViewSet(viewsets.ModelViewSet):
     queryset = Course.objects.all()
-    permission_classes = [IsAdminOrReadOnly]
+    permission_classes = [CanManageCourses]
 
     def get_serializer_class(self):
         return CourseSerializer if self.action == "retrieve" else CourseBasicSerializer
@@ -103,7 +97,7 @@ class CourseViewSet(viewsets.ModelViewSet):
 
 class TopicViewSet(viewsets.ModelViewSet):
     queryset = Topic.objects.select_related("course")
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticatedUser]
 
     def get_serializer_class(self):
         return TopicSerializer if self.action == "retrieve" else TopicBasicSerializer
@@ -164,7 +158,7 @@ class TopicViewSet(viewsets.ModelViewSet):
 class SubtopicViewSet(viewsets.ModelViewSet):
     queryset = Subtopic.objects.select_related("topic__course")
     serializer_class = SubtopicSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticatedUser]
 
     def get_queryset(self):
         qs = Subtopic.objects.select_related("topic__course")
@@ -226,7 +220,7 @@ class SubtopicViewSet(viewsets.ModelViewSet):
 class VideoViewSet(viewsets.ModelViewSet):
     queryset = Video.objects.select_related("sub_topic__topic__course")
     serializer_class = VideoSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticatedUser]
 
     def get_queryset(self):
         qs = Video.objects.select_related("sub_topic__topic__course")
@@ -284,7 +278,7 @@ class VideoViewSet(viewsets.ModelViewSet):
 class NoteViewSet(viewsets.ModelViewSet):
     queryset = Note.objects.select_related("sub_topic", "user")
     serializer_class = NoteSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticatedUser]
 
     def get_queryset(self):
         qs = Note.objects.select_related("sub_topic", "user")
@@ -350,7 +344,7 @@ class NoteViewSet(viewsets.ModelViewSet):
 class QuestionViewSet(viewsets.ModelViewSet):
     queryset = Question.objects.select_related("course", "topic", "subtopic", "created_by")
     serializer_class = QuestionSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticatedUser]
 
     def get_queryset(self):
         from django.db import models
@@ -483,7 +477,7 @@ class QuestionViewSet(viewsets.ModelViewSet):
 
     
 class ProgressViewSet(viewsets.ViewSet):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticatedUser]
     
     @action(detail=False, methods=["get"])
     def stats(self, request):

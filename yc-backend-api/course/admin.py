@@ -98,21 +98,21 @@ class QuestionAdmin(admin.ModelAdmin):
     
     fieldsets = (
         ("Basic Information", {
-            "fields": ("type", "title", "content", "level", "difficulty", "marks", "categories")
+            "fields": ["type", "title", "content", "level", "difficulty", "marks", "categories"]
         }),
         ("Associations", {
-            "fields": ("course", "topic", "subtopic")
+            "fields": ["course", "topic", "subtopic"]
         }),
         ("MCQ Fields", {
-            "fields": ("mcq_options", "mcq_correct_answer_index"),
+            "fields": ["mcq_options"],
             "classes": ("collapse",)
         }),
         ("Coding Fields", {
-            "fields": ("test_cases_basic", "test_cases_advanced"),
+            "fields": ["test_cases_basic", "test_cases_advanced"],
             "classes": ("collapse",)
         }),
         ("Metadata", {
-            "fields": ("id", "created_by", "created_at", "updated_at"),
+            "fields": ["id", "created_by", "created_at", "updated_at"],
             "classes": ("collapse",)
         }),
     )

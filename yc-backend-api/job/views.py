@@ -8,7 +8,8 @@ from django.core.exceptions import FieldDoesNotExist
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from authentication.permissions import IsAuthenticatedUser
+from authentication.permissions import IsInstructorOrAdmin
 from rest_framework.exceptions import PermissionDenied
 
 from .models import Job
@@ -66,7 +67,7 @@ def normalize_job(job: Job) -> dict:
 
 
 class JobListCreateAPIView(APIView):
-    permission_classes = []  
+    permission_classes = [IsInstructorOrAdmin]
 
     def get(self, request):
         queryset = Job.objects.all().order_by("-created_at")
@@ -74,8 +75,6 @@ class JobListCreateAPIView(APIView):
         return Response(normalized)
 
     def post(self, request):
-        if not request.user or not request.user.is_authenticated:
-            raise PermissionDenied("You must be logged in to create a job.")
         serializer = JobSerializer(data=request.data)
         if serializer.is_valid():
             job = serializer.save()
@@ -85,7 +84,7 @@ class JobListCreateAPIView(APIView):
 
 
 class JobDetailAPIView(APIView):
-    permission_classes = []  
+    permission_classes = [IsInstructorOrAdmin]
 
     def get_object(self, pk):
         return get_object_or_404(Job, pk=pk)
@@ -94,8 +93,6 @@ class JobDetailAPIView(APIView):
         return Response(normalize_job(self.get_object(pk)))
 
     def put(self, request, pk):
-        if not request.user or not request.user.is_authenticated:
-            raise PermissionDenied("You must be logged in to edit a job.")
         job = self.get_object(pk)
         serializer = JobSerializer(job, data=request.data)
         if serializer.is_valid():
@@ -104,8 +101,6 @@ class JobDetailAPIView(APIView):
         return Response(serializer.errors, status=400)
 
     def patch(self, request, pk):
-        if not request.user or not request.user.is_authenticated:
-            raise PermissionDenied("You must be logged in to edit a job.")
         job = self.get_object(pk)
         serializer = JobSerializer(job, data=request.data, partial=True)
         if serializer.is_valid():
@@ -114,8 +109,6 @@ class JobDetailAPIView(APIView):
         return Response(serializer.errors, status=400)
 
     def delete(self, request, pk):
-        if not request.user or not request.user.is_authenticated:
-            raise PermissionDenied("You must be logged in to delete a job.")
         self.get_object(pk).delete()
         return Response({"message": "Job deleted"}, status=204)
 

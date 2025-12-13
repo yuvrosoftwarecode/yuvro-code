@@ -1,141 +1,325 @@
 import React, { useEffect, useState } from "react";
-import { Plus, Pencil, Trash, Eye, ClipboardList, Filter } from "lucide-react";
-import { fetchJobs, createJob, updateJob, deleteJobById } from "../../services/jobsapi";
-import AssessmentInterface from "../../components/student/AssessmentInterface";
+import { useNavigate } from "react-router-dom";
+import { Plus, Pencil, Trash, Eye, Filter, Settings, FileText, Building2, Users, Calendar, X, Briefcase, MapPin, DollarSign, Copy, Clock, CheckCircle } from "lucide-react";
+import { jobService, Job, Company } from "../../services/jobService";
+
 import RoleSidebar from "../../components/common/RoleSidebar";
 import RoleHeader from "../../components/common/RoleHeader";
-
-
-interface Job {
-  id: number;
-  title: string;
-  company: string;
-  location: string;
-  work_type: string;
-  salary: string;
-  applicants?: number;
-  status: string;
-  job_type?: string;
-  experience_level?: number;
-  description: string,
-  skills?: string;
-}
+import QuestionBank from "../../components/common/QuestionBank";
+import SearchBar from "../../components/common/SearchBar";
+import { fetchQuestionById } from "../../services/questionService";
+import { toast } from "sonner";
 
 const Jobs: React.FC = () => {
+  const navigate = useNavigate();
   const [jobs, setJobs] = useState<Job[]>([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [showJobForm, setShowJobForm] = useState(false);
+
   const [isEditing, setIsEditing] = useState(false);
-  const [selectedJobId, setSelectedJobId] = useState<number | null>(null);
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string>("");
+  const [currentFormTab, setCurrentFormTab] = useState('details');
+  const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
+  const [selectedQuestionsByType, setSelectedQuestionsByType] = useState({
+    mcq_single: [] as string[],
+    mcq_multiple: [] as string[],
+    coding: [] as string[],
+    descriptive: [] as string[]
+  });
+  const [randomQuestionsConfig, setRandomQuestionsConfig] = useState({
+    mcq_single: 0,
+    mcq_multiple: 0,
+    coding: 0,
+    descriptive: 0
+  });
   const [formData, setFormData] = useState({
     title: "",
-    company: "",
-    location: "",
-    work_type: "Remote",
-    salary: "",
-    experience_level: 0,
-    job_type: "",
+    company_id: "",
     description: "",
-    skills: "",
-    status: "Active",
+    employment_type: "full-time" as const,
+    experience_min_years: 0,
+    experience_max_years: undefined as number | undefined,
+    locations: [] as string[],
+    is_remote: false,
+    min_salary: undefined as number | undefined,
+    max_salary: undefined as number | undefined,
+    currency: "USD" as const,
+    skills: [] as string[],
+    notice_period: undefined as number | undefined,
+    education_level: "any" as const,
+    status: "draft" as const,
+    posted_at: undefined as string | undefined,
+    expires_at: undefined as string | undefined,
   });
+
+
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [deleteJobId, setDeleteJobId] = useState<number | null>(null);
+  const [deleteJobId, setDeleteJobId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedTab, setSelectedTab] = useState('all');
 
-  // Assessment states
-  const [showAssessment, setShowAssessment] = useState(false);
-  const [showAssessmentConfig, setShowAssessmentConfig] = useState(false);
-  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
-  const [assessmentConfig, setAssessmentConfig] = useState({
-    duration: 60,
-    totalQuestions: 10,
-    topicId: "1"
-  });
+
 
   useEffect(() => {
     loadJobs();
+    loadCompanies();
   }, []);
+
+  const loadCompanies = async () => {
+    try {
+      const data = await jobService.getAllCompanies();
+      setCompanies(data);
+    } catch (error) {
+      console.error("Error fetching companies:", error);
+      setCompanies([]);
+    }
+  };
+
+  const handleCompanySelect = (companyId: string) => {
+    const company = companies.find(c => c.id === companyId);
+    if (company) {
+      setFormData(prev => ({
+        ...prev,
+        company_id: company.id,
+      }));
+    }
+  };
+
+  const categorizeQuestionsByType = async (questionIds: string[]) => {
+    if (questionIds.length === 0) {
+      return {
+        mcq_single: [],
+        mcq_multiple: [],
+        coding: [],
+        descriptive: []
+      };
+    }
+
+    try {
+      const questionPromises = questionIds.map(id => fetchQuestionById(id));
+      const questions = await Promise.all(questionPromises);
+
+      const categorized = {
+        mcq_single: [] as string[],
+        mcq_multiple: [] as string[],
+        coding: [] as string[],
+        descriptive: [] as string[]
+      };
+
+      questions.forEach(question => {
+        if (question.type === 'mcq_single') {
+          categorized.mcq_single.push(question.id);
+        } else if (question.type === 'mcq_multiple') {
+          categorized.mcq_multiple.push(question.id);
+        } else if (question.type === 'coding') {
+          categorized.coding.push(question.id);
+        } else if (question.type === 'descriptive') {
+          categorized.descriptive.push(question.id);
+        }
+      });
+
+      return categorized;
+    } catch (error) {
+      console.error('Failed to categorize questions:', error);
+      return {
+        mcq_single: questionIds,
+        mcq_multiple: [],
+        coding: [],
+        descriptive: []
+      };
+    }
+  };
+
+  const handleQuestionsChange = async (questions: string[]) => {
+    setSelectedQuestions(questions);
+    const categorizedQuestions = await categorizeQuestionsByType(questions);
+    setSelectedQuestionsByType(categorizedQuestions);
+  };
 
   const loadJobs = async () => {
     try {
-      const data = await fetchJobs();
+      const data = await jobService.getAllJobs();
       setJobs(data);
     } catch (error) {
       console.error("Error fetching jobs:", error);
     }
   };
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const openAddModal = () => {
+  const openAddForm = () => {
     setIsEditing(false);
+    setCurrentFormTab('details');
+    setSelectedCompanyId("");
     setFormData({
       title: "",
-      company: "",
-      location: "",
-      work_type: "Remote",
-      salary: "",
-      experience_level: 0,
-      job_type: "",
+      company_id: "",
       description: "",
-      skills: "",
-      status: "Active",
+      employment_type: "full-time",
+      experience_min_years: 0,
+      experience_max_years: undefined,
+      locations: [],
+      is_remote: false,
+      min_salary: undefined,
+      max_salary: undefined,
+      currency: "USD",
+      skills: [],
+      notice_period: undefined,
+      education_level: "any",
+      status: "draft",
+      posted_at: undefined,
+      expires_at: undefined,
     });
-    setIsModalOpen(true);
+    setSelectedQuestions([]);
+    setSelectedQuestionsByType({
+      mcq_single: [],
+      mcq_multiple: [],
+      coding: [],
+      descriptive: []
+    });
+    setRandomQuestionsConfig({
+      mcq_single: 0,
+      mcq_multiple: 0,
+      coding: 0,
+      descriptive: 0
+    });
+    setShowJobForm(true);
   };
 
-  const openEditModal = (job: Job) => {
-    setIsEditing(true);
-    setSelectedJobId(job.id);
+  const fillFromPreviousJob = (job: Job) => {
+    setSelectedCompanyId(job.company.id);
     setFormData({
       title: job.title,
-      company: job.company,
-      location: job.location,
-      work_type: job.work_type,
-      salary: job.salary,
-      status: job.status,
-      job_type: job.job_type || "",
-      experience_level: job.experience_level || 0,
-      skills: job.skills || "",
+      company_id: job.company.id,
       description: job.description,
+      employment_type: job.employment_type,
+      experience_min_years: job.experience_min_years,
+      experience_max_years: job.experience_max_years,
+      locations: job.locations,
+      is_remote: job.is_remote,
+      min_salary: job.min_salary,
+      max_salary: job.max_salary,
+      currency: job.currency,
+      skills: job.skills,
+      notice_period: job.notice_period,
+      education_level: job.education_level,
+      status: "draft", // Always set to draft for new jobs
+      posted_at: undefined,
+      expires_at: undefined,
     });
-    setIsModalOpen(true);
+
+    // Handle screening questions
+    const allQuestions = [
+      ...(job.screening_questions_config?.mcq_single || []),
+      ...(job.screening_questions_config?.mcq_multiple || []),
+      ...(job.screening_questions_config?.coding || []),
+      ...(job.screening_questions_config?.descriptive || [])
+    ];
+    setSelectedQuestions(allQuestions);
+    setSelectedQuestionsByType(job.screening_questions_config || {
+      mcq_single: [],
+      mcq_multiple: [],
+      coding: [],
+      descriptive: []
+    });
+    setRandomQuestionsConfig(job.screening_questions_random_config || {
+      mcq_single: 0,
+      mcq_multiple: 0,
+      coding: 0,
+      descriptive: 0
+    });
+
+    toast.success(`Form filled with details from "${job.title}"`);
   };
 
-  const handleAddJob = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const openEditForm = (job: Job) => {
+    setIsEditing(true);
+    setSelectedJobId(job.id);
+    setCurrentFormTab('details');
+    setSelectedCompanyId(job.company.id);
+    setFormData({
+      title: job.title,
+      company_id: job.company.id,
+      description: job.description,
+      employment_type: job.employment_type,
+      experience_min_years: job.experience_min_years,
+      experience_max_years: job.experience_max_years,
+      locations: job.locations,
+      is_remote: job.is_remote,
+      min_salary: job.min_salary,
+      max_salary: job.max_salary,
+      currency: job.currency,
+      skills: job.skills,
+      notice_period: job.notice_period,
+      education_level: job.education_level,
+      status: job.status,
+      posted_at: job.posted_at,
+      expires_at: job.expires_at,
+    });
 
-    try {
-      await createJob(formData);
-      loadJobs();
-      setIsModalOpen(false);
-    } catch (err) {
-      console.error("Error creating job:", err);
+    // Handle screening questions
+    const allQuestions = [
+      ...(job.screening_questions_config?.mcq_single || []),
+      ...(job.screening_questions_config?.mcq_multiple || []),
+      ...(job.screening_questions_config?.coding || []),
+      ...(job.screening_questions_config?.descriptive || [])
+    ];
+    setSelectedQuestions(allQuestions);
+    setSelectedQuestionsByType(job.screening_questions_config || {
+      mcq_single: [],
+      mcq_multiple: [],
+      coding: [],
+      descriptive: []
+    });
+    setRandomQuestionsConfig(job.screening_questions_random_config || {
+      mcq_single: 0,
+      mcq_multiple: 0,
+      coding: 0,
+      descriptive: 0
+    });
+
+    setShowJobForm(true);
+  };
+
+  const handleSubmitJob = async () => {
+    if (!formData.title.trim()) {
+      toast.error('Please enter a job title');
+      return;
     }
-  };
 
-  const handleUpdateJob = async (e: React.FormEvent) => {
-    e.preventDefault();
+    if (!formData.company_id.trim()) {
+      toast.error('Please select a company');
+      return;
+    }
 
-    if (!selectedJobId) return;
+    const payload = {
+      ...formData,
+      screening_questions_config: selectedQuestionsByType,
+      screening_questions_random_config: randomQuestionsConfig,
+    };
 
     try {
-      await updateJob(selectedJobId, formData);
+      if (isEditing && selectedJobId) {
+        await jobService.updateJob(selectedJobId, payload);
+        toast.success('Job updated successfully');
+      } else {
+        await jobService.createJob(payload);
+        toast.success('Job posted successfully');
+      }
       loadJobs();
-      setIsModalOpen(false);
+      setShowJobForm(false);
       setIsEditing(false);
       setSelectedJobId(null);
     } catch (err) {
-      console.error("Error updating job:", err);
+      console.error("Error saving job:", err);
+      toast.error(isEditing ? 'Failed to update job' : 'Failed to post job');
     }
   };
 
-  const openDeleteModal = (id: number) => {
+
+
+  const openDeleteModal = (id: string) => {
     setDeleteJobId(id);
     setIsDeleteModalOpen(true);
   };
@@ -144,7 +328,7 @@ const Jobs: React.FC = () => {
     if (!deleteJobId) return;
     try {
       setIsDeleting(true);
-      await deleteJobById(deleteJobId);
+      await jobService.deleteJob(deleteJobId);
       setJobs(prev => prev.filter(job => job.id !== deleteJobId));
       setIsDeleteModalOpen(false);
       setDeleteJobId(null);
@@ -160,38 +344,25 @@ const Jobs: React.FC = () => {
     setDeleteJobId(null);
   };
 
-  // Assessment handlers
-  const openAssessmentConfig = (job: Job) => {
-    setSelectedJob(job);
-    setAssessmentConfig({
-      duration: 60,
-      totalQuestions: 10,
-      topicId: "1"
-    });
-    setShowAssessmentConfig(true);
+  const filteredJobs = jobs.filter(job => {
+    const matchesSearch = job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      job.company.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      job.skills.some(skill => skill.toLowerCase().includes(searchQuery.toLowerCase()));
+    const matchesTab = selectedTab === 'all' || job.status === selectedTab;
+    return matchesSearch && matchesTab;
+  });
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'active': return 'bg-green-100 text-green-700 border-green-200';
+      case 'draft': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+      case 'paused': return 'bg-orange-100 text-orange-700 border-orange-200';
+      case 'closed': return 'bg-gray-100 text-gray-700 border-gray-200';
+      default: return 'bg-gray-100 text-gray-700 border-gray-200';
+    }
   };
 
-  const startAssessment = () => {
-    setShowAssessmentConfig(false);
-    setShowAssessment(true);
-  };
 
-  const handleAssessmentComplete = (stats?: { answeredCount: number; totalQuestions: number; timeSpent: number }) => {
-    console.log("Assessment completed:", stats);
-    setShowAssessment(false);
-    setSelectedJob(null);
-    // Here you can save the assessment results to your backend
-  };
-
-  const handleAssessmentBack = () => {
-    setShowAssessment(false);
-    setSelectedJob(null);
-  };
-
-  const closeAssessmentConfig = () => {
-    setShowAssessmentConfig(false);
-    setSelectedJob(null);
-  };
 
   const headerActions = (
     <>
@@ -200,7 +371,14 @@ const Jobs: React.FC = () => {
         <span>Filter</span>
       </button>
       <button
-        onClick={openAddModal}
+        onClick={() => navigate('/recruiter/jobs/companies')}
+        className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+      >
+        <Building2 className="h-4 w-4" />
+        <span>Companies</span>
+      </button>
+      <button
+        onClick={openAddForm}
         className="flex items-center space-x-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
       >
         <Plus className="h-4 w-4" />
@@ -218,388 +396,712 @@ const Jobs: React.FC = () => {
         {/* Main Content */}
         <div className="flex-1">
           {/* Header */}
-          <RoleHeader 
+          <RoleHeader
             title="Job Management Dashboard"
             subtitle="Manage your job recruitment pipeline"
             actions={headerActions}
           />
 
-          <div className="p-6">
-            {/* Search Section */}
-            <div className="mb-6">
-              <input
-                type="text"
-                placeholder="Search jobs..."
-                className="w-full max-w-md border border-gray-300 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-              />
-            </div>
-
-        <h2 className="text-2xl font-bold mb-4">Job Listings</h2>
-        <p className="text-gray-600 mb-6">{jobs.length} job(s) found</p>
-
-        <div className="bg-white shadow rounded">
-          <table className="w-full table-auto">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="p-3 text-left">Job Title</th>
-                <th className="p-3 text-left">Company</th>
-                <th className="p-3 text-left">Location</th>
-                <th className="p-3 text-left">Applicants</th>
-                <th className="p-3 text-left">Status</th>
-                <th className="p-3 text-left">Assessment</th>
-                <th className="p-3 text-left">Actions</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {jobs.map((job) => (
-                <tr key={job.id} className="border-b">
-                  <td className="p-3 font-semibold">{job.title}</td>
-                  <td className="p-3">{job.company}</td>
-                  <td className="p-3">{job.location}</td>
-                  <td className="p-3 flex items-center gap-1">
-                    <Eye size={18} /> {job.applicants || 0}
-                  </td>
-                  <td className="p-3">
-                    <span
-                      className={`px-3 py-1 rounded text-sm ${job.status === "Active"
-                        ? "bg-green-100 text-green-700"
-                        : "bg-red-100 text-red-700"
-                        }`}
-                    >
-                      {job.status}
-                    </span>
-                  </td>
-
-                  <td className="p-3">
-                    <button
-                      onClick={() => openAssessmentConfig(job)}
-                      className="flex items-center gap-2 bg-purple-600 text-white px-3 py-1 rounded text-sm hover:bg-purple-700"
-                    >
-                      <ClipboardList size={14} />
-                      Create Assessment
-                    </button>
-                  </td>
-
-                  <td className="p-3 flex gap-3 text-gray-600">
-                    <Pencil
-                      size={18}
-                      className="cursor-pointer hover:text-blue-600"
-                      onClick={() => openEditModal(job)}
-                    />
-                    <Trash
-                      size={18}
-                      className="cursor-pointer text-red-600 hover:text-red-800"
-                      onClick={() => openDeleteModal(job.id)}
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {isModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center overflow-y-auto">
-            <div className="bg-white p-6 w-full max-w-3xl rounded shadow-lg my-10">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold">
-                  {isEditing ? "Update Job" : "Post New Job"}
-                </h2>
-                <button onClick={() => setIsModalOpen(false)}>✖</button>
-              </div>
-
-              <form
-                onSubmit={isEditing ? handleUpdateJob : handleAddJob}
-                className="space-y-4"
-              >
-
-                <div>
-                  <label className="font-semibold">Job Title</label>
-                  <input
-                    type="text"
-                    name="title"
-                    value={formData.title}
-                    onChange={handleChange}
-                    className="w-full border px-3 py-2 rounded mt-1"
-                    required
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label>Company</label>
-                    <input
-                      type="text"
-                      name="company"
-                      value={formData.company}
-                      onChange={handleChange}
-                      className="w-full border px-3 py-2 rounded mt-1"
-                    />
-                  </div>
-
-                  <div>
-                    <label>Location</label>
-                    <input
-                      type="text"
-                      name="location"
-                      value={formData.location}
-                      onChange={handleChange}
-                      className="w-full border px-3 py-2 rounded mt-1"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label>Work Type</label>
-                    <select
-                      name="work_type"
-                      value={formData.work_type}
-                      onChange={handleChange}
-                      className="w-full border px-3 py-2 rounded mt-1"
-                    >
-                      <option value="Remote">Remote</option>
-                      <option value="Hybrid">Hybrid</option>
-                      <option value="Onsite">Onsite</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label>Job Type</label>
-                    <input
-                      type="text"
-                      name="job_type"
-                      value={formData.job_type}
-                      onChange={handleChange}
-                      className="w-full border px-3 py-2 rounded mt-1"
-                      placeholder="e.g., Full-time"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label>Experience Level</label>
-                    <input
-                      type="text"
-                      name="experience_level"
-                      value={formData.experience_level}
-                      onChange={handleChange}
-                      className="w-full border px-3 py-2 rounded mt-1"
-                      placeholder="e.g., Fresher"
-                    />
-                  </div>
-
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label> Description</label>
-                      <input
-                        type="text"
-                        name="description"
-                        value={formData.description}
-                        onChange={handleChange}
-                        className="w-full border px-3 py-2 rounded mt-1"
-                        placeholder="e.g., Fresher"
-                      />
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            {/* Job Listings - Only show when no forms are open */}
+            {!showJobForm && (
+              <>
+                {/* Stats Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                  <div className="bg-white border border-gray-200 rounded-lg p-6">
+                    <div className="pb-3">
+                      <h3 className="text-md font-medium text-gray-600">Total Jobs</h3>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="text-2xl font-bold">{jobs.length}</div>
+                      <Briefcase className="h-8 w-8 text-blue-500" />
                     </div>
                   </div>
 
-                  <div>
-                    <label>Salary</label>
-                    <input
-                      type="text"
-                      name="salary"
-                      value={formData.salary}
-                      onChange={handleChange}
-                      className="w-full border px-3 py-2 rounded mt-1"
-                      placeholder="e.g., ₹6-10 LPA"
-                    />
+                  <div className="bg-white border border-gray-200 rounded-lg p-6">
+                    <div className="pb-3">
+                      <h3 className="text-md font-medium text-gray-600">Active</h3>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="text-2xl font-bold text-green-600">{jobs.filter(j => j.status === 'active').length}</div>
+                      <CheckCircle className="h-8 w-8 text-green-600" />
+                    </div>
+                  </div>
+
+                  <div className="bg-white border border-gray-200 rounded-lg p-6">
+                    <div className="pb-3">
+                      <h3 className="text-md font-medium text-gray-600">Draft</h3>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="text-2xl font-bold text-yellow-600">{jobs.filter(j => j.status === 'draft').length}</div>
+                      <FileText className="h-8 w-8 text-yellow-600" />
+                    </div>
+                  </div>
+
+                  <div className="bg-white border border-gray-200 rounded-lg p-6">
+                    <div className="pb-3">
+                      <h3 className="text-md font-medium text-gray-600">Total Applicants</h3>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="text-2xl font-bold">0</div>
+                      <Users className="h-8 w-8 text-gray-600" />
+                    </div>
                   </div>
                 </div>
 
-                <div>
-                  <label>Skills (comma-separated)</label>
-                  <input
-                    type="text"
-                    name="skills"
-                    value={formData.skills}
-                    onChange={handleChange}
-                    className="w-full border px-3 py-2 rounded mt-1"
-                    placeholder="e.g., React, Node.js"
-                  />
+                {/* Tabs and Search */}
+                <div className="mb-6 flex items-center justify-between gap-4">
+                  <div className="flex w-full items-center gap-4 h-12">
+                    <div className="h-full flex items-center border border-gray-200 rounded-lg">
+                      <div className="flex rounded-lg overflow-hidden border border-gray-200 bg-white px-4 gap-4 h-full items-center">
+                        <button
+                          onClick={() => setSelectedTab('all')}
+                          className={`px-5 h-8 text-sm font-medium rounded-lg transition-colors duration-150 ${selectedTab === 'all' ? 'bg-gray-200 text-gray-900 shadow-sm' : 'bg-white text-gray-600'
+                            }`}
+                        >
+                          All Jobs
+                        </button>
+                        <button
+                          onClick={() => setSelectedTab('active')}
+                          className={`px-5 h-8 text-sm font-medium rounded-lg transition-colors duration-150 ${selectedTab === 'active' ? 'bg-gray-100 text-gray-900 shadow-sm' : 'bg-white text-gray-600'
+                            }`}
+                        >
+                          Active
+                        </button>
+                        <button
+                          onClick={() => setSelectedTab('draft')}
+                          className={`px-5 h-8 text-sm font-medium rounded-lg transition-colors duration-150 ${selectedTab === 'draft' ? 'bg-gray-100 text-gray-900 shadow-sm' : 'bg-white text-gray-600'
+                            }`}
+                        >
+                          Draft
+                        </button>
+                        <button
+                          onClick={() => setSelectedTab('paused')}
+                          className={`px-5 h-8 text-sm font-medium rounded-lg transition-colors duration-150 ${selectedTab === 'paused' ? 'bg-gray-100 text-gray-900 shadow-sm' : 'bg-white text-gray-600'
+                            }`}
+                        >
+                          Paused
+                        </button>
+                        <button
+                          onClick={() => setSelectedTab('closed')}
+                          className={`px-5 h-8 text-sm font-medium rounded-lg transition-colors duration-150 ${selectedTab === 'closed' ? 'bg-gray-100 text-gray-900 shadow-sm' : 'bg-white text-gray-600'
+                            }`}
+                        >
+                          Closed
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="group relative h-full flex items-center">
+                      <SearchBar
+                        searchQuery={searchQuery}
+                        setSearchQuery={setSearchQuery}
+                        placeholder="Search jobs, companies, skills..."
+                      />
+                    </div>
+                  </div>
                 </div>
 
-                <div>
-                  <label>Status</label>
-                  <select
-                    name="status"
-                    value={formData.status}
-                    onChange={handleChange}
-                    className="w-full border px-3 py-2 rounded mt-1"
-                  >
-                    <option value="Active">Active</option>
-                    <option value="Closed">Closed</option>
-                  </select>
+                {/* Job Cards Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredJobs.map((job) => (
+                    <div key={job.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow">
+                      {/* Header */}
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex-1">
+                          <h3 className="text-lg font-semibold text-gray-900 mb-1">{job.title}</h3>
+                          <p className="text-sm text-gray-600 flex items-center">
+                            <Building2 className="h-4 w-4 mr-1" />
+                            {job.company.name}
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => openEditForm(job)}
+                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => openDeleteModal(job.id)}
+                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          >
+                            <Trash className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Job Details */}
+                      <div className="space-y-3 mb-4">
+                        <div className="flex items-center text-sm text-gray-600">
+                          <MapPin className="h-4 w-4 mr-2" />
+                          {job.locations.join(', ') || (job.is_remote ? 'Remote' : 'Not specified')}
+                        </div>
+
+                        {job.employment_type && (
+                          <div className="flex items-center text-sm text-gray-600">
+                            <Clock className="h-4 w-4 mr-2" />
+                            {job.employment_type.charAt(0).toUpperCase() + job.employment_type.slice(1).replace('-', ' ')}
+                          </div>
+                        )}
+
+                        {(job.experience_min_years > 0 || job.experience_max_years) && (
+                          <div className="flex items-center text-sm text-gray-600">
+                            <Briefcase className="h-4 w-4 mr-2" />
+                            {job.experience_min_years}-{job.experience_max_years || '+'} years experience
+                          </div>
+                        )}
+
+                        {(job.min_salary || job.max_salary) && (
+                          <div className="flex items-center text-sm text-gray-600">
+                            <DollarSign className="h-4 w-4 mr-2" />
+                            {job.min_salary && job.max_salary
+                              ? `${job.min_salary}-${job.max_salary} ${job.currency}`
+                              : job.min_salary
+                                ? `${job.min_salary}+ ${job.currency}`
+                                : `Up to ${job.max_salary} ${job.currency}`
+                            }
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Skills */}
+                      {job.skills.length > 0 && (
+                        <div className="mb-4">
+                          <div className="flex flex-wrap gap-1">
+                            {job.skills.slice(0, 3).map((skill, idx) => (
+                              <span key={idx} className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-md">
+                                {skill}
+                              </span>
+                            ))}
+                            {job.skills.length > 3 && (
+                              <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-md">
+                                +{job.skills.length - 3}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Footer */}
+                      <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                        <div className="flex items-center gap-2">
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(job.status)}`}>
+                            {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
+                          </span>
+                          <div className="flex items-center text-xs text-gray-500">
+                            <Eye className="h-3 w-3 mr-1" />
+                            0 applicants
+                          </div>
+                        </div>
+                        {job.posted_at && (
+                          <span className="text-xs text-gray-400">
+                            {new Date(job.posted_at).toLocaleDateString()}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
 
-                <div className="flex justify-end gap-4">
+                {/* Empty State */}
+                {filteredJobs.length === 0 && (
+                  <div className="text-center py-12">
+                    <Briefcase className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No jobs found</h3>
+                    <p className="text-gray-600 mb-4">
+                      {searchQuery || selectedTab !== 'all'
+                        ? 'Try adjusting your search or filters'
+                        : 'Get started by posting your first job'
+                      }
+                    </p>
+                    {!searchQuery && selectedTab === 'all' && (
+                      <button
+                        onClick={openAddForm}
+                        className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors"
+                      >
+                        Post Your First Job
+                      </button>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Inline Job Form */}
+            {showJobForm && (
+              <div className="mb-8 bg-white shadow rounded-lg p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    {isEditing ? "Update Job" : "Post New Job"}
+                  </h2>
                   <button
-                    type="button"
-                    onClick={() => setIsModalOpen(false)}
-                    className="px-4 py-2 bg-gray-300 rounded"
+                    onClick={() => setShowJobForm(false)}
+                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                   >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-blue-600 text-white rounded"
-                  >
-                    {isEditing ? "Update Job" : "Post Job"}
+                    <X className="h-5 w-5" />
                   </button>
                 </div>
-              </form>
-            </div>
-          </div>
-        )}
 
-        {isDeleteModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center">
-            <div className="bg-white p-6 rounded shadow-lg w-96 text-center">
-              <h3 className="text-lg font-semibold mb-4">
-                Are you sure you want to delete this job?
-              </h3>
+                {/* Use Previous Post Section - Only show when adding new job */}
+                {!isEditing && (
+                  <div className="mb-6 border border-gray-200 shadow-sm rounded-lg">
+                    <div className="pb-4 p-6 border-b">
+                      <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                        <FileText className="h-5 w-5 mr-2 text-purple-500" />
+                        Use Previous Post
+                      </h3>
+                      <p className="text-sm text-gray-600 mt-1">Click on any previous job to auto-fill the form</p>
+                    </div>
+                    <div className="p-6">
+                      <div className={`grid gap-4 ${jobs.length === 1 ? 'grid-cols-1 md:grid-cols-1' :
+                        jobs.length === 2 ? 'grid-cols-1 md:grid-cols-2' :
+                          'grid-cols-1 md:grid-cols-3'
+                        }`}>
+                        {jobs.slice(0, 3).map((job) => (
+                          <div
+                            key={job.id}
+                            onClick={() => fillFromPreviousJob(job)}
+                            className="relative p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 cursor-pointer transition-all group"
+                          >
+                            <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Copy className="h-4 w-4 text-blue-500" />
+                            </div>
+                            <h4 className="font-semibold text-gray-900 mb-1 pr-6">{job.title}</h4>
+                            <p className="text-sm text-gray-600 mb-2">{job.company.name}</p>
+                            <div className="text-xs text-gray-500 mb-2 space-y-1">
+                              <div className="flex items-center">
+                                <MapPin className="h-3 w-3 mr-1" />
+                                {job.locations.join(', ') || (job.is_remote ? 'Remote' : 'Not specified')}
+                              </div>
+                              {(job.experience_min_years > 0 || job.experience_max_years) && (
+                                <div className="flex items-center">
+                                  <Briefcase className="h-3 w-3 mr-1" />
+                                  {job.experience_min_years}-{job.experience_max_years || '+'} years exp
+                                </div>
+                              )}
+                              {(job.min_salary || job.max_salary) && (
+                                <div className="flex items-center">
+                                  <DollarSign className="h-3 w-3 mr-1" />
+                                  {job.min_salary && job.max_salary
+                                    ? `${job.min_salary}-${job.max_salary} ${job.currency}`
+                                    : job.min_salary
+                                      ? `${job.min_salary}+ ${job.currency}`
+                                      : `Up to ${job.max_salary} ${job.currency}`
+                                  }
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className={`px-2 py-1 rounded text-xs ${job.status === 'active' ? 'bg-green-100 text-green-700' :
+                                job.status === 'draft' ? 'bg-yellow-100 text-yellow-700' :
+                                  'bg-gray-100 text-gray-700'
+                                }`}>
+                                {job.status}
+                              </span>
+                              {job.posted_at && (
+                                <span className="text-xs text-gray-400">
+                                  {new Date(job.posted_at).toLocaleDateString()}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                        {jobs.length === 0 && (
+                          <div className="col-span-3 text-center py-8 text-gray-500">
+                            No previous jobs found. Create your first job posting!
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
 
-              <div className="flex justify-center gap-4 mt-4">
-                <button
-                  onClick={() => setIsDeleteModalOpen(false)}
-                  className="px-4 py-2 bg-gray-300 rounded"
-                >
-                  Cancel
-                </button>
+                <div className="w-full">
+                  <div className="grid w-full grid-cols-2 mb-6 bg-gray-100 p-1 rounded-lg">
+                    <button
+                      onClick={() => setCurrentFormTab('details')}
+                      className={`flex items-center gap-2 rounded-md py-2 px-4 transition-all ${currentFormTab === 'details' ? 'bg-white shadow-sm' : ''
+                        }`}
+                    >
+                      <Briefcase className="h-4 w-4" />
+                      Job Details
+                    </button>
+                    <button
+                      onClick={() => setCurrentFormTab('screening')}
+                      className={`flex items-center gap-2 rounded-md py-2 px-4 transition-all ${currentFormTab === 'screening' ? 'bg-white shadow-sm' : ''
+                        }`}
+                    >
+                      <FileText className="h-4 w-4" />
+                      Screening Questions ({Object.values(selectedQuestionsByType).flat().length + Object.values(randomQuestionsConfig).reduce((sum, count) => sum + count, 0)})
+                    </button>
+                  </div>
 
-                <button
-                  onClick={confirmDeleteJob}
-                  className="px-4 py-2 bg-red-600 text-white rounded"
-                >
-                  Delete
-                </button>
+                  {currentFormTab === 'details' && (
+                    <div className="space-y-6">
+                      {/* Basic Job Information */}
+                      <div className="border border-gray-200 shadow-sm rounded-lg">
+                        <div className="pb-4 p-6 border-b">
+                          <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                            <Briefcase className="h-5 w-5 mr-2 text-blue-500" />
+                            Basic Information
+                          </h3>
+                        </div>
+                        <div className="space-y-4 p-6">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">Job Title *</label>
+                              <input
+                                type="text"
+                                value={formData.title}
+                                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                                placeholder="e.g., Senior React Developer"
+                                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">Employment Type *</label>
+                              <select
+                                value={formData.employment_type}
+                                onChange={(e) => setFormData({ ...formData, employment_type: e.target.value as any })}
+                                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                              >
+                                <option value="full-time">Full Time</option>
+                                <option value="part-time">Part Time</option>
+                                <option value="contract">Contract</option>
+                                <option value="internship">Internship</option>
+                              </select>
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Job Description *</label>
+                            <textarea
+                              value={formData.description}
+                              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                              placeholder="Describe the role, responsibilities, and what you're looking for..."
+                              rows={4}
+                              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none"
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">Company *</label>
+                              <select
+                                value={selectedCompanyId}
+                                onChange={(e) => {
+                                  setSelectedCompanyId(e.target.value);
+                                  handleCompanySelect(e.target.value);
+                                }}
+                                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                              >
+                                <option value="">Select Company</option>
+                                {companies.map(company => (
+                                  <option key={company.id} value={company.id}>{company.name}</option>
+                                ))}
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">Remote Work</label>
+                              <div className="flex items-center space-x-4 pt-2">
+                                <label className="flex items-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={formData.is_remote}
+                                    onChange={(e) => setFormData({ ...formData, is_remote: e.target.checked })}
+                                    className="mr-2"
+                                  />
+                                  Remote Position
+                                </label>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Locations (comma-separated)</label>
+                            <input
+                              type="text"
+                              value={formData.locations.join(', ')}
+                              onChange={(e) => {
+                                const locations = e.target.value.split(',').map(loc => loc.trim()).filter(loc => loc);
+                                setFormData({ ...formData, locations });
+                              }}
+                              placeholder="e.g., Bangalore, Mumbai, Delhi"
+                              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">Min Salary</label>
+                              <input
+                                type="number"
+                                value={formData.min_salary || ''}
+                                onChange={(e) => setFormData({ ...formData, min_salary: e.target.value ? Number(e.target.value) : undefined })}
+                                placeholder="50000"
+                                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">Max Salary</label>
+                              <input
+                                type="number"
+                                value={formData.max_salary || ''}
+                                onChange={(e) => setFormData({ ...formData, max_salary: e.target.value ? Number(e.target.value) : undefined })}
+                                placeholder="100000"
+                                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">Currency</label>
+                              <select
+                                value={formData.currency}
+                                onChange={(e) => setFormData({ ...formData, currency: e.target.value as any })}
+                                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                              >
+                                <option value="USD">USD</option>
+                                <option value="INR">INR</option>
+                                <option value="EUR">EUR</option>
+                                <option value="GBP">GBP</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                              <select
+                                value={formData.status}
+                                onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+                                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                              >
+                                <option value="draft">Draft</option>
+                                <option value="active">Active</option>
+                                <option value="paused">Paused</option>
+                                <option value="closed">Closed</option>
+                              </select>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">Min Experience (years)</label>
+                              <input
+                                type="number"
+                                value={formData.experience_min_years}
+                                onChange={(e) => setFormData({ ...formData, experience_min_years: Number(e.target.value) })}
+                                min="0"
+                                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">Max Experience (years)</label>
+                              <input
+                                type="number"
+                                value={formData.experience_max_years || ''}
+                                onChange={(e) => setFormData({ ...formData, experience_max_years: e.target.value ? Number(e.target.value) : undefined })}
+                                min="0"
+                                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">Education Level</label>
+                              <select
+                                value={formData.education_level}
+                                onChange={(e) => setFormData({ ...formData, education_level: e.target.value as any })}
+                                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                              >
+                                <option value="any">Any</option>
+                                <option value="high_school">High School</option>
+                                <option value="diploma">Diploma</option>
+                                <option value="bachelor">Bachelor's Degree</option>
+                                <option value="master">Master's Degree</option>
+                                <option value="phd">PhD</option>
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Skills and Requirements */}
+                      <div className="border border-gray-200 shadow-sm rounded-lg">
+                        <div className="pb-4 p-6 border-b">
+                          <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                            <Settings className="h-5 w-5 mr-2 text-green-500" />
+                            Skills & Requirements
+                          </h3>
+                        </div>
+                        <div className="space-y-4 p-6">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Required Skills (comma-separated)</label>
+                            <input
+                              type="text"
+                              value={formData.skills.join(', ')}
+                              onChange={(e) => {
+                                const skills = e.target.value.split(',').map(skill => skill.trim()).filter(skill => skill);
+                                setFormData({ ...formData, skills });
+                              }}
+                              placeholder="e.g., React, Node.js, JavaScript, TypeScript"
+                              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Notice Period (days)</label>
+                            <input
+                              type="number"
+                              value={formData.notice_period || ''}
+                              onChange={(e) => setFormData({ ...formData, notice_period: e.target.value ? Number(e.target.value) : undefined })}
+                              placeholder="30"
+                              min="0"
+                              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {currentFormTab === 'screening' && (
+                    <div className="space-y-6">
+                      {/* Random Questions Configuration */}
+                      <div className="border border-gray-200 shadow-sm rounded-lg">
+                        <div className="pb-4 p-6 border-b">
+                          <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                            <Settings className="h-5 w-5 mr-2 text-orange-500" />
+                            Random Questions Configuration
+                          </h3>
+                        </div>
+                        <div className="p-6">
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">MCQ Single Choice</label>
+                              <input
+                                type="number"
+                                min="0"
+                                value={randomQuestionsConfig.mcq_single}
+                                onChange={(e) => setRandomQuestionsConfig({
+                                  ...randomQuestionsConfig,
+                                  mcq_single: parseInt(e.target.value) || 0
+                                })}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="0"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">MCQ Multiple Choice</label>
+                              <input
+                                type="number"
+                                min="0"
+                                value={randomQuestionsConfig.mcq_multiple}
+                                onChange={(e) => setRandomQuestionsConfig({
+                                  ...randomQuestionsConfig,
+                                  mcq_multiple: parseInt(e.target.value) || 0
+                                })}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="0"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">Coding Questions</label>
+                              <input
+                                type="number"
+                                min="0"
+                                value={randomQuestionsConfig.coding}
+                                onChange={(e) => setRandomQuestionsConfig({
+                                  ...randomQuestionsConfig,
+                                  coding: parseInt(e.target.value) || 0
+                                })}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="0"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">Descriptive Questions</label>
+                              <input
+                                type="number"
+                                min="0"
+                                value={randomQuestionsConfig.descriptive}
+                                onChange={(e) => setRandomQuestionsConfig({
+                                  ...randomQuestionsConfig,
+                                  descriptive: parseInt(e.target.value) || 0
+                                })}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="0"
+                              />
+                            </div>
+                          </div>
+                          <p className="text-sm text-gray-500 mt-3">
+                            Specify how many questions of each type should be randomly selected from the question bank for this job screening.
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Specific Question Selection */}
+                      <div className="border border-gray-200 shadow-sm rounded-lg">
+                        <div className="pb-4 p-6 border-b">
+                          <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                            <FileText className="h-5 w-5 mr-2 text-purple-500" />
+                            Specific Question Selection
+                          </h3>
+                        </div>
+                        <div className="p-6">
+                          <QuestionBank
+                            mode="selection"
+                            selectedQuestions={selectedQuestions}
+                            onQuestionsChange={handleQuestionsChange}
+                            allowMultipleSelection={true}
+                            showSplitView={true}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Action Buttons */}
+                  <div className="flex justify-end space-x-4 mt-6 pt-6 border-t">
+                    <button
+                      onClick={() => setShowJobForm(false)}
+                      className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSubmitJob}
+                      className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+                    >
+                      {isEditing ? 'Update Job' : 'Post Job'}
+                    </button>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-        )}
+            )}
 
-        {/* Assessment Configuration Modal */}
-        {showAssessmentConfig && selectedJob && (
-          <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center">
-            <div className="bg-white p-6 rounded shadow-lg w-96">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold">Configure Assessment</h2>
-                <button onClick={closeAssessmentConfig}>✖</button>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Job Position</label>
-                  <input
-                    type="text"
-                    value={selectedJob.title}
-                    disabled
-                    className="w-full border px-3 py-2 rounded bg-gray-100"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">Duration (minutes)</label>
-                  <select
-                    value={assessmentConfig.duration}
-                    onChange={(e) => setAssessmentConfig({ ...assessmentConfig, duration: parseInt(e.target.value) })}
-                    className="w-full border px-3 py-2 rounded"
-                  >
-                    <option value={30}>30 minutes</option>
-                    <option value={45}>45 minutes</option>
-                    <option value={60}>60 minutes</option>
-                    <option value={90}>90 minutes</option>
-                    <option value={120}>120 minutes</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">Number of Questions</label>
-                  <select
-                    value={assessmentConfig.totalQuestions}
-                    onChange={(e) => setAssessmentConfig({ ...assessmentConfig, totalQuestions: parseInt(e.target.value) })}
-                    className="w-full border px-3 py-2 rounded"
-                  >
-                    <option value={5}>5 questions</option>
-                    <option value={10}>10 questions</option>
-                    <option value={15}>15 questions</option>
-                    <option value={20}>20 questions</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">Topic/Skill Area</label>
-                  <select
-                    value={assessmentConfig.topicId}
-                    onChange={(e) => setAssessmentConfig({ ...assessmentConfig, topicId: e.target.value })}
-                    className="w-full border px-3 py-2 rounded"
-                  >
-                    <option value="1">JavaScript Fundamentals</option>
-                    <option value="2">React Development</option>
-                    <option value="3">Node.js Backend</option>
-                    <option value="4">Python Programming</option>
-                    <option value="5">Data Structures & Algorithms</option>
-                  </select>
-                </div>
-
-                <div className="bg-blue-50 p-3 rounded">
-                  <h4 className="font-medium text-blue-800 mb-2">Assessment Preview</h4>
-                  <ul className="text-sm text-blue-700 space-y-1">
-                    <li>• Duration: {assessmentConfig.duration} minutes</li>
-                    <li>• Questions: {assessmentConfig.totalQuestions} mixed (MCQ + Coding)</li>
-                    <li>• Proctored with camera monitoring</li>
-                    <li>• Auto-submit on time completion</li>
-                  </ul>
-                </div>
-
-                <div className="flex justify-end gap-4 mt-6">
-                  <button
-                    onClick={closeAssessmentConfig}
-                    className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={startAssessment}
-                    className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
-                  >
-                    Start Assessment
-                  </button>
+            {/* Delete Confirmation Modal */}
+            {isDeleteModalOpen && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div className="bg-white rounded-lg p-6 w-96">
+                  <h3 className="text-lg font-semibold mb-4">Confirm Delete</h3>
+                  <p className="text-gray-600 mb-6">
+                    Are you sure you want to delete this job? This action cannot be undone.
+                  </p>
+                  <div className="flex justify-end space-x-4">
+                    <button
+                      onClick={closeDeleteModal}
+                      className="px-4 py-2 border border-gray-300 text-gray-700 rounded hover:bg-gray-50"
+                      disabled={isDeleting}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={confirmDeleteJob}
+                      className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                      disabled={isDeleting}
+                    >
+                      {isDeleting ? 'Deleting...' : 'Delete'}
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-        )}
+            )}
 
-        {/* Assessment Interface */}
-        {showAssessment && selectedJob && (
-          <div className="fixed inset-0 bg-white z-50">
-            <AssessmentInterface
-              assessment={{
-                id: selectedJob.id.toString(),
-                title: `${selectedJob.title} - Skill Assessment`,
-                course: selectedJob.company,
-                duration: assessmentConfig.duration,
-                totalQuestions: assessmentConfig.totalQuestions,
-                topicId: assessmentConfig.topicId
-              }}
-              onComplete={handleAssessmentComplete}
-              onBack={handleAssessmentBack}
-            />
-          </div>
-        )}
 
           </div>
         </div>

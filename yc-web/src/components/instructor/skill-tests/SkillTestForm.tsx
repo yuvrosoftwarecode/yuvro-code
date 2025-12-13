@@ -1,78 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Trophy, Calendar, Settings, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import RoleSidebar from '@/components/common/RoleSidebar';
 import RoleHeader from '@/components/common/RoleHeader';
 import QuestionBank from '@/components/common/QuestionBank';
-import { contestService } from '@/services/contestService';
-import { fetchQuestionById, Question } from '@/services/questionService';
+import skillTestService, { SkillTest } from '@/services/skillTestService';
+import courseService, { Course, TopicBasic } from '@/services/courseService';
+import { fetchQuestionById } from '@/services/questionService';
 
-interface Contest {
-  id: string;
-  title: string;
-  organizer: string;
-  type: 'company' | 'college' | 'weekly' | 'monthly';
-  status: 'upcoming' | 'ongoing' | 'past';
-  startDate: string;
-  endDate: string;
-  duration: string;
-  participants: number;
-  prize?: string;
-  difficulty: 'Easy' | 'Medium' | 'Hard';
-  description: string;
-  questions_config?: {
-    mcq_single: string[];
-    mcq_multiple: string[];
-    coding: string[];
-    descriptive: string[];
-  };
-  questions_random_config?: {
-    mcq_single: number;
-    mcq_multiple: number;
-    coding: number;
-    descriptive: number;
-  };
-}
-
-function mapContestFromBackend(c: any): Contest {
-  return {
-    id: String(c.id),
-    title: c.title,
-    organizer: c.organizer,
-    type: c.type,
-    status: c.status,
-    startDate: c.start_datetime || c.start_date || '',
-    endDate: c.end_datetime || c.end_date || '',
-    duration: c.duration ? `${Math.round((typeof c.duration === 'string' ? parseFloat(c.duration) : c.duration) / 60)} min` : '',
-    participants: c.participants_count ?? 0,
-    prize: c.prize ?? '',
-    difficulty: c.difficulty.charAt(0).toUpperCase() + c.difficulty.slice(1),
-    description: c.description ?? '',
-    questions_config: c.questions_config ?? {
-      mcq_single: [],
-      mcq_multiple: [],
-      coding: [],
-      descriptive: []
-    },
-    questions_random_config: c.questions_random_config ?? {
-      mcq_single: 0,
-      mcq_multiple: 0,
-      coding: 0,
-      descriptive: 0
-    },
-  };
-}
-
-export default function ContestForm() {
+export default function SkillTestForm() {
   const navigate = useNavigate();
-  const { contestId } = useParams<{ contestId: string }>();
-  const isEditMode = !!contestId;
+  const { skillTestId } = useParams<{ skillTestId: string }>();
+  const isEditMode = !!skillTestId;
+  
+  // Get URL parameters for course and topic
+  const urlParams = new URLSearchParams(window.location.search);
+  const courseIdFromUrl = urlParams.get('courseId');
+  const topicIdFromUrl = urlParams.get('topicId');
+  
+  console.log('SkillTestForm - URL params:', { courseIdFromUrl, topicIdFromUrl, currentUrl: window.location.href });
 
-  const [contest, setContest] = useState<Contest | null>(null);
+  const [skillTest, setSkillTest] = useState<SkillTest | null>(null);
   const [currentFormTab, setCurrentFormTab] = useState('details');
   const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
   const [selectedQuestionsByType, setSelectedQuestionsByType] = useState({
@@ -88,22 +39,22 @@ export default function ContestForm() {
     descriptive: 0
   });
   const [loading, setLoading] = useState(false);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [topics, setTopics] = useState<TopicBasic[]>([]);
+  const [selectedCourse, setSelectedCourse] = useState<string>('');
 
   const [formData, setFormData] = useState({
     title: '',
-    organizer: '',
     description: '',
-    type: 'company' as 'company' | 'college' | 'weekly' | 'monthly',
-    startDate: '',
-    endDate: '',
-    duration: '',
-    difficulty: 'Medium' as 'Easy' | 'Medium' | 'Hard',
     instructions: '',
-    totalMarks: '100',
-    passingMarks: '60',
-    enableProctoring: true,
-    publishStatus: 'draft' as 'draft' | 'active' | 'inactive' | 'archived',
-    prize: ''
+    difficulty: 'medium' as 'easy' | 'medium' | 'hard',
+    duration: 60,
+    total_marks: 100,
+    passing_marks: 60,
+    enable_proctoring: false,
+    publish_status: 'draft' as 'draft' | 'active' | 'inactive' | 'archived',
+    course: courseIdFromUrl || '',
+    topic: topicIdFromUrl || ''
   });
 
   const categorizeQuestionsByType = async (questionIds: string[]) => {
@@ -157,116 +108,184 @@ export default function ContestForm() {
     setSelectedQuestionsByType(categorizedQuestions);
   };
 
-  // Helper function to format datetime for HTML datetime-local input
-  const formatDateTimeForInput = (dateString: string) => {
-    if (!dateString) return '';
+  const fetchCourses = async () => {
     try {
-      const date = new Date(dateString);
-      // Format as YYYY-MM-DDTHH:MM (required format for datetime-local)
-      return date.toISOString().slice(0, 16);
+      const data = await courseService.getCourses();
+      setCourses(data);
     } catch (error) {
-      console.error('Error formatting date:', error);
-      return '';
+      console.error('Failed to fetch courses:', error);
+      toast.error('Failed to load courses');
     }
   };
 
-  const fetchContest = async () => {
-    if (!contestId) return;
+  const fetchTopics = async (courseId: string) => {
+    try {
+      const data = await courseService.getTopics(courseId);
+      setTopics(data);
+    } catch (error) {
+      console.error('Failed to fetch topics:', error);
+      toast.error('Failed to load topics');
+    }
+  };
+
+  const fetchSkillTest = async () => {
+    if (!skillTestId) return;
     
     setLoading(true);
     try {
-      const data = await contestService.getContest(contestId);
-      const mappedContest = mapContestFromBackend(data);
-      setContest(mappedContest);
+      const data = await skillTestService.getSkillTest(skillTestId);
+      setSkillTest(data);
       
-      // Populate form with contest data
+      // Populate form with skill test data
       setFormData({
-        title: mappedContest.title,
-        organizer: mappedContest.organizer,
-        type: mappedContest.type,
-        startDate: formatDateTimeForInput(mappedContest.startDate),
-        endDate: formatDateTimeForInput(mappedContest.endDate),
-        duration: mappedContest.duration.replace(' min', ''),
-        prize: mappedContest.prize || '',
-        difficulty: mappedContest.difficulty,
-        description: mappedContest.description,
-        instructions: '',
-        totalMarks: '100',
-        passingMarks: '60',
-        enableProctoring: false,
-        publishStatus: 'draft'
+        title: data.title,
+        description: data.description,
+        instructions: data.instructions,
+        difficulty: data.difficulty,
+        duration: data.duration,
+        total_marks: data.total_marks,
+        passing_marks: data.passing_marks,
+        enable_proctoring: data.enable_proctoring,
+        publish_status: data.publish_status,
+        course: data.course,
+        topic: data.topic || ''
       });
 
+      setSelectedCourse(data.course);
+      if (data.course) {
+        await fetchTopics(data.course);
+      }
+
       const allQuestions = [
-        ...(mappedContest.questions_config?.mcq_single || []),
-        ...(mappedContest.questions_config?.mcq_multiple || []),
-        ...(mappedContest.questions_config?.coding || []),
-        ...(mappedContest.questions_config?.descriptive || [])
+        ...(data.questions_config?.mcq_single || []),
+        ...(data.questions_config?.mcq_multiple || []),
+        ...(data.questions_config?.coding || []),
+        ...(data.questions_config?.descriptive || [])
       ];
       setSelectedQuestions(allQuestions);
-      setSelectedQuestionsByType(mappedContest.questions_config || {
+      setSelectedQuestionsByType(data.questions_config || {
         mcq_single: [],
         mcq_multiple: [],
         coding: [],
         descriptive: []
       });
-      setRandomQuestionsConfig(mappedContest.questions_random_config || {
+      setRandomQuestionsConfig(data.questions_random_config || {
         mcq_single: 0,
         mcq_multiple: 0,
         coding: 0,
         descriptive: 0
       });
     } catch (error) {
-      console.error('Failed to fetch contest:', error);
-      toast.error('Failed to load contest');
-      navigate('/instructor/contests');
+      console.error('Failed to fetch skill test:', error);
+      toast.error('Failed to load skill test');
+      // Don't navigate away on error, let user try again
+      // navigate('/instructor/skill-tests');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
+    fetchCourses();
     if (isEditMode) {
-      fetchContest();
+      fetchSkillTest();
+    } else {
+      // For new skill tests, set course and topic from URL params
+      if (courseIdFromUrl) {
+        setSelectedCourse(courseIdFromUrl);
+        fetchTopics(courseIdFromUrl);
+      }
     }
-  }, [contestId]);
+  }, [skillTestId, courseIdFromUrl, topicIdFromUrl]);
+
+  // Course and topic are auto-selected from URL parameters
 
   const handleSubmit = async () => {
+    if (!formData.title.trim()) {
+      toast.error('Please enter a skill test title');
+      return;
+    }
+
+    // Course and topic are auto-selected from navigation context
+
     const payload = {
       title: formData.title,
-      organizer: formData.organizer,
-      type: formData.type,
-      status: 'upcoming',
-      start_datetime: formData.startDate ? new Date(formData.startDate).toISOString() : undefined,
-      end_datetime: formData.endDate ? new Date(formData.endDate).toISOString() : undefined,
-      duration: formData.duration ? parseInt(formData.duration) * 60 : undefined,
-      prize: formData.prize,
-      difficulty: formData.difficulty.toLowerCase(),
       description: formData.description,
+      instructions: formData.instructions,
+      difficulty: formData.difficulty,
+      duration: formData.duration,
+      total_marks: formData.total_marks,
+      passing_marks: formData.passing_marks,
+      enable_proctoring: formData.enable_proctoring,
+      publish_status: formData.publish_status,
+      course: formData.course,
+      topic: formData.topic || undefined,
       questions_config: selectedQuestionsByType,
       questions_random_config: randomQuestionsConfig,
     };
 
     try {
-      if (isEditMode && contestId) {
-        await contestService.updateContest(contestId, payload);
-        toast.success('Contest updated successfully');
+      if (isEditMode && skillTestId) {
+        await skillTestService.updateSkillTest(skillTestId, payload);
+        toast.success('Skill test updated successfully');
       } else {
-        await contestService.createContest(payload);
-        toast.success('Contest created successfully');
+        await skillTestService.createSkillTest(payload);
+        toast.success('Skill test created successfully');
       }
-      navigate('/instructor/contests');
+      
+      // Navigate back to the course topics page and auto-select the topic for which skill test was created
+      const skillTestTopicId = formData.topic; // Use the actual topic from the skill test
+      const skillTestCourseId = formData.course; // Use the actual course from the skill test
+      console.log('Skill test saved, navigating back. SkillTest CourseId:', skillTestCourseId, 'SkillTest TopicId:', skillTestTopicId);
+      
+      try {
+        if (skillTestCourseId) {
+          let targetUrl = `/instructor/skill-tests/courses/${skillTestCourseId}/manage`;
+          if (skillTestTopicId) {
+            targetUrl += `?topicId=${skillTestTopicId}`;
+          }
+          console.log('Navigating to course manage page with skill test topic:', targetUrl);
+          navigate(targetUrl);
+        } else {
+          console.log('No courseId in skill test, navigating to main skill tests page');
+          navigate('/instructor/skill-tests');
+        }
+      } catch (error) {
+        console.error('Navigation failed, using window.location:', error);
+        if (skillTestCourseId) {
+          let targetUrl = `/instructor/skill-tests/courses/${skillTestCourseId}/manage`;
+          if (skillTestTopicId) {
+            targetUrl += `?topicId=${skillTestTopicId}`;
+          }
+          window.location.href = targetUrl;
+        } else {
+          window.location.href = '/instructor/skill-tests';
+        }
+      }
     } catch (error) {
-      toast.error(isEditMode ? 'Failed to update contest' : 'Failed to create contest');
+      toast.error(isEditMode ? 'Failed to update skill test' : 'Failed to create skill test');
     }
   };
 
   const getHeaderTitle = () => {
-    return isEditMode ? `Edit Contest: ${contest?.title || 'Loading...'}` : 'Add New Contest';
+    return isEditMode ? `Edit Skill Test: ${skillTest?.title || 'Loading...'}` : 'Add New Skill Test';
   };
 
   const getHeaderSubtitle = () => {
-    return isEditMode ? 'Modify contest details and settings' : 'Create a new coding contest for students';
+    if (isEditMode) {
+      return 'Modify skill test details and settings';
+    }
+    
+    const courseName = courses.find(c => c.id === courseIdFromUrl)?.name;
+    const topicName = topics.find(t => t.id === topicIdFromUrl)?.name;
+    
+    if (courseName && topicName) {
+      return `Create a new skill test for ${courseName} - ${topicName}`;
+    } else if (courseName) {
+      return `Create a new skill test for ${courseName}`;
+    }
+    
+    return 'Create a new skill test';
   };
 
   if (loading && isEditMode) {
@@ -277,7 +296,7 @@ export default function ContestForm() {
           <div className="flex-1">
             <RoleHeader
               title="Loading..."
-              subtitle="Please wait while we load the contest details"
+              subtitle="Please wait while we load the skill test details"
               actions={null}
             />
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -301,10 +320,38 @@ export default function ContestForm() {
             subtitle={getHeaderSubtitle()}
             actions={
               <button
-                onClick={() => navigate('/instructor/contests')}
+                onClick={() => {
+                  const skillTestTopicId = formData.topic || topicIdFromUrl;
+                  const skillTestCourseId = formData.course || courseIdFromUrl;
+                  console.log('Back button clicked. SkillTest CourseId:', skillTestCourseId, 'SkillTest TopicId:', skillTestTopicId);
+                  try {
+                    if (skillTestCourseId) {
+                      let targetUrl = `/instructor/skill-tests/courses/${skillTestCourseId}/manage`;
+                      if (skillTestTopicId) {
+                        targetUrl += `?topicId=${skillTestTopicId}`;
+                      }
+                      console.log('Navigating to course manage page with skill test topic:', targetUrl);
+                      navigate(targetUrl);
+                    } else {
+                      console.log('No courseId, navigating to main skill tests page');
+                      navigate('/instructor/skill-tests');
+                    }
+                  } catch (error) {
+                    console.error('Navigation failed, using window.location:', error);
+                    if (skillTestCourseId) {
+                      let targetUrl = `/instructor/skill-tests/courses/${skillTestCourseId}/manage`;
+                      if (skillTestTopicId) {
+                        targetUrl += `?topicId=${skillTestTopicId}`;
+                      }
+                      window.location.href = targetUrl;
+                    } else {
+                      window.location.href = '/instructor/skill-tests';
+                    }
+                  }
+                }}
                 className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 transition-colors"
               >
-                ← Back to List
+                ← Back to Courses
               </button>
             }
           />
@@ -317,7 +364,7 @@ export default function ContestForm() {
                     className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md py-2 px-4 transition-all"
                   >
                     <Settings className="h-4 w-4" />
-                    Contest Details
+                    Test Details
                   </TabsTrigger>
                   <TabsTrigger
                     value="questions"
@@ -340,49 +387,14 @@ export default function ContestForm() {
                     <CardContent className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Contest Title *</label>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Test Title *</label>
                           <input
                             type="text"
                             value={formData.title}
                             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                            placeholder="e.g., Weekly Coding Challenge"
+                            placeholder="e.g., JavaScript Fundamentals Test"
                             className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                           />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Organizer *</label>
-                          <input
-                            type="text"
-                            value={formData.organizer}
-                            onChange={(e) => setFormData({ ...formData, organizer: e.target.value })}
-                            placeholder="e.g., Yuvro Platform"
-                            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                        <textarea
-                          value={formData.description}
-                          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                          placeholder="Describe the contest focus and topics..."
-                          rows={3}
-                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none"
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Contest Type *</label>
-                          <select
-                            value={formData.type}
-                            onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
-                            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                          >
-                            <option value="company">Company Contest</option>
-                            <option value="college">College Contest</option>
-                          </select>
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">Difficulty Level *</label>
@@ -391,73 +403,111 @@ export default function ContestForm() {
                             onChange={(e) => setFormData({ ...formData, difficulty: e.target.value as any })}
                             className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                           >
-                            <option value="Easy">Easy</option>
-                            <option value="Medium">Medium</option>
-                            <option value="Hard">Hard</option>
+                            <option value="easy">Easy</option>
+                            <option value="medium">Medium</option>
+                            <option value="hard">Hard</option>
                           </select>
                         </div>
                       </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                        <textarea
+                          value={formData.description}
+                          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                          placeholder="Describe the skill test focus and topics..."
+                          rows={3}
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Instructions</label>
+                        <textarea
+                          value={formData.instructions}
+                          onChange={(e) => setFormData({ ...formData, instructions: e.target.value })}
+                          placeholder="Instructions for students taking the test..."
+                          rows={3}
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none"
+                        />
+                      </div>
+
+                      {/* Course and Topic are auto-selected from navigation context */}
                     </CardContent>
                   </Card>
 
-                  {/* Schedule & Duration Card */}
+                  {/* Test Configuration Card */}
                   <Card className="border border-gray-200 shadow-sm">
                     <CardHeader className="pb-4">
                       <CardTitle className="text-lg font-semibold text-gray-900 flex items-center">
                         <Calendar className="h-5 w-5 mr-2 text-green-500" />
-                        Schedule & Duration
+                        Test Configuration
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Start Date *</label>
-                          <input
-                            type="datetime-local"
-                            value={formData.startDate}
-                            onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">End Date *</label>
-                          <input
-                            type="datetime-local"
-                            value={formData.endDate}
-                            onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                          />
-                        </div>
-                        <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">Duration (minutes) *</label>
                           <input
                             type="number"
                             value={formData.duration}
-                            onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                            placeholder="e.g., 120"
+                            onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value) || 60 })}
+                            placeholder="e.g., 60"
                             min="1"
                             className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                           />
                         </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Total Marks</label>
+                          <input
+                            type="number"
+                            value={formData.total_marks}
+                            onChange={(e) => setFormData({ ...formData, total_marks: parseInt(e.target.value) || 100 })}
+                            placeholder="e.g., 100"
+                            min="1"
+                            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Passing Marks</label>
+                          <input
+                            type="number"
+                            value={formData.passing_marks}
+                            onChange={(e) => setFormData({ ...formData, passing_marks: parseInt(e.target.value) || 60 })}
+                            placeholder="e.g., 60"
+                            min="1"
+                            max={formData.total_marks}
+                            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                          />
+                        </div>
                       </div>
-                    </CardContent>
-                  </Card>
 
-                  {/* Prize Information Card */}
-                  <Card className="border border-gray-200 shadow-sm">
-                    <CardHeader className="pb-4">
-                      <CardTitle className="text-lg font-semibold text-gray-900">Prize Information</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Prize (Optional)</label>
-                        <input
-                          type="text"
-                          value={formData.prize}
-                          onChange={(e) => setFormData({ ...formData, prize: e.target.value })}
-                          placeholder="e.g., $500 Cash Prize"
-                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                        />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Publish Status</label>
+                          <select
+                            value={formData.publish_status}
+                            onChange={(e) => setFormData({ ...formData, publish_status: e.target.value as any })}
+                            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                          >
+                            <option value="draft">Draft</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                            <option value="archived">Archived</option>
+                          </select>
+                        </div>
+                        <div className="flex items-center">
+                          <input
+                            type="checkbox"
+                            id="enable_proctoring"
+                            checked={formData.enable_proctoring}
+                            onChange={(e) => setFormData({ ...formData, enable_proctoring: e.target.checked })}
+                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                          />
+                          <label htmlFor="enable_proctoring" className="ml-2 block text-sm text-gray-900">
+                            Enable Proctoring
+                          </label>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -532,7 +582,7 @@ export default function ContestForm() {
                         </div>
                       </div>
                       <p className="text-sm text-gray-500 mt-3">
-                        Specify how many questions of each type should be randomly selected from the question bank for this contest.
+                        Specify how many questions of each type should be randomly selected from the question bank for this skill test.
                       </p>
                     </CardContent>
                   </Card>
@@ -552,6 +602,9 @@ export default function ContestForm() {
                         onQuestionsChange={handleQuestionsChange}
                         allowMultipleSelection={true}
                         showSplitView={true}
+                        courseFilter={selectedCourse}
+                        topicFilter={formData.topic}
+                        categoryFilter="skill_test"
                       />
                     </CardContent>
                   </Card>
@@ -560,7 +613,35 @@ export default function ContestForm() {
                 {/* Action Buttons */}
                 <div className="flex justify-end gap-3 pt-6 border-t border-gray-200">
                   <button
-                    onClick={() => navigate('/instructor/contests')}
+                    onClick={() => {
+                      const skillTestTopicId = formData.topic || topicIdFromUrl;
+                      const skillTestCourseId = formData.course || courseIdFromUrl;
+                      console.log('Cancel button clicked. SkillTest CourseId:', skillTestCourseId, 'SkillTest TopicId:', skillTestTopicId);
+                      try {
+                        if (skillTestCourseId) {
+                          let targetUrl = `/instructor/skill-tests/courses/${skillTestCourseId}/manage`;
+                          if (skillTestTopicId) {
+                            targetUrl += `?topicId=${skillTestTopicId}`;
+                          }
+                          console.log('Navigating to course manage page with skill test topic:', targetUrl);
+                          navigate(targetUrl);
+                        } else {
+                          console.log('No courseId, navigating to main skill tests page');
+                          navigate('/instructor/skill-tests');
+                        }
+                      } catch (error) {
+                        console.error('Navigation failed, using window.location:', error);
+                        if (skillTestCourseId) {
+                          let targetUrl = `/instructor/skill-tests/courses/${skillTestCourseId}/manage`;
+                          if (skillTestTopicId) {
+                            targetUrl += `?topicId=${skillTestTopicId}`;
+                          }
+                          window.location.href = targetUrl;
+                        } else {
+                          window.location.href = '/instructor/skill-tests';
+                        }
+                      }
+                    }}
                     className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
                   >
                     Cancel
@@ -569,7 +650,7 @@ export default function ContestForm() {
                     onClick={handleSubmit}
                     className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
                   >
-                    {isEditMode ? 'Update Contest' : 'Create Contest'}
+                    {isEditMode ? 'Update Skill Test' : 'Create Skill Test'}
                   </button>
                 </div>
               </Tabs>

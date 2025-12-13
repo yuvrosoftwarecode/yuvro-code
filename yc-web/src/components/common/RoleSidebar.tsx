@@ -15,7 +15,8 @@ import {
   UserCheck,
   BarChart3,
   FileText,
-  HelpCircle
+  HelpCircle,
+  CheckCircle
 } from 'lucide-react';
 
 interface SidebarItem {
@@ -49,45 +50,31 @@ const sidebarItems: SidebarItem[] = [
     roles: ['admin', 'instructor']
   },
   {
-    id: 'recruiter-jobs',
-    label: 'Jobs',
-    icon: Briefcase,
-    path: '/recruiter/jobs',
-    roles: ['recruiter']
-  },
-  {
-    id: 'search',
-    label: 'Job Search',
-    icon: Search,
-    path: '/job_search',
-    roles: ['recruiter']
-  },
-  {
-    id: 'candidates',
-    label: 'Candidates',
-    icon: Users,
-    path: '/candidates',
-    roles: ['recruiter']
-  },
-  {
-    id: 'contests',
-    label: 'Contests',
-    icon: Trophy,
-    path: '/instructor/contests',
-    roles: ['admin', 'instructor', 'recruiter']
-  },
-  {
-    id: 'assessment',
-    label: 'Assessment',
-    icon: Calendar,
-    path: '/assessment',
-    roles: ['instructor', 'recruiter']
+    id: 'skill-tests',
+    label: 'Skill Tests',
+    icon: CheckCircle,
+    path: '/instructor/skill-tests',
+    roles: ['admin', 'instructor']
   },
   {
     id: 'mock-interview',
     label: 'Mock Interview',
     icon: TrendingUp,
     path: '/instructor/mock-interview',
+    roles: ['admin', 'instructor']
+  },
+  {
+    id: 'recruiter-jobs',
+    label: 'Jobs',
+    icon: Briefcase,
+    path: '/recruiter/jobs',
+    roles: ['admin', 'recruiter']
+  },
+  {
+    id: 'contests',
+    label: 'Contests',
+    icon: Trophy,
+    path: '/instructor/contests',
     roles: ['admin', 'instructor', 'recruiter']
   },
   {

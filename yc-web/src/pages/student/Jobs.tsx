@@ -2,11 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from '../../components/Navigation';
 
-import {
-  fetchFilteredJobs,
-  createJob,
-  Job as JobType,
-} from "@/services/jobsapi";
+import jobService, { Job as JobType } from "@/services/jobService";
 
 import Header from "@/components/common/Header";
 import JobFilters from "@/components/student/jobs/JobFilters";
@@ -162,7 +158,7 @@ const Jobs = () => {
         const payloadStr = JSON.stringify(payload);
         if (lastPayloadRef.current === payloadStr) return;
         lastPayloadRef.current = payloadStr;
-        const data = await fetchFilteredJobs(payload);
+        const data = await jobService.getFilteredJobs(payload);
         const normalized = data.map(normalizeJob);
         if (cancelled) return;
         setJobs(normalized);
@@ -203,7 +199,7 @@ const Jobs = () => {
       formData.company_info = safeCompanyInfo(formData.company_info);
       formData.salary = Number(formData.salary || 0);
 
-      const newJob = await createJob(formData);
+      const newJob = await jobService.createJob(formData);
       if (!newJob) return;
       const normalized = normalizeJob(newJob);
       setJobs((prev) => [...prev, normalized]);

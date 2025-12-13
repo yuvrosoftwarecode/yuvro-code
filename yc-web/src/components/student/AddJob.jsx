@@ -1,6 +1,5 @@
 import { useState } from "react";
-// import { createJob } from "../../services/jobsapi";
-import { createJob } from "@/services/jobsapi";
+import jobService from "@/services/jobService";
 
 
 export default function AddJob() {
@@ -22,7 +21,7 @@ export default function AddJob() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await createJob(form);
+      await jobService.createJob(form);
       alert("Job saved to database!");
     } catch (err) {
       alert("Error saving job!");

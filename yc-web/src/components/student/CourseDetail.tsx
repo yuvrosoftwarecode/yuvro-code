@@ -18,7 +18,6 @@ import { Check } from "lucide-react";
 import ProgressBar from "@/components/ui/ProgressBar";
 import { PlayCircle, HelpCircle, StickyNote, Code, Sparkles, X } from "lucide-react";
 import AIChatContainer from "./LearnCertify/AIChatWidget/AIChatContainer";
-import { v4 as uuidv4 } from 'uuid';
 
 type Topic = {
   id: string;
@@ -66,7 +65,7 @@ const CourseDetail: React.FC = () => {
 
   useEffect(() => {
     if (courseId) {
-      setChatSessionId(`course-chat-${courseId}-${uuidv4()}`);
+      setChatSessionId(`course-chat-${courseId}-${crypto.randomUUID()}`);
     }
   }, [courseId]);
 
@@ -443,7 +442,7 @@ const CourseDetail: React.FC = () => {
                     subtopicName={selectedSubtopic.name}
                     subtopicContent={selectedSubtopic.content}
                     sessionId={chatSessionId}
-                    onNewSession={() => setChatSessionId(`course-chat-${courseId}-${uuidv4()}`)}
+                    onNewSession={() => setChatSessionId(`course-chat-${courseId}-${crypto.randomUUID()}`)}
                   />
                 }
                 {rightTab === "quizzes" && <StudentQuizEmbed subtopicId={selectedSubtopic.id} />}

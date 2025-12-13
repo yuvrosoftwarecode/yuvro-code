@@ -92,7 +92,7 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
         // Combine and shuffle questions
         const allQuestions = [...mcqQuestions, ...codingQuestions];
         const shuffledQuestions = allQuestions.sort(() => 0.5 - Math.random());
-        
+
         setQuestions(shuffledQuestions);
       } catch (err) {
         console.error("Failed to load skill test questions", err);
@@ -488,7 +488,7 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
       {/* Header */}
       <div className="bg-card border-b px-6 py-4">
         <div className="flex items-center justify-between">
-          
+
           {/* LEFT SIDE - VIDEO + TITLE */}
           <div className="flex items-center space-x-4">
 
@@ -547,7 +547,7 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
                   <AlertDialogDescription>
                     Are you sure you want to submit?
                     <br /><br />
-                    Answered: {answeredCount}/{questions.length}  
+                    Answered: {answeredCount}/{questions.length}
                     <br />
                     Flagged: {flaggedCount}
                   </AlertDialogDescription>
@@ -567,9 +567,8 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
       <div className="flex flex-1">
 
         {/* Sidebar */}
-        <div className={`bg-card border-r transition-all duration-300 ${
-          isSidebarCollapsed ? 'w-16' : 'w-80'
-        }`}>
+        <div className={`bg-card border-r transition-all duration-300 ${isSidebarCollapsed ? 'w-16' : 'w-80'
+          }`}>
           <div className="p-4">
 
             {/* Top */}
@@ -673,7 +672,7 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
                       </div>
 
                       <CardTitle>{currentQuestionData.title}</CardTitle>
-                      
+
                       {/* Question Content */}
                       <div className="mt-4 prose prose-sm max-w-none">
                         <div dangerouslySetInnerHTML={{ __html: currentQuestionData.content }} />
@@ -701,7 +700,7 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
       </div>
 
       {/* Tab Switch Dialog */}
-      <AlertDialog open={showTabSwitchDialog} onOpenChange={() => {}}>
+      <AlertDialog open={showTabSwitchDialog} onOpenChange={() => { }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Assessment Terminated</AlertDialogTitle>

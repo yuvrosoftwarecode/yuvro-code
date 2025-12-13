@@ -10,7 +10,7 @@ from .models import (
     JobTestSubmission, SkillTestSubmission
 )
 from .serializers import (
-    ContestSerializer
+    ContestSerializer, SkillTestSerializer
 )
 from authentication.permissions import IsOwnerOrInstructorOrAdmin
 
@@ -70,3 +70,38 @@ class ContestViewSet(viewsets.ModelViewSet):
         new_status = contest.update_status()
         contest.save(update_fields=['status'])
         return Response({'status': new_status}, status=status.HTTP_200_OK)
+
+
+class SkillTestViewSet(viewsets.ModelViewSet):
+    queryset = SkillTest.objects.all()
+    serializer_class = SkillTestSerializer
+    permission_classes = [IsOwnerOrInstructorOrAdmin]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    
+    search_fields = ['title', 'description']
+    ordering_fields = ['created_at']
+    
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+        
+    def get_queryset(self):
+        qs = super().get_queryset()
+        
+        course_param = self.request.query_params.get('course')
+        topic_param = self.request.query_params.get('topic')
+        difficulty_param = self.request.query_params.get('difficulty')
+        
+        q = Q()
+        if course_param:
+            q &= Q(course=course_param)
+            
+        if topic_param:
+            q &= Q(topic=topic_param)
+        
+        if difficulty_param:
+            q &= Q(difficulty=difficulty_param)
+
+        if q:
+            qs = qs.filter(q)
+            
+        return qs

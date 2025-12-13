@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -19,6 +19,9 @@ interface QuestionBankProps {
   title?: string;
   description?: string;
   showSplitView?: boolean;
+  courseFilter?: string;
+  topicFilter?: string;
+  categoryFilter?: string;
 }
 
 export default function QuestionBank({
@@ -31,7 +34,10 @@ export default function QuestionBank({
   filters: initialFilters = {},
   title = 'Question Bank',
   description = 'Browse and manage questions from the question bank',
-  showSplitView = false
+  showSplitView = false,
+  courseFilter,
+  topicFilter,
+  categoryFilter
 }: QuestionBankProps) {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [allSelectedQuestions, setAllSelectedQuestions] = useState<Question[]>([]);
@@ -39,7 +45,10 @@ export default function QuestionBank({
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<QuestionFilters>({
     ...initialFilters,
-    search: ''
+    search: '',
+    course: courseFilter,
+    topic: topicFilter,
+    categories: categoryFilter
   });
   const [selectedType, setSelectedType] = useState<string>('mcq_single');
   const [leftPanelWidth, setLeftPanelWidth] = useState(40);
@@ -70,6 +79,16 @@ export default function QuestionBank({
   useEffect(() => {
     fetchQuestionsData();
   }, [searchQuery, selectedType, filters]);
+
+  // Update filters when props change
+  useEffect(() => {
+    setFilters(prev => ({
+      ...prev,
+      course: courseFilter,
+      topic: topicFilter,
+      categories: categoryFilter
+    }));
+  }, [courseFilter, topicFilter, categoryFilter]);
 
   // Handle selectedQuestions changes - manage allSelectedQuestions
   useEffect(() => {
@@ -262,7 +281,26 @@ export default function QuestionBank({
             style={{ width: `${leftPanelWidth}%` }}
           >
             <div className="p-4 border-b border-gray-200 bg-white">
-              <h4 className="font-medium text-gray-900">Selected Questions ({selectedQuestions.length})</h4>
+              <div className="flex items-center justify-between">
+                <h4 className="font-medium text-gray-900">Selected Questions ({selectedQuestions.length})</h4>
+                {selectedQuestions.length > 0 && (
+                  <button
+                    onClick={() => {
+                      if (window.confirm(`Are you sure you want to clear all ${selectedQuestions.length} selected questions?`)) {
+                        setAllSelectedQuestions([]);
+                        if (onQuestionsChange) {
+                          onQuestionsChange([]);
+                        }
+                        toast.success('All questions cleared');
+                      }
+                    }}
+                    className="px-3 py-1.5 text-xs font-medium text-red-600 bg-white border border-red-200 rounded-md hover:bg-red-50 hover:border-red-300 transition-colors flex items-center"
+                  >
+                    <X className="h-3 w-3 mr-1" />
+                    Clear All
+                  </button>
+                )}
+              </div>
             </div>
             <div className="flex-1 overflow-y-auto p-4">
               {selectedQuestions.length === 0 ? (
@@ -288,14 +326,12 @@ export default function QuestionBank({
                           <h5 className="text-sm font-medium text-gray-900 line-clamp-2">{question.title}</h5>
                           <p className="text-xs text-gray-500 mt-1">{question.marks} marks</p>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 text-gray-400 hover:text-red-600"
+                        <button
                           onClick={() => handleQuestionToggle(question.id)}
+                          className="h-6 w-6 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors flex items-center justify-center"
                         >
                           <X className="h-4 w-4" />
-                        </Button>
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -523,15 +559,15 @@ export default function QuestionBank({
                     {mode === 'management' && (
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="icon" title="View Question">
+                          <button className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="View Question">
                             <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" title="Edit Question">
+                          </button>
+                          <button className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors" title="Edit Question">
                             <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" title="Delete Question">
+                          </button>
+                          <button className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Delete Question">
                             <Trash2 className="h-4 w-4" />
-                          </Button>
+                          </button>
                         </div>
                       </TableCell>
                     )}
@@ -544,9 +580,26 @@ export default function QuestionBank({
 
         {mode === 'selection' && selectedQuestions.length > 0 && !showSplitView && (
           <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-            <p className="text-sm text-blue-700">
-              {selectedQuestions.length} question{selectedQuestions.length !== 1 ? 's' : ''} selected
-            </p>
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-blue-700">
+                {selectedQuestions.length} question{selectedQuestions.length !== 1 ? 's' : ''} selected
+              </p>
+              <button
+                onClick={() => {
+                  if (window.confirm(`Are you sure you want to clear all ${selectedQuestions.length} selected questions?`)) {
+                    setAllSelectedQuestions([]);
+                    if (onQuestionsChange) {
+                      onQuestionsChange([]);
+                    }
+                    toast.success('All questions cleared');
+                  }
+                }}
+                className="px-3 py-1.5 text-xs font-medium text-red-600 bg-white border border-red-200 rounded-md hover:bg-red-50 hover:border-red-300 transition-colors flex items-center"
+              >
+                <X className="h-3 w-3 mr-1" />
+                Clear All
+              </button>
+            </div>
           </div>
         )}
       </CardContent>

@@ -9,7 +9,6 @@ import type { Course, Topic, CodingProblem } from '@/pages/student/CodePractice'
 import { ResizablePanel, ResizablePanelGroup, ResizableHandle } from '@/components/ui/resizable';
 import { toast } from 'sonner';
 import { Sparkles, X } from 'lucide-react';
-import { v4 as uuidv4 } from 'uuid';
 import AIChatContainer from '@/components/student/LearnCertify/AIChatWidget/AIChatContainer';
 
 interface ProblemSolvingProps {
@@ -38,10 +37,10 @@ const ProblemSolving = ({ problem, course, topic, onBack }: ProblemSolvingProps)
   const [showOutput, setShowOutput] = useState(false);
   const [showAiChat, setShowAiChat] = useState(false);
   // Generate a unique session key every time the problem is loaded to start fresh
-  const [chatSessionId, setChatSessionId] = useState(() => `chat-${problem.id}-${uuidv4()}`);
+  const [chatSessionId, setChatSessionId] = useState(() => `chat-${problem.id}-${crypto.randomUUID()}`);
 
   useEffect(() => {
-    setChatSessionId(`chat-${problem.id}-${uuidv4()}`);
+    setChatSessionId(`chat-${problem.id}-${crypto.randomUUID()}`);
   }, [problem.id]);
 
   // keyboard shortcuts
@@ -384,7 +383,7 @@ ${code}
                         welcomeMessage="I can help you understand this problem or debug your code."
                         persistenceKey={chatSessionId}
                         chatTitle={problem.title}
-                        onNewChat={() => setChatSessionId(`chat-${problem.id}-${uuidv4()}`)}
+                        onNewChat={() => setChatSessionId(`chat-${problem.id}-${crypto.randomUUID()}`)}
                       />
                     ) : (
                       <div className="space-y-6">

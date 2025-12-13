@@ -2,7 +2,7 @@ from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from datetime import timedelta
-from assessment.models import Contest, MockInterview, JobTest, UserSubmission
+from assessment.models import Contest, MockInterview, JobTest, SkillTest, UserSubmission
 
 User = get_user_model()
 
@@ -143,6 +143,155 @@ class Command(BaseCommand):
             },
         ]
 
+        # Sample skill tests data
+        from course.models import Course, Topic
+        
+        # Get sample courses and topics
+        try:
+            js_course = Course.objects.filter(name__icontains='javascript').first()
+            python_course = Course.objects.filter(name__icontains='python').first()
+            
+            if not js_course:
+                js_course = Course.objects.create(
+                    name='JavaScript Fundamentals',
+                    category='programming_languages',
+                    short_code='JS101'
+                )
+            
+            if not python_course:
+                python_course = Course.objects.create(
+                    name='Python Programming',
+                    category='programming_languages', 
+                    short_code='PY101'
+                )
+            
+            # Get or create topics
+            js_basics_topic, _ = Topic.objects.get_or_create(
+                course=js_course,
+                name='JavaScript Basics',
+                defaults={'order_index': 1}
+            )
+            
+            js_dom_topic, _ = Topic.objects.get_or_create(
+                course=js_course,
+                name='DOM Manipulation',
+                defaults={'order_index': 2}
+            )
+            
+            python_basics_topic, _ = Topic.objects.get_or_create(
+                course=python_course,
+                name='Python Basics',
+                defaults={'order_index': 1}
+            )
+            
+        except Exception as e:
+            self.stdout.write(f'Warning: Could not create sample courses/topics: {e}')
+            js_course = python_course = None
+            js_basics_topic = js_dom_topic = python_basics_topic = None
+
+        skill_tests_data = [
+            {
+                'title': 'JavaScript Variables and Functions',
+                'description': 'Test your knowledge of JavaScript variables, functions, and basic syntax',
+                'instructions': 'Answer all questions within the time limit. No external resources allowed.',
+                'difficulty': 'easy',
+                'duration': 30,
+                'total_marks': 50,
+                'passing_marks': 30,
+                'enable_proctoring': False,
+                'publish_status': 'active',
+                'course': js_course,
+                'topic': js_basics_topic,
+                'questions_config': {
+                    'mcq_single': ['1', '2'],
+                    'mcq_multiple': ['3'],
+                    'coding': [],
+                    'descriptive': []
+                },
+                'questions_random_config': {
+                    'mcq_single': 5,
+                    'mcq_multiple': 2,
+                    'coding': 0,
+                    'descriptive': 0
+                }
+            },
+            {
+                'title': 'DOM Manipulation Skills Test',
+                'description': 'Assess your ability to manipulate DOM elements using JavaScript',
+                'instructions': 'Complete the coding challenges and answer the questions.',
+                'difficulty': 'medium',
+                'duration': 45,
+                'total_marks': 75,
+                'passing_marks': 45,
+                'enable_proctoring': True,
+                'publish_status': 'active',
+                'course': js_course,
+                'topic': js_dom_topic,
+                'questions_config': {
+                    'mcq_single': ['4'],
+                    'mcq_multiple': [],
+                    'coding': ['5'],
+                    'descriptive': []
+                },
+                'questions_random_config': {
+                    'mcq_single': 3,
+                    'mcq_multiple': 1,
+                    'coding': 2,
+                    'descriptive': 0
+                }
+            },
+            {
+                'title': 'Python Fundamentals Assessment',
+                'description': 'Comprehensive test covering Python basics, data types, and control structures',
+                'instructions': 'Read each question carefully and provide accurate answers.',
+                'difficulty': 'easy',
+                'duration': 40,
+                'total_marks': 60,
+                'passing_marks': 36,
+                'enable_proctoring': False,
+                'publish_status': 'active',
+                'course': python_course,
+                'topic': python_basics_topic,
+                'questions_config': {
+                    'mcq_single': ['6', '7'],
+                    'mcq_multiple': ['8'],
+                    'coding': ['9'],
+                    'descriptive': []
+                },
+                'questions_random_config': {
+                    'mcq_single': 4,
+                    'mcq_multiple': 2,
+                    'coding': 1,
+                    'descriptive': 1
+                }
+            },
+            {
+                'title': 'Advanced JavaScript Concepts',
+                'description': 'Test your understanding of closures, promises, async/await, and ES6+ features',
+                'instructions': 'This is an advanced test. Take your time to think through each problem.',
+                'difficulty': 'hard',
+                'duration': 60,
+                'total_marks': 100,
+                'passing_marks': 70,
+                'enable_proctoring': True,
+                'publish_status': 'draft',
+                'course': js_course,
+                'topic': None,  # Course-level test
+                'questions_config': {
+                    'mcq_single': ['10'],
+                    'mcq_multiple': ['11'],
+                    'coding': ['12', '13'],
+                    'descriptive': ['14']
+                },
+                'questions_random_config': {
+                    'mcq_single': 2,
+                    'mcq_multiple': 1,
+                    'coding': 3,
+                    'descriptive': 1
+                }
+            }
+        ]
+
         # Sample mock interviews
         interviews_data = [
             {
@@ -238,6 +387,21 @@ class Command(BaseCommand):
             if created:
                 contest_count += 1
                 self.stdout.write(f'Created contest: {contest.title}')
+
+        # Create skill tests
+        skill_test_count = 0
+        for skill_test_data in skill_tests_data:
+            if skill_test_data['course']:  # Only create if course exists
+                skill_test, created = SkillTest.objects.get_or_create(
+                    title=skill_test_data['title'],
+                    defaults={
+                        **skill_test_data,
+                        'created_by': instructor,
+                    }
+                )
+                if created:
+                    skill_test_count += 1
+                    self.stdout.write(f'Created skill test: {skill_test.title}')
 
         # Create mock interviews
         interview_count = 0
@@ -435,5 +599,5 @@ class Command(BaseCommand):
                 self.stdout.write(f'Created submission: {submission.user.username} - {submission.assessment_title}')
 
         self.stdout.write(
-            self.style.SUCCESS(f'Successfully loaded {contest_count} contests, {interview_count} mock interviews, {job_test_count} job tests, and {submission_count} submissions')
+            self.style.SUCCESS(f'Successfully loaded {contest_count} contests, {skill_test_count} skill tests, {interview_count} mock interviews, {job_test_count} job tests, and {submission_count} submissions')
         )

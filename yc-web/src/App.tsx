@@ -33,8 +33,12 @@ import DashboardRedirect from './components/DashboardRedirect';
 import OwnerContest from './pages/instructor/Contest';
 import ContestEdit from './components/instructor/contests/ContestEdit';
 import ContestForm from './components/instructor/contests/ContestForm';
+import InstructorSkillTest from './pages/instructor/SkillTest';
+import SkillTestForm from './components/instructor/skill-tests/SkillTestForm';
 import InstructorMockInterview from './pages/instructor/MockInterview';
 import RecruiterJobs from "./pages/recruiter/Jobs";
+import RecruiterCompanies from "./pages/recruiter/Companies";
+import RecruiterCompanyDetail from "./pages/recruiter/CompanyDetail";
 import AddJob from "./components/student/AddJob";
 import JobFiltersSidebar from "@/components/student/jobs/ApplicationTracker";
 
@@ -171,6 +175,24 @@ function App() {
                 }
               />
 
+              <Route
+                path="/recruiter/jobs/companies"
+                element={
+                  <ProtectedRoute allowedRoles={["admin", "instructor", "recruiter"]}>
+                    <RecruiterCompanies />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/recruiter/jobs/companies/:companyId"
+                element={
+                  <ProtectedRoute allowedRoles={["admin", "instructor", "recruiter"]}>
+                    <RecruiterCompanyDetail />
+                  </ProtectedRoute>
+                }
+              />
+
 
               <Route
                 path="/instructor/courses"
@@ -286,6 +308,42 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={["admin", "instructor", "recruiter"]}>
                     <ContestEdit />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/instructor/skill-tests"
+                element={
+                  <ProtectedRoute allowedRoles={["admin", "instructor"]}>
+                    <InstructorSkillTest />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/instructor/skill-tests/courses/:courseId/manage"
+                element={
+                  <ProtectedRoute allowedRoles={["admin", "instructor"]}>
+                    <InstructorSkillTest />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/instructor/skill-tests/add"
+                element={
+                  <ProtectedRoute allowedRoles={["admin", "instructor"]}>
+                    <SkillTestForm />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/instructor/skill-tests/:skillTestId/edit"
+                element={
+                  <ProtectedRoute allowedRoles={["admin", "instructor"]}>
+                    <SkillTestForm />
                   </ProtectedRoute>
                 }
               />

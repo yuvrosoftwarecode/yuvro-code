@@ -1,0 +1,164 @@
+import restApiAuthUtil from '../utils/RestApiAuthUtil';
+
+export interface SkillTest {
+  id: string;
+  title: string;
+  description: string;
+  instructions: string;
+  difficulty: 'easy' | 'medium' | 'hard';
+  duration: number;
+  total_marks: number;
+  passing_marks: number;
+  enable_proctoring: boolean;
+  questions_config: {
+    mcq_single: string[];
+    mcq_multiple: string[];
+    coding: string[];
+    descriptive: string[];
+  };
+  questions_random_config: {
+    mcq_single: number;
+    mcq_multiple: number;
+    coding: number;
+    descriptive: number;
+  };
+  publish_status: 'draft' | 'active' | 'inactive' | 'archived';
+  course: string;
+  topic?: string;
+  participants_count: number;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateSkillTestData {
+  title: string;
+  description?: string;
+  instructions?: string;
+  difficulty: 'easy' | 'medium' | 'hard';
+  duration: number;
+  total_marks?: number;
+  passing_marks?: number;
+  enable_proctoring?: boolean;
+  questions_config?: {
+    mcq_single: string[];
+    mcq_multiple: string[];
+    coding: string[];
+    descriptive: string[];
+  };
+  questions_random_config?: {
+    mcq_single: number;
+    mcq_multiple: number;
+    coding: number;
+    descriptive: number;
+  };
+  publish_status?: 'draft' | 'active' | 'inactive' | 'archived';
+  course: string;
+  topic?: string;
+}
+
+export interface UpdateSkillTestData extends Partial<CreateSkillTestData> {}
+
+export interface SkillTestFilters {
+  course?: string;
+  topic?: string;
+  difficulty?: 'easy' | 'medium' | 'hard';
+  search?: string;
+}
+
+// API Functions
+export const fetchSkillTests = async (filters?: SkillTestFilters): Promise<SkillTest[]> => {
+  try {
+    const params = new URLSearchParams();
+
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value) {
+          params.append(key, value);
+        }
+      });
+    }
+
+    const queryString = params.toString();
+    const url = queryString ? `/skill-tests/?${queryString}` : '/skill-tests/';
+
+    const response = await restApiAuthUtil.get(url);
+    return response as SkillTest[];
+  } catch (error) {
+    console.error('Error fetching skill tests:', error);
+    throw error;
+  }
+};
+
+export const fetchSkillTestById = async (id: string): Promise<SkillTest> => {
+  try {
+    const response = await restApiAuthUtil.get(`/skill-tests/${id}/`);
+    return response as SkillTest;
+  } catch (error) {
+    console.error('Error fetching skill test:', error);
+    throw error;
+  }
+};
+
+export const createSkillTest = async (data: CreateSkillTestData): Promise<SkillTest> => {
+  try {
+    const response = await restApiAuthUtil.post('/skill-tests/', data);
+    return response as SkillTest;
+  } catch (error) {
+    console.error('Error creating skill test:', error);
+    throw error;
+  }
+};
+
+export const updateSkillTest = async (id: string, data: UpdateSkillTestData): Promise<SkillTest> => {
+  try {
+    const response = await restApiAuthUtil.patch(`/skill-tests/${id}/`, data);
+    return response as SkillTest;
+  } catch (error) {
+    console.error('Error updating skill test:', error);
+    throw error;
+  }
+};
+
+export const deleteSkillTest = async (id: string): Promise<void> => {
+  try {
+    await restApiAuthUtil.delete(`/skill-tests/${id}/`);
+  } catch (error) {
+    console.error('Error deleting skill test:', error);
+    throw error;
+  }
+};
+
+// Utility functions
+export const getSkillTestsByCourse = async (courseId: string): Promise<SkillTest[]> => {
+  return fetchSkillTests({ course: courseId });
+};
+
+export const getSkillTestsByTopic = async (topicId: string): Promise<SkillTest[]> => {
+  return fetchSkillTests({ topic: topicId });
+};
+
+export const DIFFICULTY_LEVELS = [
+  { value: 'easy', label: 'Easy' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'hard', label: 'Hard' },
+] as const;
+
+export const PUBLISH_STATUS_OPTIONS = [
+  { value: 'draft', label: 'Draft' },
+  { value: 'active', label: 'Active' },
+  { value: 'inactive', label: 'Inactive' },
+  { value: 'archived', label: 'Archived' },
+] as const;
+
+const skillTestService = {
+  getSkillTests: fetchSkillTests,
+  getSkillTest: fetchSkillTestById,
+  createSkillTest,
+  updateSkillTest,
+  deleteSkillTest,
+  getSkillTestsByCourse,
+  getSkillTestsByTopic,
+};
+
+export default skillTestService;

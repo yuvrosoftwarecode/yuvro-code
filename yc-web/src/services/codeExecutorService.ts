@@ -1,5 +1,5 @@
 import restApiAuthUtil from '../utils/RestApiAuthUtil';
-import restApiUtil from '../utils/RestApiUtil';
+import restApiUtilCodeExecuter from '../utils/RestApiUtilCodeExecuter';
 
 export interface CodeSubmission {
   id: number;
@@ -61,11 +61,9 @@ export interface ExecutionResult extends CodeSubmission {
 }
 
 class CodeExecutorService {
-  private codeExecutorBaseURL = import.meta.env.VITE_CODE_EXECUTOR_URL || 'http://localhost:8002';
-
   async runCode(request: { code: string; language: string; test_cases: any[]; problem_title?: string }): Promise<ExecutionResult> {
     try {
-      const data = await restApiUtil.post(`${this.codeExecutorBaseURL}/execute-with-tests`, {
+      const data = await restApiUtilCodeExecuter.post('/execute-with-tests', {
         code: request.code,
         language: request.language,
         test_cases: request.test_cases.map(tc => ({

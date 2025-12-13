@@ -314,7 +314,6 @@ class Command(BaseCommand):
                     
                     contest, contest_created = Contest.objects.get_or_create(
                         title=contest_data['title'],
-                        course=course,
                         defaults={
                             'description': contest_data['description'],
                             'instructions': contest_data['instructions'],

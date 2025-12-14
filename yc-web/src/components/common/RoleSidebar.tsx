@@ -16,7 +16,8 @@ import {
   BarChart3,
   FileText,
   HelpCircle,
-  CheckCircle
+  CheckCircle,
+  Building2
 } from 'lucide-react';
 
 interface SidebarItem {
@@ -29,11 +30,18 @@ interface SidebarItem {
 
 const sidebarItems: SidebarItem[] = [
   {
-    id: 'dashboard',
+    id: 'admin-dashboard',
     label: 'Dashboard',
     icon: BarChart3,
     path: '/instructor/dashboard',
-    roles: ['admin', 'instructor', 'recruiter']
+    roles: ['admin', 'instructor']
+  },
+  {
+    id: 'recruiter-dashboard',
+    label: 'Dashboard',
+    icon: BarChart3,
+    path: '/recruiter/dashboard',
+    roles: ['recruiter']
   },
   {
     id: 'users',
@@ -68,20 +76,20 @@ const sidebarItems: SidebarItem[] = [
     label: 'Jobs',
     icon: Briefcase,
     path: '/recruiter/jobs',
-    roles: ['admin', 'recruiter']
+    roles: ['recruiter']
+  },
+  {
+    id: 'instructor-jobs',
+    label: 'Jobs',
+    icon: Briefcase,
+    path: '/instructor/jobs',
+    roles: ['admin', 'instructor']
   },
   {
     id: 'contests',
     label: 'Contests',
     icon: Trophy,
     path: '/instructor/contests',
-    roles: ['admin', 'instructor', 'recruiter']
-  },
-  {
-    id: 'settings',
-    label: 'Settings',
-    icon: Settings,
-    path: '/instructor/settings',
     roles: ['admin', 'instructor', 'recruiter']
   }
 ];

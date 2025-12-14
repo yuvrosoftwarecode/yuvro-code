@@ -1,5 +1,5 @@
 import { useAuth } from '../contexts/AuthContext';
-import Navigation from '../components/Navigation';
+import Navigation from '../components/common/Navigation';
 import RoleSidebar from '../components/common/RoleSidebar';
 import RoleHeader from '../components/common/RoleHeader';
 

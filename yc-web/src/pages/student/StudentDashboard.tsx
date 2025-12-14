@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import Navigation from '../../components/Navigation';
+import Navigation from '../../components/common/Navigation';
+
 import {
   BookOpen,
   Code,
@@ -113,6 +114,7 @@ const Dashboard: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
+        <Navigation />
         <Navigation />
         <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
           <div className="animate-pulse">

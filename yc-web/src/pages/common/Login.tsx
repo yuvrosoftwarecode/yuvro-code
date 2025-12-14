@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { ApiError } from '../../utils/RestApiUtil';
+import { redirectToDashboard } from '../../utils/redirectToDashboard';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -10,7 +11,7 @@ const Login: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const { login, loginWithGoogle } = useAuth();
+  const { login, loginWithGoogle, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as any)?.from?.pathname || '/dashboard';
@@ -18,23 +19,50 @@ const Login: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    
+    // Basic validation
+    if (!email.trim()) {
+      setError('Please enter your email address.');
+      return;
+    }
+    
+    if (!password.trim()) {
+      setError('Please enter your password.');
+      return;
+    }
+    
+    if (!email.includes('@')) {
+      setError('Please enter a valid email address.');
+      return;
+    }
+    
     setIsLoading(true);
 
     try {
       await login(email, password);
-
+      
+      // After successful login, the user will be available in the AuthContext
+      // We need to wait a moment for the context to update, or use a different approach
+      // Let's use the authService directly to get the user data
+      
+      // For now, let's use a simple redirect based on localStorage
       const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
-
-      if (storedUser.role === "admin" || storedUser.role === "instructor" || storedUser.role === "recruiter") {
-        navigate("/instructor/dashboard");
+      if (storedUser && storedUser.role) {
+        redirectToDashboard(storedUser, navigate);
       } else {
-        navigate("/student/dashboard");
+        // Fallback redirect
+        navigate('/dashboard');
       }
 
-
     } catch (err) {
-      if (err instanceof ApiError) setError(err.message);
-      else setError('An unexpected error occurred');
+      console.error('Login error:', err);
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('An unexpected error occurred. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -70,8 +98,16 @@ const Login: React.FC = () => {
           </div>
 
           {error && (
-            <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md py-2 px-3 text-center">
-              {error}
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className="flex items-center">
+                <svg className="w-5 h-5 text-red-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                  <h3 className="text-sm font-medium text-red-800">Login Failed</h3>
+                  <p className="text-sm text-red-700 mt-1">{error}</p>
+                </div>
+              </div>
             </div>
           )}
 
@@ -82,11 +118,17 @@ const Login: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
               <input
                 type="email"
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-slate-800 focus:border-slate-800"
+                className={`w-full border rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-slate-800 focus:border-slate-800 ${
+                  error ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                }`}
                 placeholder="Enter your email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (error) setError(''); // Clear error when user starts typing
+                }}
                 disabled={isLoading}
+                required
               />
             </div>
 
@@ -96,11 +138,17 @@ const Login: React.FC = () => {
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 pr-10 text-sm focus:ring-2 focus:ring-slate-800 focus:border-slate-800"
+                  className={`w-full border rounded-md px-3 py-2 pr-10 text-sm focus:ring-2 focus:ring-slate-800 focus:border-slate-800 ${
+                    error ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                  }`}
                   placeholder="Enter your password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (error) setError(''); // Clear error when user starts typing
+                  }}
                   disabled={isLoading}
+                  required
                 />
                 <button
                   type="button"

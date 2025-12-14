@@ -33,10 +33,13 @@ import ContestEdit from './components/instructor/contests/ContestEdit';
 import ContestForm from './components/instructor/contests/ContestForm';
 import InstructorSkillTest from './pages/instructor/SkillTest';
 import SkillTestForm from './components/instructor/skill-tests/SkillTestForm';
+import InstructorProfile from './pages/instructor/Profile';
 import InstructorMockInterview from './pages/instructor/MockInterview';
 import RecruiterJobs from "./pages/recruiter/Jobs";
 import RecruiterCompanies from "./pages/recruiter/Companies";
 import RecruiterCompanyDetail from "./pages/recruiter/CompanyDetail";
+import RecruiterDashboard from "./pages/recruiter/Dashboard";
+import RecruiterProfile from "./pages/recruiter/Profile";
 import AddJob from "./components/student/AddJob";
 import JobFiltersSidebar from "@/components/student/jobs/ApplicationTracker";
 
@@ -156,8 +159,17 @@ function App() {
               <Route
                 path="/instructor/dashboard"
                 element={
-                  <ProtectedRoute allowedRoles={["admin", "instructor", "recruiter"]}>
+                  <ProtectedRoute allowedRoles={["admin", "instructor"]}>
                     <InstructorDashboard />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/recruiter/dashboard"
+                element={
+                  <ProtectedRoute allowedRoles={["recruiter"]}>
+                    <RecruiterDashboard />
                   </ProtectedRoute>
                 }
               />
@@ -185,6 +197,15 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={["admin", "instructor", "recruiter"]}>
                     <RecruiterCompanyDetail />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/recruiter/profile"
+                element={
+                  <ProtectedRoute allowedRoles={["recruiter"]}>
+                    <RecruiterProfile />
                   </ProtectedRoute>
                 }
               />
@@ -258,7 +279,7 @@ function App() {
                 path="/instructor/profile"
                 element={
                   <ProtectedRoute allowedRoles={["admin", "instructor", "recruiter"]}>
-                    <div>Profile</div>
+                    <InstructorProfile />
                   </ProtectedRoute>
                 }
               />

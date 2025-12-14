@@ -7,7 +7,7 @@ import NotesManager from "@/components/instructor/courses/NotesManager";
 import QuestionBankManager from "@/components/instructor/courses/QuestionBankManager";
 import RoleSidebar from "../../common/RoleSidebar";
 import RoleHeader from "../../common/RoleHeader";
-import Navigation from "../../Navigation";
+import Navigation from "../../common/Navigation";
 
 import {
   Card,

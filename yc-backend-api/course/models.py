@@ -19,6 +19,7 @@ class Course(models.Model):
         ("programming_languages", "Programming Languages"),
         ("databases", "Databases"),
         ("ai_tools", "AI Tools"),
+        ("web_development", "Web Development"),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -333,6 +334,7 @@ class Question(models.Model):
         ("practice", "Practice Questions"),
         ("skill_test", "Skill Test"),
         ("contest", "Contest"),
+        ("mock_interview", "Mock Interview"),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

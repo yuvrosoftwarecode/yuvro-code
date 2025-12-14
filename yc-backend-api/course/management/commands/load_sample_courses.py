@@ -126,6 +126,7 @@ class Command(BaseCommand):
             
             # Create topics and subtopics
             topic_map = {}  # To store topic references for questions
+            subtopic_map = {}  # To store subtopic references for questions
             
             for topic_data in course_data.get('topics', []):
                 topic, topic_created = Topic.objects.get_or_create(
@@ -151,6 +152,10 @@ class Command(BaseCommand):
                         }
                     )
                     
+                    # Store subtopic reference with topic name for lookup
+                    subtopic_key = f"{topic_data['name']}::{subtopic_data['name']}"
+                    subtopic_map[subtopic_key] = subtopic
+                    
                     if subtopic_created:
                         self.stdout.write(f'    ✓ Created subtopic: {subtopic.name}')
                     
@@ -171,13 +176,13 @@ class Command(BaseCommand):
             # Create questions for the course
             if instructor:  # Only create questions if instructor exists
                 for question_data in course_data.get('questions', []):
-                    self.create_question(question_data, course, topic_map, instructor)
+                    self.create_question(question_data, course, topic_map, subtopic_map, instructor)
             else:
                 self.stdout.write(self.style.WARNING(f'No instructor found for course {course.short_code}, skipping questions'))
             
             self.stdout.write(f'✓ Loaded course: {course.name}')
 
-    def create_question(self, question_data, course, topic_map, instructor):
+    def create_question(self, question_data, course, topic_map, subtopic_map, instructor):
         """Create a question with proper associations"""
         
         # Fallback to admin if instructor is None
@@ -209,9 +214,20 @@ class Command(BaseCommand):
                 question_kwargs['topic'] = topic_map[topic_name]
                 question_kwargs['course'] = course
         elif question_data['level'] == 'subtopic':
-            # For subtopic level, we'd need subtopic_name in the JSON
-            # For now, associate with course
-            question_kwargs['course'] = course
+            topic_name = question_data.get('topic_name')
+            subtopic_name = question_data.get('subtopic_name')
+            if topic_name and subtopic_name:
+                subtopic_key = f"{topic_name}::{subtopic_name}"
+                if subtopic_key in subtopic_map:
+                    question_kwargs['subtopic'] = subtopic_map[subtopic_key]
+                    question_kwargs['topic'] = subtopic_map[subtopic_key].topic
+                    question_kwargs['course'] = course
+                else:
+                    self.stdout.write(self.style.WARNING(f'Subtopic not found: {subtopic_key}, skipping question'))
+                    return
+            else:
+                self.stdout.write(self.style.WARNING(f'Missing topic_name or subtopic_name for subtopic-level question: {question_data["title"][:50]}...'))
+                return
         
         # Add type-specific fields
         if question_data['type'] in ['mcq_single', 'mcq_multiple']:

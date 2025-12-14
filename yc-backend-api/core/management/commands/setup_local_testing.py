@@ -24,7 +24,6 @@ class Command(BaseCommand):
         )
 
         try:
-            # Run migrations first (unless skipped)
             if not options["skip_migrations"]:
                 self.stdout.write("📦 Running database migrations...")
                 call_command("migrate", verbosity=0)
@@ -32,7 +31,6 @@ class Command(BaseCommand):
                     self.style.SUCCESS("✓ Database migrations completed\n")
                 )
 
-            # Setup test users
             self.stdout.write("👥 Setting up test users...")
             if options["clear"]:
                 call_command("create_test_users", "--clear", verbosity=1)
@@ -40,13 +38,46 @@ class Command(BaseCommand):
                 call_command("create_test_users", verbosity=1)
             self.stdout.write("")
 
-            # Load sample courses
             self.stdout.write("📚 Loading sample course data...")
             if options["clear"]:
                 call_command("load_sample_courses", "--clear", verbosity=1)
             else:
                 call_command("load_sample_courses", verbosity=1)
             self.stdout.write("")
+
+            self.stdout.write("💼 Loading sample companies and jobs...")
+            if options["clear"]:
+                call_command("load_sample_companies_and_jobs", "--clear", verbosity=1)
+            else:
+                call_command("load_sample_companies_and_jobs", verbosity=1)
+            self.stdout.write("")
+
+            self.stdout.write("📝 Loading sample assessment tests...")
+            if options["clear"]:
+                call_command("load_sample_assessment_tests", "--clear", verbosity=1)
+            else:
+                call_command("load_sample_assessment_tests", verbosity=1)
+            self.stdout.write("")
+
+
+            self.stdout.write(
+                self.style.SUCCESS("🎉 Local testing environment setup completed successfully!")
+            )
+            self.stdout.write(
+                self.style.SUCCESS("✓ Test users created")
+            )
+            self.stdout.write(
+                self.style.SUCCESS("✓ Sample courses loaded")
+            )
+            self.stdout.write(
+                self.style.SUCCESS("✓ Sample companies and jobs loaded")
+            )
+            self.stdout.write(
+                self.style.SUCCESS("✓ Sample assessment tests loaded")
+            )
+            self.stdout.write("")
+            self.stdout.write("🚀 You can now start testing the application!")
+
         except Exception as e:
             self.stdout.write(self.style.ERROR(f"❌ Error during setup: {str(e)}"))
             raise e

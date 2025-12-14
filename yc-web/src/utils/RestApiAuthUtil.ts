@@ -8,9 +8,20 @@ interface RequestOptions extends RequestInit {
 
 class RestApiAuthUtil extends RestApiUtil {
     private token: string | null = null;
+    private isRefreshing: boolean = false;
+    private refreshSubscribers: ((token: string) => void)[] = [];
 
     constructor(baseURL: string) {
         super(baseURL);
+    }
+
+    private onRefreshed(token: string) {
+        this.refreshSubscribers.forEach((cb) => cb(token));
+        this.refreshSubscribers = [];
+    }
+
+    private addSubscriber(cb: (token: string) => void) {
+        this.refreshSubscribers.push(cb);
     }
 
     setAuthToken(token: string) {
@@ -99,28 +110,40 @@ class RestApiAuthUtil extends RestApiUtil {
                     endpoint.includes('/auth/token/refresh');
 
                 if (isAuthEndpoint) {
-                    // For auth endpoints, just throw the error without trying to refresh
                     throw error;
                 }
 
-                console.log('Received 401, attempting token refresh...');
-                const refreshed = await this.refreshToken();
-                if (refreshed) {
-                    console.log('Token refreshed, retrying request...');
-                    // Update headers with new token
-                    authHeaders = this.getAuthHeaders();
-                    const retryOptionsWithAuth = {
-                        ...options,
-                        headers: {
-                            ...authHeaders,
-                            ...options.headers,
-                        },
-                    };
-                    return await super.request<T>(endpoint, retryOptionsWithAuth);
-                } else {
-                    console.error('Token refresh failed, redirecting to login');
-                    throw new ApiError('Session expired. Please log in again.', 401);
+                if (!this.isRefreshing) {
+                    this.isRefreshing = true;
+                    this.refreshToken().then((success) => {
+                        this.isRefreshing = false;
+                        if (success && this.token) {
+                            this.onRefreshed(this.token);
+                        } else {
+                            // If refresh fails, clear queue. The refreshToken method handles logout.
+                            this.refreshSubscribers = [];
+                        }
+                    });
                 }
+
+                // Return a promise that waits for the refresh to complete
+                return new Promise<T>((resolve) => {
+                    this.addSubscriber((newToken) => {
+                        // Update headers with new token
+                        const retryHeaders: HeadersInit = {
+                            ...options.headers,
+                            'Authorization': `Bearer ${newToken}`,
+                            // Ensure Content-Type is preserved if it was set in getAuthHeaders or options
+                            ...(authHeaders['Content-Type'] ? { 'Content-Type': authHeaders['Content-Type'] as string } : {})
+                        };
+
+                        const retryOptionsWithAuth = {
+                            ...options,
+                            headers: retryHeaders,
+                        };
+                        resolve(super.request<T>(endpoint, retryOptionsWithAuth));
+                    });
+                });
             }
             throw error;
         }

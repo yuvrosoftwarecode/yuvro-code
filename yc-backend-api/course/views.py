@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.db import IntegrityError
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from authentication.permissions import CanManageCourses, IsAuthenticatedUser
 from .models import (
     Course,
@@ -12,6 +13,7 @@ from .models import (
     Note,
     CourseInstructor,
     Question,
+    UserCourseProgress,
 )
 from .serializers import (
     CourseSerializer,
@@ -468,3 +470,235 @@ class QuestionViewSet(viewsets.ModelViewSet):
             return super().destroy(request, *args, **kwargs)
 
         return Response({"error": "Not allowed"}, status=403)
+
+
+class StudentViewSet(viewsets.ViewSet):
+    """
+    ViewSet to handle student-specific actions like progress, continue learning, etc.
+    Route: /api/course/std/
+    """
+    permission_classes = [IsAuthenticatedUser]
+
+    @action(detail=False, methods=["post"])
+    def mark_complete(self, request):
+        user = request.user
+        subtopic_id = request.data.get("subtopic_id")
+        
+        if not subtopic_id:
+            return Response({"error": "subtopic_id is required"}, status=400)
+            
+        subtopic = get_object_or_404(Subtopic, id=subtopic_id)
+        
+        # Get or create progress record
+        progress, created = UserCourseProgress.objects.get_or_create(
+            user=user,
+            subtopic=subtopic,
+            defaults={
+                "course": subtopic.topic.course,
+                "topic": subtopic.topic
+            }
+        )
+        
+        # Mark as fully complete
+        progress.is_completed = True
+        progress.progress_percent = 100.0
+        progress.completed_at = timezone.now()
+        progress.save()
+        
+        return Response({"message": "Marked as complete", "progress": progress.progress_percent})
+
+    @action(detail=False, methods=["post"])
+    def submit_quiz(self, request):
+        user = request.user
+        subtopic_id = request.data.get("subtopic_id")
+        answers = request.data.get("answers")
+        score_percent = request.data.get("score_percent", 0)
+        is_passed = request.data.get("is_passed", False)
+
+        if not subtopic_id:
+            return Response({"error": "subtopic_id is required"}, status=400)
+            
+        subtopic = get_object_or_404(Subtopic, id=subtopic_id)
+        
+        progress, _ = UserCourseProgress.objects.get_or_create(
+            user=user,
+            subtopic=subtopic,
+            defaults={
+                "course": subtopic.topic.course,
+                "topic": subtopic.topic
+            }
+        )
+        
+        progress.quiz_score = float(score_percent)
+        progress.quiz_answers = answers or {} 
+        progress.is_quiz_completed = is_passed
+        
+        new_percent = progress.calculate_progress()
+        if new_percent >= 100:
+             progress.completed_at = timezone.now()
+             
+        progress.save()
+        
+        return Response({
+            "message": "Quiz submitted",
+            "progress": new_percent,
+            "is_completed": progress.is_completed
+        })
+
+    @action(detail=False, methods=["post"])
+    def submit_coding(self, request):
+        user = request.user
+        subtopic_id = request.data.get("subtopic_id")
+        coding_status = request.data.get("coding_status", {})
+        
+        if not subtopic_id:
+            return Response({"error": "subtopic_id is required"}, status=400)
+
+        subtopic = get_object_or_404(Subtopic, id=subtopic_id)
+        
+        progress, _ = UserCourseProgress.objects.get_or_create(
+            user=user,
+            subtopic=subtopic,
+            defaults={
+                "course": subtopic.topic.course,
+                "topic": subtopic.topic
+            }
+        )
+        
+        total_questions = Question.objects.filter(
+            subtopic=subtopic, 
+            type="coding"
+        ).count()
+        
+        solved_count = len([k for k, v in coding_status.items() if v])
+        
+        coding_score = 0.0
+        if total_questions > 0:
+            coding_score = (solved_count / total_questions) * 100.0
+        else:
+            coding_score = 100.0
+            
+        progress.coding_score = coding_score
+        progress.coding_answers = coding_status
+        progress.is_coding_completed = (coding_score >= 100.0)
+        
+        new_percent = progress.calculate_progress()
+        if new_percent >= 100:
+             progress.completed_at = timezone.now()
+             
+        progress.save()
+
+        return Response({
+            "message": "Coding progress updated",
+            "progress": new_percent,
+            "is_completed": progress.is_completed
+        })
+
+    @action(detail=False, methods=["post"])
+    def mark_video_watched(self, request):
+        """
+        Mark videos as watched for a subtopic (20% progress).
+        """
+        user = request.user
+        subtopic_id = request.data.get("subtopic_id")
+        
+        if not subtopic_id:
+            return Response({"error": "subtopic_id is required"}, status=400)
+            
+        subtopic = get_object_or_404(Subtopic, id=subtopic_id)
+        
+        # Get or create progress record
+        progress, created = UserCourseProgress.objects.get_or_create(
+            user=user,
+            subtopic=subtopic,
+            defaults={
+                "course": subtopic.topic.course,
+                "topic": subtopic.topic
+            }
+        )
+        
+        # Update video status
+        progress.is_videos_watched = True
+        
+        # Recalculate total progress
+        new_percent = progress.calculate_progress()
+        if new_percent >= 100:
+             progress.completed_at = timezone.now()
+
+        progress.save()
+        
+        return Response({
+            "message": "Videos marked as watched", 
+            "progress": new_percent,
+            "is_completed": progress.is_completed
+        })
+
+    @action(detail=False, methods=["get"])
+    def continue_learning(self, request):
+        user = request.user
+        last_progress = UserCourseProgress.objects.filter(user=user).order_by("-updated_at").first()
+        
+        if not last_progress:
+             return Response({"message": "No progress found"}, status=200)
+             
+        # Return necessary details to navigate
+        return Response({
+            "course_id": last_progress.course.id,
+            "topic_id": last_progress.topic.id if last_progress.topic else None,
+            "subtopic_id": last_progress.subtopic.id,
+            "subtopic_name": last_progress.subtopic.name
+        })
+
+    @action(detail=False, methods=["get"])
+    def get_course_progress(self, request):
+        user = request.user
+        course_id = request.query_params.get("course_id")
+        
+        if not course_id:
+             return Response({"error": "course_id is required"}, status=400)
+             
+        progress_qs = UserCourseProgress.objects.filter(user=user, course_id=course_id)
+        
+        data = {}
+        for p in progress_qs:
+            data[str(p.subtopic.id)] = {
+                "progress_percent": p.progress_percent,
+                "is_completed": p.is_completed
+            }
+            
+        return Response(data)
+
+    @action(detail=False, methods=["get"])
+    def get_user_progress_details(self, request):
+        """
+        Get detailed progress for all subtopics in a course, including quiz/coding status.
+        Recalculates progress on-the-fly to ensure consistency with course content changes (e.g. added/removed questions).
+        """
+        user = request.user
+        course_id = request.query_params.get("course_id")
+        
+        if not course_id:
+             return Response({"error": "course_id is required"}, status=400)
+             
+        progress_qs = UserCourseProgress.objects.filter(
+            user=user, 
+            course_id=course_id
+        ).select_related('subtopic').prefetch_related('subtopic__questions')
+        
+        updated_records = []
+        for p in progress_qs:
+            p.calculate_progress()
+            updated_records.append(p)
+            
+        if updated_records:
+             UserCourseProgress.objects.bulk_update(
+                 updated_records, 
+                 ['progress_percent', 'is_completed']
+             )
+        
+        from .serializers import UserCourseProgressSerializer
+        serializer = UserCourseProgressSerializer(updated_records, many=True)
+        
+        data = {str(item['subtopic']): item for item in serializer.data}
+            
+        return Response(data)

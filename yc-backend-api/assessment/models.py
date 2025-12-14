@@ -3,6 +3,7 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from core.models import BaseModel, BaseTimestampedModel
+from course.models import Question
 
 User = get_user_model()
 
@@ -230,7 +231,19 @@ class BaseUserSubmission(BaseTimestampedModel):
     started_at = models.DateTimeField(auto_now_add=True)
     submitted_at = models.DateTimeField(null=True, blank=True)
     completed_at = models.DateTimeField(null=True, blank=True)
-    proctoring_events = models.JSONField(default=list, blank=True)
+    
+    general_events = models.JSONField(
+        default=list, 
+        blank=True,
+        help_text="General submission events: session start/end, navigation, browser info, etc."
+    )
+    
+    proctoring_events = models.JSONField(
+        default=list, 
+        blank=True,
+        help_text="Proctoring events: camera/mic status, face detection, violations, etc."
+    )
+    
     browser_info = models.JSONField(default=dict, blank=True)
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     user_agent = models.TextField(blank=True)
@@ -282,3 +295,214 @@ class JobTestSubmission(BaseUserSubmission):
         
     def __str__(self):
         return f"{self.user.username} - {self.job_test.title}"
+
+
+class BaseQuestionActivity(BaseTimestampedModel):    
+    QUESTION_ACTIVITY_TYPES = [
+        ('question_viewed', 'Question Viewed'),
+        ('answer_started', 'Answer Started'),
+        ('answer_changed', 'Answer Changed'),
+        ('answer_submitted', 'Answer Submitted'),
+        ('question_skipped', 'Question Skipped'),
+        ('question_flagged', 'Question Flagged'),
+        ('question_unflagged', 'Question Unflagged'),
+        ('time_warning', 'Time Warning Shown'),
+        ('hint_requested', 'Hint Requested'),
+        ('solution_viewed', 'Solution Viewed'),
+    ]
+    
+    NAVIGATION_ACTIVITY_TYPES = [
+        ('tab_switched', 'Tab Switched'),
+        ('window_blur', 'Window Lost Focus'),
+        ('window_focus', 'Window Gained Focus'),
+        ('fullscreen_exit', 'Fullscreen Exited'),
+        ('fullscreen_enter', 'Fullscreen Entered'),
+        ('browser_minimize', 'Browser Minimized'),
+        ('browser_restore', 'Browser Restored'),
+        ('page_reload', 'Page Reloaded'),
+        ('navigation_attempt', 'Navigation Attempt'),
+        ('back_button_pressed', 'Back Button Pressed'),
+    ]
+    
+    PROCTORING_ACTIVITY_TYPES = [
+        ('copy_detected', 'Copy Action Detected'),
+        ('paste_detected', 'Paste Action Detected'),
+        ('right_click_detected', 'Right Click Detected'),
+        ('keyboard_shortcut', 'Keyboard Shortcut Used'),
+        ('camera_enabled', 'Camera Enabled'),
+        ('camera_disabled', 'Camera Disabled'),
+        ('microphone_enabled', 'Microphone Enabled'),
+        ('microphone_disabled', 'Microphone Disabled'),
+        ('screen_share_started', 'Screen Share Started'),
+        ('screen_share_ended', 'Screen Share Ended'),
+        ('face_not_detected', 'Face Not Detected'),
+        ('multiple_faces_detected', 'Multiple Faces Detected'),
+        ('face_recognition_failed', 'Face Recognition Failed'),
+        ('suspicious_movement', 'Suspicious Movement'),
+        ('audio_anomaly', 'Audio Anomaly Detected'),
+        ('network_disconnection', 'Network Disconnected'),
+        ('network_reconnection', 'Network Reconnected'),
+        ('violation_warning', 'Violation Warning Issued'),
+        ('violation_critical', 'Critical Violation'),
+        ('manual_flag', 'Manually Flagged by Proctor'),
+        ('suspicious_activity', 'Suspicious Activity'),
+        ('device_change', 'Device Change Detected'),
+        ('external_monitor', 'External Monitor Detected'),
+    ]
+    
+    ALERT_PRIORITY_LEVELS = [
+        ('info', 'Informational'),
+        ('low', 'Low Priority'),
+        ('medium', 'Medium Priority'),
+        ('high', 'High Priority'),
+        ('critical', 'Critical Priority'),
+    ]
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='%(class)s_question_activities')
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='%(class)s_question_activities')
+    
+    question_activities = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Question-specific activities: [{'timestamp': '2024-12-14T10:00:00Z', 'activity_type': 'question_viewed', 'meta_data': {...}}]"
+    )
+    
+    navigation_activities = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Navigation and focus activities: [{'timestamp': '2024-12-14T10:01:00Z', 'activity_type': 'tab_switched', 'meta_data': {...}}]"
+    )
+    
+    proctoring_activities = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Proctoring events: [{'timestamp': '2024-12-14T10:02:00Z', 'activity_type': 'face_not_detected', 'meta_data': {...}}]"
+    )
+    
+    camera_snapshots = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Camera snapshot image paths with timestamps: [{'timestamp': '2024-12-14T10:00:00Z', 'image_path': '/media/snapshots/user123_q456_20241214100000.jpg', 'meta_data': {...}}]"
+    )
+    
+    alert_priority = models.CharField(
+        max_length=10, 
+        choices=ALERT_PRIORITY_LEVELS, 
+        default='info',
+        help_text="Priority level for alerts and violations"
+    )
+    
+    answer_data = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Current answer content based on question type (MCQ selections, code, descriptive text)"
+    )
+    
+    answer_history = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Answer change history: [{'timestamp': '2024-12-14T10:05:00Z', 'answer_data': {...}, 'is_auto_save': true}]"
+    )
+    
+    is_final_answer = models.BooleanField(default=False, help_text="Whether the current answer is final/submitted")
+    answer_attempt_count = models.IntegerField(default=0, help_text="Number of times answer was modified")
+    
+    marks_obtained = models.FloatField(null=True, blank=True)
+    is_correct = models.BooleanField(null=True, blank=True)
+    auto_graded = models.BooleanField(default=False)
+    graded_by = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='graded_%(class)s_question_activities'
+    )
+    graded_at = models.DateTimeField(null=True, blank=True)
+    grading_feedback = models.TextField(blank=True)
+    
+    session_id = models.CharField(max_length=100, blank=True, help_text="Browser session identifier")
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.TextField(blank=True)
+    
+    total_question_time = models.IntegerField(default=0, help_text="Total time spent on this question in seconds")
+    violation_count = models.IntegerField(default=0, help_text="Total number of violations for this question")
+    last_activity_timestamp = models.DateTimeField(null=True, blank=True)
+    
+    has_violations = models.BooleanField(default=False)
+    violations_resolved = models.BooleanField(default=False)
+    resolved_by = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='resolved_%(class)s_question_activities'
+    )
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    resolution_notes = models.TextField(blank=True)
+    
+    class Meta:
+        abstract = True
+        ordering = ['-updated_at']
+
+
+class SkillTestQuestionActivity(BaseQuestionActivity):
+    skill_test_submission = models.ForeignKey(
+        SkillTestSubmission, 
+        on_delete=models.CASCADE, 
+        related_name='skill_test_question_activities'
+    )
+    
+    class Meta:
+        ordering = ['-updated_at']
+        unique_together = ['skill_test_submission', 'question']
+        
+    def __str__(self):
+        return f"{self.user.username} - {self.question.title[:30]} - {'Final' if self.is_final_answer else 'Draft'}"
+
+
+class ContestQuestionActivity(BaseQuestionActivity):
+    contest_submission = models.ForeignKey(
+        ContestSubmission, 
+        on_delete=models.CASCADE, 
+        related_name='contest_question_activities'
+    )
+    
+    class Meta:
+        ordering = ['-updated_at']
+        unique_together = ['contest_submission', 'question']
+        
+    def __str__(self):
+        return f"{self.user.username} - {self.question.title[:30]} - {'Final' if self.is_final_answer else 'Draft'}"
+
+
+class MockInterviewQuestionActivity(BaseQuestionActivity):
+    mock_interview_submission = models.ForeignKey(
+        MockInterviewSubmission, 
+        on_delete=models.CASCADE, 
+        related_name='mock_interview_question_activities'
+    )
+    
+    class Meta:
+        ordering = ['-updated_at']
+        unique_together = ['mock_interview_submission', 'question']
+        
+    def __str__(self):
+        return f"{self.user.username} - {self.question.title[:30]} - {'Final' if self.is_final_answer else 'Draft'}"
+
+
+class JobTestQuestionActivity(BaseQuestionActivity):
+    job_test_submission = models.ForeignKey(
+        JobTestSubmission, 
+        on_delete=models.CASCADE, 
+        related_name='job_test_question_activities'
+    )
+    
+    class Meta:
+        ordering = ['-updated_at']
+        unique_together = ['job_test_submission', 'question']
+        
+    def __str__(self):
+        return f"{self.user.username} - {self.question.title[:30]} - {'Final' if self.is_final_answer else 'Draft'}"
+
+
+

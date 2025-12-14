@@ -7,17 +7,14 @@ from .views import (
     VideoViewSet,
     NoteViewSet,
     QuestionViewSet,
-    ProgressViewSet,
 )
 
-# Create a router and register our viewsets with it
 router = DefaultRouter()
 router.register(r"courses", CourseViewSet)
 router.register(r"topics", TopicViewSet)
 router.register(r"subtopics", SubtopicViewSet)
 router.register(r"videos", VideoViewSet)
 router.register(r"notes", NoteViewSet)
-router.register(r"std", ProgressViewSet, basename="student-progress")
 router.register(r"questions", QuestionViewSet)
 
 

@@ -1,73 +1,218 @@
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import RoleSidebar from '../../components/common/RoleSidebar';
 import RoleHeader from '../../components/common/RoleHeader';
+import { 
+  BookOpen, 
+  Users, 
+  Trophy, 
+  Target, 
+  MessageCircle, 
+  FileText,
+  TrendingUp, 
+  Calendar,
+  Clock,
+  Award,
+  CheckCircle,
+  ArrowRight,
+  Play,
+  Star,
+  BarChart3,
+  Plus,
+  Eye,
+  Edit,
+  Settings
+} from 'lucide-react';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+
+  // Mock data - replace with actual API calls
+  const [dashboardData, setDashboardData] = useState({
+    stats: {
+      coursesCreated: 5,
+      totalStudents: 247,
+      contestsHosted: 12,
+      skillTestsCreated: 28,
+      mockInterviewsCreated: 15,
+      totalQuestions: 156
+    },
+    recentActivity: [
+      {
+        id: 1,
+        type: 'course',
+        action: 'Created new course',
+        target: 'Advanced React Patterns',
+        time: '2 hours ago',
+        icon: BookOpen,
+        color: 'text-blue-600'
+      },
+      {
+        id: 2,
+        type: 'student',
+        action: 'Student enrolled',
+        target: 'John Doe joined Python Fundamentals',
+        time: '4 hours ago',
+        icon: Users,
+        color: 'text-green-600'
+      },
+      {
+        id: 3,
+        type: 'contest',
+        action: 'Contest completed',
+        target: 'Weekly Algorithm Challenge #15',
+        time: '1 day ago',
+        icon: Trophy,
+        color: 'text-yellow-600'
+      },
+      {
+        id: 4,
+        type: 'assessment',
+        action: 'Skill test published',
+        target: 'JavaScript Fundamentals Assessment',
+        time: '2 days ago',
+        icon: Target,
+        color: 'text-purple-600'
+      }
+    ],
+    upcomingEvents: [
+      {
+        id: 1,
+        title: 'Weekly Contest Review',
+        date: 'Today, 3:00 PM',
+        type: 'contest',
+        participants: 45
+      },
+      {
+        id: 2,
+        title: 'Course Content Review',
+        date: 'Tomorrow, 10:00 AM',
+        type: 'course',
+        duration: '2 hours'
+      },
+      {
+        id: 3,
+        title: 'Student Progress Meeting',
+        date: 'Dec 18, 2:00 PM',
+        type: 'meeting',
+        attendees: 8
+      }
+    ],
+    courseProgress: [
+      {
+        id: 1,
+        name: 'Data Structures & Algorithms',
+        studentsEnrolled: 89,
+        completionRate: 78,
+        avgScore: 85
+      },
+      {
+        id: 2,
+        name: 'Python Programming',
+        studentsEnrolled: 67,
+        completionRate: 82,
+        avgScore: 88
+      },
+      {
+        id: 3,
+        name: 'Web Development',
+        studentsEnrolled: 91,
+        completionRate: 65,
+        avgScore: 79
+      }
+    ],
+    topPerformers: [
+      {
+        id: 1,
+        name: 'Alice Johnson',
+        course: 'Python Programming',
+        score: 98,
+        progress: 95
+      },
+      {
+        id: 2,
+        name: 'Bob Smith',
+        course: 'Data Structures',
+        score: 94,
+        progress: 88
+      },
+      {
+        id: 3,
+        name: 'Carol Davis',
+        course: 'Web Development',
+        score: 92,
+        progress: 90
+      }
+    ]
+  });
+
+  useEffect(() => {
+    // Simulate loading
+    setTimeout(() => setLoading(false), 1000);
+  }, []);
 
   const stats = [
     {
-      name: 'Total Projects',
-      value: '12',
-      change: '+4.75%',
-      icon: (
-        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-        </svg>
-      ),
+      name: 'Courses Created',
+      value: dashboardData.stats.coursesCreated.toString(),
+      change: '+2 this month',
+      icon: BookOpen,
+      color: 'bg-blue-500',
+      path: '/instructor/courses'
     },
     {
-      name: 'Active Tasks',
-      value: '24',
-      change: '+2.02%',
-      icon: (
-        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-        </svg>
-      ),
+      name: 'Total Students',
+      value: dashboardData.stats.totalStudents.toString(),
+      change: '+23 this week',
+      icon: Users,
+      color: 'bg-green-500',
+      path: '/instructor/users'
     },
     {
-      name: 'Completed',
-      value: '89%',
-      change: '+12.5%',
-      icon: (
-        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      ),
+      name: 'Contests Hosted',
+      value: dashboardData.stats.contestsHosted.toString(),
+      change: '+4 this month',
+      icon: Trophy,
+      color: 'bg-yellow-500',
+      path: '/instructor/contests'
     },
     {
-      name: 'Team Members',
-      value: '8',
-      change: '+1.2%',
-      icon: (
-        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-        </svg>
-      ),
-    },
+      name: 'Skill Tests',
+      value: dashboardData.stats.skillTestsCreated.toString(),
+      change: '+8 this week',
+      icon: Target,
+      color: 'bg-purple-500',
+      path: '/instructor/skill-tests'
+    }
   ];
 
-  const recentActivities = [
-    {
-      id: 1,
-      action: 'Created new project',
-      target: 'Mobile App Redesign',
-      time: '2 hours ago',
-    },
-    {
-      id: 2,
-      action: 'Completed task',
-      target: 'User Interface Design',
-      time: '4 hours ago',
-    },
-    {
-      id: 3,
-      action: 'Updated profile',
-      target: 'Personal Information',
-      time: '1 day ago',
-    },
-  ];
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="flex">
+          <RoleSidebar />
+          <div className="flex-1">
+            <RoleHeader 
+              title="Loading..."
+              subtitle="Please wait while we load your dashboard."
+            />
+            <div className="p-6">
+              <div className="animate-pulse">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="bg-gray-300 rounded-lg h-24"></div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -75,161 +220,246 @@ const Dashboard: React.FC = () => {
         <RoleSidebar />
         <div className="flex-1">
           <RoleHeader 
-            title={`Welcome back, ${user?.username || 'User'}! 👋`}
-            subtitle="Here's what's happening with your projects today."
+            title={`Welcome back, ${user?.first_name || user?.username || 'Instructor'}! 👋`}
+            subtitle="Manage your courses, track student progress, and create engaging content."
           />
           <div className="p-6">
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {stats.map((stat, index) => (
-            <div key={index} className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">{stat.name}</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</p>
-                </div>
-                <div className="bg-indigo-50 p-3 rounded-lg">
-                  <div className="text-indigo-600">{stat.icon}</div>
-                </div>
-              </div>
-              <div className="mt-4 flex items-center">
-                <span className="text-sm font-medium text-green-600">
-                  {stat.change}
-                </span>
-                <span className="text-sm text-gray-500 ml-2">from last month</span>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Recent Activity */}
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow">
-              <div className="p-6 border-b border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900">Recent Activity</h3>
-              </div>
-              <div className="p-6">
-                <div className="space-y-4">
-                  {recentActivities.map((activity) => (
-                    <div key={activity.id} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">
-                          {activity.action} <span className="text-indigo-600">{activity.target}</span>
-                        </p>
-                        <p className="text-xs text-gray-500">{activity.time}</p>
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              {stats.map((stat, index) => (
+                <div 
+                  key={index} 
+                  className="bg-white rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() => navigate(stat.path)}
+                >
+                  <div className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">{stat.name}</p>
+                        <p className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</p>
+                      </div>
+                      <div className={`${stat.color} p-3 rounded-lg`}>
+                        <stat.icon className="w-6 h-6 text-white" />
                       </div>
                     </div>
-                  ))}
+                    <div className="mt-4 flex items-center">
+                      <span className="text-sm font-medium text-green-600">
+                        {stat.change}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              ))}
             </div>
 
-            {/* Project Progress */}
-            <div className="bg-white rounded-lg shadow mt-6">
-              <div className="p-6 border-b border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900">Project Progress</h3>
-              </div>
-              <div className="p-6">
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex justify-between text-sm mb-2">
-                      <span className="font-medium text-gray-700">Mobile App Redesign</span>
-                      <span className="text-gray-500">75%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-indigo-600 h-2 rounded-full" style={{ width: '75%' }}></div>
-                    </div>
+            {/* Main Content Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Left Column - Recent Activity & Course Analytics */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* Recent Activity */}
+                <div className="bg-white rounded-lg shadow">
+                  <div className="p-6 border-b border-gray-200">
+                    <h3 className="text-lg font-semibold text-gray-900">Recent Activity</h3>
                   </div>
-                  <div>
-                    <div className="flex justify-between text-sm mb-2">
-                      <span className="font-medium text-gray-700">Website Development</span>
-                      <span className="text-gray-500">60%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-green-600 h-2 rounded-full" style={{ width: '60%' }}></div>
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex justify-between text-sm mb-2">
-                      <span className="font-medium text-gray-700">API Integration</span>
-                      <span className="text-gray-500">90%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-yellow-600 h-2 rounded-full" style={{ width: '90%' }}></div>
+                  <div className="p-6">
+                    <div className="space-y-4">
+                      {dashboardData.recentActivity.map((activity) => (
+                        <div key={activity.id} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                          <div className={`p-2 rounded-lg ${activity.color} bg-opacity-10`}>
+                            <activity.icon className={`w-5 h-5 ${activity.color}`} />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-gray-900">
+                              {activity.action} <span className="text-indigo-600">{activity.target}</span>
+                            </p>
+                            <p className="text-xs text-gray-500">{activity.time}</p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Quick Actions */}
-            <div className="bg-white rounded-lg shadow">
-              <div className="p-6 border-b border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900">Quick Actions</h3>
-              </div>
-              <div className="p-6">
-                <div className="grid grid-cols-2 gap-4">
-                  <button className="bg-blue-500 hover:bg-blue-600 text-white p-4 rounded-lg text-center">
-                    <div className="text-2xl mb-2">📁</div>
-                    <div className="text-sm font-medium">New Project</div>
-                  </button>
-                  <button className="bg-green-500 hover:bg-green-600 text-white p-4 rounded-lg text-center">
-                    <div className="text-2xl mb-2">📝</div>
-                    <div className="text-sm font-medium">Add Task</div>
-                  </button>
-                  <button className="bg-purple-500 hover:bg-purple-600 text-white p-4 rounded-lg text-center">
-                    <div className="text-2xl mb-2">👥</div>
-                    <div className="text-sm font-medium">Invite Team</div>
-                  </button>
-                  <button className="bg-orange-500 hover:bg-orange-600 text-white p-4 rounded-lg text-center">
-                    <div className="text-2xl mb-2">📊</div>
-                    <div className="text-sm font-medium">Analytics</div>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Profile Summary */}
-            <div className="bg-white rounded-lg shadow">
-              <div className="p-6 border-b border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900">Profile Summary</h3>
-              </div>
-              <div className="p-6">
-                <div className="flex items-center space-x-4 mb-6">
-                  <div className="w-16 h-16 bg-indigo-600 rounded-full flex items-center justify-center text-white text-xl font-bold">
-                    {(user?.username || user?.email || 'U').charAt(0).toUpperCase()}
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-gray-900">{user?.username || 'User'}</h4>
-                    <p className="text-sm text-gray-500">{user?.email}</p>
-                  </div>
-                </div>
-                
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Profile Completion</span>
-                    <span className="text-sm font-medium text-gray-900">85%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-indigo-600 h-2 rounded-full" style={{ width: '85%' }}></div>
-                  </div>
-                  
-                  <div className="pt-4 border-t border-gray-200">
-                    <button className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-4 rounded-lg text-sm font-medium">
-                      Complete Profile
+                {/* Course Analytics */}
+                <div className="bg-white rounded-lg shadow">
+                  <div className="p-6 border-b border-gray-200 flex justify-between items-center">
+                    <h3 className="text-lg font-semibold text-gray-900">Course Analytics</h3>
+                    <button 
+                      onClick={() => navigate('/instructor/courses')}
+                      className="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center"
+                    >
+                      View All <ArrowRight className="w-4 h-4 ml-1" />
                     </button>
                   </div>
+                  <div className="p-6">
+                    <div className="space-y-6">
+                      {dashboardData.courseProgress.map((course) => (
+                        <div key={course.id} className="border-l-4 border-indigo-500 pl-4">
+                          <div className="flex justify-between items-start mb-2">
+                            <h4 className="font-medium text-gray-900">{course.name}</h4>
+                            <span className="text-sm text-gray-500">{course.completionRate}% completion</span>
+                          </div>
+                          <div className="grid grid-cols-3 gap-4 mb-3">
+                            <div className="text-center">
+                              <div className="text-lg font-semibold text-blue-600">{course.studentsEnrolled}</div>
+                              <div className="text-xs text-gray-500">Students</div>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-lg font-semibold text-green-600">{course.completionRate}%</div>
+                              <div className="text-xs text-gray-500">Completion</div>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-lg font-semibold text-purple-600">{course.avgScore}</div>
+                              <div className="text-xs text-gray-500">Avg Score</div>
+                            </div>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div 
+                              className="bg-indigo-600 h-2 rounded-full transition-all duration-300" 
+                              style={{ width: `${course.completionRate}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column - Sidebar */}
+              <div className="space-y-6">
+                {/* Quick Actions */}
+                <div className="bg-white rounded-lg shadow">
+                  <div className="p-6 border-b border-gray-200">
+                    <h3 className="text-lg font-semibold text-gray-900">Quick Actions</h3>
+                  </div>
+                  <div className="p-6">
+                    <div className="grid grid-cols-2 gap-4">
+                      <button 
+                        onClick={() => navigate('/instructor/courses')}
+                        className="bg-blue-500 hover:bg-blue-600 text-white p-4 rounded-lg text-center transition-colors"
+                      >
+                        <BookOpen className="w-6 h-6 mx-auto mb-2" />
+                        <div className="text-sm font-medium">Create Course</div>
+                      </button>
+                      <button 
+                        onClick={() => navigate('/instructor/skill-tests')}
+                        className="bg-green-500 hover:bg-green-600 text-white p-4 rounded-lg text-center transition-colors"
+                      >
+                        <Target className="w-6 h-6 mx-auto mb-2" />
+                        <div className="text-sm font-medium">New Test</div>
+                      </button>
+                      <button 
+                        onClick={() => navigate('/instructor/contests')}
+                        className="bg-yellow-500 hover:bg-yellow-600 text-white p-4 rounded-lg text-center transition-colors"
+                      >
+                        <Trophy className="w-6 h-6 mx-auto mb-2" />
+                        <div className="text-sm font-medium">Host Contest</div>
+                      </button>
+                      <button 
+                        onClick={() => navigate('/instructor/mock-interview')}
+                        className="bg-purple-500 hover:bg-purple-600 text-white p-4 rounded-lg text-center transition-colors"
+                      >
+                        <MessageCircle className="w-6 h-6 mx-auto mb-2" />
+                        <div className="text-sm font-medium">Mock Interview</div>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Upcoming Events */}
+                <div className="bg-white rounded-lg shadow">
+                  <div className="p-6 border-b border-gray-200">
+                    <h3 className="text-lg font-semibold text-gray-900">Upcoming Events</h3>
+                  </div>
+                  <div className="p-6">
+                    <div className="space-y-4">
+                      {dashboardData.upcomingEvents.map((event) => (
+                        <div key={event.id} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+                          <div className="flex-shrink-0">
+                            <Calendar className="w-5 h-5 text-indigo-600 mt-0.5" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">
+                              {event.title}
+                            </p>
+                            <p className="text-xs text-gray-500">{event.date}</p>
+                            {event.participants && (
+                              <p className="text-xs text-gray-400">{event.participants} participants</p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Top Performers */}
+                <div className="bg-white rounded-lg shadow">
+                  <div className="p-6 border-b border-gray-200 flex justify-between items-center">
+                    <h3 className="text-lg font-semibold text-gray-900">Top Performers</h3>
+                    <button 
+                      onClick={() => navigate('/instructor/users')}
+                      className="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center"
+                    >
+                      View All <ArrowRight className="w-4 h-4 ml-1" />
+                    </button>
+                  </div>
+                  <div className="p-6">
+                    <div className="space-y-4">
+                      {dashboardData.topPerformers.map((student, index) => (
+                        <div key={student.id} className="flex items-center space-x-3">
+                          <div className="flex-shrink-0">
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold ${
+                              index === 0 ? 'bg-yellow-500' : index === 1 ? 'bg-gray-400' : 'bg-orange-500'
+                            }`}>
+                              {index + 1}
+                            </div>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">{student.name}</p>
+                            <p className="text-xs text-gray-500">{student.course}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-semibold text-green-600">{student.score}%</p>
+                            <p className="text-xs text-gray-500">{student.progress}% progress</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Teaching Stats */}
+                <div className="bg-white rounded-lg shadow">
+                  <div className="p-6 border-b border-gray-200">
+                    <h3 className="text-lg font-semibold text-gray-900">Teaching Impact</h3>
+                  </div>
+                  <div className="p-6">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="text-center p-4 bg-blue-50 rounded-lg">
+                        <div className="text-2xl font-bold text-blue-600">{dashboardData.stats.mockInterviewsCreated}</div>
+                        <div className="text-sm text-gray-600">Mock Interviews</div>
+                      </div>
+                      <div className="text-center p-4 bg-green-50 rounded-lg">
+                        <div className="text-2xl font-bold text-green-600">{dashboardData.stats.totalQuestions}</div>
+                        <div className="text-sm text-gray-600">Questions Created</div>
+                      </div>
+                    </div>
+                    <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-gray-700">Student Satisfaction</span>
+                        <span className="text-sm text-gray-500">4.8/5.0</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className="bg-gradient-to-r from-green-500 to-blue-500 h-2 rounded-full" style={{ width: '96%' }}></div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
           </div>
         </div>
       </div>

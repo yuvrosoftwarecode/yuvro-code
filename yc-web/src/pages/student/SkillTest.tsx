@@ -1,6 +1,6 @@
 // src/pages/student/SkillTest.tsx
 import React, { useEffect, useState } from "react";
-import Navigation from "@/components/Navigation";
+import Navigation from "@/components/common/Navigation";
 
 import CourseSelection from "@/components/student/skill-test/CourseSelection";
 import TopicSidebar from "@/components/student/skill-test/TopicSidebar";

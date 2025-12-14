@@ -55,11 +55,32 @@ class RestApiUtil {
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
-                throw new ApiError(
-                    errorData.detail || errorData.message || 'Request failed',
-                    response.status,
-                    errorData
-                );
+
+                // Handle different error response formats
+                let errorMessage = 'Request failed';
+
+                if (errorData.detail) {
+                    errorMessage = errorData.detail;
+                } else if (errorData.message) {
+                    errorMessage = errorData.message;
+                } else if (errorData.non_field_errors && Array.isArray(errorData.non_field_errors)) {
+                    // Handle Django REST Framework non_field_errors
+                    errorMessage = errorData.non_field_errors[0];
+                } else if (errorData.error) {
+                    errorMessage = errorData.error;
+                } else if (typeof errorData === 'string') {
+                    errorMessage = errorData;
+                } else {
+                    // Try to extract first error from field-specific errors
+                    const firstFieldError = Object.values(errorData).find(value =>
+                        Array.isArray(value) && value.length > 0
+                    );
+                    if (firstFieldError && Array.isArray(firstFieldError)) {
+                        errorMessage = firstFieldError[0];
+                    }
+                }
+
+                throw new ApiError(errorMessage, response.status, errorData);
             }
 
             const contentType = response.headers.get('content-type');

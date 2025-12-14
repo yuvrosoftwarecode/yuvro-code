@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
-import Navigation from "../../components/Navigation";
-import StudentVideos, { LayoutMode } from "./StudentVideos";
+import Navigation from "../../components/common/Navigation";
+import StudentVideos from "./StudentVideos";
 import StudentQuizEmbed from "./StudentQuizEmbed";
 import StudentCodingEmbed from "./StudentCodingEmbed";
 import StudentNotes from "./StudentNotes";

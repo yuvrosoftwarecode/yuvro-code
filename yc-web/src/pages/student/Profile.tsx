@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import Navigation from "@/components/Navigation";
+import Navigation from "@/components/common/Navigation";
 
 import profileService, {
   Profile as ProfileType,

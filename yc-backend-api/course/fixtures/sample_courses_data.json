@@ -16,9 +16,19 @@
               "order_index": 0,
               "videos": [
                 {
-                  "title": "Introduction to Arrays",
-                  "video_link": "https://youtube.com/watch?v=array_intro",
+                  "title": "Introduction to Arrays - Data Structures",
+                  "video_link": "https://www.youtube.com/watch?v=55l-aZ7_F24",
                   "ai_context": "Basic array concepts and memory allocation"
+                },
+                {
+                  "title": "Array Implementation and Operations",
+                  "video_link": "https://www.youtube.com/watch?v=QJNwK2uJyGs",
+                  "ai_context": "Detailed array operations and implementation"
+                },
+                {
+                  "title": "Arrays in Memory - How Arrays Work",
+                  "video_link": "https://www.youtube.com/watch?v=pmN9ExDf3yQ",
+                  "ai_context": "Understanding how arrays are stored in memory"
                 }
               ]
             },
@@ -29,8 +39,18 @@
               "videos": [
                 {
                   "title": "Array Operations Deep Dive",
-                  "video_link": "https://youtube.com/watch?v=array_ops",
+                  "video_link": "https://www.youtube.com/watch?v=Qmt0QwzEmh0",
                   "ai_context": "Comprehensive guide to array operations"
+                },
+                {
+                  "title": "Dynamic Arrays and Resizing",
+                  "video_link": "https://www.youtube.com/watch?v=PEnFFiQe1pM",
+                  "ai_context": "Understanding dynamic arrays and memory management"
+                },
+                {
+                  "title": "Array Searching Algorithms",
+                  "video_link": "https://www.youtube.com/watch?v=P3YID7liBug",
+                  "ai_context": "Linear and binary search in arrays"
                 }
               ]
             },
@@ -38,7 +58,23 @@
               "name": "String Manipulation",
               "content": "String operations, pattern matching, and algorithms",
               "order_index": 2,
-              "videos": []
+              "videos": [
+                {
+                  "title": "String Algorithms and Pattern Matching",
+                  "video_link": "https://www.youtube.com/watch?v=GTJr8OvyEVQ",
+                  "ai_context": "String manipulation techniques and algorithms"
+                },
+                {
+                  "title": "Advanced String Processing",
+                  "video_link": "https://www.youtube.com/watch?v=V5-7GzOfADQ",
+                  "ai_context": "Advanced string processing and optimization"
+                },
+                {
+                  "title": "KMP Algorithm - String Pattern Matching",
+                  "video_link": "https://www.youtube.com/watch?v=V5-7GzOfADQ",
+                  "ai_context": "Knuth-Morris-Pratt algorithm for efficient pattern matching"
+                }
+              ]
             }
           ]
         },
@@ -50,13 +86,45 @@
               "name": "Singly Linked Lists",
               "content": "Understanding singly linked lists and basic operations",
               "order_index": 0,
-              "videos": []
+              "videos": [
+                {
+                  "title": "Linked Lists Introduction",
+                  "video_link": "https://www.youtube.com/watch?v=njTh_OwMljA",
+                  "ai_context": "Introduction to linked list data structure"
+                },
+                {
+                  "title": "Singly Linked List Implementation",
+                  "video_link": "https://www.youtube.com/watch?v=WwfhLC16bis",
+                  "ai_context": "Complete implementation of singly linked lists"
+                },
+                {
+                  "title": "Linked List Operations - Insert, Delete, Search",
+                  "video_link": "https://www.youtube.com/watch?v=Ast5sKQXxEU",
+                  "ai_context": "Basic operations on linked lists"
+                }
+              ]
             },
             {
               "name": "Doubly and Circular Linked Lists",
               "content": "Advanced linked list variations and their applications",
               "order_index": 1,
-              "videos": []
+              "videos": [
+                {
+                  "title": "Doubly Linked Lists Explained",
+                  "video_link": "https://www.youtube.com/watch?v=8kptHdreaTA",
+                  "ai_context": "Understanding doubly linked lists structure and operations"
+                },
+                {
+                  "title": "Circular Linked Lists",
+                  "video_link": "https://www.youtube.com/watch?v=5s_BiT6G7nM",
+                  "ai_context": "Circular linked lists implementation and use cases"
+                },
+                {
+                  "title": "Advanced Linked List Problems",
+                  "video_link": "https://www.youtube.com/watch?v=gBTe7lFR3vc",
+                  "ai_context": "Complex problems and solutions using linked lists"
+                }
+              ]
             }
           ]
         },
@@ -68,53 +136,647 @@
               "name": "Binary Trees",
               "content": "Binary tree structure, traversals, and operations",
               "order_index": 0,
-              "videos": []
+              "videos": [
+                {
+                  "title": "Binary Trees Introduction",
+                  "video_link": "https://www.youtube.com/watch?v=H5JubkIy_p8",
+                  "ai_context": "Introduction to binary tree data structure"
+                },
+                {
+                  "title": "Binary Tree Traversals - Inorder, Preorder, Postorder",
+                  "video_link": "https://www.youtube.com/watch?v=9RHO6jU--GU",
+                  "ai_context": "Different ways to traverse binary trees"
+                },
+                {
+                  "title": "Binary Tree Implementation",
+                  "video_link": "https://www.youtube.com/watch?v=6oL-0TdVy28",
+                  "ai_context": "Complete implementation of binary trees"
+                }
+              ]
             },
             {
               "name": "Binary Search Trees",
               "content": "BST properties, insertion, deletion, and searching",
               "order_index": 1,
-              "videos": []
+              "videos": [
+                {
+                  "title": "Binary Search Trees Explained",
+                  "video_link": "https://www.youtube.com/watch?v=pYT9F8_LFTM",
+                  "ai_context": "Understanding BST properties and operations"
+                },
+                {
+                  "title": "BST Insert and Delete Operations",
+                  "video_link": "https://www.youtube.com/watch?v=wcIRPqTR3Kc",
+                  "ai_context": "Insertion and deletion in binary search trees"
+                },
+                {
+                  "title": "BST Validation and Common Problems",
+                  "video_link": "https://www.youtube.com/watch?v=s6ATEkipzow",
+                  "ai_context": "Validating BSTs and solving common problems"
+                }
+              ]
             },
             {
               "name": "Graph Algorithms",
               "content": "Graph representation, BFS, DFS, and shortest path algorithms",
               "order_index": 2,
-              "videos": []
+              "videos": [
+                {
+                  "title": "Graph Theory Introduction",
+                  "video_link": "https://www.youtube.com/watch?v=gXgEDyodOJU",
+                  "ai_context": "Introduction to graph theory and representations"
+                },
+                {
+                  "title": "BFS and DFS Graph Traversal",
+                  "video_link": "https://www.youtube.com/watch?v=oDqjPvD54Ss",
+                  "ai_context": "Breadth-first and depth-first search algorithms"
+                },
+                {
+                  "title": "Dijkstra's Shortest Path Algorithm",
+                  "video_link": "https://www.youtube.com/watch?v=pVfj6mxhdMw",
+                  "ai_context": "Finding shortest paths in weighted graphs"
+                }
+              ]
             }
           ]
         }
       ],
-      "questions": [
+      "questions": [  
+      {
+          "type": "mcq_single",
+          "title": "Array Time Complexity",
+          "content": "What is the time complexity of accessing an element in an array by index?",
+          "level": "subtopic",
+          "topic_name": "Arrays and Strings",
+          "subtopic_name": "Array Fundamentals",
+          "difficulty": "easy",
+          "marks": 2,
+          "categories": ["learn"],
+          "mcq_options": [
+            {"text": "O(1)", "is_correct": true},
+            {"text": "O(n)", "is_correct": false},
+            {"text": "O(log n)", "is_correct": false},
+            {"text": "O(n²)", "is_correct": false}
+          ]
+        },
         {
           "type": "mcq_single",
-          "title": "What is the time complexity of accessing an element in an array?",
-          "content": "Given an array of size n, what is the time complexity to access an element at a specific index?",
+          "title": "Array Memory Layout",
+          "content": "How are array elements stored in memory?",
+          "level": "subtopic",
+          "topic_name": "Arrays and Strings",
+          "subtopic_name": "Array Fundamentals",
+          "difficulty": "easy",
+          "marks": 2,
+          "categories": ["learn"],
+          "mcq_options": [
+            {"text": "Contiguous memory locations", "is_correct": true},
+            {"text": "Random memory locations", "is_correct": false},
+            {"text": "Linked memory locations", "is_correct": false},
+            {"text": "Stack memory only", "is_correct": false}
+          ]
+        },
+        {
+          "type": "mcq_multiple",
+          "title": "Array Properties",
+          "content": "Which of the following are true about arrays?",
+          "level": "subtopic",
+          "topic_name": "Arrays and Strings",
+          "subtopic_name": "Array Fundamentals",
+          "difficulty": "medium",
+          "marks": 3,
+          "categories": ["learn", "practice"],
+          "mcq_options": [
+            {"text": "Elements are stored in contiguous memory", "is_correct": true},
+            {"text": "Random access is possible", "is_correct": true},
+            {"text": "Size can be changed dynamically", "is_correct": false},
+            {"text": "All elements must be of the same data type", "is_correct": true}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "Find Maximum Element",
+          "content": "Write a function to find the maximum element in an array of integers.",
+          "level": "subtopic",
+          "topic_name": "Arrays and Strings",
+          "subtopic_name": "Array Fundamentals",
+          "difficulty": "easy",
+          "marks": 5,
+          "categories": ["learn", "practice"],
+          "test_cases_basic": [
+            {"input": "[1, 3, 7, 2, 5]", "output": "7"},
+            {"input": "[-1, -5, -2]", "output": "-1"}
+          ],
+          "test_cases_advanced": [
+            {"input": "[42]", "output": "42"},
+            {"input": "[100, 200, 50, 300, 150]", "output": "300"}
+          ]
+        },
+        {
+          "type": "mcq_single",
+          "title": "Array Insertion Complexity",
+          "content": "What is the worst-case time complexity for inserting an element at the beginning of an array?",
+          "level": "subtopic",
+          "topic_name": "Arrays and Strings",
+          "subtopic_name": "Array Operations",
+          "difficulty": "medium",
+          "marks": 3,
+          "categories": ["learn", "practice"],
+          "mcq_options": [
+            {"text": "O(n)", "is_correct": true},
+            {"text": "O(1)", "is_correct": false},
+            {"text": "O(log n)", "is_correct": false},
+            {"text": "O(n²)", "is_correct": false}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "Array Rotation",
+          "content": "Write a function to rotate an array to the right by k steps.",
+          "level": "subtopic",
+          "topic_name": "Arrays and Strings",
+          "subtopic_name": "Array Operations",
+          "difficulty": "medium",
+          "marks": 8,
+          "categories": ["practice", "contest"],
+          "test_cases_basic": [
+            {"input": "nums = [1,2,3,4,5,6,7], k = 3", "output": "[5,6,7,1,2,3,4]"},
+            {"input": "nums = [-1,-100,3,99], k = 2", "output": "[3,99,-1,-100]"}
+          ],
+          "test_cases_advanced": [
+            {"input": "nums = [1], k = 1", "output": "[1]"},
+            {"input": "nums = [1,2], k = 3", "output": "[2,1]"}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "Remove Duplicates from Sorted Array",
+          "content": "Remove duplicates from a sorted array in-place and return the new length.",
+          "level": "subtopic",
+          "topic_name": "Arrays and Strings",
+          "subtopic_name": "Array Operations",
+          "difficulty": "easy",
+          "marks": 6,
+          "categories": ["practice", "mock_interview"],
+          "test_cases_basic": [
+            {"input": "[1,1,2]", "output": "2, nums = [1,2,_]"},
+            {"input": "[0,0,1,1,1,2,2,3,3,4]", "output": "5, nums = [0,1,2,3,4,_,_,_,_,_]"}
+          ],
+          "test_cases_advanced": [
+            {"input": "[1]", "output": "1, nums = [1]"},
+            {"input": "[1,1,1,1]", "output": "1, nums = [1,_,_,_]"}
+          ]
+        },
+        {
+          "type": "mcq_single",
+          "title": "String Immutability",
+          "content": "In most programming languages, strings are:",
+          "level": "subtopic",
+          "topic_name": "Arrays and Strings",
+          "subtopic_name": "String Manipulation",
+          "difficulty": "easy",
+          "marks": 2,
+          "categories": ["learn"],
+          "mcq_options": [
+            {"text": "Immutable", "is_correct": true},
+            {"text": "Mutable", "is_correct": false},
+            {"text": "Both mutable and immutable", "is_correct": false},
+            {"text": "Neither mutable nor immutable", "is_correct": false}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "Reverse String",
+          "content": "Write a function to reverse a string in-place using a character array.",
+          "level": "subtopic",
+          "topic_name": "Arrays and Strings",
+          "subtopic_name": "String Manipulation",
+          "difficulty": "easy",
+          "marks": 4,
+          "categories": ["learn", "practice"],
+          "test_cases_basic": [
+            {"input": "['h','e','l','l','o']", "output": "['o','l','l','e','h']"},
+            {"input": "['H','a','n','n','a','h']", "output": "['h','a','n','n','a','H']"}
+          ],
+          "test_cases_advanced": [
+            {"input": "['a']", "output": "['a']"},
+            {"input": "['A',' ','m','a','n']", "output": "['n','a','m',' ','A']"}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "Valid Anagram",
+          "content": "Given two strings s and t, return true if t is an anagram of s, and false otherwise.",
+          "level": "subtopic",
+          "topic_name": "Arrays and Strings",
+          "subtopic_name": "String Manipulation",
+          "difficulty": "easy",
+          "marks": 5,
+          "categories": ["practice", "contest"],
+          "test_cases_basic": [
+            {"input": "s = 'anagram', t = 'nagaram'", "output": "true"},
+            {"input": "s = 'rat', t = 'car'", "output": "false"}
+          ],
+          "test_cases_advanced": [
+            {"input": "s = 'a', t = 'ab'", "output": "false"},
+            {"input": "s = 'listen', t = 'silent'", "output": "true"}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "Two Sum Problem",
+          "content": "Given an array of integers and a target sum, return indices of two numbers that add up to the target.",
+          "level": "topic",
+          "topic_name": "Arrays and Strings",
+          "difficulty": "medium",
+          "marks": 8,
+          "categories": ["practice", "contest", "mock_interview"],
+          "test_cases_basic": [
+            {"input": "nums = [2,7,11,15], target = 9", "output": "[0,1]"},
+            {"input": "nums = [3,2,4], target = 6", "output": "[1,2]"}
+          ],
+          "test_cases_advanced": [
+            {"input": "nums = [3,3], target = 6", "output": "[0,1]"},
+            {"input": "nums = [1,2,3,4,5], target = 8", "output": "[2,4]"}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "Container With Most Water",
+          "content": "Given n non-negative integers representing an elevation map, find two lines that together with the x-axis forms a container that holds the most water.",
+          "level": "topic",
+          "topic_name": "Arrays and Strings",
+          "difficulty": "hard",
+          "marks": 12,
+          "categories": ["contest", "mock_interview"],
+          "test_cases_basic": [
+            {"input": "[1,8,6,2,5,4,8,3,7]", "output": "49"},
+            {"input": "[1,1]", "output": "1"}
+          ],
+          "test_cases_advanced": [
+            {"input": "[4,3,2,1,4]", "output": "16"},
+            {"input": "[1,2,1]", "output": "2"}
+          ]
+        },
+        {
+          "type": "mcq_single",
+          "title": "Linked List Node Structure",
+          "content": "What does a typical singly linked list node contain?",
+          "level": "subtopic",
+          "topic_name": "Linked Lists",
+          "subtopic_name": "Singly Linked Lists",
+          "difficulty": "easy",
+          "marks": 2,
+          "categories": ["learn"],
+          "mcq_options": [
+            {"text": "Data and pointer to next node", "is_correct": true},
+            {"text": "Only data", "is_correct": false},
+            {"text": "Only pointer", "is_correct": false},
+            {"text": "Index and data", "is_correct": false}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "Insert at Beginning of Linked List",
+          "content": "Write a function to insert a new node at the beginning of a singly linked list.",
+          "level": "subtopic",
+          "topic_name": "Linked Lists",
+          "subtopic_name": "Singly Linked Lists",
+          "difficulty": "easy",
+          "marks": 5,
+          "categories": ["learn", "practice"],
+          "test_cases_basic": [
+            {"input": "list: 2->3->4, value: 1", "output": "1->2->3->4"},
+            {"input": "list: null, value: 5", "output": "5"}
+          ],
+          "test_cases_advanced": [
+            {"input": "list: 10, value: 20", "output": "20->10"},
+            {"input": "list: 1->2->3->4->5, value: 0", "output": "0->1->2->3->4->5"}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "Delete Node from Linked List",
+          "content": "Write a function to delete the first occurrence of a given value from a singly linked list.",
+          "level": "subtopic",
+          "topic_name": "Linked Lists",
+          "subtopic_name": "Singly Linked Lists",
+          "difficulty": "medium",
+          "marks": 7,
+          "categories": ["practice", "mock_interview"],
+          "test_cases_basic": [
+            {"input": "list: 1->2->3->4, value: 3", "output": "1->2->4"},
+            {"input": "list: 1->2->2->3, value: 2", "output": "1->2->3"}
+          ],
+          "test_cases_advanced": [
+            {"input": "list: 1, value: 1", "output": "null"},
+            {"input": "list: 1->2->3, value: 4", "output": "1->2->3"}
+          ]
+        },
+        {
+          "type": "mcq_single",
+          "title": "Doubly Linked List Advantage",
+          "content": "What is the main advantage of doubly linked lists over singly linked lists?",
+          "level": "subtopic",
+          "topic_name": "Linked Lists",
+          "subtopic_name": "Doubly and Circular Linked Lists",
+          "difficulty": "easy",
+          "marks": 2,
+          "categories": ["learn"],
+          "mcq_options": [
+            {"text": "Bidirectional traversal", "is_correct": true},
+            {"text": "Less memory usage", "is_correct": false},
+            {"text": "Faster insertion", "is_correct": false},
+            {"text": "Better cache performance", "is_correct": false}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "Implement Doubly Linked List",
+          "content": "Implement a doubly linked list with insert, delete, and search operations.",
+          "level": "subtopic",
+          "topic_name": "Linked Lists",
+          "subtopic_name": "Doubly and Circular Linked Lists",
+          "difficulty": "medium",
+          "marks": 10,
+          "categories": ["practice", "contest"],
+          "test_cases_basic": [
+            {"input": "insert(1), insert(2), insert(3)", "output": "1<->2<->3"},
+            {"input": "insert(1), delete(1)", "output": "null"}
+          ],
+          "test_cases_advanced": [
+            {"input": "insert(1), insert(2), insert(3), delete(2)", "output": "1<->3"},
+            {"input": "multiple operations", "output": "correct final state"}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "Reverse Linked List",
+          "content": "Write a function to reverse a singly linked list iteratively and recursively.",
+          "level": "topic",
+          "topic_name": "Linked Lists",
+          "difficulty": "medium",
+          "marks": 8,
+          "categories": ["practice", "contest", "mock_interview"],
+          "test_cases_basic": [
+            {"input": "1->2->3->4->5", "output": "5->4->3->2->1"},
+            {"input": "1->2", "output": "2->1"}
+          ],
+          "test_cases_advanced": [
+            {"input": "null", "output": "null"},
+            {"input": "1", "output": "1"}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "Detect Cycle in Linked List",
+          "content": "Write a function to detect if a linked list has a cycle using Floyd's cycle detection algorithm.",
+          "level": "topic",
+          "topic_name": "Linked Lists",
+          "difficulty": "medium",
+          "marks": 10,
+          "categories": ["practice", "contest", "mock_interview"],
+          "test_cases_basic": [
+            {"input": "1->2->3->4->2 (cycle)", "output": "true"},
+            {"input": "1->2->3->4->null", "output": "false"}
+          ],
+          "test_cases_advanced": [
+            {"input": "1->1 (self cycle)", "output": "true"},
+            {"input": "null", "output": "false"}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "Merge Two Sorted Lists",
+          "content": "Merge two sorted linked lists and return it as a new sorted list.",
+          "level": "topic",
+          "topic_name": "Linked Lists",
+          "difficulty": "medium",
+          "marks": 10,
+          "categories": ["practice", "contest", "mock_interview"],
+          "test_cases_basic": [
+            {"input": "l1 = [1,2,4], l2 = [1,3,4]", "output": "[1,1,2,3,4,4]"},
+            {"input": "l1 = [], l2 = [0]", "output": "[0]"}
+          ],
+          "test_cases_advanced": [
+            {"input": "l1 = [], l2 = []", "output": "[]"},
+            {"input": "l1 = [1,5,9], l2 = [2,4,6,8,10]", "output": "[1,2,4,5,6,8,9,10]"}
+          ]
+        },
+        {
+          "type": "mcq_single",
+          "title": "Binary Tree Properties",
+          "content": "What is the maximum number of nodes at level k in a binary tree (root is at level 0)?",
+          "level": "subtopic",
+          "topic_name": "Trees and Graphs",
+          "subtopic_name": "Binary Trees",
+          "difficulty": "medium",
+          "marks": 3,
+          "categories": ["learn", "practice"],
+          "mcq_options": [
+            {"text": "2^k", "is_correct": true},
+            {"text": "2^(k-1)", "is_correct": false},
+            {"text": "k^2", "is_correct": false},
+            {"text": "2*k", "is_correct": false}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "Binary Tree Inorder Traversal",
+          "content": "Implement inorder traversal of a binary tree both recursively and iteratively.",
+          "level": "subtopic",
+          "topic_name": "Trees and Graphs",
+          "subtopic_name": "Binary Trees",
+          "difficulty": "medium",
+          "marks": 8,
+          "categories": ["learn", "practice", "mock_interview"],
+          "test_cases_basic": [
+            {"input": "[1,null,2,3]", "output": "[1,3,2]"},
+            {"input": "[]", "output": "[]"}
+          ],
+          "test_cases_advanced": [
+            {"input": "[1,2,3,4,5,6,7]", "output": "[4,2,5,1,6,3,7]"},
+            {"input": "[1]", "output": "[1]"}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "Binary Tree Level Order Traversal",
+          "content": "Given a binary tree, return the level order traversal of its nodes' values.",
+          "level": "subtopic",
+          "topic_name": "Trees and Graphs",
+          "subtopic_name": "Binary Trees",
+          "difficulty": "medium",
+          "marks": 8,
+          "categories": ["practice", "contest", "mock_interview"],
+          "test_cases_basic": [
+            {"input": "[3,9,20,null,null,15,7]", "output": "[[3],[9,20],[15,7]]"},
+            {"input": "[1]", "output": "[[1]]"}
+          ],
+          "test_cases_advanced": [
+            {"input": "[]", "output": "[]"},
+            {"input": "[1,2,3,4,5,6,7]", "output": "[[1],[2,3],[4,5,6,7]]"}
+          ]
+        },
+        {
+          "type": "mcq_single",
+          "title": "BST Search Complexity",
+          "content": "What is the average time complexity for searching in a balanced BST?",
+          "level": "subtopic",
+          "topic_name": "Trees and Graphs",
+          "subtopic_name": "Binary Search Trees",
+          "difficulty": "medium",
+          "marks": 3,
+          "categories": ["learn", "practice"],
+          "mcq_options": [
+            {"text": "O(log n)", "is_correct": true},
+            {"text": "O(n)", "is_correct": false},
+            {"text": "O(1)", "is_correct": false},
+            {"text": "O(n log n)", "is_correct": false}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "Validate Binary Search Tree",
+          "content": "Write a function to validate if a binary tree is a valid binary search tree.",
+          "level": "subtopic",
+          "topic_name": "Trees and Graphs",
+          "subtopic_name": "Binary Search Trees",
+          "difficulty": "medium",
+          "marks": 10,
+          "categories": ["practice", "contest", "mock_interview"],
+          "test_cases_basic": [
+            {"input": "[2,1,3]", "output": "true"},
+            {"input": "[5,1,4,null,null,3,6]", "output": "false"}
+          ],
+          "test_cases_advanced": [
+            {"input": "[10,5,15,null,null,6,20]", "output": "false"},
+            {"input": "[]", "output": "true"}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "Insert into BST",
+          "content": "Insert a given value into a Binary Search Tree and return the root of the modified tree.",
+          "level": "subtopic",
+          "topic_name": "Trees and Graphs",
+          "subtopic_name": "Binary Search Trees",
+          "difficulty": "medium",
+          "marks": 8,
+          "categories": ["practice", "contest"],
+          "test_cases_basic": [
+            {"input": "root = [4,2,7,1,3], val = 5", "output": "[4,2,7,1,3,5]"},
+            {"input": "root = [40,20,60,10,30,50,70], val = 25", "output": "[40,20,60,10,30,50,70,null,null,25]"}
+          ],
+          "test_cases_advanced": [
+            {"input": "root = [], val = 5", "output": "[5]"},
+            {"input": "root = [5], val = 3", "output": "[5,3]"}
+          ]
+        },
+        {
+          "type": "mcq_multiple",
+          "title": "Graph Representation",
+          "content": "Which are common ways to represent a graph in memory?",
+          "level": "subtopic",
+          "topic_name": "Trees and Graphs",
+          "subtopic_name": "Graph Algorithms",
+          "difficulty": "easy",
+          "marks": 3,
+          "categories": ["learn", "practice"],
+          "mcq_options": [
+            {"text": "Adjacency Matrix", "is_correct": true},
+            {"text": "Adjacency List", "is_correct": true},
+            {"text": "Edge List", "is_correct": true},
+            {"text": "Binary Tree", "is_correct": false}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "Graph BFS Implementation",
+          "content": "Implement breadth-first search (BFS) traversal for a graph represented as an adjacency list.",
+          "level": "subtopic",
+          "topic_name": "Trees and Graphs",
+          "subtopic_name": "Graph Algorithms",
+          "difficulty": "medium",
+          "marks": 10,
+          "categories": ["practice", "contest", "mock_interview"],
+          "test_cases_basic": [
+            {"input": "graph = {0: [1, 2], 1: [2], 2: [0, 3], 3: [3]}, start = 2", "output": "[2, 0, 3, 1]"},
+            {"input": "graph = {0: [1], 1: [0]}, start = 0", "output": "[0, 1]"}
+          ],
+          "test_cases_advanced": [
+            {"input": "graph = {0: []}, start = 0", "output": "[0]"},
+            {"input": "graph = {0: [1,2,3], 1: [0], 2: [0], 3: [0]}, start = 0", "output": "[0, 1, 2, 3]"}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "Graph DFS Implementation",
+          "content": "Implement depth-first search (DFS) traversal for a graph using both recursive and iterative approaches.",
+          "level": "subtopic",
+          "topic_name": "Trees and Graphs",
+          "subtopic_name": "Graph Algorithms",
+          "difficulty": "medium",
+          "marks": 10,
+          "categories": ["practice", "contest", "mock_interview"],
+          "test_cases_basic": [
+            {"input": "graph = {0: [1, 2], 1: [2], 2: [0, 3], 3: [3]}, start = 2", "output": "[2, 0, 1, 3] or [2, 3, 0, 1]"},
+            {"input": "graph = {0: [1], 1: [0]}, start = 0", "output": "[0, 1]"}
+          ],
+          "test_cases_advanced": [
+            {"input": "graph = {0: []}, start = 0", "output": "[0]"},
+            {"input": "disconnected graph", "output": "visits only connected component"}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "Number of Islands",
+          "content": "Given a 2D binary grid which represents a map of '1's (land) and '0's (water), return the number of islands.",
+          "level": "topic",
+          "topic_name": "Trees and Graphs",
+          "difficulty": "hard",
+          "marks": 12,
+          "categories": ["contest", "mock_interview"],
+          "test_cases_basic": [
+            {"input": "[['1','1','1','1','0'],['1','1','0','1','0'],['1','1','0','0','0'],['0','0','0','0','0']]", "output": "1"},
+            {"input": "[['1','1','0','0','0'],['1','1','0','0','0'],['0','0','1','0','0'],['0','0','0','1','1']]", "output": "3"}
+          ],
+          "test_cases_advanced": [
+            {"input": "[['1']]", "output": "1"},
+            {"input": "[['0']]", "output": "0"}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "Course Schedule",
+          "content": "There are a total of numCourses courses you have to take, labeled from 0 to numCourses - 1. You are given an array prerequisites where prerequisites[i] = [ai, bi] indicates that you must take course bi first if you want to take course ai. Return true if you can finish all courses.",
+          "level": "topic",
+          "topic_name": "Trees and Graphs",
+          "difficulty": "hard",
+          "marks": 15,
+          "categories": ["contest", "mock_interview"],
+          "test_cases_basic": [
+            {"input": "numCourses = 2, prerequisites = [[1,0]]", "output": "true"},
+            {"input": "numCourses = 2, prerequisites = [[1,0],[0,1]]", "output": "false"}
+          ],
+          "test_cases_advanced": [
+            {"input": "numCourses = 4, prerequisites = [[1,0],[2,0],[3,1],[3,2]]", "output": "true"},
+            {"input": "numCourses = 1, prerequisites = []", "output": "true"}
+          ]
+        },
+        {
+          "type": "mcq_single",
+          "title": "Algorithm Complexity",
+          "content": "What does Big O notation describe?",
           "level": "course",
           "difficulty": "easy",
           "marks": 2,
-          "categories": [
-            "learn",
-            "practice",
-            "skill_test"
-          ],
+          "categories": ["learn", "practice"],
           "mcq_options": [
-            {
-              "text": "O(1)",
-              "is_correct": true
-            },
-            {
-              "text": "O(n)",
-              "is_correct": false
-            },
-            {
-              "text": "O(log n)",
-              "is_correct": false
-            },
-            {
-              "text": "O(n²)",
-              "is_correct": false
-            }
+            {"text": "Upper bound of algorithm's time complexity", "is_correct": true},
+            {"text": "Exact running time of algorithm", "is_correct": false},
+            {"text": "Lower bound of algorithm's time complexity", "is_correct": false},
+            {"text": "Average case complexity", "is_correct": false}
           ]
         },
         {
@@ -124,185 +786,20 @@
           "level": "course",
           "difficulty": "medium",
           "marks": 10,
-          "categories": [
-            "practice",
-            "skill_test",
-            "contest"
-          ],
+          "categories": ["practice", "contest", "mock_interview"],
           "test_cases_basic": [
-            {
-              "input": "arr = [1,2,3,4,5], target = 3",
-              "output": "2"
-            },
-            {
-              "input": "arr = [1,3,5,7,9], target = 7",
-              "output": "3"
-            }
+            {"input": "arr = [1,2,3,4,5], target = 3", "output": "2"},
+            {"input": "arr = [1,3,5,7,9], target = 7", "output": "3"}
           ],
           "test_cases_advanced": [
-            {
-              "input": "arr = [], target = 1",
-              "output": "-1"
-            },
-            {
-              "input": "arr = [1], target = 1",
-              "output": "0"
-            },
-            {
-              "input": "arr = [1,2,3,4,5,6,7,8,9,10], target = 11",
-              "output": "-1"
-            }
-          ]
-        },
-        {
-          "type": "mcq_multiple",
-          "title": "Array Properties",
-          "content": "Which of the following are true about arrays?",
-          "level": "topic",
-          "topic_name": "Arrays and Strings",
-          "difficulty": "easy",
-          "marks": 3,
-          "categories": [
-            "learn",
-            "practice"
-          ],
-          "mcq_options": [
-            {
-              "text": "Elements are stored in contiguous memory locations",
-              "is_correct": true
-            },
-            {
-              "text": "Random access is possible",
-              "is_correct": true
-            },
-            {
-              "text": "Size can be changed dynamically",
-              "is_correct": false
-            },
-            {
-              "text": "All elements must be of the same data type",
-              "is_correct": true
-            }
-          ]
-        },
-        {
-          "type": "descriptive",
-          "title": "Explain Array vs Linked List",
-          "content": "Compare and contrast arrays and linked lists. Discuss their advantages, disadvantages, and use cases.",
-          "level": "topic",
-          "topic_name": "Arrays and Strings",
-          "difficulty": "medium",
-          "marks": 5,
-          "categories": [
-            "learn",
-            "skill_test"
-          ]
-        },
-        {
-          "type": "coding",
-          "title": "Reverse a Linked List",
-          "content": "Write a function to reverse a singly linked list and return the new head.",
-          "level": "topic",
-          "topic_name": "Linked Lists",
-          "difficulty": "medium",
-          "marks": 8,
-          "categories": [
-            "practice",
-            "skill_test",
-            "contest"
-          ],
-          "test_cases_basic": [
-            {
-              "input": "1->2->3->4->5",
-              "output": "5->4->3->2->1"
-            },
-            {
-              "input": "1->2",
-              "output": "2->1"
-            }
-          ],
-          "test_cases_advanced": [
-            {
-              "input": "null",
-              "output": "null"
-            },
-            {
-              "input": "1",
-              "output": "1"
-            },
-            {
-              "input": "1->2->3->4->5->6->7->8->9->10",
-              "output": "10->9->8->7->6->5->4->3->2->1"
-            }
-          ]
-        },
-        {
-          "type": "mcq_single",
-          "title": "Binary Tree Traversal",
-          "content": "In which traversal method do we visit the root node first?",
-          "level": "topic",
-          "topic_name": "Trees and Graphs",
-          "difficulty": "easy",
-          "marks": 2,
-          "categories": [
-            "learn",
-            "practice"
-          ],
-          "mcq_options": [
-            {
-              "text": "Inorder",
-              "is_correct": false
-            },
-            {
-              "text": "Preorder",
-              "is_correct": true
-            },
-            {
-              "text": "Postorder",
-              "is_correct": false
-            },
-            {
-              "text": "Level order",
-              "is_correct": false
-            }
-          ]
-        },
-        {
-          "type": "coding",
-          "title": "Binary Tree Level Order Traversal",
-          "content": "Given a binary tree, return the level order traversal of its nodes values (i.e., from left to right, level by level).",
-          "level": "topic",
-          "topic_name": "Trees and Graphs",
-          "difficulty": "hard",
-          "marks": 12,
-          "categories": [
-            "skill_test",
-            "contest"
-          ],
-          "test_cases_basic": [
-            {
-              "input": "[3,9,20,null,null,15,7]",
-              "output": "[[3],[9,20],[15,7]]"
-            },
-            {
-              "input": "[1]",
-              "output": "[[1]]"
-            }
-          ],
-          "test_cases_advanced": [
-            {
-              "input": "[]",
-              "output": "[]"
-            },
-            {
-              "input": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]",
-              "output": "[[1],[2,3],[4,5,6,7],[8,9,10,11,12,13,14,15]]"
-            }
+            {"input": "arr = [], target = 1", "output": "-1"},
+            {"input": "arr = [1], target = 1", "output": "0"},
+            {"input": "arr = [1,2,3,4,5,6,7,8,9,10], target = 11", "output": "-1"}
           ]
         }
       ]
-    },
-    {
+    },   
+ {
       "short_code": "PY101",
       "name": "Python Programming Fundamentals",
       "category": "programming_languages",
@@ -318,9 +815,19 @@
               "order_index": 0,
               "videos": [
                 {
-                  "title": "Python Syntax Fundamentals",
-                  "video_link": "https://youtube.com/watch?v=python_syntax",
-                  "ai_context": "Introduction to Python programming language"
+                  "title": "Python Tutorial for Beginners - Learn Python in 5 Hours",
+                  "video_link": "https://www.youtube.com/watch?v=t8pPdKYpowI",
+                  "ai_context": "Comprehensive Python introduction covering syntax and basics"
+                },
+                {
+                  "title": "Python Variables and Data Types",
+                  "video_link": "https://www.youtube.com/watch?v=OH86oLzVzzw",
+                  "ai_context": "Understanding Python variables and basic data types"
+                },
+                {
+                  "title": "Python Indentation and Syntax Rules",
+                  "video_link": "https://www.youtube.com/watch?v=kqtD5dpn9C8",
+                  "ai_context": "Python syntax fundamentals and indentation rules"
                 }
               ]
             },
@@ -328,49 +835,145 @@
               "name": "Control Structures",
               "content": "If statements, loops, and conditional logic",
               "order_index": 1,
-              "videos": []
+              "videos": [
+                {
+                  "title": "Python Control Structures - If, Elif, Else",
+                  "video_link": "https://www.youtube.com/watch?v=DZwmZ8Usvnk",
+                  "ai_context": "Conditional statements and decision making in Python"
+                },
+                {
+                  "title": "Python Loops - For and While Loops",
+                  "video_link": "https://www.youtube.com/watch?v=6iF8Xb7Z3wQ",
+                  "ai_context": "Understanding loops and iteration in Python"
+                },
+                {
+                  "title": "Python Break, Continue, and Pass Statements",
+                  "video_link": "https://www.youtube.com/watch?v=G8brQdClo9s",
+                  "ai_context": "Loop control statements in Python"
+                }
+              ]
+            },
+            {
+              "name": "Functions and Modules",
+              "content": "Defining functions, parameters, return values, and importing modules",
+              "order_index": 2,
+              "videos": [
+                {
+                  "title": "Python Functions Tutorial",
+                  "video_link": "https://www.youtube.com/watch?v=9Os0o3wzS_I",
+                  "ai_context": "Complete guide to Python functions"
+                },
+                {
+                  "title": "Python Modules and Packages",
+                  "video_link": "https://www.youtube.com/watch?v=CqvZ3vGoGs0",
+                  "ai_context": "Understanding modules and packages in Python"
+                },
+                {
+                  "title": "Python Lambda Functions",
+                  "video_link": "https://www.youtube.com/watch?v=25ovCm9jKfE",
+                  "ai_context": "Anonymous functions and lambda expressions"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Data Structures in Python",
+          "order_index": 1,
+          "subtopics": [
+            {
+              "name": "Lists and Tuples",
+              "content": "Working with Python lists and tuples, methods and operations",
+              "order_index": 0,
+              "videos": [
+                {
+                  "title": "Python Lists Tutorial",
+                  "video_link": "https://www.youtube.com/watch?v=AhSvKGTh28Q",
+                  "ai_context": "Complete guide to Python lists and list methods"
+                },
+                {
+                  "title": "Python Tuples Explained",
+                  "video_link": "https://www.youtube.com/watch?v=NI26dqhs2Rk",
+                  "ai_context": "Understanding tuples and their use cases"
+                },
+                {
+                  "title": "List Comprehensions in Python",
+                  "video_link": "https://www.youtube.com/watch?v=3dt4OGnU5sM",
+                  "ai_context": "Advanced list creation techniques"
+                }
+              ]
+            },
+            {
+              "name": "Dictionaries and Sets",
+              "content": "Dictionary operations, key-value pairs, and set operations",
+              "order_index": 1,
+              "videos": [
+                {
+                  "title": "Python Dictionaries Tutorial",
+                  "video_link": "https://www.youtube.com/watch?v=daefaLgNkw0",
+                  "ai_context": "Complete guide to Python dictionaries"
+                },
+                {
+                  "title": "Python Sets Tutorial",
+                  "video_link": "https://www.youtube.com/watch?v=sBvaPopWOmQ",
+                  "ai_context": "Understanding sets and set operations"
+                },
+                {
+                  "title": "Dictionary Comprehensions and Advanced Techniques",
+                  "video_link": "https://www.youtube.com/watch?v=3dt4OGnU5sM",
+                  "ai_context": "Advanced dictionary manipulation techniques"
+                }
+              ]
             }
           ]
         },
         {
           "name": "Object-Oriented Programming",
-          "order_index": 1,
+          "order_index": 2,
           "subtopics": [
             {
               "name": "Classes and Objects",
-              "content": "Creating classes, objects, and understanding OOP principles",
+              "content": "Creating classes, objects, attributes, and methods",
               "order_index": 0,
               "videos": [
                 {
-                  "title": "Python Classes and Objects",
-                  "video_link": "https://youtube.com/watch?v=python_oop",
-                  "ai_context": "Object-oriented programming in Python"
+                  "title": "Python OOP Tutorial - Classes and Objects",
+                  "video_link": "https://www.youtube.com/watch?v=ZDa-Z5JzLYM",
+                  "ai_context": "Introduction to object-oriented programming in Python"
+                },
+                {
+                  "title": "Python Class Methods and Static Methods",
+                  "video_link": "https://www.youtube.com/watch?v=rq8cL2XMM5M",
+                  "ai_context": "Different types of methods in Python classes"
+                },
+                {
+                  "title": "Python __init__ and Self Explained",
+                  "video_link": "https://www.youtube.com/watch?v=BJ-VvGyQxho",
+                  "ai_context": "Understanding constructors and self parameter"
                 }
               ]
             },
             {
               "name": "Inheritance and Polymorphism",
-              "content": "Advanced OOP concepts in Python",
+              "content": "Class inheritance, method overriding, and polymorphism concepts",
               "order_index": 1,
-              "videos": []
-            }
-          ]
-        },
-        {
-          "name": "Python Libraries",
-          "order_index": 2,
-          "subtopics": [
-            {
-              "name": "Standard Library",
-              "content": "Common Python standard library modules",
-              "order_index": 0,
-              "videos": []
-            },
-            {
-              "name": "External Libraries",
-              "content": "Popular third-party Python libraries",
-              "order_index": 1,
-              "videos": []
+              "videos": [
+                {
+                  "title": "Python Inheritance Tutorial",
+                  "video_link": "https://www.youtube.com/watch?v=RSl87lqOXDE",
+                  "ai_context": "Understanding inheritance in Python"
+                },
+                {
+                  "title": "Python Polymorphism Explained",
+                  "video_link": "https://www.youtube.com/watch?v=mAKNgOnaDm4",
+                  "ai_context": "Polymorphism concepts and implementation"
+                },
+                {
+                  "title": "Python Multiple Inheritance and MRO",
+                  "video_link": "https://www.youtube.com/watch?v=EiOglTERPEo",
+                  "ai_context": "Advanced inheritance concepts and method resolution order"
+                }
+              ]
             }
           ]
         }
@@ -378,750 +981,1076 @@
       "questions": [
         {
           "type": "mcq_single",
-          "title": "Python Data Types",
-          "content": "Which of the following is a mutable data type in Python?",
-          "level": "course",
+          "title": "Python Indentation",
+          "content": "What is used to define code blocks in Python?",
+          "level": "subtopic",
+          "topic_name": "Python Basics",
+          "subtopic_name": "Python Syntax and Variables",
           "difficulty": "easy",
           "marks": 2,
-          "categories": [
-            "learn",
-            "practice"
-          ],
+          "categories": ["learn"],
           "mcq_options": [
-            {
-              "text": "tuple",
-              "is_correct": false
-            },
-            {
-              "text": "string",
-              "is_correct": false
-            },
-            {
-              "text": "list",
-              "is_correct": true
-            },
-            {
-              "text": "int",
-              "is_correct": false
-            }
-          ]
-        },
-        {
-          "type": "coding",
-          "title": "Python List Comprehension",
-          "content": "Write a Python function that takes a list of numbers and returns a new list containing only the even numbers squared.",
-          "level": "course",
-          "difficulty": "medium",
-          "marks": 6,
-          "categories": [
-            "practice",
-            "skill_test"
-          ],
-          "test_cases_basic": [
-            {
-              "input": "[1,2,3,4,5,6]",
-              "output": "[4,16,36]"
-            },
-            {
-              "input": "[1,3,5]",
-              "output": "[]"
-            }
-          ],
-          "test_cases_advanced": [
-            {
-              "input": "[]",
-              "output": "[]"
-            },
-            {
-              "input": "[2,4,6,8,10]",
-              "output": "[4,16,36,64,100]"
-            }
-          ]
-        },
-        {
-          "type": "descriptive",
-          "title": "Python vs Java Comparison",
-          "content": "Compare Python and Java programming languages in terms of syntax, performance, use cases, and ecosystem.",
-          "level": "course",
-          "difficulty": "medium",
-          "marks": 8,
-          "categories": [
-            "learn",
-            "skill_test"
-          ]
-        }
-      ]
-    },
-    {
-      "short_code": "JAVA101",
-      "name": "Java Programming Complete Guide",
-      "category": "programming_languages",
-      "instructor_email": "instructor_java@yuvro.com",
-      "topics": [
-        {
-          "name": "Java Fundamentals",
-          "order_index": 0,
-          "subtopics": [
-            {
-              "name": "Java Syntax and Data Types",
-              "content": "Java syntax, primitive types, and basic operations",
-              "order_index": 0,
-              "videos": []
-            },
-            {
-              "name": "Control Flow",
-              "content": "Conditional statements and loops in Java",
-              "order_index": 1,
-              "videos": []
-            }
-          ]
-        },
-        {
-          "name": "Object-Oriented Programming in Java",
-          "order_index": 1,
-          "subtopics": [
-            {
-              "name": "Classes, Objects, and Methods",
-              "content": "Creating and using classes in Java",
-              "order_index": 0,
-              "videos": []
-            },
-            {
-              "name": "Inheritance and Interfaces",
-              "content": "Advanced OOP concepts and design patterns",
-              "order_index": 1,
-              "videos": []
-            }
-          ]
-        },
-        {
-          "name": "Advanced Java Concepts",
-          "order_index": 2,
-          "subtopics": [
-            {
-              "name": "Collections Framework",
-              "content": "Java Collections API and data structures",
-              "order_index": 0,
-              "videos": []
-            },
-            {
-              "name": "Multithreading",
-              "content": "Concurrent programming in Java",
-              "order_index": 1,
-              "videos": []
-            }
-          ]
-        }
-      ],
-      "questions": [
-        {
-          "type": "mcq_single",
-          "title": "Java Access Modifiers",
-          "content": "Which access modifier allows access from anywhere in the program?",
-          "level": "course",
-          "difficulty": "easy",
-          "marks": 2,
-          "categories": [
-            "learn",
-            "practice"
-          ],
-          "mcq_options": [
-            {
-              "text": "private",
-              "is_correct": false
-            },
-            {
-              "text": "protected",
-              "is_correct": false
-            },
-            {
-              "text": "public",
-              "is_correct": true
-            },
-            {
-              "text": "default",
-              "is_correct": false
-            }
-          ]
-        },
-        {
-          "type": "coding",
-          "title": "Java Inheritance Example",
-          "content": "Create a Java class hierarchy with a base class Animal and derived classes Dog and Cat. Implement method overriding for makeSound() method.",
-          "level": "course",
-          "difficulty": "medium",
-          "marks": 10,
-          "categories": [
-            "practice",
-            "skill_test",
-            "contest"
-          ],
-          "test_cases_basic": [
-            {
-              "input": "Dog d = new Dog(); d.makeSound();",
-              "output": "Woof!"
-            },
-            {
-              "input": "Cat c = new Cat(); c.makeSound();",
-              "output": "Meow!"
-            }
-          ],
-          "test_cases_advanced": [
-            {
-              "input": "Animal[] animals = {new Dog(), new Cat()}; for(Animal a : animals) a.makeSound();",
-              "output": "Woof!\\nMeow!"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "short_code": "SQL101",
-      "name": "MySQL Database Management",
-      "category": "databases",
-      "instructor_email": "instructor_mysql@yuvro.com",
-      "topics": [
-        {
-          "name": "SQL Fundamentals",
-          "order_index": 0,
-          "subtopics": [
-            {
-              "name": "SQL Syntax and Basic Queries",
-              "content": "SELECT, INSERT, UPDATE, DELETE operations",
-              "order_index": 0,
-              "videos": [
-                {
-                  "title": "SQL Basics Tutorial",
-                  "video_link": "https://youtube.com/watch?v=sql_basics",
-                  "ai_context": "Introduction to SQL and relational databases"
-                }
-              ]
-            },
-            {
-              "name": "Joins and Relationships",
-              "content": "INNER, LEFT, RIGHT, FULL OUTER joins",
-              "order_index": 1,
-              "videos": []
-            }
-          ]
-        },
-        {
-          "name": "Database Design",
-          "order_index": 1,
-          "subtopics": [
-            {
-              "name": "Normalization",
-              "content": "Database normalization forms and principles",
-              "order_index": 0,
-              "videos": []
-            },
-            {
-              "name": "Indexing and Performance",
-              "content": "Database indexing strategies and query optimization",
-              "order_index": 1,
-              "videos": []
-            }
-          ]
-        },
-        {
-          "name": "Advanced SQL",
-          "order_index": 2,
-          "subtopics": [
-            {
-              "name": "Stored Procedures and Functions",
-              "content": "Creating and using stored procedures in MySQL",
-              "order_index": 0,
-              "videos": []
-            },
-            {
-              "name": "Triggers and Events",
-              "content": "Database triggers and scheduled events",
-              "order_index": 1,
-              "videos": []
-            }
-          ]
-        }
-      ],
-      "questions": [
-        {
-          "type": "mcq_single",
-          "title": "SQL JOIN Types",
-          "content": "Which JOIN returns all records from both tables, filling with NULL where there is no match?",
-          "level": "course",
-          "difficulty": "medium",
-          "marks": 3,
-          "categories": [
-            "learn",
-            "practice",
-            "skill_test"
-          ],
-          "mcq_options": [
-            {
-              "text": "INNER JOIN",
-              "is_correct": false
-            },
-            {
-              "text": "LEFT JOIN",
-              "is_correct": false
-            },
-            {
-              "text": "RIGHT JOIN",
-              "is_correct": false
-            },
-            {
-              "text": "FULL OUTER JOIN",
-              "is_correct": true
-            }
-          ]
-        },
-        {
-          "type": "coding",
-          "title": "SQL Query Optimization",
-          "content": "Write an optimized SQL query to find the top 5 customers by total order value from tables: customers(id, name), orders(id, customer_id, total_amount).",
-          "level": "course",
-          "difficulty": "hard",
-          "marks": 12,
-          "categories": [
-            "skill_test",
-            "contest"
-          ],
-          "test_cases_basic": [
-            {
-              "input": "Sample data with 10 customers and various orders",
-              "output": "Top 5 customers with highest total order values"
-            }
-          ],
-          "test_cases_advanced": [
-            {
-              "input": "Large dataset with 1000+ customers",
-              "output": "Optimized query execution under 100ms"
-            }
-          ]
-        },
-        {
-          "type": "descriptive",
-          "title": "Database Normalization",
-          "content": "Explain the first three normal forms (1NF, 2NF, 3NF) with examples. Why is normalization important in database design?",
-          "level": "course",
-          "difficulty": "medium",
-          "marks": 8,
-          "categories": [
-            "learn",
-            "skill_test"
-          ]
-        }
-      ]
-    },
-    {
-      "short_code": "MONGO101",
-      "name": "MongoDB NoSQL Database",
-      "category": "databases",
-      "instructor_email": "instructor_mongodb@yuvro.com",
-      "topics": [
-        {
-          "name": "MongoDB Fundamentals",
-          "order_index": 0,
-          "subtopics": [
-            {
-              "name": "Introduction to NoSQL",
-              "content": "NoSQL concepts and MongoDB architecture",
-              "order_index": 0,
-              "videos": [
-                {
-                  "title": "MongoDB Introduction",
-                  "video_link": "https://youtube.com/watch?v=mongo_intro",
-                  "ai_context": "Getting started with MongoDB NoSQL database"
-                }
-              ]
-            },
-            {
-              "name": "CRUD Operations",
-              "content": "Create, Read, Update, Delete operations in MongoDB",
-              "order_index": 1,
-              "videos": []
-            }
-          ]
-        },
-        {
-          "name": "Advanced MongoDB",
-          "order_index": 1,
-          "subtopics": [
-            {
-              "name": "Aggregation Pipeline",
-              "content": "Complex data processing with aggregation framework",
-              "order_index": 0,
-              "videos": []
-            },
-            {
-              "name": "Indexing and Performance",
-              "content": "MongoDB indexing strategies and performance tuning",
-              "order_index": 1,
-              "videos": []
-            }
-          ]
-        }
-      ],
-      "questions": [
-        {
-          "type": "mcq_single",
-          "title": "MongoDB Document Structure",
-          "content": "What is the maximum size limit for a single document in MongoDB?",
-          "level": "course",
-          "difficulty": "easy",
-          "marks": 2,
-          "categories": [
-            "learn",
-            "practice"
-          ],
-          "mcq_options": [
-            {
-              "text": "4 MB",
-              "is_correct": false
-            },
-            {
-              "text": "16 MB",
-              "is_correct": true
-            },
-            {
-              "text": "32 MB",
-              "is_correct": false
-            },
-            {
-              "text": "64 MB",
-              "is_correct": false
-            }
-          ]
-        },
-        {
-          "type": "coding",
-          "title": "MongoDB Aggregation Pipeline",
-          "content": "Write a MongoDB aggregation pipeline to find the average order value by customer city from a collection of orders.",
-          "level": "course",
-          "difficulty": "hard",
-          "marks": 10,
-          "categories": [
-            "skill_test",
-            "contest"
-          ],
-          "test_cases_basic": [
-            {
-              "input": "Collection with orders containing customer info and order amounts",
-              "output": "Average order value grouped by city"
-            }
-          ],
-          "test_cases_advanced": [
-            {
-              "input": "Large collection with complex nested documents",
-              "output": "Efficient aggregation with proper indexing"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "short_code": "AI101",
-      "name": "Agent AI and Machine Learning",
-      "category": "ai_tools",
-      "instructor_email": "instructor_ai@yuvro.com",
-      "topics": [
-        {
-          "name": "AI Fundamentals",
-          "order_index": 0,
-          "subtopics": [
-            {
-              "name": "Introduction to Artificial Intelligence",
-              "content": "Basic concepts of AI, machine learning, and deep learning",
-              "order_index": 0,
-              "videos": [
-                {
-                  "title": "Introduction to AI and ML",
-                  "video_link": "https://youtube.com/watch?v=ai_intro",
-                  "ai_context": "Comprehensive introduction to artificial intelligence"
-                }
-              ]
-            },
-            {
-              "name": "Machine Learning Algorithms",
-              "content": "Supervised, unsupervised, and reinforcement learning",
-              "order_index": 1,
-              "videos": []
-            }
-          ]
-        },
-        {
-          "name": "Intelligent Agent Systems",
-          "order_index": 1,
-          "subtopics": [
-            {
-              "name": "Agent Architecture",
-              "content": "Designing intelligent agents and multi-agent systems",
-              "order_index": 0,
-              "videos": [
-                {
-                  "title": "Building Intelligent Agents",
-                  "video_link": "https://youtube.com/watch?v=agent_systems",
-                  "ai_context": "Designing and implementing intelligent agent systems"
-                }
-              ]
-            },
-            {
-              "name": "Agent Communication",
-              "content": "Communication protocols and coordination in agent systems",
-              "order_index": 1,
-              "videos": []
-            }
-          ]
-        },
-        {
-          "name": "Natural Language Processing",
-          "order_index": 2,
-          "subtopics": [
-            {
-              "name": "NLP Fundamentals",
-              "content": "Text processing, tokenization, and language models",
-              "order_index": 0,
-              "videos": []
-            },
-            {
-              "name": "Transformers and LLMs",
-              "content": "Understanding transformer architecture and large language models",
-              "order_index": 1,
-              "videos": [
-                {
-                  "title": "Understanding Transformers",
-                  "video_link": "https://youtube.com/watch?v=transformers",
-                  "ai_context": "Deep dive into transformer architecture and applications"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "name": "Computer Vision",
-          "order_index": 3,
-          "subtopics": [
-            {
-              "name": "Image Processing",
-              "content": "Digital image processing and feature extraction",
-              "order_index": 0,
-              "videos": []
-            },
-            {
-              "name": "Deep Learning for Vision",
-              "content": "CNNs, object detection, and image classification",
-              "order_index": 1,
-              "videos": []
-            }
-          ]
-        }
-      ],
-      "questions": [
-        {
-          "type": "mcq_single",
-          "title": "Machine Learning Types",
-          "content": "Which type of machine learning uses labeled training data?",
-          "level": "course",
-          "difficulty": "easy",
-          "marks": 2,
-          "categories": [
-            "learn",
-            "practice"
-          ],
-          "mcq_options": [
-            {
-              "text": "Supervised Learning",
-              "is_correct": true
-            },
-            {
-              "text": "Unsupervised Learning",
-              "is_correct": false
-            },
-            {
-              "text": "Reinforcement Learning",
-              "is_correct": false
-            },
-            {
-              "text": "Semi-supervised Learning",
-              "is_correct": false
-            }
+            {"text": "Indentation", "is_correct": true},
+            {"text": "Curly braces {}", "is_correct": false},
+            {"text": "Parentheses ()", "is_correct": false},
+            {"text": "Square brackets []", "is_correct": false}
           ]
         },
         {
           "type": "mcq_multiple",
-          "title": "Neural Network Components",
-          "content": "Which of the following are key components of a neural network?",
-          "level": "course",
-          "difficulty": "medium",
-          "marks": 4,
-          "categories": [
-            "learn",
-            "practice",
-            "skill_test"
-          ],
+          "title": "Python Data Types",
+          "content": "Which of the following are built-in data types in Python?",
+          "level": "subtopic",
+          "topic_name": "Python Basics",
+          "subtopic_name": "Python Syntax and Variables",
+          "difficulty": "easy",
+          "marks": 3,
+          "categories": ["learn", "practice"],
           "mcq_options": [
-            {
-              "text": "Neurons/Nodes",
-              "is_correct": true
-            },
-            {
-              "text": "Weights and Biases",
-              "is_correct": true
-            },
-            {
-              "text": "Activation Functions",
-              "is_correct": true
-            },
-            {
-              "text": "Database Connections",
-              "is_correct": false
-            }
+            {"text": "int", "is_correct": true},
+            {"text": "str", "is_correct": true},
+            {"text": "bool", "is_correct": true},
+            {"text": "char", "is_correct": false}
           ]
         },
         {
           "type": "coding",
-          "title": "Simple Linear Regression",
-          "content": "Implement a simple linear regression algorithm from scratch using gradient descent. The function should take X and y arrays and return the learned parameters.",
+          "title": "Variable Assignment",
+          "content": "Write a Python program that creates variables of different data types and prints their types.",
+          "level": "subtopic",
+          "topic_name": "Python Basics",
+          "subtopic_name": "Python Syntax and Variables",
+          "difficulty": "easy",
+          "marks": 5,
+          "categories": ["learn", "practice"],
+          "test_cases_basic": [
+            {"input": "Create int, float, str, bool variables", "output": "Print types: <class 'int'>, <class 'float'>, <class 'str'>, <class 'bool'>"},
+            {"input": "x = 10, y = 3.14, name = 'Python', flag = True", "output": "Correct type identification"}
+          ],
+          "test_cases_advanced": [
+            {"input": "Dynamic typing example", "output": "Variable type changes correctly"},
+            {"input": "None type variable", "output": "<class 'NoneType'>"}
+          ]
+        },
+        {
+          "type": "mcq_single",
+          "title": "If Statement Syntax",
+          "content": "What is the correct syntax for an if statement in Python?",
+          "level": "subtopic",
+          "topic_name": "Python Basics",
+          "subtopic_name": "Control Structures",
+          "difficulty": "easy",
+          "marks": 2,
+          "categories": ["learn"],
+          "mcq_options": [
+            {"text": "if condition:", "is_correct": true},
+            {"text": "if (condition) {", "is_correct": false},
+            {"text": "if condition then", "is_correct": false},
+            {"text": "IF condition:", "is_correct": false}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "FizzBuzz Problem",
+          "content": "Write a program that prints numbers 1 to 100, but for multiples of 3 print 'Fizz', for multiples of 5 print 'Buzz', and for multiples of both print 'FizzBuzz'.",
+          "level": "subtopic",
+          "topic_name": "Python Basics",
+          "subtopic_name": "Control Structures",
+          "difficulty": "medium",
+          "marks": 8,
+          "categories": ["practice", "contest"],
+          "test_cases_basic": [
+            {"input": "Numbers 1-15", "output": "1, 2, Fizz, 4, Buzz, Fizz, 7, 8, Fizz, Buzz, 11, Fizz, 13, 14, FizzBuzz"},
+            {"input": "Check multiples of 3 and 5", "output": "Correct Fizz, Buzz, FizzBuzz output"}
+          ],
+          "test_cases_advanced": [
+            {"input": "Edge cases: 0, negative numbers", "output": "Handle edge cases appropriately"},
+            {"input": "Large range", "output": "Efficient execution for large ranges"}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "Number Guessing Game",
+          "content": "Create a number guessing game where the computer generates a random number and the user has to guess it.",
+          "level": "subtopic",
+          "topic_name": "Python Basics",
+          "subtopic_name": "Control Structures",
+          "difficulty": "medium",
+          "marks": 10,
+          "categories": ["practice", "mock_interview"],
+          "test_cases_basic": [
+            {"input": "User guesses correctly", "output": "Congratulations message"},
+            {"input": "User guess too high/low", "output": "Appropriate hint messages"}
+          ],
+          "test_cases_advanced": [
+            {"input": "Invalid input handling", "output": "Error handling for non-numeric input"},
+            {"input": "Limited attempts", "output": "Game ends after max attempts"}
+          ]
+        },
+        {
+          "type": "mcq_single",
+          "title": "Function Definition",
+          "content": "What keyword is used to define a function in Python?",
+          "level": "subtopic",
+          "topic_name": "Python Basics",
+          "subtopic_name": "Functions and Modules",
+          "difficulty": "easy",
+          "marks": 2,
+          "categories": ["learn"],
+          "mcq_options": [
+            {"text": "def", "is_correct": true},
+            {"text": "function", "is_correct": false},
+            {"text": "func", "is_correct": false},
+            {"text": "define", "is_correct": false}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "Calculator Function",
+          "content": "Write a function that takes two numbers and an operation (+, -, *, /) and returns the result.",
+          "level": "subtopic",
+          "topic_name": "Python Basics",
+          "subtopic_name": "Functions and Modules",
+          "difficulty": "easy",
+          "marks": 6,
+          "categories": ["learn", "practice"],
+          "test_cases_basic": [
+            {"input": "calculate(10, 5, '+')", "output": "15"},
+            {"input": "calculate(10, 3, '/')", "output": "3.333..."}
+          ],
+          "test_cases_advanced": [
+            {"input": "calculate(10, 0, '/')", "output": "Handle division by zero"},
+            {"input": "calculate(5, 3, '%')", "output": "Handle invalid operation"}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "Factorial Function",
+          "content": "Write both recursive and iterative functions to calculate the factorial of a number.",
+          "level": "subtopic",
+          "topic_name": "Python Basics",
+          "subtopic_name": "Functions and Modules",
+          "difficulty": "medium",
+          "marks": 8,
+          "categories": ["practice", "contest"],
+          "test_cases_basic": [
+            {"input": "factorial(5)", "output": "120"},
+            {"input": "factorial(0)", "output": "1"}
+          ],
+          "test_cases_advanced": [
+            {"input": "factorial(10)", "output": "3628800"},
+            {"input": "factorial(-1)", "output": "Handle negative input"}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "Prime Number Checker",
+          "content": "Write a function to check if a given number is prime. Then create a function to find all prime numbers up to n.",
+          "level": "topic",
+          "topic_name": "Python Basics",
+          "difficulty": "medium",
+          "marks": 10,
+          "categories": ["practice", "contest", "mock_interview"],
+          "test_cases_basic": [
+            {"input": "is_prime(17)", "output": "True"},
+            {"input": "primes_up_to(10)", "output": "[2, 3, 5, 7]"}
+          ],
+          "test_cases_advanced": [
+            {"input": "is_prime(1)", "output": "False"},
+            {"input": "primes_up_to(100)", "output": "All primes up to 100"}
+          ]
+        },
+        {
+          "type": "mcq_single",
+          "title": "List Mutability",
+          "content": "Are Python lists mutable or immutable?",
+          "level": "subtopic",
+          "topic_name": "Data Structures in Python",
+          "subtopic_name": "Lists and Tuples",
+          "difficulty": "easy",
+          "marks": 2,
+          "categories": ["learn"],
+          "mcq_options": [
+            {"text": "Mutable", "is_correct": true},
+            {"text": "Immutable", "is_correct": false},
+            {"text": "Depends on content", "is_correct": false},
+            {"text": "Neither", "is_correct": false}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "List Operations",
+          "content": "Write functions to perform common list operations: find maximum, minimum, sum, and average of a list of numbers.",
+          "level": "subtopic",
+          "topic_name": "Data Structures in Python",
+          "subtopic_name": "Lists and Tuples",
+          "difficulty": "easy",
+          "marks": 6,
+          "categories": ["learn", "practice"],
+          "test_cases_basic": [
+            {"input": "[1, 2, 3, 4, 5]", "output": "max=5, min=1, sum=15, avg=3.0"},
+            {"input": "[-1, 0, 1]", "output": "max=1, min=-1, sum=0, avg=0.0"}
+          ],
+          "test_cases_advanced": [
+            {"input": "[]", "output": "Handle empty list"},
+            {"input": "[42]", "output": "Single element list"}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "List Comprehension Examples",
+          "content": "Use list comprehensions to: 1) Create squares of numbers 1-10, 2) Filter even numbers from a list, 3) Create a list of tuples (number, square).",
+          "level": "subtopic",
+          "topic_name": "Data Structures in Python",
+          "subtopic_name": "Lists and Tuples",
+          "difficulty": "medium",
+          "marks": 8,
+          "categories": ["practice", "contest"],
+          "test_cases_basic": [
+            {"input": "Squares 1-10", "output": "[1, 4, 9, 16, 25, 36, 49, 64, 81, 100]"},
+            {"input": "Even numbers from [1,2,3,4,5,6]", "output": "[2, 4, 6]"}
+          ],
+          "test_cases_advanced": [
+            {"input": "Nested list comprehension", "output": "Correct nested structure"},
+            {"input": "Conditional list comprehension", "output": "Proper filtering"}
+          ]
+        },
+        {
+          "type": "mcq_single",
+          "title": "Dictionary Key Requirements",
+          "content": "What type of objects can be used as dictionary keys in Python?",
+          "level": "subtopic",
+          "topic_name": "Data Structures in Python",
+          "subtopic_name": "Dictionaries and Sets",
+          "difficulty": "medium",
+          "marks": 3,
+          "categories": ["learn", "practice"],
+          "mcq_options": [
+            {"text": "Immutable objects only", "is_correct": true},
+            {"text": "Any object", "is_correct": false},
+            {"text": "Strings and numbers only", "is_correct": false},
+            {"text": "Mutable objects only", "is_correct": false}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "Word Frequency Counter",
+          "content": "Write a function that takes a string and returns a dictionary with word frequencies.",
+          "level": "subtopic",
+          "topic_name": "Data Structures in Python",
+          "subtopic_name": "Dictionaries and Sets",
+          "difficulty": "medium",
+          "marks": 8,
+          "categories": ["practice", "mock_interview"],
+          "test_cases_basic": [
+            {"input": "'hello world hello'", "output": "{'hello': 2, 'world': 1}"},
+            {"input": "'python is great python'", "output": "{'python': 2, 'is': 1, 'great': 1}"}
+          ],
+          "test_cases_advanced": [
+            {"input": "Handle punctuation and case", "output": "Proper text processing"},
+            {"input": "Empty string", "output": "{}"}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "Set Operations Implementation",
+          "content": "Given two lists, find: 1) Common elements, 2) Elements only in first list, 3) Elements only in second list, 4) All unique elements.",
+          "level": "subtopic",
+          "topic_name": "Data Structures in Python",
+          "subtopic_name": "Dictionaries and Sets",
+          "difficulty": "medium",
+          "marks": 10,
+          "categories": ["practice", "contest", "mock_interview"],
+          "test_cases_basic": [
+            {"input": "[1,2,3,4], [3,4,5,6]", "output": "common=[3,4], only_first=[1,2], only_second=[5,6], all_unique=[1,2,3,4,5,6]"},
+            {"input": "[1,1,2], [2,2,3]", "output": "Handle duplicates correctly"}
+          ],
+          "test_cases_advanced": [
+            {"input": "[], [1,2,3]", "output": "Handle empty lists"},
+            {"input": "Large lists", "output": "Efficient set operations"}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "Student Grade Manager",
+          "content": "Create a program using lists and dictionaries to manage student grades. Include functions to add students, add grades, calculate averages, and find top performers.",
+          "level": "topic",
+          "topic_name": "Data Structures in Python",
+          "difficulty": "hard",
+          "marks": 15,
+          "categories": ["practice", "contest", "mock_interview"],
+          "test_cases_basic": [
+            {"input": "Add students and grades", "output": "Proper data structure management"},
+            {"input": "Calculate class average", "output": "Correct mathematical calculations"}
+          ],
+          "test_cases_advanced": [
+            {"input": "Handle edge cases", "output": "Empty classes, invalid grades"},
+            {"input": "Complex queries", "output": "Top N students, grade distributions"}
+          ]
+        },
+        {
+          "type": "mcq_single",
+          "title": "Class Definition",
+          "content": "What keyword is used to define a class in Python?",
+          "level": "subtopic",
+          "topic_name": "Object-Oriented Programming",
+          "subtopic_name": "Classes and Objects",
+          "difficulty": "easy",
+          "marks": 2,
+          "categories": ["learn"],
+          "mcq_options": [
+            {"text": "class", "is_correct": true},
+            {"text": "Class", "is_correct": false},
+            {"text": "object", "is_correct": false},
+            {"text": "def", "is_correct": false}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "Simple Class Implementation",
+          "content": "Create a Person class with attributes name and age, and methods to display info and have a birthday.",
+          "level": "subtopic",
+          "topic_name": "Object-Oriented Programming",
+          "subtopic_name": "Classes and Objects",
+          "difficulty": "easy",
+          "marks": 6,
+          "categories": ["learn", "practice"],
+          "test_cases_basic": [
+            {"input": "Person('Alice', 25)", "output": "Create person object with correct attributes"},
+            {"input": "person.birthday()", "output": "Age increases by 1"}
+          ],
+          "test_cases_advanced": [
+            {"input": "Multiple person objects", "output": "Independent object states"},
+            {"input": "String representation", "output": "Proper __str__ method"}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "Bank Account Class",
+          "content": "Create a BankAccount class with methods for deposit, withdraw, and check balance. Include proper error handling for insufficient funds.",
+          "level": "subtopic",
+          "topic_name": "Object-Oriented Programming",
+          "subtopic_name": "Classes and Objects",
+          "difficulty": "medium",
+          "marks": 10,
+          "categories": ["practice", "mock_interview"],
+          "test_cases_basic": [
+            {"input": "deposit(100), withdraw(50)", "output": "balance = 50"},
+            {"input": "withdraw(200) with balance 100", "output": "Insufficient funds error"}
+          ],
+          "test_cases_advanced": [
+            {"input": "Negative deposit/withdrawal", "output": "Handle invalid amounts"},
+            {"input": "Account history tracking", "output": "Transaction logging"}
+          ]
+        },
+        {
+          "type": "mcq_single",
+          "title": "Inheritance Syntax",
+          "content": "How do you create a class that inherits from another class in Python?",
+          "level": "subtopic",
+          "topic_name": "Object-Oriented Programming",
+          "subtopic_name": "Inheritance and Polymorphism",
+          "difficulty": "easy",
+          "marks": 2,
+          "categories": ["learn"],
+          "mcq_options": [
+            {"text": "class Child(Parent):", "is_correct": true},
+            {"text": "class Child extends Parent:", "is_correct": false},
+            {"text": "class Child inherits Parent:", "is_correct": false},
+            {"text": "class Child -> Parent:", "is_correct": false}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "Animal Inheritance Hierarchy",
+          "content": "Create an Animal base class and Dog, Cat subclasses. Implement method overriding for make_sound() method.",
+          "level": "subtopic",
+          "topic_name": "Object-Oriented Programming",
+          "subtopic_name": "Inheritance and Polymorphism",
+          "difficulty": "medium",
+          "marks": 8,
+          "categories": ["practice", "contest"],
+          "test_cases_basic": [
+            {"input": "Dog().make_sound()", "output": "'Woof!'"},
+            {"input": "Cat().make_sound()", "output": "'Meow!'"}
+          ],
+          "test_cases_advanced": [
+            {"input": "Polymorphic behavior", "output": "Same method call, different behavior"},
+            {"input": "super() usage", "output": "Proper parent method calling"}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "Shape Area Calculator",
+          "content": "Create a Shape base class and Rectangle, Circle subclasses. Implement area calculation with method overriding.",
+          "level": "subtopic",
+          "topic_name": "Object-Oriented Programming",
+          "subtopic_name": "Inheritance and Polymorphism",
+          "difficulty": "medium",
+          "marks": 10,
+          "categories": ["practice", "contest", "mock_interview"],
+          "test_cases_basic": [
+            {"input": "Rectangle(5, 3).area()", "output": "15"},
+            {"input": "Circle(5).area()", "output": "78.54 (approximately)"}
+          ],
+          "test_cases_advanced": [
+            {"input": "List of different shapes", "output": "Polymorphic area calculations"},
+            {"input": "Abstract base class", "output": "Proper abstraction implementation"}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "Library Management System",
+          "content": "Design a library management system with classes for Book, Author, Library. Implement borrowing, returning, and searching functionality.",
+          "level": "topic",
+          "topic_name": "Object-Oriented Programming",
+          "difficulty": "hard",
+          "marks": 20,
+          "categories": ["contest", "mock_interview"],
+          "test_cases_basic": [
+            {"input": "Add books, borrow book", "output": "Proper state management"},
+            {"input": "Search by author/title", "output": "Correct search results"}
+          ],
+          "test_cases_advanced": [
+            {"input": "Multiple copies of same book", "output": "Handle inventory correctly"},
+            {"input": "Overdue books tracking", "output": "Date management and penalties"}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "Text Processing Program",
+          "content": "Create a program that reads a text file and provides statistics: word count, character count, most frequent words, and average word length.",
           "level": "course",
           "difficulty": "hard",
           "marks": 15,
-          "categories": [
-            "skill_test",
-            "contest"
-          ],
+          "categories": ["practice", "contest", "mock_interview"],
           "test_cases_basic": [
-            {
-              "input": "X = [1,2,3,4,5], y = [2,4,6,8,10]",
-              "output": "slope ≈ 2, intercept ≈ 0"
-            },
-            {
-              "input": "X = [0,1,2], y = [1,3,5]",
-              "output": "slope ≈ 2, intercept ≈ 1"
-            }
+            {"input": "Sample text file", "output": "Correct statistics calculation"},
+            {"input": "Empty file", "output": "Handle empty file gracefully"}
           ],
           "test_cases_advanced": [
+            {"input": "Large text files", "output": "Efficient processing"},
+            {"input": "Unicode characters", "output": "Proper encoding handling"}
+          ]
+        }
+      ]
+    },    {
+
+      "short_code": "WEB101",
+      "name": "Web Development Fundamentals",
+      "category": "web_development",
+      "instructor_email": "instructor_web@yuvro.com",
+      "topics": [
+        {
+          "name": "HTML and CSS",
+          "order_index": 0,
+          "subtopics": [
             {
-              "input": "Large dataset with 1000+ points and noise",
-              "output": "Converged parameters within tolerance"
+              "name": "HTML Basics",
+              "content": "HTML structure, elements, attributes, and semantic markup",
+              "order_index": 0,
+              "videos": [
+                {
+                  "title": "HTML Tutorial for Beginners - HTML Crash Course",
+                  "video_link": "https://www.youtube.com/watch?v=UB1O30fR-EE",
+                  "ai_context": "Complete HTML tutorial covering all basic concepts"
+                },
+                {
+                  "title": "HTML5 Semantic Elements",
+                  "video_link": "https://www.youtube.com/watch?v=kGW8Al_cga4",
+                  "ai_context": "Understanding semantic HTML5 elements"
+                },
+                {
+                  "title": "HTML Forms and Input Types",
+                  "video_link": "https://www.youtube.com/watch?v=fNcJuPIZ2WE",
+                  "ai_context": "Creating forms and handling user input"
+                }
+              ]
             },
             {
-              "input": "Edge cases with single point or identical values",
-              "output": "Proper error handling"
+              "name": "CSS Styling",
+              "content": "CSS selectors, properties, layout, and responsive design",
+              "order_index": 1,
+              "videos": [
+                {
+                  "title": "CSS Tutorial for Beginners - CSS Crash Course",
+                  "video_link": "https://www.youtube.com/watch?v=yfoY53QXEnI",
+                  "ai_context": "Complete CSS tutorial from basics to advanced"
+                },
+                {
+                  "title": "CSS Flexbox Tutorial",
+                  "video_link": "https://www.youtube.com/watch?v=JJSoEo8JSnc",
+                  "ai_context": "Mastering CSS Flexbox for layout"
+                },
+                {
+                  "title": "CSS Grid Layout Tutorial",
+                  "video_link": "https://www.youtube.com/watch?v=jV8B24rSN5o",
+                  "ai_context": "Understanding CSS Grid for complex layouts"
+                }
+              ]
+            },
+            {
+              "name": "Responsive Design",
+              "content": "Media queries, mobile-first design, and responsive frameworks",
+              "order_index": 2,
+              "videos": [
+                {
+                  "title": "Responsive Web Design Tutorial",
+                  "video_link": "https://www.youtube.com/watch?v=srvUrASNdxk",
+                  "ai_context": "Creating responsive websites for all devices"
+                },
+                {
+                  "title": "CSS Media Queries Tutorial",
+                  "video_link": "https://www.youtube.com/watch?v=2KL-z9A56SQ",
+                  "ai_context": "Using media queries for responsive design"
+                },
+                {
+                  "title": "Mobile First Design Principles",
+                  "video_link": "https://www.youtube.com/watch?v=WIVhynO5gHs",
+                  "ai_context": "Mobile-first approach to web design"
+                }
+              ]
             }
           ]
         },
         {
-          "type": "descriptive",
-          "title": "AI Agent Architecture",
-          "content": "Describe the architecture of an intelligent agent. Explain the different types of agents and their characteristics. Provide examples of real-world AI agents.",
-          "level": "course",
+          "name": "JavaScript Fundamentals",
+          "order_index": 1,
+          "subtopics": [
+            {
+              "name": "JavaScript Basics",
+              "content": "Variables, data types, functions, and control structures in JavaScript",
+              "order_index": 0,
+              "videos": [
+                {
+                  "title": "JavaScript Tutorial for Beginners - JavaScript Crash Course",
+                  "video_link": "https://www.youtube.com/watch?v=hdI2bqOjy3c",
+                  "ai_context": "Complete JavaScript fundamentals tutorial"
+                },
+                {
+                  "title": "JavaScript Variables and Data Types",
+                  "video_link": "https://www.youtube.com/watch?v=9emXNzqCKyg",
+                  "ai_context": "Understanding JavaScript variables and types"
+                },
+                {
+                  "title": "JavaScript Functions Deep Dive",
+                  "video_link": "https://www.youtube.com/watch?v=N8ap4k_1QEQ",
+                  "ai_context": "Mastering JavaScript functions"
+                }
+              ]
+            },
+            {
+              "name": "DOM Manipulation",
+              "content": "Document Object Model, event handling, and dynamic content",
+              "order_index": 1,
+              "videos": [
+                {
+                  "title": "JavaScript DOM Manipulation Tutorial",
+                  "video_link": "https://www.youtube.com/watch?v=5fb2aPlgoys",
+                  "ai_context": "Complete guide to DOM manipulation"
+                },
+                {
+                  "title": "JavaScript Event Handling",
+                  "video_link": "https://www.youtube.com/watch?v=XF1_MlZ5l6M",
+                  "ai_context": "Understanding and handling events in JavaScript"
+                },
+                {
+                  "title": "JavaScript Form Validation",
+                  "video_link": "https://www.youtube.com/watch?v=In0nB0ABaUk",
+                  "ai_context": "Client-side form validation with JavaScript"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Frontend Frameworks",
+          "order_index": 2,
+          "subtopics": [
+            {
+              "name": "React Basics",
+              "content": "React components, JSX, props, and state management",
+              "order_index": 0,
+              "videos": [
+                {
+                  "title": "React Tutorial for Beginners - React Crash Course",
+                  "video_link": "https://www.youtube.com/watch?v=w7ejDZ8SWv8",
+                  "ai_context": "Complete React tutorial for beginners"
+                },
+                {
+                  "title": "React Components and Props",
+                  "video_link": "https://www.youtube.com/watch?v=5ZdHfJVAY-s",
+                  "ai_context": "Understanding React components and props"
+                },
+                {
+                  "title": "React State and Lifecycle",
+                  "video_link": "https://www.youtube.com/watch?v=4pO-HcG2igk",
+                  "ai_context": "Managing state and component lifecycle in React"
+                }
+              ]
+            },
+            {
+              "name": "Modern JavaScript",
+              "content": "ES6+ features, async/await, modules, and modern development practices",
+              "order_index": 1,
+              "videos": [
+                {
+                  "title": "Modern JavaScript ES6+ Tutorial",
+                  "video_link": "https://www.youtube.com/watch?v=nZ1DMMsyVyI",
+                  "ai_context": "Modern JavaScript features and syntax"
+                },
+                {
+                  "title": "JavaScript Async/Await Tutorial",
+                  "video_link": "https://www.youtube.com/watch?v=V_Kr9OSfDeU",
+                  "ai_context": "Asynchronous JavaScript programming"
+                },
+                {
+                  "title": "JavaScript Modules and Import/Export",
+                  "video_link": "https://www.youtube.com/watch?v=cRHQNNcYf6s",
+                  "ai_context": "JavaScript modules and modern development"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "questions": [
+        {
+          "type": "mcq_single",
+          "title": "HTML Document Structure",
+          "content": "Which element represents the root of an HTML document?",
+          "level": "subtopic",
+          "topic_name": "HTML and CSS",
+          "subtopic_name": "HTML Basics",
+          "difficulty": "easy",
+          "marks": 2,
+          "categories": ["learn"],
+          "mcq_options": [
+            {"text": "<html>", "is_correct": true},
+            {"text": "<body>", "is_correct": false},
+            {"text": "<head>", "is_correct": false},
+            {"text": "<document>", "is_correct": false}
+          ]
+        },
+        {
+          "type": "mcq_multiple",
+          "title": "HTML5 Semantic Elements",
+          "content": "Which are HTML5 semantic elements?",
+          "level": "subtopic",
+          "topic_name": "HTML and CSS",
+          "subtopic_name": "HTML Basics",
           "difficulty": "medium",
-          "marks": 10,
-          "categories": [
-            "learn",
-            "skill_test"
+          "marks": 3,
+          "categories": ["learn", "practice"],
+          "mcq_options": [
+            {"text": "<header>", "is_correct": true},
+            {"text": "<nav>", "is_correct": true},
+            {"text": "<section>", "is_correct": true},
+            {"text": "<div>", "is_correct": false}
           ]
         },
         {
           "type": "coding",
-          "title": "Transformer Attention Mechanism",
-          "content": "Implement a simplified version of the attention mechanism used in transformers. Calculate attention scores for a given query, key, and value matrices.",
-          "level": "course",
-          "difficulty": "hard",
-          "marks": 20,
-          "categories": [
-            "contest"
-          ],
+          "title": "Create HTML Form",
+          "content": "Create an HTML form with fields for name, email, password, and a submit button. Include proper labels and input types.",
+          "level": "subtopic",
+          "topic_name": "HTML and CSS",
+          "subtopic_name": "HTML Basics",
+          "difficulty": "easy",
+          "marks": 6,
+          "categories": ["learn", "practice"],
           "test_cases_basic": [
-            {
-              "input": "Q, K, V matrices of compatible dimensions",
-              "output": "Attention output matrix"
-            },
-            {
-              "input": "Single head attention with softmax normalization",
-              "output": "Properly normalized attention weights"
-            }
+            {"input": "Form structure", "output": "Proper form element with fields"},
+            {"input": "Input types", "output": "Correct input types for each field"}
           ],
           "test_cases_advanced": [
-            {
-              "input": "Multi-head attention with different dimensions",
-              "output": "Concatenated multi-head output"
-            },
-            {
-              "input": "Masked attention for causal modeling",
-              "output": "Properly masked attention matrix"
-            }
+            {"input": "Accessibility", "output": "Proper labels and ARIA attributes"},
+            {"input": "Validation", "output": "HTML5 validation attributes"}
+          ]
+        },
+        {
+          "type": "mcq_single",
+          "title": "CSS Selector Specificity",
+          "content": "Which CSS selector has the highest specificity?",
+          "level": "subtopic",
+          "topic_name": "HTML and CSS",
+          "subtopic_name": "CSS Styling",
+          "difficulty": "medium",
+          "marks": 3,
+          "categories": ["learn", "practice"],
+          "mcq_options": [
+            {"text": "ID selector (#id)", "is_correct": true},
+            {"text": "Class selector (.class)", "is_correct": false},
+            {"text": "Element selector (div)", "is_correct": false},
+            {"text": "Universal selector (*)", "is_correct": false}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "CSS Layout with Flexbox",
+          "content": "Create a navigation bar using CSS Flexbox with logo on the left and menu items on the right. Make it responsive.",
+          "level": "subtopic",
+          "topic_name": "HTML and CSS",
+          "subtopic_name": "CSS Styling",
+          "difficulty": "medium",
+          "marks": 8,
+          "categories": ["practice", "contest"],
+          "test_cases_basic": [
+            {"input": "Flexbox layout", "output": "Proper flex container and items"},
+            {"input": "Logo and menu positioning", "output": "Logo left, menu right"}
+          ],
+          "test_cases_advanced": [
+            {"input": "Responsive behavior", "output": "Works on different screen sizes"},
+            {"input": "Hover effects", "output": "Interactive menu items"}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "CSS Grid Layout",
+          "content": "Create a webpage layout using CSS Grid with header, sidebar, main content, and footer areas.",
+          "level": "subtopic",
+          "topic_name": "HTML and CSS",
+          "subtopic_name": "CSS Styling",
+          "difficulty": "medium",
+          "marks": 10,
+          "categories": ["practice", "contest", "mock_interview"],
+          "test_cases_basic": [
+            {"input": "Grid container", "output": "Proper grid-template-areas"},
+            {"input": "Layout areas", "output": "Header, sidebar, main, footer positioned correctly"}
+          ],
+          "test_cases_advanced": [
+            {"input": "Responsive grid", "output": "Layout adapts to screen size"},
+            {"input": "Grid gap and alignment", "output": "Proper spacing and alignment"}
+          ]
+        },
+        {
+          "type": "mcq_single",
+          "title": "Media Query Syntax",
+          "content": "What is the correct syntax for a CSS media query targeting screens smaller than 768px?",
+          "level": "subtopic",
+          "topic_name": "HTML and CSS",
+          "subtopic_name": "Responsive Design",
+          "difficulty": "medium",
+          "marks": 3,
+          "categories": ["learn", "practice"],
+          "mcq_options": [
+            {"text": "@media (max-width: 768px)", "is_correct": true},
+            {"text": "@media screen and (width < 768px)", "is_correct": false},
+            {"text": "@media (screen-width: 768px)", "is_correct": false},
+            {"text": "@media max-width: 768px", "is_correct": false}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "Responsive Card Layout",
+          "content": "Create a responsive card layout that displays 3 cards per row on desktop, 2 on tablet, and 1 on mobile.",
+          "level": "subtopic",
+          "topic_name": "HTML and CSS",
+          "subtopic_name": "Responsive Design",
+          "difficulty": "medium",
+          "marks": 10,
+          "categories": ["practice", "contest", "mock_interview"],
+          "test_cases_basic": [
+            {"input": "Desktop layout", "output": "3 cards per row"},
+            {"input": "Mobile layout", "output": "1 card per row"}
+          ],
+          "test_cases_advanced": [
+            {"input": "Smooth transitions", "output": "Responsive breakpoints work smoothly"},
+            {"input": "Card content", "output": "Images and text scale properly"}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "Complete Landing Page",
+          "content": "Create a complete responsive landing page with header, hero section, features section, and footer using HTML and CSS.",
+          "level": "topic",
+          "topic_name": "HTML and CSS",
+          "difficulty": "hard",
+          "marks": 20,
+          "categories": ["contest", "mock_interview"],
+          "test_cases_basic": [
+            {"input": "Page structure", "output": "All sections present and properly structured"},
+            {"input": "Responsive design", "output": "Works on all device sizes"}
+          ],
+          "test_cases_advanced": [
+            {"input": "Visual design", "output": "Professional appearance with good typography"},
+            {"input": "Performance", "output": "Optimized CSS and fast loading"}
+          ]
+        },
+        {
+          "type": "mcq_single",
+          "title": "JavaScript Variable Declaration",
+          "content": "Which is the modern way to declare a block-scoped variable in JavaScript?",
+          "level": "subtopic",
+          "topic_name": "JavaScript Fundamentals",
+          "subtopic_name": "JavaScript Basics",
+          "difficulty": "easy",
+          "marks": 2,
+          "categories": ["learn"],
+          "mcq_options": [
+            {"text": "let", "is_correct": true},
+            {"text": "var", "is_correct": false},
+            {"text": "const", "is_correct": false},
+            {"text": "variable", "is_correct": false}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "JavaScript Calculator",
+          "content": "Create a simple calculator function that takes two numbers and an operator (+, -, *, /) and returns the result.",
+          "level": "subtopic",
+          "topic_name": "JavaScript Fundamentals",
+          "subtopic_name": "JavaScript Basics",
+          "difficulty": "easy",
+          "marks": 6,
+          "categories": ["learn", "practice"],
+          "test_cases_basic": [
+            {"input": "calculate(10, 5, '+')", "output": "15"},
+            {"input": "calculate(10, 3, '/')", "output": "3.333..."}
+          ],
+          "test_cases_advanced": [
+            {"input": "calculate(10, 0, '/')", "output": "Handle division by zero"},
+            {"input": "calculate(5, 3, '%')", "output": "Handle invalid operator"}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "Array Methods Practice",
+          "content": "Write functions using JavaScript array methods: filter even numbers, map to squares, reduce to sum, and find maximum.",
+          "level": "subtopic",
+          "topic_name": "JavaScript Fundamentals",
+          "subtopic_name": "JavaScript Basics",
+          "difficulty": "medium",
+          "marks": 8,
+          "categories": ["practice", "contest"],
+          "test_cases_basic": [
+            {"input": "[1,2,3,4,5] filter even", "output": "[2,4]"},
+            {"input": "[1,2,3] map to squares", "output": "[1,4,9]"}
+          ],
+          "test_cases_advanced": [
+            {"input": "Empty array handling", "output": "Proper edge case handling"},
+            {"input": "Chaining methods", "output": "Method chaining works correctly"}
+          ]
+        },
+        {
+          "type": "mcq_single",
+          "title": "DOM Selection",
+          "content": "Which method is used to select an element by its ID in JavaScript?",
+          "level": "subtopic",
+          "topic_name": "JavaScript Fundamentals",
+          "subtopic_name": "DOM Manipulation",
+          "difficulty": "easy",
+          "marks": 2,
+          "categories": ["learn"],
+          "mcq_options": [
+            {"text": "document.getElementById()", "is_correct": true},
+            {"text": "document.getElement()", "is_correct": false},
+            {"text": "document.selectById()", "is_correct": false},
+            {"text": "document.querySelector()", "is_correct": false}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "Interactive To-Do List",
+          "content": "Create an interactive to-do list where users can add, remove, and mark tasks as complete using DOM manipulation.",
+          "level": "subtopic",
+          "topic_name": "JavaScript Fundamentals",
+          "subtopic_name": "DOM Manipulation",
+          "difficulty": "medium",
+          "marks": 12,
+          "categories": ["practice", "contest", "mock_interview"],
+          "test_cases_basic": [
+            {"input": "Add task", "output": "New task appears in list"},
+            {"input": "Remove task", "output": "Task is removed from list"}
+          ],
+          "test_cases_advanced": [
+            {"input": "Mark complete", "output": "Task styling changes"},
+            {"input": "Empty input handling", "output": "Prevents adding empty tasks"}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "Form Validation",
+          "content": "Create a registration form with JavaScript validation for email format, password strength, and matching password confirmation.",
+          "level": "subtopic",
+          "topic_name": "JavaScript Fundamentals",
+          "subtopic_name": "DOM Manipulation",
+          "difficulty": "medium",
+          "marks": 10,
+          "categories": ["practice", "mock_interview"],
+          "test_cases_basic": [
+            {"input": "Valid email format", "output": "Email validation passes"},
+            {"input": "Password matching", "output": "Passwords match validation"}
+          ],
+          "test_cases_advanced": [
+            {"input": "Real-time validation", "output": "Validation occurs as user types"},
+            {"input": "Error message display", "output": "Clear error messages shown"}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "Dynamic Web Page",
+          "content": "Create a dynamic web page that fetches and displays data, handles user interactions, and updates the DOM without page refresh.",
+          "level": "topic",
+          "topic_name": "JavaScript Fundamentals",
+          "difficulty": "hard",
+          "marks": 18,
+          "categories": ["contest", "mock_interview"],
+          "test_cases_basic": [
+            {"input": "Data fetching", "output": "Successfully retrieves and displays data"},
+            {"input": "User interactions", "output": "Responds to user input correctly"}
+          ],
+          "test_cases_advanced": [
+            {"input": "Error handling", "output": "Gracefully handles network errors"},
+            {"input": "Performance", "output": "Efficient DOM updates"}
+          ]
+        },
+        {
+          "type": "mcq_single",
+          "title": "React Component",
+          "content": "What is the correct way to define a functional component in React?",
+          "level": "subtopic",
+          "topic_name": "Frontend Frameworks",
+          "subtopic_name": "React Basics",
+          "difficulty": "easy",
+          "marks": 2,
+          "categories": ["learn"],
+          "mcq_options": [
+            {"text": "function Component() { return <div>Hello</div>; }", "is_correct": true},
+            {"text": "const Component = <div>Hello</div>;", "is_correct": false},
+            {"text": "class Component() { return <div>Hello</div>; }", "is_correct": false},
+            {"text": "component Component() { return <div>Hello</div>; }", "is_correct": false}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "React Counter Component",
+          "content": "Create a React counter component with buttons to increment and decrement the count, displaying the current value.",
+          "level": "subtopic",
+          "topic_name": "Frontend Frameworks",
+          "subtopic_name": "React Basics",
+          "difficulty": "easy",
+          "marks": 8,
+          "categories": ["learn", "practice"],
+          "test_cases_basic": [
+            {"input": "Initial state", "output": "Counter starts at 0"},
+            {"input": "Increment button", "output": "Count increases by 1"}
+          ],
+          "test_cases_advanced": [
+            {"input": "Decrement button", "output": "Count decreases by 1"},
+            {"input": "State management", "output": "State updates correctly"}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "React Props Example",
+          "content": "Create a React component that receives props for name and age, and displays a greeting message.",
+          "level": "subtopic",
+          "topic_name": "Frontend Frameworks",
+          "subtopic_name": "React Basics",
+          "difficulty": "easy",
+          "marks": 6,
+          "categories": ["learn", "practice"],
+          "test_cases_basic": [
+            {"input": "Props: name='John', age=25", "output": "Hello John, you are 25 years old"},
+            {"input": "Different props", "output": "Displays correct information"}
+          ],
+          "test_cases_advanced": [
+            {"input": "Default props", "output": "Handles missing props gracefully"},
+            {"input": "Prop validation", "output": "PropTypes validation works"}
+          ]
+        },
+        {
+          "type": "mcq_single",
+          "title": "ES6 Arrow Functions",
+          "content": "What is the correct syntax for an ES6 arrow function?",
+          "level": "subtopic",
+          "topic_name": "Frontend Frameworks",
+          "subtopic_name": "Modern JavaScript",
+          "difficulty": "easy",
+          "marks": 2,
+          "categories": ["learn"],
+          "mcq_options": [
+            {"text": "const func = () => {}", "is_correct": true},
+            {"text": "const func = -> {}", "is_correct": false},
+            {"text": "const func = function() => {}", "is_correct": false},
+            {"text": "arrow func = () => {}", "is_correct": false}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "Async/Await API Call",
+          "content": "Write an async function that fetches data from an API and handles both success and error cases.",
+          "level": "subtopic",
+          "topic_name": "Frontend Frameworks",
+          "subtopic_name": "Modern JavaScript",
+          "difficulty": "medium",
+          "marks": 10,
+          "categories": ["practice", "contest", "mock_interview"],
+          "test_cases_basic": [
+            {"input": "Successful API call", "output": "Returns fetched data"},
+            {"input": "API error", "output": "Handles error gracefully"}
+          ],
+          "test_cases_advanced": [
+            {"input": "Loading states", "output": "Manages loading indicators"},
+            {"input": "Timeout handling", "output": "Handles request timeouts"}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "ES6 Destructuring and Spread",
+          "content": "Demonstrate ES6 destructuring with objects and arrays, and use the spread operator for array/object manipulation.",
+          "level": "subtopic",
+          "topic_name": "Frontend Frameworks",
+          "subtopic_name": "Modern JavaScript",
+          "difficulty": "medium",
+          "marks": 8,
+          "categories": ["practice", "contest"],
+          "test_cases_basic": [
+            {"input": "Object destructuring", "output": "Extracts properties correctly"},
+            {"input": "Array spread", "output": "Combines arrays properly"}
+          ],
+          "test_cases_advanced": [
+            {"input": "Nested destructuring", "output": "Handles complex structures"},
+            {"input": "Default values", "output": "Uses default values when needed"}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "React Todo Application",
+          "content": "Build a complete React todo application with add, edit, delete, and filter functionality using modern JavaScript features.",
+          "level": "topic",
+          "topic_name": "Frontend Frameworks",
+          "difficulty": "hard",
+          "marks": 25,
+          "categories": ["contest", "mock_interview"],
+          "test_cases_basic": [
+            {"input": "CRUD operations", "output": "All todo operations work correctly"},
+            {"input": "State management", "output": "React state managed properly"}
+          ],
+          "test_cases_advanced": [
+            {"input": "Local storage", "output": "Persists data between sessions"},
+            {"input": "Component structure", "output": "Well-organized component hierarchy"}
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "Portfolio Website",
+          "content": "Create a complete portfolio website showcasing your skills, projects, and contact information using HTML, CSS, and JavaScript.",
+          "level": "course",
+          "difficulty": "hard",
+          "marks": 30,
+          "categories": ["contest", "mock_interview"],
+          "test_cases_basic": [
+            {"input": "Website structure", "output": "All sections present and functional"},
+            {"input": "Responsive design", "output": "Works on all devices"}
+          ],
+          "test_cases_advanced": [
+            {"input": "Interactive elements", "output": "JavaScript interactions work smoothly"},
+            {"input": "Performance optimization", "output": "Fast loading and optimized code"}
           ]
         }
       ]
     }
-  ],
-  "assessments": {
-    "skill_tests": [
-      {
-        "title": "Data Structures Comprehensive Assessment",
-        "description": "Test your knowledge of data structures and algorithms",
-        "instructions": "Answer all questions to the best of your ability. You have 90 minutes to complete this test.",
-        "difficulty": "medium",
-        "duration": 90,
-        "total_marks": 50,
-        "passing_marks": 30,
-        "course_short_code": "DS101",
-        "publish_status": "active"
-      },
-      {
-        "title": "Python Programming Assessment",
-        "description": "Comprehensive Python programming test",
-        "instructions": "Complete all coding and theoretical questions within the time limit.",
-        "difficulty": "medium",
-        "duration": 75,
-        "total_marks": 40,
-        "passing_marks": 24,
-        "course_short_code": "PY101",
-        "publish_status": "active"
-      },
-      {
-        "title": "AI and Machine Learning Assessment",
-        "description": "Test your understanding of AI concepts and algorithms",
-        "instructions": "Answer all questions covering AI fundamentals, ML algorithms, and practical implementations.",
-        "difficulty": "hard",
-        "duration": 120,
-        "total_marks": 60,
-        "passing_marks": 36,
-        "course_short_code": "AI101",
-        "publish_status": "active"
-      }
-    ],
-    "contests": [
-      {
-        "title": "Data Structures Coding Challenge",
-        "description": "Competitive programming challenge focusing on data structures and algorithms",
-        "instructions": "Solve the coding problems within the time limit. Best solutions win!",
-        "difficulty": "hard",
-        "duration": 120,
-        "total_marks": 100,
-        "passing_marks": 60,
-        "course_short_code": "DS101",
-        "organizer": "YourCourse Platform",
-        "type": "company",
-        "start_days_from_now": 7,
-        "prize": "Certificate and Internship Opportunity",
-        "publish_status": "active"
-      },
-      {
-        "title": "AI Innovation Contest",
-        "description": "Build innovative AI solutions and compete with peers",
-        "instructions": "Create AI models and algorithms to solve real-world problems.",
-        "difficulty": "hard",
-        "duration": 180,
-        "total_marks": 150,
-        "passing_marks": 90,
-        "course_short_code": "AI101",
-        "organizer": "Tech Innovation Hub",
-        "type": "college",
-        "start_days_from_now": 14,
-        "prize": "Cash Prize and Job Opportunities",
-        "publish_status": "active"
-      }
-    ]
-  }
+  ]
 }

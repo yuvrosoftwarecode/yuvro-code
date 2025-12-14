@@ -198,6 +198,10 @@ export const deleteNote = async (id: string) => {
   return true;
 };
 
+export const markSubtopicComplete = async (subtopicId: string) => {
+  return restApiAuthUtil.post('/course/std/mark_complete/', { subtopic_id: subtopicId });
+};
+
 const courseService = {
   getCourses: fetchCourses,
   getCourse: fetchCourseById,
@@ -229,6 +233,7 @@ const courseService = {
   createNote,
   updateNote,
   deleteNote,
+  markSubtopicComplete,
 };
 
 export default courseService;
@@ -299,19 +304,19 @@ export async function removeInstructorFromCourse(courseId: string, instructorId:
 export async function fetchAllInstructors() {
   try {
     const response = await restApiAuthUtil.get('/auth/users/', { params: { role: 'instructor' } });
-    
+
     // Handle both paginated and direct array responses
     const instructors = response.results || response || [];
-    
+
     return instructors;
   } catch (error) {
     console.error('Error fetching instructors:', error);
-    
+
     // If it's a permission error (403), show a helpful message
     if (error.status === 403) {
       console.warn('Permission denied: Only admins can view instructor list');
     }
-    
+
     return [];
   }
 }
@@ -335,12 +340,12 @@ export async function fetchSkillTestQuestions(topicId: string) {
     try {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) return parsed.map(String);
-    } catch {}
+    } catch { }
     try {
       const fixed = raw.replace(/'/g, '"');
       const parsed = JSON.parse(fixed);
       if (Array.isArray(parsed)) return parsed.map(String);
-    } catch {}
+    } catch { }
     return raw.split(/[,|;]/).map((s: string) => s.trim()).filter(Boolean);
   }
 
@@ -371,7 +376,7 @@ export async function fetchSkillTestQuestions(topicId: string) {
 // Question Bank Management Functions
 export async function fetchQuestionsByLevel(level: "course" | "topic" | "subtopic", id: string) {
   const params: any = {};
-  
+
   if (level === "course") {
     params.course = id;
   } else if (level === "topic") {
@@ -379,7 +384,7 @@ export async function fetchQuestionsByLevel(level: "course" | "topic" | "subtopi
   } else if (level === "subtopic") {
     params.subtopic = id;
   }
-  
+
   return restApiAuthUtil.get('/course/questions/', { params });
 }
 

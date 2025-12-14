@@ -221,6 +221,7 @@
         },
         {
           "type": "mcq_single",
+<<<<<<< HEAD
           "title": "Array Memory Layout",
           "content": "How are array elements stored in memory?",
           "level": "subtopic",
@@ -769,6 +770,13 @@
           "title": "Algorithm Complexity",
           "content": "What does Big O notation describe?",
           "level": "course",
+=======
+          "title": "What is the time complexity of accessing an element in an array?",
+          "content": "Given an array of size n, what is the time complexity to access an element at a specific index?",
+          "level": "subtopic",
+          "topic_name": "Arrays and Strings",
+          "subtopic_name": "Array Fundamentals",
+>>>>>>> a9374be (feat(ui): update course dashboard with new banner, card layout, and auth context fixes)
           "difficulty": "easy",
           "marks": 2,
           "categories": ["learn", "practice"],
@@ -783,18 +791,197 @@
           "type": "coding",
           "title": "Implement Binary Search",
           "content": "Write a function to implement binary search algorithm that returns the index of target element in a sorted array.",
-          "level": "course",
+          "level": "subtopic",
+          "topic_name": "Arrays and Strings",
+          "subtopic_name": "Array Operations",
           "difficulty": "medium",
           "marks": 10,
+<<<<<<< HEAD
           "categories": ["practice", "contest", "mock_interview"],
+=======
+          "categories": [
+            "learn",
+            "practice",
+            "skill_test",
+            "contest"
+          ],
+>>>>>>> a9374be (feat(ui): update course dashboard with new banner, card layout, and auth context fixes)
           "test_cases_basic": [
             {"input": "arr = [1,2,3,4,5], target = 3", "output": "2"},
             {"input": "arr = [1,3,5,7,9], target = 7", "output": "3"}
           ],
           "test_cases_advanced": [
+<<<<<<< HEAD
             {"input": "arr = [], target = 1", "output": "-1"},
             {"input": "arr = [1], target = 1", "output": "0"},
             {"input": "arr = [1,2,3,4,5,6,7,8,9,10], target = 11", "output": "-1"}
+=======
+            {
+              "input": "arr = [], target = 1",
+              "output": "-1"
+            },
+            {
+              "input": "arr = [1], target = 1",
+              "output": "0"
+            },
+            {
+              "input": "arr = [1,2,3,4,5,6,7,8,9,10], target = 11",
+              "output": "-1"
+            }
+          ]
+        },
+        {
+          "type": "mcq_multiple",
+          "title": "Array Properties",
+          "content": "Which of the following are true about arrays?",
+          "level": "subtopic",
+          "topic_name": "Arrays and Strings",
+          "subtopic_name": "Array Fundamentals",
+          "difficulty": "easy",
+          "marks": 3,
+          "categories": [
+            "learn",
+            "practice"
+          ],
+          "mcq_options": [
+            {
+              "text": "Elements are stored in contiguous memory locations",
+              "is_correct": true
+            },
+            {
+              "text": "Random access is possible",
+              "is_correct": true
+            },
+            {
+              "text": "Size can be changed dynamically",
+              "is_correct": false
+            },
+            {
+              "text": "All elements must be of the same data type",
+              "is_correct": true
+            }
+          ]
+        },
+        {
+          "type": "descriptive",
+          "title": "Explain Array vs Linked List",
+          "content": "Compare and contrast arrays and linked lists. Discuss their advantages, disadvantages, and use cases.",
+          "level": "subtopic",
+          "topic_name": "Arrays and Strings",
+          "subtopic_name": "Array Fundamentals",
+          "difficulty": "medium",
+          "marks": 5,
+          "categories": [
+            "learn",
+            "skill_test"
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "Reverse a Linked List",
+          "content": "Write a function to reverse a singly linked list and return the new head.",
+          "level": "subtopic",
+          "topic_name": "Linked Lists",
+          "subtopic_name": "Singly Linked Lists",
+          "difficulty": "medium",
+          "marks": 8,
+          "categories": [
+            "learn",
+            "practice",
+            "skill_test",
+            "contest"
+          ],
+          "test_cases_basic": [
+            {
+              "input": "1->2->3->4->5",
+              "output": "5->4->3->2->1"
+            },
+            {
+              "input": "1->2",
+              "output": "2->1"
+            }
+          ],
+          "test_cases_advanced": [
+            {
+              "input": "null",
+              "output": "null"
+            },
+            {
+              "input": "1",
+              "output": "1"
+            },
+            {
+              "input": "1->2->3->4->5->6->7->8->9->10",
+              "output": "10->9->8->7->6->5->4->3->2->1"
+            }
+          ]
+        },
+        {
+          "type": "mcq_single",
+          "title": "Binary Tree Traversal",
+          "content": "In which traversal method do we visit the root node first?",
+          "level": "subtopic",
+          "topic_name": "Trees and Graphs",
+          "subtopic_name": "Binary Trees",
+          "difficulty": "easy",
+          "marks": 2,
+          "categories": [
+            "learn",
+            "practice"
+          ],
+          "mcq_options": [
+            {
+              "text": "Inorder",
+              "is_correct": false
+            },
+            {
+              "text": "Preorder",
+              "is_correct": true
+            },
+            {
+              "text": "Postorder",
+              "is_correct": false
+            },
+            {
+              "text": "Level order",
+              "is_correct": false
+            }
+          ]
+        },
+        {
+          "type": "coding",
+          "title": "Binary Tree Level Order Traversal",
+          "content": "Given a binary tree, return the level order traversal of its nodes values (i.e., from left to right, level by level).",
+          "level": "subtopic",
+          "topic_name": "Trees and Graphs",
+          "subtopic_name": "Binary Trees",
+          "difficulty": "hard",
+          "marks": 12,
+          "categories": [
+            "learn",
+            "skill_test",
+            "contest"
+          ],
+          "test_cases_basic": [
+            {
+              "input": "[3,9,20,null,null,15,7]",
+              "output": "[[3],[9,20],[15,7]]"
+            },
+            {
+              "input": "[1]",
+              "output": "[[1]]"
+            }
+          ],
+          "test_cases_advanced": [
+            {
+              "input": "[]",
+              "output": "[]"
+            },
+            {
+              "input": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]",
+              "output": "[[1],[2,3],[4,5,6,7],[8,9,10,11,12,13,14,15]]"
+            }
+>>>>>>> a9374be (feat(ui): update course dashboard with new banner, card layout, and auth context fixes)
           ]
         }
       ]

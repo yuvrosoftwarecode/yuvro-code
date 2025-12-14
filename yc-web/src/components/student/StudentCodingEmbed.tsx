@@ -7,16 +7,47 @@ import { Code, Play, CheckCircle } from "lucide-react";
 
 interface StudentCodingEmbedProps {
   subtopicId: string;
+  onComplete?: (status: boolean) => void;
 }
 
-const StudentCodingEmbed = ({ subtopicId }: StudentCodingEmbedProps) => {
+const StudentCodingEmbed = ({ subtopicId, onComplete }: StudentCodingEmbedProps) => {
+  const [isCompleted, setIsCompleted] = useState(false);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);
 
+  // Track solved questions IDs
+  const [solvedMap, setSolvedMap] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    // Load solved state
+    try {
+      const stored = localStorage.getItem(`coding_solved_${subtopicId}`);
+      if (stored) {
+        setSolvedMap(JSON.parse(stored));
+      }
+    } catch (e) {
+      console.error("Failed to load solved state", e);
+    }
+  }, [subtopicId]);
+
   useEffect(() => {
     loadCodingQuestions();
   }, [subtopicId]);
+
+  // Check completion whenever solvedMap or questions change
+  useEffect(() => {
+    if (questions.length > 0) {
+      const allSolved = questions.every(q => solvedMap[q.id]);
+      if (allSolved) {
+        setIsCompleted(true);
+        if (onComplete) onComplete(true);
+      }
+    } else if (!loading && questions.length === 0) {
+      // No questions = completed
+      if (onComplete) onComplete(true);
+    }
+  }, [solvedMap, questions, loading, onComplete]);
 
   const loadCodingQuestions = async () => {
     setLoading(true);
@@ -28,16 +59,36 @@ const StudentCodingEmbed = ({ subtopicId }: StudentCodingEmbedProps) => {
         level: 'subtopic',
         type: 'coding'
       });
-      
+
       setQuestions(res);
       if (res.length > 0) {
         setSelectedQuestion(res[0]);
+      } else {
+        // No coding questions -> Mark complete
+        if (onComplete) onComplete(true);
       }
     } catch (err) {
       console.error("Failed to load coding questions", err);
       setQuestions([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSimulateSubmit = () => {
+    if (!selectedQuestion) return;
+
+    // In a real app, we would run test cases here.
+    // For now, we simulate success.
+    const newSolved = { ...solvedMap, [selectedQuestion.id]: true };
+    setSolvedMap(newSolved);
+    localStorage.setItem(`coding_solved_${subtopicId}`, JSON.stringify(newSolved));
+
+    // Check if this was the last one
+    const allSolved = questions.every(q => q.id === selectedQuestion.id ? true : newSolved[q.id]);
+    if (allSolved) {
+      setIsCompleted(true);
+      if (onComplete) onComplete(true);
     }
   };
 
@@ -63,17 +114,24 @@ const StudentCodingEmbed = ({ subtopicId }: StudentCodingEmbedProps) => {
       <div className="text-center text-muted-foreground py-8">
         <Code className="mx-auto h-12 w-12 mb-4 opacity-50" />
         <p>No coding questions available for this subtopic.</p>
+        <p className="text-sm mt-2">Requirement automatically met.</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2 mb-4">
-        <Code className="h-5 w-5" />
-        <h3 className="text-lg font-semibold">
-          Coding Practice ({questions.length} questions)
-        </h3>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Code className="h-5 w-5" />
+          <h3 className="text-lg font-semibold">
+            Coding Practice ({Object.keys(solvedMap).length} / {questions.length} solved)
+          </h3>
+        </div>
+        {/* Progress Badge */}
+        <Badge variant={isCompleted ? "default" : "outline"} className={isCompleted ? "bg-green-600" : ""}>
+          {isCompleted ? "All Completed" : "In Progress"}
+        </Badge>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -83,13 +141,12 @@ const StudentCodingEmbed = ({ subtopicId }: StudentCodingEmbedProps) => {
             <h4 className="font-medium">Problems</h4>
             <div className="space-y-2">
               {questions.map((question, index) => (
-                <Card 
-                  key={question.id} 
-                  className={`cursor-pointer transition-colors ${
-                    selectedQuestion?.id === question.id 
-                      ? 'border-blue-500 bg-blue-50' 
-                      : 'hover:bg-gray-50'
-                  }`}
+                <Card
+                  key={question.id}
+                  className={`cursor-pointer transition-colors ${selectedQuestion?.id === question.id
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'hover:bg-gray-50'
+                    }`}
                   onClick={() => setSelectedQuestion(question)}
                 >
                   <CardContent className="p-3">
@@ -107,8 +164,8 @@ const StudentCodingEmbed = ({ subtopicId }: StudentCodingEmbedProps) => {
                           </span>
                         </div>
                       </div>
-                      {selectedQuestion?.id === question.id && (
-                        <CheckCircle className="h-4 w-4 text-blue-500" />
+                      {(solvedMap[question.id]) && (
+                        <CheckCircle className="h-4 w-4 text-green-500" />
                       )}
                     </div>
                   </CardContent>
@@ -138,7 +195,7 @@ const StudentCodingEmbed = ({ subtopicId }: StudentCodingEmbedProps) => {
                   </div>
                 </div>
               </CardHeader>
-              
+
               <CardContent className="space-y-4">
                 {/* Problem Description */}
                 <div>
@@ -189,8 +246,12 @@ const StudentCodingEmbed = ({ subtopicId }: StudentCodingEmbedProps) => {
                     <Play className="h-4 w-4" />
                     Start Coding
                   </Button>
-                  <Button variant="outline">
-                    View Solution
+                  <Button
+                    variant="default"
+                    className="bg-green-600 hover:bg-green-700"
+                    onClick={handleSimulateSubmit}
+                  >
+                    {solvedMap[selectedQuestion.id] ? "Solved ✓" : "Submit Solution"}
                   </Button>
                 </div>
               </CardContent>

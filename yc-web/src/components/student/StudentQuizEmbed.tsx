@@ -12,7 +12,12 @@ type QuizQuestion = {
   correct_answer_index: number;
 };
 
-const StudentQuizEmbed = ({ subtopicId }: { subtopicId: string }) => {
+interface StudentQuizEmbedProps {
+  subtopicId: string;
+  onComplete?: (status: boolean) => void;
+}
+
+const StudentQuizEmbed = ({ subtopicId, onComplete }: StudentQuizEmbedProps) => {
   const navigate = useNavigate();
   const [quizzes, setQuizzes] = useState<QuizQuestion[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,6 +30,13 @@ const StudentQuizEmbed = ({ subtopicId }: { subtopicId: string }) => {
   const [quizCompleted, setQuizCompleted] = useState(false);
 
   useEffect(() => {
+    // Check if previously passed
+    const passed = localStorage.getItem(`quiz_passed_${subtopicId}`) === 'true';
+    if (passed) {
+      setIsPassed(true);
+      if (onComplete) onComplete(true);
+    }
+
     loadQuizzes();
     resetQuiz();
   }, [subtopicId]);
@@ -39,7 +51,7 @@ const StudentQuizEmbed = ({ subtopicId }: { subtopicId: string }) => {
         level: 'subtopic',
         type: 'mcq_single'
       }, 5);
-      
+
       // Transform to quiz format
       const quizData: QuizQuestion[] = selectedQuestions.map(q => ({
         id: q.id,
@@ -47,8 +59,13 @@ const StudentQuizEmbed = ({ subtopicId }: { subtopicId: string }) => {
         options: q.mcq_options?.map(opt => opt.text) || [],
         correct_answer_index: q.mcq_options?.findIndex(opt => opt.is_correct) || 0
       }));
-      
+
       setQuizzes(quizData);
+
+      // If no quizzes, mark complete automatically
+      if (quizData.length === 0 && onComplete) {
+        onComplete(true);
+      }
     } catch (err) {
       console.error("Failed to load quizzes", err);
       setQuizzes([]);
@@ -63,8 +80,12 @@ const StudentQuizEmbed = ({ subtopicId }: { subtopicId: string }) => {
     setSubmitted(false);
     setScore(0);
     setUserAnswers({});
-    setIsPassed(false);
+    // Don't reset isPassed if already passed in storage, but UI should show result
+    // Actually if we retake, we might want to clear it?
+    // User wants "progress" to be sticky. So keep isPassed true in state if passed.
+    const passed = localStorage.getItem(`quiz_passed_${subtopicId}`) === 'true';
     setQuizCompleted(false);
+    if (!passed) setIsPassed(false);
   };
 
   const handleSubmit = () => {
@@ -84,7 +105,14 @@ const StudentQuizEmbed = ({ subtopicId }: { subtopicId: string }) => {
     // Check if quiz is completed
     if (currentIndex === quizzes.length - 1) {
       const percentage = (updatedScore / quizzes.length) * 100;
-      setIsPassed(percentage >= 70);
+      const passed = percentage >= 70;
+
+      if (passed) {
+        setIsPassed(true);
+        localStorage.setItem(`quiz_passed_${subtopicId}`, 'true');
+        if (onComplete) onComplete(true);
+      }
+
       setQuizCompleted(true);
     }
   };
@@ -103,7 +131,7 @@ const StudentQuizEmbed = ({ subtopicId }: { subtopicId: string }) => {
 
   const handlePrevious = () => {
     if (currentIndex === 0) return;
-    
+
     const previousIndex = currentIndex - 1;
     setCurrentIndex(previousIndex);
     setSelectedOption(userAnswers[previousIndex] ?? null);
@@ -144,9 +172,8 @@ const StudentQuizEmbed = ({ subtopicId }: { subtopicId: string }) => {
           </p>
 
           <p
-            className={`text-lg font-semibold mb-4 ${
-              isPassed ? "text-green-600" : "text-red-600"
-            }`}
+            className={`text-lg font-semibold mb-4 ${isPassed ? "text-green-600" : "text-red-600"
+              }`}
           >
             {isPassed ? "Congratulations! You passed the quiz." : "Keep practicing! You can retake the quiz."}
           </p>
@@ -175,7 +202,7 @@ const StudentQuizEmbed = ({ subtopicId }: { subtopicId: string }) => {
             </span>
           </CardTitle>
         </CardHeader>
-        
+
         <CardContent className="space-y-4">
           {/* Question */}
           <div className="bg-gray-50 p-4 rounded-lg">
@@ -189,7 +216,7 @@ const StudentQuizEmbed = ({ subtopicId }: { subtopicId: string }) => {
               const isSelected = selectedOption === index;
 
               let buttonClass = "w-full justify-start text-left border border-gray-300";
-              
+
               if (submitted) {
                 if (isCorrect) {
                   buttonClass += " bg-green-100 border-green-500 text-green-800";

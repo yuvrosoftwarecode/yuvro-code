@@ -1,10 +1,8 @@
-import { BrowserRouter as Router, Routes, Route, Navigate,} from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import './observability/telemetry';
-import Landing from './pages/landing/Landing';
 import Home from './pages/landing/Home';
-import About from './pages/landing/About';
 import Login from './pages/common/Login';
 import Register from './pages/common/Register';
 import Profile from './pages/student/Profile';
@@ -51,8 +49,6 @@ function App() {
           <div className="App">
             <Routes>
               <Route path="/" element={<Home />} />
-              <Route path="/landing" element={<Landing />} />
-              <Route path="/about" element={<About />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />

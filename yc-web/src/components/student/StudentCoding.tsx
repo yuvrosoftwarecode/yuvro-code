@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Code, Play, CheckCircle, ChevronLeft } from "lucide-react";
-import Navigation from "@/components/Navigation";
+import Navigation from "@/components/common/Navigation";
 
 const StudentCoding = () => {
   const { subtopicId } = useParams<{ subtopicId: string }>();

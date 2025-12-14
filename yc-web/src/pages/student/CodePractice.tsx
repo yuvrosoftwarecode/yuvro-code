@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Navigation from '@/components/Navigation';
+import Navigation from '@/components/common/Navigation';
 import CourseDashboard from '@/components/student/code-practice/CourseDashboard';
 import TopicSelection from '@/components/student/code-practice/TopicSelection';
 import ProblemSolving from '@/components/student/code-practice/ProblemSolving';

@@ -4,7 +4,7 @@ import { fetchRandomQuestions } from "@/services/questionService";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight, Code } from "lucide-react";
-import Navigation from "@/components/Navigation";
+import Navigation from "@/components/common/Navigation";
 
 type QuizQuestion = {
   id: string;

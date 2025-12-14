@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import Navigation from "../../components/Navigation";
+import Navigation from "../../components/common/Navigation";
 import StudentVideos from "./StudentVideos";
 import StudentQuizEmbed from "./StudentQuizEmbed";
 import StudentCodingEmbed from "./StudentCodingEmbed";

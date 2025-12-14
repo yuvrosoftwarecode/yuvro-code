@@ -4,10 +4,15 @@ import authService from '../services/authService';
 import { ApiError } from '../utils/RestApiUtil';
 
 export interface User {
-  id: number;
+  id: string;
   email: string;
   username: string;
+  first_name?: string;
+  last_name?: string;
   role?: string;
+  is_active?: boolean;
+  date_joined?: string;
+  last_login?: string;
   profile?: {
     about?: string;
     avatar?: string;
@@ -86,9 +91,11 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
 // Initialize state from localStorage
 const getInitialState = (): AuthState => {
   const accessToken = localStorage.getItem('access');
+  const storedUser = localStorage.getItem('user');
+
   if (accessToken) {
     return {
-      user: null, // Will be loaded from authService
+      user: storedUser ? JSON.parse(storedUser) : null, // Load user from localStorage if available
       token: accessToken,
       isLoading: true, // Set to true while we fetch user data
       isAuthenticated: true, // Trust the token from localStorage
@@ -162,6 +169,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const response = await authService.login(email, password);
 
+      // Store user data in localStorage for persistence
+      localStorage.setItem('user', JSON.stringify(response.user));
+
       dispatch({
         type: 'LOGIN_SUCCESS',
         payload: { user: response.user, token: response.access },
@@ -196,6 +206,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         password,
         password_confirm: password
       });
+
+      // Store user data in localStorage for persistence
+      localStorage.setItem('user', JSON.stringify(response.user));
+
       dispatch({
         type: 'LOGIN_SUCCESS',
         payload: { user: response.user, token: response.access },
@@ -208,6 +222,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = (): void => {
     authService.logoutUser().finally(() => {
+      // Clear user data from localStorage
+      localStorage.removeItem('user');
       dispatch({ type: 'LOGOUT' });
     });
   };

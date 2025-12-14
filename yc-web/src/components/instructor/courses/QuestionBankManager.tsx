@@ -56,7 +56,6 @@ const QuestionBankManager: React.FC<QuestionBankManagerProps> = ({
   course,
   selectedTopic,
   selectedSubtopic,
-  topics,
 }) => {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(false);
@@ -399,11 +398,17 @@ const QuestionBankManager: React.FC<QuestionBankManagerProps> = ({
 
   // Get available level options based on current selection
   const getAvailableLevels = () => {
-    return [
-      { value: 'course', label: 'Course Level' },
-      { value: 'topic', label: 'Topic Level' },
-      { value: 'subtopic', label: 'Subtopic Level' }
-    ];
+    const levels = [{ value: 'course', label: 'Course Level' }];
+
+    if (selectedTopic) {
+      levels.push({ value: 'topic', label: 'Topic Level' });
+    }
+
+    if (selectedSubtopic) {
+      levels.push({ value: 'subtopic', label: 'Subtopic Level' });
+    }
+
+    return levels;
   };
 
   // Handle level change and update form data accordingly
@@ -665,64 +670,18 @@ const QuestionBankManager: React.FC<QuestionBankManagerProps> = ({
                       ))}
                     </SelectContent>
                   </Select>
-
-
-                  {/* Topic Selection - Show if level is topic/subtopic and no topic pre-selected */}
-                  {(formData.level === 'topic' || formData.level === 'subtopic') && !selectedTopic && (
-                    <div className="mt-3">
-                      <Label className="text-sm font-medium text-slate-700">Select Topic</Label>
-                      <Select
-                        value={formData.topic}
-                        onValueChange={(value) => {
-                          setFormData(prev => ({
-                            ...prev,
-                            topic: value,
-                            subtopic: undefined // Reset subtopic when topic changes
-                          }));
-                        }}
-                      >
-                        <SelectTrigger className="bg-white border-slate-300 mt-1">
-                          <SelectValue placeholder="Select a topic" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white border border-slate-200 shadow-lg z-[9999]">
-                          {topics.map((topic: any) => (
-                            <SelectItem key={topic.id} value={topic.id}>
-                              {topic.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-
-                  {/* Subtopic Selection - Show if level is subtopic and no subtopic pre-selected */}
-                  {formData.level === 'subtopic' && !selectedSubtopic && (
-                    <div className="mt-3">
-                      <Label className="text-sm font-medium text-slate-700">Select Subtopic</Label>
-                      <Select
-                        disabled={!formData.topic && !selectedTopic}
-                        value={formData.subtopic}
-                        onValueChange={(value) => setFormData(prev => ({ ...prev, subtopic: value }))}
-                      >
-                        <SelectTrigger className="bg-white border-slate-300 mt-1">
-                          <SelectValue placeholder="Select a subtopic" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white border border-slate-200 shadow-lg z-[9999]">
-                          {(() => {
-                            // Find the active topic to get its subtopics
-                            const activeTopicId = selectedTopic?.id || formData.topic;
-                            const activeTopic = topics.find((t: any) => t.id === activeTopicId);
-
-                            return activeTopic?.subtopics?.map((sub: any) => (
-                              <SelectItem key={sub.id} value={sub.id}>
-                                {sub.name}
-                              </SelectItem>
-                            )) || <SelectItem value="none" disabled>No subtopics found</SelectItem>;
-                          })()}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
+                  {/* Context indicator */}
+                  <div className="mt-1 text-xs text-slate-500">
+                    {formData.level === 'course' && (
+                      <span>Will be stored at: <strong>Course</strong> level</span>
+                    )}
+                    {formData.level === 'topic' && selectedTopic && (
+                      <span>Will be stored at: <strong>{selectedTopic.name}</strong> topic level</span>
+                    )}
+                    {formData.level === 'subtopic' && selectedSubtopic && (
+                      <span>Will be stored at: <strong>{selectedSubtopic.name}</strong> subtopic level</span>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-slate-700">Difficulty</Label>
@@ -971,7 +930,6 @@ const QuestionBankManager: React.FC<QuestionBankManagerProps> = ({
             </div>
           </CardContent>
         </Card>
-
       )}
 
       {/* Delete Confirmation Modal */}

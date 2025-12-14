@@ -216,20 +216,6 @@ class Command(BaseCommand):
         elif question_data['level'] == 'subtopic':
             topic_name = question_data.get('topic_name')
             subtopic_name = question_data.get('subtopic_name')
-<<<<<<< HEAD
-            if topic_name and subtopic_name:
-                subtopic_key = f"{topic_name}::{subtopic_name}"
-                if subtopic_key in subtopic_map:
-                    question_kwargs['subtopic'] = subtopic_map[subtopic_key]
-                    question_kwargs['topic'] = subtopic_map[subtopic_key].topic
-                    question_kwargs['course'] = course
-                else:
-                    self.stdout.write(self.style.WARNING(f'Subtopic not found: {subtopic_key}, skipping question'))
-                    return
-            else:
-                self.stdout.write(self.style.WARNING(f'Missing topic_name or subtopic_name for subtopic-level question: {question_data["title"][:50]}...'))
-                return
-=======
             
             if topic_name and subtopic_name:
                 # Find topic first
@@ -250,12 +236,11 @@ class Command(BaseCommand):
                         question_kwargs['topic'] = topic
                         question_kwargs['course'] = course
                 else:
-                     self.stdout.write(self.style.WARNING(f'Topic "{topic_name}" not found for question "{question_data["title"]}"'))
-                     question_kwargs['course'] = course
+                    self.stdout.write(self.style.WARNING(f'Topic not found: {topic_name}, skipping question'))
+                    return
             else:
-                self.stdout.write(self.style.WARNING(f'Missing topic_name or subtopic_name for subtopic-level question "{question_data["title"]}"'))
-                question_kwargs['course'] = course
->>>>>>> a9374be (feat(ui): update course dashboard with new banner, card layout, and auth context fixes)
+                self.stdout.write(self.style.WARNING(f'Missing topic_name or subtopic_name for subtopic-level question: {question_data["title"][:50]}...'))
+                return
         
         # Add type-specific fields
         if question_data['type'] in ['mcq_single', 'mcq_multiple']:

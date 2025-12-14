@@ -3,6 +3,8 @@ from django.db import models
 from django.core.validators import MinValueValidator
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.utils import timezone
+from core.models import BaseTimestampedModel
 
 User = get_user_model()
 
@@ -198,49 +200,109 @@ class CourseInstructor(models.Model):
         super().save(*args, **kwargs)
 
 
-class LearnProgress(models.Model):
-    """
-    Tracks which subtopic a user has completed inside
-    """
+class UserCourseProgress(BaseTimestampedModel):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="learn_progress"
+        related_name="course_progress"
     )
-    
+    course = models.ForeignKey(
+        Course,
+        on_delete=models.CASCADE,
+        related_name="user_progress"
+    )
+    topic = models.ForeignKey(
+        Topic,
+        on_delete=models.CASCADE,
+        related_name="user_progress",
+        null=True,
+        blank=True
+    )
     subtopic = models.ForeignKey(
         Subtopic,
         on_delete=models.CASCADE,
-        related_name="progress_records"
+        related_name="user_progress"
     )
-    completed = models.BooleanField(default=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    
+    is_videos_watched = models.BooleanField(
+        default=False,
+        help_text="Whether all videos in this subtopic have been watched"
+    )   
+    quiz_answers = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Quiz answers: {'question_id': {'user_answer': ['A', 'B'], 'correct_answer': ['A', 'C'], 'is_correct': false, 'timestamp': '2024-12-14T10:00:00Z'}}"
+    )
+    quiz_score = models.FloatField(
+        default=0.0,
+        help_text="Quiz score as percentage (0-100)"
+    )
+    is_quiz_completed = models.BooleanField(
+        default=False,
+    )
+
+    coding_answers = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Coding answers: {'question_id': {'user_code': 'def solution()...', 'language': 'python', 'test_results': {...}, 'is_correct': true, 'timestamp': '2024-12-14T10:00:00Z'}}"
+    )
+    coding_score = models.FloatField(
+        default=0.0,
+        help_text="Coding score as percentage (0-100)"
+    )
+    
+    is_coding_completed = models.BooleanField(
+        default=False,
+    )
+    
+    progress_percent = models.FloatField(
+        default=0.0,
+        help_text="Overall progress percentage considering videos + quiz + coding (0-100)"
+    )
+    is_completed = models.BooleanField(
+        default=False,
+        help_text="Whether this subtopic is fully completed"
+    )
+    
+    # Continue learning tracking
+    is_current_subtopic = models.BooleanField(
+        default=False,
+        help_text="Whether this is the current subtopic the user is working on"
+    )
+    last_accessed = models.DateTimeField(
+        auto_now=True,
+        help_text="Last time user accessed this subtopic"
+    )
+    
+
+    completed_at = models.DateTimeField(null=True, blank=True)
     
     class Meta:
         unique_together = ("user", "subtopic")
         ordering = ["-updated_at"]
-        
+    
     def __str__(self):
-        return f"{self.user.username} - {self.subtopic.name} ({'Done' if self.completed else 'Pending'}) "
+        return f"{self.user.username} - {self.subtopic.name} ({self.progress_percent:.1f}%)"
     
-class CourseContinue(models.Model):
-    """
-    Stores the last subtopic the user viewed inside a course,
-    used to power 'Continue Learning
-    """
-    
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="continue_learning")
-    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="continue_records")
-    last_subtopic = models.ForeignKey(Subtopic, null=True, blank=True, on_delete=models.SET_NULL, related_name="last_viewed_by")
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        unique_together = ("user", "course")
-        ordering = ["-updated_at"]
+    def calculate_progress(self):
+        components = []
         
-    def __str__(self):
-        return f"{self.user.username} - {self.course.name}"
-
+        if self.is_videos_watched:
+            components.append(20.0)
+        
+        if self.is_quiz_completed:
+            components.append(30.0 * (self.quiz_score / 100))
+        
+        if self.is_coding_completed:
+            components.append(50.0 * (self.coding_score / 100))
+        
+        total_progress = sum(components)
+        
+        self.progress_percent = round(total_progress, 2)
+        self.is_completed = self.progress_percent >= 90.0
+        
+        return self.progress_percent
+    
         
 class Question(models.Model):
     """

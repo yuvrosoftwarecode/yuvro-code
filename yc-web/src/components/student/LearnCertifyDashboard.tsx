@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import restApiAuthUtil from "../../utils/RestApiAuthUtil";
 import { fetchTopicsByCourse } from '@/services/courseService';
 
-import ContinueLearningBanner from "@/components/student/LearnCertify/ContinueLearningBanner";
+import ContinueLearningCard from "@/components/student/LearnCertify/ContinueLearning";
 import StatsGrid from "@/components/student/LearnCertify/StatsGrid";
 import SearchBar from "@/components/common/SearchBar";
 import CategorySection from "@/components/student/LearnCertify/CatergorySection";
@@ -45,11 +45,9 @@ const LearnCertifyDashboard: React.FC = () => {
           })
         );
         setCourses(withTopics);
-        return withTopics;
       } catch (err) {
         console.error("Failed to fetch courses", err);
         setCourses([]);
-        return [];
       }
     };
 
@@ -57,10 +55,8 @@ const LearnCertifyDashboard: React.FC = () => {
       try {
         const s = await restApiAuthUtil.get("/course/std/stats/");
         setStats(s as Stats);
-        return s;
       } catch (err) {
         console.error("Failed to fetch stats", err);
-        return null;
       }
     };
 
@@ -68,18 +64,15 @@ const LearnCertifyDashboard: React.FC = () => {
       try {
         const c = await restApiAuthUtil.get("/course/std/continue_learning/");
         const cp = c as ContinueProgress;
-        setContinueProgress((prev) => ({
-          ...prev, // Keep existing if needed, though usually we overwrite
-          course_id: String(cp.course_id || ""),
-          course_name: cp.course_name || prev.course_name || "Python",
+        setContinueProgress({
+          course_id: cp.course_id || "",
+          course_name: cp.course_name || "Python",
           lesson: cp.lesson || 0,
           total_lessons: cp.total_lessons || 0,
           percent: cp.percent || 0,
-        }));
-        return cp;
+        });
       } catch (err) {
         console.error("Failed to fetch continue progress", err);
-        return null;
       }
     };
 
@@ -88,14 +81,12 @@ const LearnCertifyDashboard: React.FC = () => {
         const list = await restApiAuthUtil.get<{ course_id: string; percent: number }[]>("/course/std/progress/");
         const map: CourseProgressMap = {};
         if (Array.isArray(list)) {
-          list.forEach((p) => { map[String(p.course_id)] = p.percent ?? 0; });
+          list.forEach((p) => { map[p.course_id] = p.percent ?? 0; });
         }
         setProgressMap(map);
-        return map;
       } catch (err) {
         console.warn("Progress endpoint missing or failed - using defaults", err);
         setProgressMap({});
-        return {};
       }
     };
 
@@ -105,27 +96,14 @@ const LearnCertifyDashboard: React.FC = () => {
 
     const loadAll = async () => {
       try {
-        const [fetchedCourses, , fetchedContinue] = await Promise.all([
-          fetchCourses(),
-          fetchStats(),
-          fetchContinue(),
-          fetchProgressMap()
-        ]);
-
-        // Merge course name if missing using the FRESH fetchedCourses
-        if (fetchedContinue && fetchedCourses.length > 0) {
-          const cp = fetchedContinue as ContinueProgress;
-          const courseStrId = String(cp.course_id || "");
-          const course = fetchedCourses.find((c) => String(c.id) === courseStrId);
-
-          if (course) {
-            setContinueProgress((prev) => ({
-              ...prev,
-              course_name: course.name
-            }));
-          }
-        }
-
+        await Promise.all([fetchCourses(), fetchStats(), fetchContinue(), fetchProgressMap()]);
+        setContinueProgress((prev) => {
+          const course = courses.find((c) => c.id === prev.course_id);
+          return {
+            ...prev,
+            course_name: course?.name || prev.course_name || "Python",
+          };
+        });
       } catch (err) {
         console.error('Error loading dashboard data', err);
       } finally {
@@ -144,11 +122,6 @@ const LearnCertifyDashboard: React.FC = () => {
   }, []);
 
   const handleStartLearning = (courseId: string) => {
-    console.log("Starting learning for course:", courseId);
-    if (!courseId) {
-      console.warn("Attempted to start learning with empty courseId");
-      return;
-    }
     navigate(`/student/learn/${courseId}`);
   };
 
@@ -236,7 +209,7 @@ const LearnCertifyDashboard: React.FC = () => {
 
             <StatsGrid stats={stats} />
 
-            <ContinueLearningBanner continueProgress={continueProgress} />
+            <ContinueLearningCard continueProgress={continueProgress} onContinue={handleStartLearning} />
           </div>
 
 

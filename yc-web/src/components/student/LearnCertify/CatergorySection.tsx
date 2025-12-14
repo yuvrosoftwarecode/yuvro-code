@@ -27,7 +27,7 @@ const CategorySection: React.FC<Props> = ({ title, icon, courses, progressMap, o
             id={c.id}
             title={c.name}
             description={
-              c.topics?.length
+            c.topics?.length
                 ? c.topics.slice(0, 3).map(t => t.name).join(", ")
                 : ""
             }

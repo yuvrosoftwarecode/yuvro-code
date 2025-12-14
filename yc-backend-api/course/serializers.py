@@ -8,7 +8,6 @@ from .models import (
     Note,
     CourseInstructor,
     Question,
-    UserCourseProgress,
 )
 from authentication.serializers import UserSerializer
 from django.contrib.auth import get_user_model
@@ -152,6 +151,9 @@ class VideoSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_at", "updated_at"]
 
 
+
+
+
 class NoteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Note
@@ -288,25 +290,3 @@ class QuestionSerializer(serializers.ModelSerializer):
         # For course level, course is already set
         
         return super().create(validated_data)
-
-class UserCourseProgressSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = UserCourseProgress
-        fields = [
-            "id",
-            "user",
-            "course",
-            "topic",
-            "subtopic",
-            "is_videos_watched",
-            "quiz_score",
-            "is_quiz_completed",
-            "coding_score",
-            "is_coding_completed",
-            "progress_percent",
-            "is_completed",
-            "completed_at",
-            "is_current_subtopic",
-            "last_accessed"
-        ]
-        read_only_fields = ["id", "user", "course", "topic", "subtopic", "progress_percent", "completed_at", "last_accessed"]

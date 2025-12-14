@@ -130,6 +130,13 @@ class Video(models.Model):
     def __str__(self):
         return f"{self.sub_topic.name} - {self.title}"
 
+
+
+
+
+
+
+
 class Note(models.Model):
     """
     Note model representing user-created notes for personal study.
@@ -151,6 +158,7 @@ class Note(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.sub_topic.name} - {self.content[:30]}..."
+
 
 class CourseInstructor(models.Model):
     """
@@ -191,6 +199,7 @@ class CourseInstructor(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()  # Validate before saving
         super().save(*args, **kwargs)
+
 
 class UserCourseProgress(BaseTimestampedModel):
     user = models.ForeignKey(
@@ -277,36 +286,25 @@ class UserCourseProgress(BaseTimestampedModel):
         return f"{self.user.username} - {self.subtopic.name} ({self.progress_percent:.1f}%)"
     
     def calculate_progress(self):
-        has_quiz = self.subtopic.questions.filter(type__in=['mcq_single', 'mcq_multiple']).exists()
-        has_coding = self.subtopic.questions.filter(type='coding').exists()
-        
-        w_video = 20.0
-        w_quiz = 30.0 if has_quiz else 0.0
-        w_coding = 50.0 if has_coding else 0.0
-        
-        total_weight = w_video + w_quiz + w_coding
-        
-        if total_weight == 0:
-            return 100.0 if self.is_videos_watched else 0.0
-
-        current_score = 0.0
+        components = []
         
         if self.is_videos_watched:
-            current_score += w_video
-            
-        if has_quiz and self.is_quiz_completed:
-            current_score += w_quiz * (self.quiz_score / 100.0)
-            
-        if has_coding:
-            current_score += w_coding * (self.coding_score / 100.0)
-            
-        self.progress_percent = round((current_score / total_weight) * 100.0, 2)
+            components.append(20.0)
         
-        self.is_completed = self.progress_percent >= 99.0
+        if self.is_quiz_completed:
+            components.append(30.0 * (self.quiz_score / 100))
+        
+        if self.is_coding_completed:
+            components.append(50.0 * (self.coding_score / 100))
+        
+        total_progress = sum(components)
+        
+        self.progress_percent = round(total_progress, 2)
+        self.is_completed = self.progress_percent >= 90.0
         
         return self.progress_percent
     
-
+        
 class Question(models.Model):
     """
     Unified Question Bank model for storing questions at different levels (course, topic, subtopic)

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import Navigation from "../../components/common/Navigation";
 import StudentVideos from "./StudentVideos";
@@ -12,16 +12,11 @@ import {
   fetchCourseById,
   fetchTopicsByCourse,
   fetchSubtopicsByTopic,
-  markSubtopicComplete,
-  markSubtopicVideoWatched,
-  fetchCourseStructure,
-  fetchUserCourseProgress,
   Course as CourseType
 } from "@/services/courseService";
-import { fetchQuestions } from "@/services/questionService";
 import { Check } from "lucide-react";
 import ProgressBar from "@/components/ui/ProgressBar";
-import { PlayCircle, HelpCircle, StickyNote, Code, Sparkles, X, Layout, Video as VideoIcon } from "lucide-react";
+import { PlayCircle, HelpCircle, StickyNote, Code, Sparkles, X } from "lucide-react";
 import AIChatContainer from "./LearnCertify/AIChatWidget/AIChatContainer";
 
 type Topic = {
@@ -39,45 +34,40 @@ type Subtopic = {
 };
 
 const CourseDetail: React.FC = () => {
+  const [readMap, setReadMap] = useState<Record<string, boolean>>({});
   const { courseId } = useParams<{ courseId: string }>();
 
   const [course, setCourse] = useState<CourseType | null>(null);
+  const [loading, setLoading] = useState(true);
+
   const [topics, setTopics] = useState<Topic[]>([]);
+  const [subtopicsMap, setSubtopicsMap] = useState<Record<string, Subtopic[]>>(
+    {}
+  );
 
   const [collapsed, setCollapsed] = useState(false);
 
-  const [expandedTopics, setExpandedTopics] = useState<Record<string, boolean>>({});
-  const [subtopicsMap, setSubtopicsMap] = useState<Record<string, Subtopic[]>>({});
-
-  // Progress Map: Stores { subtopicId: progressPercent } (0 - 100)
-  const [progressMap, setProgressMap] = useState<Record<string, number>>({});
-
-  // Keep readMap for backward compatibility (stores is_completed)
-  const [readMap, setReadMap] = useState<Record<string, boolean>>({});
-
-  const [loading, setLoading] = useState(true);
-  const [chatSessionId, setChatSessionId] = useState(`course-chat-${courseId}-${crypto.randomUUID()}`);
-  const [rightTab, setRightTab] = useState<'videos' | 'quizzes' | 'coding' | 'notes'>('videos');
-
-  // Track requirements state (Quiz/Coding presence)
-  const [requirements, setRequirements] = useState<{ hasQuiz: boolean; hasCoding: boolean; loaded: boolean }>({
-    hasQuiz: false, hasCoding: false, loaded: false
-  });
-
-  const [activeProgress, setActiveProgress] = useState<{
-    quiz: boolean;
-    coding: boolean;
-    video: boolean
-  }>({ quiz: false, coding: false, video: false });
-
-  // Layout for Videos
-  const [videoLayout, setVideoLayout] = useState<LayoutMode>('video');
+  const [expandedTopics, setExpandedTopics] = useState<Record<string, boolean>>(
+    {}
+  );
 
   const [selectedSubtopic, setSelectedSubtopic] = useState<Subtopic | null>(
     null
   );
 
+  const [rightTab, setRightTab] = useState<
+    "videos" | "quizzes" | "coding" | "notes"
+  >("videos");
 
+
+  const [chatSessionId, setChatSessionId] = useState<string>("");
+  const [marking, setMarking] = useState(false);
+
+  useEffect(() => {
+    if (courseId) {
+      setChatSessionId(`course-chat-${courseId}-${crypto.randomUUID()}`);
+    }
+  }, [courseId]);
 
   const getCourseContext = () => {
     let ctx = `Course: ${course?.name || 'Unknown'}.\n`;
@@ -93,81 +83,29 @@ const CourseDetail: React.FC = () => {
     return ctx;
   };
 
-
-  // Ref to prevent duplicate API calls
-  const markingRef = React.useRef<boolean>(false);
-
-  // Reset progress and Check Requirements when subtopic changes
-  useEffect(() => {
-    setActiveProgress({ quiz: false, coding: false });
-    setRequirements({ hasQuiz: false, hasCoding: false, loaded: false });
-    markingRef.current = false; // Reset lock on subtopic change
-
-    if (selectedSubtopic) {
-      checkRequirements(selectedSubtopic.id);
-    }
-  }, [selectedSubtopic?.id]);
-
-  const checkRequirements = async (subtopicId: string) => {
+  const handleMarkAsRead = async () => {
+    if (!selectedSubtopic || marking) return;
+    setMarking(true);
     try {
-      // Check for Quiz Existence
-      const quizzes = await fetchQuestions({ subtopic: subtopicId, level: 'subtopic', type: 'mcq_single' });
-      const hasQuiz = quizzes.length > 0;
+      await restApiAuthUtil.post("/course/std/mark_complete/", {
+        subtopic_id: selectedSubtopic.id,
+      });
 
-      // Check for Coding Existence
-      const coding = await fetchQuestions({ subtopic: subtopicId, level: 'subtopic', type: 'coding' });
-      const hasCoding = coding.length > 0;
-
-      setRequirements({ hasQuiz, hasCoding, loaded: true });
-
-      // We don't load local storage anymore. 
-      // Progress is loaded via fetchUserCourseProgress in loadPage/refresh
-      // But we can check current state from progressMap/other maps if we store details
-      // For now, we rely on the generic loadPage to populate "readMap" but 
-      // we need to know granular status for the buttons.
-
-      // Let's refactor proper progress fetching.
+      setReadMap((prev) => ({ ...prev, [selectedSubtopic.id]: true }));
+      toast.success(`Marked '${selectedSubtopic.name}' as read!`);
     } catch (err) {
-      console.error("Failed to check requirements", err);
-      // Safer to assume nothing and let components drive it.
-      setRequirements({ hasQuiz: false, hasCoding: false, loaded: true });
+      toast.error("Failed to mark as read");
+      console.error(err);
+    } finally {
+      setMarking(false);
     }
   };
 
-  const markSubtopicRead = useCallback(async (subtopicId: string) => {
-    if (markingRef.current || readMap[subtopicId]) return;
-
-    markingRef.current = true;
-    try {
-      await markSubtopicComplete(subtopicId);
-      setReadMap((prev) => ({ ...prev, [subtopicId]: true }));
-      toast.success("Subtopic completed! 🎉");
-    } catch (err) {
-      console.error("Failed to mark as read", err);
-      markingRef.current = false;
-    }
-  }, [readMap]);
-
-  const handleProgressUpdate = useCallback(async (type: 'quiz' | 'coding', status: boolean) => {
-    // Determine new status locally for immediate UI feedback (optional)
-    // Then reload partial progress to get accurate %
-    if (!selectedSubtopic) return;
-
-    // We trust the child component has already called the API to submit
-    // So we just need to refresh the course progress map
-    await loadProgress();
-  }, [selectedSubtopic, requirements]);
-
-  /* PROGRESS CALCULATION */
   const getTopicProgress = (topicId: string): number => {
     const subs = subtopicsMap[topicId] || [];
     if (subs.length === 0) return 0;
-
-    // Sum of all subtopic percentages
-    const totalProgress = subs.reduce((acc, s) => acc + (progressMap[s.id] || 0), 0);
-
-    // Average progress for the topic (0 to 100)
-    return Math.round(totalProgress / subs.length);
+    const completed = subs.filter((s) => readMap[s.id]).length;
+    return Math.round((completed / subs.length) * 100);
   };
 
   useEffect(() => {
@@ -216,56 +154,26 @@ const CourseDetail: React.FC = () => {
         setSubtopicsMap({});
       }
 
-      setSubtopicsMap(allSubtopics);
-
-      await loadProgress();
+      try {
+        const response = await restApiAuthUtil.get<{ completed_subtopic_ids: string[] }>(
+          `/course/std/completed_subtopics/?course_id=${courseId}`
+        );
+        const completedIds = response.completed_subtopic_ids || [];
+        const newReadMap: Record<string, boolean> = {};
+        completedIds.forEach((id) => {
+          newReadMap[id] = true;
+        });
+        setReadMap(newReadMap);
+      } catch (err) {
+        console.warn("Could not fetch completed subtopics", err);
+        setReadMap({});
+      }
     } catch (err) {
       toast.error("Failed to load course");
     } finally {
       setLoading(false);
     }
   };
-
-  const loadProgress = async () => {
-    if (!courseId) return;
-    try {
-      const progressData = await fetchUserCourseProgress(courseId) as any;
-      // console.log("Progress Data", progressData);
-
-      const newProgressMap: Record<string, number> = {};
-      const newReadMap: Record<string, boolean> = {};
-
-      // progressData is { subtopicId: { progress_percent: 20.0, is_completed: false, is_videos_watched: boolean... } }
-      Object.entries(progressData).forEach(([subId, data]: [string, any]) => {
-        newProgressMap[subId] = data.progress_percent || 0;
-        newReadMap[subId] = data.is_completed || false;
-
-        // Update active progress if currently selected
-        if (selectedSubtopic && selectedSubtopic.id === subId) {
-          setActiveProgress({
-            quiz: data.is_quiz_completed,
-            coding: data.is_coding_completed,
-            video: data.is_videos_watched
-          });
-        }
-      });
-
-      setProgressMap(newProgressMap);
-      setReadMap(newReadMap);
-    } catch (err) {
-      console.warn("Could not fetch progress map", err);
-    }
-  };
-
-  // refresh progress when subtopic changes to ensure activeProgress is correct
-  useEffect(() => {
-    if (selectedSubtopic && !loading) {
-      // We might simply check the existing maps if we loaded all data, 
-      // but detailed flags (video/quiz/coding) might need fresh check or logic from map
-      // For now, loadProgress fetches everything, so it updates the active state too.
-      loadProgress();
-    }
-  }, [selectedSubtopic]);
 
   const toggleExpandTopic = async (topicId: string) => {
     const isOpen = expandedTopics[topicId];
@@ -464,24 +372,7 @@ const CourseDetail: React.FC = () => {
         <div className="flex-1 bg-white shadow-sm overflow-hidden flex flex-col">
           {/* Tabs */}
           <div className="border-b border-gray-200 py-3 flex items-center justify-between">
-            <div className="ml-4 flex items-center gap-2 text-sm bg-white border border-gray-300 shadow-sm rounded-full px-4 py-1 font-medium text-gray-700 max-w-[30%] min-w-0">
-              {selectedSubtopic && (
-                <>
-                  <span className="text-gray-500 truncate hidden md:block max-w-[120px]" title={topics.find(t => t.id === selectedSubtopic.topic)?.name}>
-                    {collapsed
-                      ? topics.find(t => t.id === selectedSubtopic.topic)?.name
-                      : topics.find(t => t.id === selectedSubtopic.topic)?.name.charAt(0)
-                    }
-                  </span>
-                  <ChevronRight className="w-3 h-3 text-gray-400 flex-shrink-0 hidden md:block" />
-                </>
-              )}
-              <span className="truncate" title={selectedSubtopic ? selectedSubtopic.name : ""}>
-                {selectedSubtopic ? selectedSubtopic.name : "No subtopic selected"}
-              </span>
-            </div>
-
-            <div className="flex gap-2 justify-center flex-1 min-w-0">
+            <div className="flex gap-2 justify-center flex-1">
               {[
                 { key: "videos", label: "Videos", icon: <PlayCircle /> },
                 { key: "quizzes", label: "Quizzes", icon: <HelpCircle /> },
@@ -503,73 +394,34 @@ const CourseDetail: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-4 ml-4 mr-6">
-
-
-              {/* Layout Selector (Visible only on Videos tab) */}
-              {rightTab === "videos" && (
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={async () => {
-                      if (selectedSubtopic) {
-                        try {
-                          await markSubtopicVideoWatched(selectedSubtopic.id);
-                          toast.success("Videos marked as watched");
-                          // Refresh progress to update UI
-                          loadProgress();
-                        } catch (e) {
-                          toast.error("Failed to mark video watched");
-                        }
-                      }
-                    }}
-                    className={`px-3 py-1.5 text-xs font-semibold rounded-lg shadow-sm flex items-center gap-1.5 transition-colors 
-                        ${activeProgress.video
-                        ? "bg-green-100 text-green-700 hover:bg-green-200"
-                        : "bg-blue-600 text-white hover:bg-blue-700"}`}
-                  >
-                    {activeProgress.video ? <Check className="w-3.5 h-3.5" /> : <PlayCircle className="w-3.5 h-3.5" />}
-                    {activeProgress.video ? "Watched" : "Mark as Watched"}
-                  </button>
-                  <div className="h-4 w-px bg-gray-300 mx-1" />
-                </div>
+              {selectedSubtopic && (
+                <button
+                  onClick={handleMarkAsRead}
+                  disabled={readMap[selectedSubtopic.id] || marking}
+                  className={`px-4 py-1.5 rounded-full text-sm font-semibold flex items-center gap-2 transition-all
+                      ${readMap[selectedSubtopic.id]
+                      ? "bg-green-100 text-green-700 border border-green-200 cursor-default"
+                      : "bg-blue-600 text-white hover:bg-blue-700 shadow-sm hover:shadow active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                    }
+                    `}
+                >
+                  {readMap[selectedSubtopic.id] ? (
+                    <>
+                      <Check size={16} strokeWidth={2.5} />
+                      Completed
+                    </>
+                  ) : (
+                    <>
+                      {marking ? 'Marking...' : 'Mark as Read'}
+                    </>
+                  )}
+                </button>
               )}
-
-              {/* Layout Selector (Visible only on Videos tab) */}
-              {rightTab === "videos" && (
-                <div className="flex items-center gap-1 bg-gray-100/80 p-1 rounded-xl mx-2">
-                  {(['video', 'video-chat', 'video-code', 'chat-code', 'video-chat-code'] as LayoutMode[]).map((mode) => (
-                    <button
-                      key={mode}
-                      onClick={() => setVideoLayout(mode)}
-                      title={mode.replace(/-/g, ' + ')}
-                      className={`px-2 py-1.5 rounded-lg text-[10px] font-semibold transition-all flex items-center gap-1 ${videoLayout === mode
-                        ? "bg-white text-indigo-600 shadow-sm ring-1 ring-black/5 scale-[1.02]"
-                        : "text-gray-500 hover:text-gray-900 hover:bg-gray-200/50"
-                        }`}
-                    >
-                      {mode === 'video' && <VideoIcon className="w-3.5 h-3.5" />}
-                      {mode === 'video-chat' && (
-                        <div className="flex gap-0.5"><VideoIcon className="w-3.5 h-3.5" /><Sparkles className="w-3.5 h-3.5" /></div>
-                      )}
-                      {mode === 'video-code' && (
-                        <div className="flex gap-0.5"><VideoIcon className="w-3.5 h-3.5" /><Code className="w-3.5 h-3.5" /></div>
-                      )}
-                      {mode === 'chat-code' && (
-                        <div className="flex gap-0.5"><Sparkles className="w-3.5 h-3.5" /><Code className="w-3.5 h-3.5" /></div>
-                      )}
-                      {mode === 'video-chat-code' && (
-                        <div className="flex items-center gap-0.5">
-                          <div className="flex flex-col gap-0.5">
-                            <VideoIcon className="w-2 h-2" />
-                            <Sparkles className="w-2 h-2" />
-                          </div>
-                          <span className="text-gray-300 mx-0.5">|</span>
-                          <Code className="w-2 h-2" />
-                        </div>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              )}
+              <div className="flex items-center gap-2 text-sm bg-white border border-gray-300 shadow-sm rounded-full px-4 py-1 font-medium text-gray-700">
+                <span>
+                  {selectedSubtopic ? selectedSubtopic.name : "No subtopic selected"}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -591,21 +443,10 @@ const CourseDetail: React.FC = () => {
                     subtopicContent={selectedSubtopic.content}
                     sessionId={chatSessionId}
                     onNewSession={() => setChatSessionId(`course-chat-${courseId}-${crypto.randomUUID()}`)}
-                    layout={videoLayout}
                   />
                 }
-                {rightTab === "quizzes" && (
-                  <StudentQuizEmbed
-                    subtopicId={selectedSubtopic.id}
-                    onComplete={(status) => handleProgressUpdate('quiz', status)}
-                  />
-                )}
-                {rightTab === "coding" && (
-                  <StudentCodingEmbed
-                    subtopicId={selectedSubtopic.id}
-                    onComplete={(status) => handleProgressUpdate('coding', status)}
-                  />
-                )}
+                {rightTab === "quizzes" && <StudentQuizEmbed subtopicId={selectedSubtopic.id} />}
+                {rightTab === "coding" && <StudentCodingEmbed subtopicId={selectedSubtopic.id} />}
                 {rightTab === "notes" && <StudentNotes subtopicId={selectedSubtopic.id} />}
 
               </>
@@ -613,7 +454,9 @@ const CourseDetail: React.FC = () => {
           </div>
         </div>
       </div>
-    </div >
+
+
+    </div>
   );
 };
 

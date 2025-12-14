@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchRandomQuestions } from "@/services/questionService";
-import { submitQuiz } from "@/services/courseService";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
@@ -13,12 +12,7 @@ type QuizQuestion = {
   correct_answer_index: number;
 };
 
-interface StudentQuizEmbedProps {
-  subtopicId: string;
-  onComplete?: (status: boolean) => void;
-}
-
-const StudentQuizEmbed = ({ subtopicId, onComplete }: StudentQuizEmbedProps) => {
+const StudentQuizEmbed = ({ subtopicId }: { subtopicId: string }) => {
   const navigate = useNavigate();
   const [quizzes, setQuizzes] = useState<QuizQuestion[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,9 +25,6 @@ const StudentQuizEmbed = ({ subtopicId, onComplete }: StudentQuizEmbedProps) => 
   const [quizCompleted, setQuizCompleted] = useState(false);
 
   useEffect(() => {
-    if (onComplete) {
-    }
-
     loadQuizzes();
     resetQuiz();
   }, [subtopicId]);
@@ -48,7 +39,7 @@ const StudentQuizEmbed = ({ subtopicId, onComplete }: StudentQuizEmbedProps) => 
         level: 'subtopic',
         type: 'mcq_single'
       }, 5);
-
+      
       // Transform to quiz format
       const quizData: QuizQuestion[] = selectedQuestions.map(q => ({
         id: q.id,
@@ -56,13 +47,8 @@ const StudentQuizEmbed = ({ subtopicId, onComplete }: StudentQuizEmbedProps) => 
         options: q.mcq_options?.map(opt => opt.text) || [],
         correct_answer_index: q.mcq_options?.findIndex(opt => opt.is_correct) || 0
       }));
-
+      
       setQuizzes(quizData);
-
-      // If no quizzes, mark complete automatically
-      if (quizData.length === 0 && onComplete) {
-        onComplete(true);
-      }
     } catch (err) {
       console.error("Failed to load quizzes", err);
       setQuizzes([]);
@@ -77,10 +63,8 @@ const StudentQuizEmbed = ({ subtopicId, onComplete }: StudentQuizEmbedProps) => 
     setSubmitted(false);
     setScore(0);
     setUserAnswers({});
-
-    const passed = localStorage.getItem(`quiz_passed_${subtopicId}`) === 'true';
+    setIsPassed(false);
     setQuizCompleted(false);
-    if (!passed) setIsPassed(false);
   };
 
   const handleSubmit = () => {
@@ -100,18 +84,7 @@ const StudentQuizEmbed = ({ subtopicId, onComplete }: StudentQuizEmbedProps) => 
     // Check if quiz is completed
     if (currentIndex === quizzes.length - 1) {
       const percentage = (updatedScore / quizzes.length) * 100;
-      const passed = percentage >= 70;
-
-      if (passed) {
-        setIsPassed(true);
-      }
-
-      submitQuiz(subtopicId, { ...userAnswers, [currentIndex]: selectedOption }, percentage, passed)
-        .then(() => {
-          if (onComplete) onComplete(true);
-        })
-        .catch(err => console.error("Failed to submit quiz", err));
-
+      setIsPassed(percentage >= 70);
       setQuizCompleted(true);
     }
   };
@@ -130,7 +103,7 @@ const StudentQuizEmbed = ({ subtopicId, onComplete }: StudentQuizEmbedProps) => 
 
   const handlePrevious = () => {
     if (currentIndex === 0) return;
-
+    
     const previousIndex = currentIndex - 1;
     setCurrentIndex(previousIndex);
     setSelectedOption(userAnswers[previousIndex] ?? null);
@@ -171,8 +144,9 @@ const StudentQuizEmbed = ({ subtopicId, onComplete }: StudentQuizEmbedProps) => 
           </p>
 
           <p
-            className={`text-lg font-semibold mb-4 ${isPassed ? "text-green-600" : "text-red-600"
-              }`}
+            className={`text-lg font-semibold mb-4 ${
+              isPassed ? "text-green-600" : "text-red-600"
+            }`}
           >
             {isPassed ? "Congratulations! You passed the quiz." : "Keep practicing! You can retake the quiz."}
           </p>
@@ -201,7 +175,7 @@ const StudentQuizEmbed = ({ subtopicId, onComplete }: StudentQuizEmbedProps) => 
             </span>
           </CardTitle>
         </CardHeader>
-
+        
         <CardContent className="space-y-4">
           {/* Question */}
           <div className="bg-gray-50 p-4 rounded-lg">
@@ -215,7 +189,7 @@ const StudentQuizEmbed = ({ subtopicId, onComplete }: StudentQuizEmbedProps) => 
               const isSelected = selectedOption === index;
 
               let buttonClass = "w-full justify-start text-left border border-gray-300";
-
+              
               if (submitted) {
                 if (isCorrect) {
                   buttonClass += " bg-green-100 border-green-500 text-green-800";

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchRandomQuestions } from "@/services/questionService";
+import { submitQuiz } from "@/services/courseService";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
@@ -30,11 +31,7 @@ const StudentQuizEmbed = ({ subtopicId, onComplete }: StudentQuizEmbedProps) => 
   const [quizCompleted, setQuizCompleted] = useState(false);
 
   useEffect(() => {
-    // Check if previously passed
-    const passed = localStorage.getItem(`quiz_passed_${subtopicId}`) === 'true';
-    if (passed) {
-      setIsPassed(true);
-      if (onComplete) onComplete(true);
+    if (onComplete) {
     }
 
     loadQuizzes();
@@ -80,9 +77,7 @@ const StudentQuizEmbed = ({ subtopicId, onComplete }: StudentQuizEmbedProps) => 
     setSubmitted(false);
     setScore(0);
     setUserAnswers({});
-    // Don't reset isPassed if already passed in storage, but UI should show result
-    // Actually if we retake, we might want to clear it?
-    // User wants "progress" to be sticky. So keep isPassed true in state if passed.
+
     const passed = localStorage.getItem(`quiz_passed_${subtopicId}`) === 'true';
     setQuizCompleted(false);
     if (!passed) setIsPassed(false);
@@ -109,9 +104,13 @@ const StudentQuizEmbed = ({ subtopicId, onComplete }: StudentQuizEmbedProps) => 
 
       if (passed) {
         setIsPassed(true);
-        localStorage.setItem(`quiz_passed_${subtopicId}`, 'true');
-        if (onComplete) onComplete(true);
       }
+
+      submitQuiz(subtopicId, { ...userAnswers, [currentIndex]: selectedOption }, percentage, passed)
+        .then(() => {
+          if (onComplete) onComplete(true);
+        })
+        .catch(err => console.error("Failed to submit quiz", err));
 
       setQuizCompleted(true);
     }

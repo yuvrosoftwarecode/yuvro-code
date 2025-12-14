@@ -202,6 +202,34 @@ export const markSubtopicComplete = async (subtopicId: string) => {
   return restApiAuthUtil.post('/course/std/mark_complete/', { subtopic_id: subtopicId });
 };
 
+export const markSubtopicVideoWatched = async (subtopicId: string) => {
+  return restApiAuthUtil.post('/course/std/mark_video_watched/', { subtopic_id: subtopicId });
+};
+
+export const fetchCourseProgress = async (courseId: string) => {
+  return restApiAuthUtil.get('/course/std/get_course_progress/', { params: { course_id: courseId } });
+};
+
+export const submitQuiz = async (subtopicId: string, answers: any, scorePercent: number, isPassed: boolean) => {
+  return restApiAuthUtil.post('/course/std/submit_quiz/', {
+    subtopic_id: subtopicId,
+    answers,
+    score_percent: scorePercent,
+    is_passed: isPassed
+  });
+};
+
+export const submitCoding = async (subtopicId: string, codingStatus: Record<string, boolean>) => {
+  return restApiAuthUtil.post('/course/std/submit_coding/', {
+    subtopic_id: subtopicId,
+    coding_status: codingStatus
+  });
+};
+
+export const fetchUserCourseProgress = async (courseId: string) => {
+  return restApiAuthUtil.get('/course/std/get_user_progress_details/', { params: { course_id: courseId } });
+};
+
 const courseService = {
   getCourses: fetchCourses,
   getCourse: fetchCourseById,
@@ -234,6 +262,13 @@ const courseService = {
   updateNote,
   deleteNote,
   markSubtopicComplete,
+  markSubtopicVideoWatched,
+  markSubtopicComplete,
+  markSubtopicVideoWatched,
+  fetchCourseProgress,
+  submitQuiz,
+  submitCoding,
+  fetchUserCourseProgress,
 };
 
 export default courseService;

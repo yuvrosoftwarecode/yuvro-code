@@ -13,6 +13,9 @@ import {
   fetchTopicsByCourse,
   fetchSubtopicsByTopic,
   markSubtopicComplete,
+  markSubtopicVideoWatched,
+  fetchCourseStructure,
+  fetchUserCourseProgress,
   Course as CourseType
 } from "@/services/courseService";
 import { fetchQuestions } from "@/services/questionService";
@@ -36,53 +39,45 @@ type Subtopic = {
 };
 
 const CourseDetail: React.FC = () => {
-  const [readMap, setReadMap] = useState<Record<string, boolean>>({});
   const { courseId } = useParams<{ courseId: string }>();
 
   const [course, setCourse] = useState<CourseType | null>(null);
-  const [loading, setLoading] = useState(true);
-
   const [topics, setTopics] = useState<Topic[]>([]);
-  const [subtopicsMap, setSubtopicsMap] = useState<Record<string, Subtopic[]>>(
-    {}
-  );
-
-  // Track progress for current subtopic locally
-  const [activeProgress, setActiveProgress] = useState<{ quiz: boolean; coding: boolean }>({
-    quiz: false,
-    coding: false
-  });
-
-  const [requirements, setRequirements] = useState<{ hasQuiz: boolean; hasCoding: boolean; loaded: boolean }>({
-    hasQuiz: false,
-    hasCoding: false,
-    loaded: false
-  });
 
   const [collapsed, setCollapsed] = useState(false);
 
-  const [expandedTopics, setExpandedTopics] = useState<Record<string, boolean>>(
-    {}
-  );
+  const [expandedTopics, setExpandedTopics] = useState<Record<string, boolean>>({});
+  const [subtopicsMap, setSubtopicsMap] = useState<Record<string, Subtopic[]>>({});
+
+  // Progress Map: Stores { subtopicId: progressPercent } (0 - 100)
+  const [progressMap, setProgressMap] = useState<Record<string, number>>({});
+
+  // Keep readMap for backward compatibility (stores is_completed)
+  const [readMap, setReadMap] = useState<Record<string, boolean>>({});
+
+  const [loading, setLoading] = useState(true);
+  const [chatSessionId, setChatSessionId] = useState(`course-chat-${courseId}-${crypto.randomUUID()}`);
+  const [rightTab, setRightTab] = useState<'videos' | 'quizzes' | 'coding' | 'notes'>('videos');
+
+  // Track requirements state (Quiz/Coding presence)
+  const [requirements, setRequirements] = useState<{ hasQuiz: boolean; hasCoding: boolean; loaded: boolean }>({
+    hasQuiz: false, hasCoding: false, loaded: false
+  });
+
+  const [activeProgress, setActiveProgress] = useState<{
+    quiz: boolean;
+    coding: boolean;
+    video: boolean
+  }>({ quiz: false, coding: false, video: false });
+
+  // Layout for Videos
+  const [videoLayout, setVideoLayout] = useState<LayoutMode>('video');
 
   const [selectedSubtopic, setSelectedSubtopic] = useState<Subtopic | null>(
     null
   );
 
-  const [rightTab, setRightTab] = useState<
-    "videos" | "quizzes" | "coding" | "notes"
-  >("videos");
-  const [videoLayout, setVideoLayout] = useState<LayoutMode>("video");
 
-
-  const [chatSessionId, setChatSessionId] = useState<string>("");
-  const [marking, setMarking] = useState(false);
-
-  useEffect(() => {
-    if (courseId) {
-      setChatSessionId(`course-chat-${courseId}-${crypto.randomUUID()}`);
-    }
-  }, [courseId]);
 
   const getCourseContext = () => {
     let ctx = `Course: ${course?.name || 'Unknown'}.\n`;
@@ -125,38 +120,13 @@ const CourseDetail: React.FC = () => {
 
       setRequirements({ hasQuiz, hasCoding, loaded: true });
 
-      // Load local progress state
-      const quizDone = localStorage.getItem(`quiz_passed_${subtopicId}`) === 'true';
+      // We don't load local storage anymore. 
+      // Progress is loaded via fetchUserCourseProgress in loadPage/refresh
+      // But we can check current state from progressMap/other maps if we store details
+      // For now, we rely on the generic loadPage to populate "readMap" but 
+      // we need to know granular status for the buttons.
 
-      // Check if coding is fully solved in storage
-      let codingDone = false;
-      if (hasCoding) {
-        try {
-          const map = JSON.parse(localStorage.getItem(`coding_solved_${subtopicId}`) || '{}');
-          codingDone = coding.every(q => map[q.id]);
-        } catch { }
-      } else {
-        codingDone = true; // No coding = done
-      }
-
-      const currentProgress = {
-        quiz: hasQuiz ? quizDone : true,
-        coding: codingDone
-      };
-
-      setActiveProgress(currentProgress);
-
-      // If we met requirements just now (e.g. reloaded page), mark it read?
-      if (!readMap[subtopicId]) {
-        const quizSatisfied = !hasQuiz || currentProgress.quiz;
-        const codingSatisfied = !hasCoding || currentProgress.coding;
-        const hasRequirements = hasQuiz || hasCoding; // Only auto-complete if tracked content exists
-
-        if (hasRequirements && quizSatisfied && codingSatisfied) {
-          markSubtopicRead(subtopicId);
-        }
-      }
-
+      // Let's refactor proper progress fetching.
     } catch (err) {
       console.error("Failed to check requirements", err);
       // Safer to assume nothing and let components drive it.
@@ -178,31 +148,26 @@ const CourseDetail: React.FC = () => {
     }
   }, [readMap]);
 
-  const handleProgressUpdate = useCallback((type: 'quiz' | 'coding', status: boolean) => {
-    if (!selectedSubtopic || !requirements.loaded) return;
+  const handleProgressUpdate = useCallback(async (type: 'quiz' | 'coding', status: boolean) => {
+    // Determine new status locally for immediate UI feedback (optional)
+    // Then reload partial progress to get accurate %
+    if (!selectedSubtopic) return;
 
-    setActiveProgress(prev => {
-      // Prevent loop: if status didn't change, don't update state
-      if (prev[type] === status) return prev;
+    // We trust the child component has already called the API to submit
+    // So we just need to refresh the course progress map
+    await loadProgress();
+  }, [selectedSubtopic, requirements]);
 
-      const newState = { ...prev, [type]: status };
-
-      const quizSatisfied = !requirements.hasQuiz || newState.quiz;
-      const codingSatisfied = !requirements.hasCoding || newState.coding;
-      const hasRequirements = requirements.hasQuiz || requirements.hasCoding;
-
-      if (hasRequirements && quizSatisfied && codingSatisfied && !readMap[selectedSubtopic.id]) {
-        markSubtopicRead(selectedSubtopic.id);
-      }
-      return newState;
-    });
-  }, [selectedSubtopic, requirements, readMap, markSubtopicRead]);
-
+  /* PROGRESS CALCULATION */
   const getTopicProgress = (topicId: string): number => {
     const subs = subtopicsMap[topicId] || [];
     if (subs.length === 0) return 0;
-    const completed = subs.filter((s) => readMap[s.id]).length;
-    return Math.round((completed / subs.length) * 100);
+
+    // Sum of all subtopic percentages
+    const totalProgress = subs.reduce((acc, s) => acc + (progressMap[s.id] || 0), 0);
+
+    // Average progress for the topic (0 to 100)
+    return Math.round(totalProgress / subs.length);
   };
 
   useEffect(() => {
@@ -251,26 +216,56 @@ const CourseDetail: React.FC = () => {
         setSubtopicsMap({});
       }
 
-      try {
-        const response = await restApiAuthUtil.get<{ completed_subtopic_ids: string[] }>(
-          `/course/std/completed_subtopics/?course_id=${courseId}`
-        );
-        const completedIds = response.completed_subtopic_ids || [];
-        const newReadMap: Record<string, boolean> = {};
-        completedIds.forEach((id) => {
-          newReadMap[id] = true;
-        });
-        setReadMap(newReadMap);
-      } catch (err) {
-        console.warn("Could not fetch completed subtopics", err);
-        setReadMap({});
-      }
+      setSubtopicsMap(allSubtopics);
+
+      await loadProgress();
     } catch (err) {
       toast.error("Failed to load course");
     } finally {
       setLoading(false);
     }
   };
+
+  const loadProgress = async () => {
+    if (!courseId) return;
+    try {
+      const progressData = await fetchUserCourseProgress(courseId) as any;
+      // console.log("Progress Data", progressData);
+
+      const newProgressMap: Record<string, number> = {};
+      const newReadMap: Record<string, boolean> = {};
+
+      // progressData is { subtopicId: { progress_percent: 20.0, is_completed: false, is_videos_watched: boolean... } }
+      Object.entries(progressData).forEach(([subId, data]: [string, any]) => {
+        newProgressMap[subId] = data.progress_percent || 0;
+        newReadMap[subId] = data.is_completed || false;
+
+        // Update active progress if currently selected
+        if (selectedSubtopic && selectedSubtopic.id === subId) {
+          setActiveProgress({
+            quiz: data.is_quiz_completed,
+            coding: data.is_coding_completed,
+            video: data.is_videos_watched
+          });
+        }
+      });
+
+      setProgressMap(newProgressMap);
+      setReadMap(newReadMap);
+    } catch (err) {
+      console.warn("Could not fetch progress map", err);
+    }
+  };
+
+  // refresh progress when subtopic changes to ensure activeProgress is correct
+  useEffect(() => {
+    if (selectedSubtopic && !loading) {
+      // We might simply check the existing maps if we loaded all data, 
+      // but detailed flags (video/quiz/coding) might need fresh check or logic from map
+      // For now, loadProgress fetches everything, so it updates the active state too.
+      loadProgress();
+    }
+  }, [selectedSubtopic]);
 
   const toggleExpandTopic = async (topicId: string) => {
     const isOpen = expandedTopics[topicId];
@@ -508,15 +503,34 @@ const CourseDetail: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-4 ml-4 mr-6">
-              {/* Manual Complete Button for Content-Only Subtopics */}
-              {selectedSubtopic && requirements.loaded && !requirements.hasQuiz && !requirements.hasCoding && !readMap[selectedSubtopic.id] && (
-                <button
-                  onClick={() => markSubtopicRead(selectedSubtopic.id)}
-                  className="mr-2 px-3 py-1.5 bg-green-600 text-white text-xs font-semibold rounded-lg hover:bg-green-700 shadow-sm flex items-center gap-1.5 transition-colors"
-                >
-                  <Check className="w-3.5 h-3.5" />
-                  Mark Complete
-                </button>
+
+
+              {/* Layout Selector (Visible only on Videos tab) */}
+              {rightTab === "videos" && (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={async () => {
+                      if (selectedSubtopic) {
+                        try {
+                          await markSubtopicVideoWatched(selectedSubtopic.id);
+                          toast.success("Videos marked as watched");
+                          // Refresh progress to update UI
+                          loadProgress();
+                        } catch (e) {
+                          toast.error("Failed to mark video watched");
+                        }
+                      }
+                    }}
+                    className={`px-3 py-1.5 text-xs font-semibold rounded-lg shadow-sm flex items-center gap-1.5 transition-colors 
+                        ${activeProgress.video
+                        ? "bg-green-100 text-green-700 hover:bg-green-200"
+                        : "bg-blue-600 text-white hover:bg-blue-700"}`}
+                  >
+                    {activeProgress.video ? <Check className="w-3.5 h-3.5" /> : <PlayCircle className="w-3.5 h-3.5" />}
+                    {activeProgress.video ? "Watched" : "Mark as Watched"}
+                  </button>
+                  <div className="h-4 w-px bg-gray-300 mx-1" />
+                </div>
               )}
 
               {/* Layout Selector (Visible only on Videos tab) */}

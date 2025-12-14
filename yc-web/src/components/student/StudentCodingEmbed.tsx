@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchQuestions, Question } from "@/services/questionService";
+import { submitCoding } from "@/services/courseService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,22 +21,13 @@ const StudentCodingEmbed = ({ subtopicId, onComplete }: StudentCodingEmbedProps)
   const [solvedMap, setSolvedMap] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    // Load solved state
-    try {
-      const stored = localStorage.getItem(`coding_solved_${subtopicId}`);
-      if (stored) {
-        setSolvedMap(JSON.parse(stored));
-      }
-    } catch (e) {
-      console.error("Failed to load solved state", e);
-    }
+    setSolvedMap({});
   }, [subtopicId]);
 
   useEffect(() => {
     loadCodingQuestions();
   }, [subtopicId]);
 
-  // Check completion whenever solvedMap or questions change
   useEffect(() => {
     if (questions.length > 0) {
       const allSolved = questions.every(q => solvedMap[q.id]);
@@ -44,7 +36,6 @@ const StudentCodingEmbed = ({ subtopicId, onComplete }: StudentCodingEmbedProps)
         if (onComplete) onComplete(true);
       }
     } else if (!loading && questions.length === 0) {
-      // No questions = completed
       if (onComplete) onComplete(true);
     }
   }, [solvedMap, questions, loading, onComplete]);
@@ -52,7 +43,6 @@ const StudentCodingEmbed = ({ subtopicId, onComplete }: StudentCodingEmbedProps)
   const loadCodingQuestions = async () => {
     setLoading(true);
     try {
-      // Fetch all coding questions for this subtopic from question service
       const res = await fetchQuestions({
         subtopic: subtopicId,
         categories: 'learn',
@@ -64,7 +54,6 @@ const StudentCodingEmbed = ({ subtopicId, onComplete }: StudentCodingEmbedProps)
       if (res.length > 0) {
         setSelectedQuestion(res[0]);
       } else {
-        // No coding questions -> Mark complete
         if (onComplete) onComplete(true);
       }
     } catch (err) {
@@ -78,18 +67,22 @@ const StudentCodingEmbed = ({ subtopicId, onComplete }: StudentCodingEmbedProps)
   const handleSimulateSubmit = () => {
     if (!selectedQuestion) return;
 
-    // In a real app, we would run test cases here.
-    // For now, we simulate success.
+
     const newSolved = { ...solvedMap, [selectedQuestion.id]: true };
     setSolvedMap(newSolved);
-    localStorage.setItem(`coding_solved_${subtopicId}`, JSON.stringify(newSolved));
 
-    // Check if this was the last one
     const allSolved = questions.every(q => q.id === selectedQuestion.id ? true : newSolved[q.id]);
-    if (allSolved) {
-      setIsCompleted(true);
-      if (onComplete) onComplete(true);
-    }
+
+    submitCoding(subtopicId, newSolved)
+      .then(() => {
+        if (allSolved) {
+          setIsCompleted(true);
+          if (onComplete) onComplete(true);
+        } else {
+          if (onComplete) onComplete(false); // Update progress even if partial
+        }
+      })
+      .catch(err => console.error("Backend submit failed", err));
   };
 
   const getDifficultyColor = (difficulty: string) => {

@@ -14,7 +14,7 @@ import {
   fetchCourses,
   fetchTopicsByCourse,
 } from "@/services/courseService";
-import { fetchQuestions } from "@/services/questionService";
+import { getSkillTestsByTopic, startSkillTest } from "@/services/skillTestService";
 import { toast } from "sonner";
 
 // -------------------- Types for this page --------------------
@@ -89,6 +89,10 @@ const SkillTest: React.FC = () => {
   const [testCompleted, setTestCompleted] = useState<Set<string>>(new Set());
   const [testStats, setTestStats] = useState<TestStats | null>(null);
 
+  // New State for Real Logic
+  const [questions, setQuestions] = useState<any[]>([]);
+  const [currentSubmissionId, setCurrentSubmissionId] = useState<string | null>(null);
+
   // -------------------- Load courses from backend --------------------
 
   useEffect(() => {
@@ -128,45 +132,25 @@ const SkillTest: React.FC = () => {
       // Optional: you could add a separate loading state for tests
       setTests([]);
 
-      // Fetch all skill test MCQs + coding problems for this topic using question service
-      const [quizzes, codingProblems] = await Promise.all([
-        fetchQuestions({
-          topic: topic.id,
-          categories: 'skill_test',
-          type: 'mcq_single'
-        }),
-        fetchQuestions({
-          topic: topic.id,
-          categories: 'skill_test',
-          type: 'coding'
-        })
-      ]);
+      const apiTests = await getSkillTestsByTopic(topic.id);
 
-      const quizCount = Array.isArray(quizzes) ? quizzes.length : 0;
-      const codingCount = Array.isArray(codingProblems)
-        ? codingProblems.length
-        : 0;
-      const totalQuestions = quizCount + codingCount;
+      // Filter only active tests
+      const activeTests = apiTests.filter(t => t.publish_status === 'active');
 
-      // If no questions → no tests available
-      if (totalQuestions === 0) {
-        setTests([]);
-        return;
-      }
+      // Map to UI Test format
+      const mappedTests: Test[] = activeTests.map(t => ({
+        id: t.id,
+        title: t.title,
+        difficulty: t.difficulty.charAt(0).toUpperCase() + t.difficulty.slice(1) as "Easy" | "Medium" | "Hard",
+        questions: (t.questions_config.mcq_single.length +
+          t.questions_config.mcq_multiple.length +
+          t.questions_config.coding.length +
+          t.questions_config.descriptive.length),
+        duration: t.duration,
+        topicId: topic.id
+      }));
 
-      // Simple duration logic: 2 mins per question, at least 15 mins
-      const duration = Math.max(15, totalQuestions * 2);
-
-      const uiTest: Test = {
-        id: `${topic.id}-skill-test`,
-        title: `${topic.name} Skill Test`,
-        difficulty: "Medium",
-        questions: totalQuestions,
-        duration,
-        topicId: topic.id,
-      };
-
-      setTests([uiTest]);
+      setTests(mappedTests);
     } catch (err) {
       console.error("Failed to load skill test questions", err);
       toast.error("Failed to load skill test questions");
@@ -207,39 +191,36 @@ const SkillTest: React.FC = () => {
 
       setSelectedTopic(uiTopics[0] || null);
 
-      // ***** NOW BUILD DYNAMIC SKILL TESTS *****
-      const dynamicTests: Test[] = [];
+      // ***** NOW LOAD REAL SKILL TESTS *****
+      const realTests: Test[] = [];
 
       for (const topic of uiTopics) {
-        const [quizzes, coding] = await Promise.all([
-          fetchQuestions({
-            topic: topic.id,
-            categories: 'skill_test',
-            type: 'mcq_single'
-          }),
-          fetchQuestions({
-            topic: topic.id,
-            categories: 'skill_test',
-            type: 'coding'
-          })
-        ]);
+        try {
+          const apiTests = await getSkillTestsByTopic(topic.id);
 
-        const totalQuestions = quizzes.length + coding.length;
+          // Filter only active tests
+          const activeTests = apiTests.filter(t => t.publish_status === 'active');
 
-        // If a topic has no skill test questions, skip it
-        if (totalQuestions === 0) continue;
+          // Map to UI Test format
+          const mappedTests: Test[] = activeTests.map(t => ({
+            id: t.id,
+            title: t.title,
+            difficulty: t.difficulty.charAt(0).toUpperCase() + t.difficulty.slice(1) as "Easy" | "Medium" | "Hard",
+            questions: (t.questions_config.mcq_single.length +
+              t.questions_config.mcq_multiple.length +
+              t.questions_config.coding.length +
+              t.questions_config.descriptive.length),
+            duration: t.duration,
+            topicId: topic.id
+          }));
 
-        dynamicTests.push({
-          id: `${course.id}-${topic.id}-skilltest`,
-          title: `${topic.name} Skill Test`,
-          difficulty: "Medium",
-          questions: totalQuestions,
-          duration: 45,
-          topicId: topic.id,
-        });
+          realTests.push(...mappedTests);
+        } catch (e) {
+          console.error(`Failed to load tests for topic ${topic.name}`, e);
+        }
       }
 
-      setTests(dynamicTests);
+      setTests(realTests);
     } catch (err) {
       console.error("Failed to load topics or tests", err);
       toast.error("Failed to load topics or tests");
@@ -265,8 +246,29 @@ const SkillTest: React.FC = () => {
     }
   };
 
-  const handleBeginTest = () => {
-    setCurrentView("test");
+  const handleBeginTest = async () => {
+    if (!selectedTest) return;
+
+    try {
+      const loadingToast = toast.loading("Starting test...");
+      const res = await startSkillTest(selectedTest.id);
+      toast.dismiss(loadingToast);
+
+      if (res.status === 'started' || res.status === 'in_progress') {
+        setQuestions(res.questions);
+        setCurrentSubmissionId(res.submission_id);
+        setCurrentView("test");
+        toast.success("Test started successfully");
+      } else if (res.status === 'completed' || res.status === 'submitted') {
+        toast.info("You have already completed this test.");
+        // Maybe fetch results? For now just go to results
+        // setTestCompleted(prev => new Set(prev).add(selectedTest.id));
+        // setCurrentView("results");
+      }
+    } catch (err: any) {
+      console.error("Failed to start test", err);
+      toast.error(err.response?.data?.error || "Failed to start test");
+    }
   };
 
   const handleTestComplete = (
@@ -359,6 +361,8 @@ const SkillTest: React.FC = () => {
             // passes topicId so AssessmentInterface can fetch real questions if needed
             topicId: selectedTopic.id,
           }}
+          questions={questions}
+          submissionId={currentSubmissionId || ""}
           onComplete={handleTestComplete}
           onBack={handleBackToInstructions}
         />

@@ -35,7 +35,8 @@ import {
   Maximize
 } from 'lucide-react';
 import CodeEditor from '@/components/ui/code-editor';
-import { fetchQuestions } from "@/services/questionService";
+import { submitSkillTest } from "@/services/skillTestService";
+import { toast } from "sonner";
 
 interface Assessment {
   id: string;
@@ -59,47 +60,26 @@ interface Question {
 
 interface AssessmentInterfaceProps {
   assessment: Assessment;
+  questions: Question[];
+  submissionId: string;
   onComplete: (stats?: { answeredCount: number; totalQuestions: number; timeSpent: number }) => void;
   onBack: () => void;
 }
 
 const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
   assessment,
+  questions: propQuestions,
+  submissionId,
   onComplete,
   onBack
 }) => {
 
   // --------------------- REAL QUESTIONS ---------------------
-  const [questions, setQuestions] = useState<Question[]>([]);
+  const [questions, setQuestions] = useState<Question[]>(propQuestions);
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        // Fetch both MCQ and coding questions for skill test
-        const [mcqQuestions, codingQuestions] = await Promise.all([
-          fetchQuestions({
-            topic: assessment.topicId,
-            categories: 'skill_test',
-            type: 'mcq_single'
-          }),
-          fetchQuestions({
-            topic: assessment.topicId,
-            categories: 'skill_test',
-            type: 'coding'
-          })
-        ]);
-
-        // Combine and shuffle questions
-        const allQuestions = [...mcqQuestions, ...codingQuestions];
-        const shuffledQuestions = allQuestions.sort(() => 0.5 - Math.random());
-
-        setQuestions(shuffledQuestions);
-      } catch (err) {
-        console.error("Failed to load skill test questions", err);
-      }
-    };
-    load();
-  }, [assessment.topicId]);
+    setQuestions(propQuestions);
+  }, [propQuestions]);
 
   // --------------------- STATES ---------------------
 
@@ -209,7 +189,7 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
 
   // -------------------- SUBMIT ASSESSMENT --------------------
 
-  const handleSubmitAssessment = () => {
+  const handleSubmitAssessment = async () => {
     const answeredCount = questions.filter(q => {
       if (q.type === "descriptive") {
         return answers[q.id]?.trim();
@@ -220,11 +200,22 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
 
     const timeSpent = (assessment.duration * 60) - timeLeft;
 
-    onComplete({
-      answeredCount,
-      totalQuestions: questions.length,
-      timeSpent
-    });
+    // Submit to Backend
+    try {
+      const loadingToast = toast.loading("Submitting assessment...");
+      await submitSkillTest(assessment.id, submissionId, answers);
+      toast.dismiss(loadingToast);
+      toast.success("Assessment submitted successfully!");
+
+      onComplete({
+        answeredCount,
+        totalQuestions: questions.length,
+        timeSpent
+      });
+    } catch (err) {
+      toast.error("Failed to submit assessment. Please try again.");
+      console.error("Submit error", err);
+    }
   };
 
   // -------------------- NAVIGATION --------------------

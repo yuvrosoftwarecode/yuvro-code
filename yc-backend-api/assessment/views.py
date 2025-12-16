@@ -10,7 +10,7 @@ from .models import (
     JobTestSubmission, SkillTestSubmission
 )
 from .serializers import (
-    ContestSerializer, SkillTestSerializer
+    ContestSerializer, SkillTestSerializer, MockInterviewSerializer
 )
 from authentication.permissions import IsOwnerOrInstructorOrAdmin
 
@@ -104,4 +104,38 @@ class SkillTestViewSet(viewsets.ModelViewSet):
         if q:
             qs = qs.filter(q)
             
+        return qs
+
+
+class MockInterviewViewSet(viewsets.ModelViewSet):
+    queryset = MockInterview.objects.all()
+    serializer_class = MockInterviewSerializer
+    permission_classes = [IsOwnerOrInstructorOrAdmin]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+
+    search_fields = ['title', 'description']
+    ordering_fields = ['scheduled_datetime']
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        # optionally filter by status or type
+        status_param = self.request.query_params.get('status')
+        type_param = self.request.query_params.get('type')
+
+        q = Q()
+        if status_param:
+            q &= Q(status=status_param)
+
+        if type_param:
+            q &= Q(type=type_param)
+
+        if q:
+            qs = qs.filter(q)
+
+        for obj in qs:
+            obj.update_status()
+
         return qs

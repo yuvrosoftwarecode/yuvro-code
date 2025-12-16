@@ -66,7 +66,6 @@ class BaseAssessmentModel(BaseModel):
     
     
 class SkillTest(BaseAssessmentModel):
-    # Course integration - only for SkillTest
     course = models.ForeignKey(
         'course.Course', 
         on_delete=models.CASCADE, 

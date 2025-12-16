@@ -80,7 +80,6 @@ class JobTestSerializer(serializers.ModelSerializer):
         return obj.job_test_submissions.count()
 
 
-# Submission Serializers
 class ContestSubmissionSerializer(serializers.ModelSerializer):
     contest_title = serializers.CharField(source='contest.title', read_only=True)
     user_name = serializers.CharField(source='user.get_full_name', read_only=True)

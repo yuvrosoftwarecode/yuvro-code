@@ -16,7 +16,8 @@ import {
   markSubtopicVideoWatched,
   fetchCourseStructure,
   fetchUserCourseProgress,
-  Course as CourseType
+  Course as CourseType,
+  default as courseService
 } from "@/services/courseService";
 import { fetchQuestions } from "@/services/questionService";
 import { Check } from "lucide-react";
@@ -120,13 +121,6 @@ const CourseDetail: React.FC = () => {
 
       setRequirements({ hasQuiz, hasCoding, loaded: true });
 
-      // We don't load local storage anymore. 
-      // Progress is loaded via fetchUserCourseProgress in loadPage/refresh
-      // But we can check current state from progressMap/other maps if we store details
-      // For now, we rely on the generic loadPage to populate "readMap" but 
-      // we need to know granular status for the buttons.
-
-      // Let's refactor proper progress fetching.
     } catch (err) {
       console.error("Failed to check requirements", err);
       // Safer to assume nothing and let components drive it.
@@ -149,12 +143,8 @@ const CourseDetail: React.FC = () => {
   }, [readMap]);
 
   const handleProgressUpdate = useCallback(async (type: 'quiz' | 'coding', status: boolean) => {
-    // Determine new status locally for immediate UI feedback (optional)
-    // Then reload partial progress to get accurate %
     if (!selectedSubtopic) return;
 
-    // We trust the child component has already called the API to submit
-    // So we just need to refresh the course progress map
     await loadProgress();
   }, [selectedSubtopic, requirements]);
 
@@ -192,16 +182,25 @@ const CourseDetail: React.FC = () => {
       let firstTopicId: string | null = null;
 
       try {
-        for (const topic of t) {
+        const subtopicPromises = t.map(async (topic) => {
           const subs = await fetchSubtopicsByTopic(topic.id);
-          allSubtopics[topic.id] = subs as Subtopic[];
+          return { topicId: topic.id, subs: subs as Subtopic[] };
+        });
 
-          // Set first topic and subtopic
-          if (!firstSubtopic && Array.isArray(subs) && subs.length > 0) {
-            firstSubtopic = subs[0] as Subtopic;
-            firstTopicId = topic.id;
-          }
+        const results = await Promise.all(subtopicPromises);
+
+        results.forEach(({ topicId, subs }) => {
+          allSubtopics[topicId] = subs;
+        });
+
+        // Find first subtopic for selection
+        const firstWithSubs = results.find(r => r.subs.length > 0);
+
+        if (firstWithSubs) {
+          firstSubtopic = firstWithSubs.subs[0];
+          firstTopicId = firstWithSubs.topicId;
         }
+
         setSubtopicsMap(allSubtopics);
 
         // Auto-expand first topic and select first subtopic
@@ -260,12 +259,9 @@ const CourseDetail: React.FC = () => {
   // refresh progress when subtopic changes to ensure activeProgress is correct
   useEffect(() => {
     if (selectedSubtopic && !loading) {
-      // We might simply check the existing maps if we loaded all data, 
-      // but detailed flags (video/quiz/coding) might need fresh check or logic from map
-      // For now, loadProgress fetches everything, so it updates the active state too.
       loadProgress();
     }
-  }, [selectedSubtopic]);
+  }, [selectedSubtopic, loading]);
 
   const toggleExpandTopic = async (topicId: string) => {
     const isOpen = expandedTopics[topicId];
@@ -484,7 +480,7 @@ const CourseDetail: React.FC = () => {
             <div className="flex gap-2 justify-center flex-1 min-w-0">
               {[
                 { key: "videos", label: "Videos", icon: <PlayCircle /> },
-                { key: "quizzes", label: "Quizzes", icon: <HelpCircle /> },
+                { key: "quizzes", label: "Quiz", icon: <HelpCircle /> },
                 { key: "coding", label: "Coding", icon: <Code /> },
                 { key: "notes", label: "Notes", icon: <StickyNote /> }
               ].map((tab) => (
@@ -536,7 +532,7 @@ const CourseDetail: React.FC = () => {
               {/* Layout Selector (Visible only on Videos tab) */}
               {rightTab === "videos" && (
                 <div className="flex items-center gap-1 bg-gray-100/80 p-1 rounded-xl mx-2">
-                  {(['video', 'video-chat', 'video-code', 'chat-code', 'video-chat-code'] as LayoutMode[]).map((mode) => (
+                  {(['video', 'video-chat', 'video-code', 'code-chat', 'video-chat-code'] as LayoutMode[]).map((mode) => (
                     <button
                       key={mode}
                       onClick={() => setVideoLayout(mode)}
@@ -553,8 +549,8 @@ const CourseDetail: React.FC = () => {
                       {mode === 'video-code' && (
                         <div className="flex gap-0.5"><VideoIcon className="w-3.5 h-3.5" /><Code className="w-3.5 h-3.5" /></div>
                       )}
-                      {mode === 'chat-code' && (
-                        <div className="flex gap-0.5"><Sparkles className="w-3.5 h-3.5" /><Code className="w-3.5 h-3.5" /></div>
+                      {mode === 'code-chat' && (
+                        <div className="flex gap-0.5"><Code className="w-3.5 h-3.5" /><Sparkles className="w-3.5 h-3.5" /></div>
                       )}
                       {mode === 'video-chat-code' && (
                         <div className="flex items-center gap-0.5">

@@ -44,8 +44,6 @@ const StudentQuizEmbed = ({ subtopicId, onComplete }: StudentQuizEmbedProps) => 
       // Fetch random 5 questions from question service with category 'learn' and level 'subtopic'
       const selectedQuestions = await fetchRandomQuestions({
         subtopic: subtopicId,
-        categories: 'learn',
-        level: 'subtopic',
         type: 'mcq_single'
       }, 5);
 

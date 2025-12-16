@@ -1,12 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { fetchNotesBySubtopic } from "@/services/courseService";
+import { fetchNotesBySubtopic, Note } from "@/services/courseService";
 import { Card, CardContent } from "@/components/ui/card";
-
-type Note = {
-  id: string;
-  content: string;
-  sub_topic: string;
-};
 
 const StudentNotes = ({ subtopicId }: { subtopicId: string }) => {
   const [notes, setNotes] = useState<Note[]>([]);

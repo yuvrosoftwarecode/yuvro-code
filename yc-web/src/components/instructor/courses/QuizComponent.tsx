@@ -55,7 +55,7 @@ const QuizComponent = ({ subtopic }: any) => {
     setEditingQuiz(null);
 
     setQuestion("");
-    setOptions(["", "","", ""]); // always 2 default options
+    setOptions(["", "", "", ""]); // always 2 default options
     setCorrectIndex(null);
 
     setOpen(true);
@@ -100,7 +100,7 @@ const QuizComponent = ({ subtopic }: any) => {
       return toast.error("Select correct answer");
 
     const payload = {
-      category: "learn_certify",
+      categories: ["learn"],
       sub_topic: subtopic.id,
       topic: null,
       question,

@@ -277,8 +277,11 @@ class UserCourseProgress(BaseTimestampedModel):
         return f"{self.user.username} - {self.subtopic.name} ({self.progress_percent:.1f}%)"
     
     def calculate_progress(self):
-        has_quiz = self.subtopic.questions.filter(type__in=['mcq_single', 'mcq_multiple']).exists()
-        has_coding = self.subtopic.questions.filter(type='coding').exists()
+        # Use .all() to leverage prefetch_related if available
+        questions = self.subtopic.questions.all()
+        
+        has_quiz = any(q.type in ['mcq_single', 'mcq_multiple'] for q in questions)
+        has_coding = any(q.type == 'coding' for q in questions)
         
         w_video = 20.0
         w_quiz = 30.0 if has_quiz else 0.0
@@ -423,7 +426,7 @@ class Question(models.Model):
             for category in self.categories:
                 if category not in valid_categories:
                     raise ValidationError(f"Invalid category: {category}")
-            
+        
         # Validate MCQ fields
         if self.type in ["mcq_single", "mcq_multiple"]:
             if not self.mcq_options or not isinstance(self.mcq_options, list) or len(self.mcq_options) < 2:

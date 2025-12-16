@@ -56,9 +56,9 @@ const ContinueLearningBanner: React.FC<Props> = ({ continueProgress }) => {
                     </div>
 
                     {/* Progress Bar */}
-                    <div className="w-full max-w-md space-y-1.5">
+                    <div className="w-full space-y-1.5">
                         <div className="flex justify-between text-xs font-medium text-gray-500">
-                            <span>Progress</span>
+                            <span>Lesson {continueProgress.lesson} of {continueProgress.total_lessons}</span>
                             <span className="text-blue-600">{progressPercent}%</span>
                         </div>
                         <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">

@@ -134,7 +134,7 @@ class RestApiAuthUtil extends RestApiUtil {
                             ...options.headers,
                             'Authorization': `Bearer ${newToken}`,
                             // Ensure Content-Type is preserved if it was set in getAuthHeaders or options
-                            ...(authHeaders['Content-Type'] ? { 'Content-Type': authHeaders['Content-Type'] as string } : {})
+                            ...((authHeaders as Record<string, string>)['Content-Type'] ? { 'Content-Type': (authHeaders as Record<string, string>)['Content-Type'] } : {})
                         };
 
                         const retryOptionsWithAuth = {

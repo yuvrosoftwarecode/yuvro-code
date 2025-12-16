@@ -426,6 +426,14 @@ const QuestionBankManager: React.FC<QuestionBankManagerProps> = ({
         newData.subtopic = selectedSubtopic?.id;
       }
 
+      // Auto-select 'learn' category if subtopic level is selected
+      if (level === 'subtopic') {
+        if (!newData.categories.includes('learn')) {
+          newData.categories = [...newData.categories, 'learn'];
+          toast.success("Added 'learn' category for Subtopic level");
+        }
+      }
+
       return newData;
     });
   };
@@ -771,6 +779,11 @@ const QuestionBankManager: React.FC<QuestionBankManagerProps> = ({
                           if (checked) {
                             setFormData(prev => ({ ...prev, categories: [...prev.categories, category.value] }));
                           } else {
+                            // Prevent removing 'learn' if level is subtopic
+                            if (category.value === 'learn' && formData.level === 'subtopic') {
+                              toast.error("Subtopic questions must have the 'learn' category");
+                              return;
+                            }
                             setFormData(prev => ({ ...prev, categories: prev.categories.filter(c => c !== category.value) }));
                           }
                         }}

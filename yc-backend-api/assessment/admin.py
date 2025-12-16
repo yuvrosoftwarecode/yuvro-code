@@ -3,7 +3,9 @@ from django.utils.html import format_html
 from .models import (
     SkillTest, Contest, MockInterview, JobTest,
     SkillTestSubmission, ContestSubmission, 
-    MockInterviewSubmission, JobTestSubmission
+    MockInterviewSubmission, JobTestSubmission,
+    SkillTestQuestionActivity, ContestQuestionActivity,
+    MockInterviewQuestionActivity, JobTestQuestionActivity
 )
 
 
@@ -266,3 +268,65 @@ class JobTestSubmissionAdmin(admin.ModelAdmin):
     
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('user', 'job_test')
+
+
+class BaseQuestionActivityAdmin(admin.ModelAdmin):
+    list_display = ['user', 'question', 'has_violations', 'violation_count', 'updated_at']
+    list_filter = ['has_violations', 'violations_resolved', 'alert_priority', 'created_at']
+    search_fields = ['user__username', 'user__email', 'question__title', 'session_id']
+    readonly_fields = [
+        'id', 'created_at', 'updated_at', 
+        'question_activities', 'navigation_activities', 'proctoring_activities',
+        'camera_snapshots', 'answer_history', 'answer_data'
+    ]
+    
+    fieldsets = (
+        ('Context', {
+            'fields': ('user', 'question', 'session_id', 'ip_address')
+        }),
+        ('Status', {
+            'fields': ('is_final_answer', 'is_correct', 'marks_obtained')
+        }),
+        ('Activity Logs', {
+            'fields': ('question_activities', 'navigation_activities'),
+            'classes': ('collapse',)
+        }),
+        ('Proctoring Logs', {
+            'fields': ('proctoring_activities', 'camera_snapshots', 'has_violations', 'violation_count', 'alert_priority'),
+        }),
+        ('Violations & Resolution', {
+            'fields': ('violations_resolved', 'resolved_by', 'resolved_at', 'resolution_notes'),
+            'classes': ('collapse',)
+        }),
+        ('Answer Data', {
+            'fields': ('answer_data', 'answer_history', 'answer_attempt_count'),
+            'classes': ('collapse',)
+        }),
+        ('Grading', {
+            'fields': ('auto_graded', 'graded_by', 'graded_at', 'grading_feedback'),
+            'classes': ('collapse',)
+        })
+    )
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('user', 'question')
+
+
+@admin.register(SkillTestQuestionActivity)
+class SkillTestQuestionActivityAdmin(BaseQuestionActivityAdmin):
+    list_display = BaseQuestionActivityAdmin.list_display + ['skill_test_submission']
+
+
+@admin.register(ContestQuestionActivity)
+class ContestQuestionActivityAdmin(BaseQuestionActivityAdmin):
+    list_display = BaseQuestionActivityAdmin.list_display + ['contest_submission']
+
+
+@admin.register(MockInterviewQuestionActivity)
+class MockInterviewQuestionActivityAdmin(BaseQuestionActivityAdmin):
+    list_display = BaseQuestionActivityAdmin.list_display + ['mock_interview_submission']
+
+
+@admin.register(JobTestQuestionActivity)
+class JobTestQuestionActivityAdmin(BaseQuestionActivityAdmin):
+    list_display = BaseQuestionActivityAdmin.list_display + ['job_test_submission']

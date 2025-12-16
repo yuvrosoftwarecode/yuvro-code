@@ -145,7 +145,7 @@ const CodingProblemsManager: React.FC<Props> = ({ subtopicId }) => {
     setSaving(true);
     try {
       const payload = {
-        category: "learn_certify",
+        categories: ["learn"],
         topic: null,
         sub_topic: subtopicId,
         title: title.trim(),

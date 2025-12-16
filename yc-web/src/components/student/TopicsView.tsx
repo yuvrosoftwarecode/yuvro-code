@@ -1,14 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Course, TopicBasic } from '../../services/courseService';
+import { Course, TopicBasic, Subtopic, CodingProblem } from '../../services/courseService';
 import courseService from '../../services/courseService';
 
-interface CodingProblem {
-  id: string;
-  title: string;
-  description: string;
-  input: string;
-  test_cases: any[];
-}
+
 
 interface TopicsViewProps {
   course: Course;
@@ -42,11 +36,11 @@ const TopicsView: React.FC<TopicsViewProps> = ({ course, onBackToCourses, onProb
   const handleTopicSelect = async (topic: TopicBasic) => {
     setSelectedTopic(topic);
     setProblemsLoading(true);
-    
+
     try {
       // Get subtopics for this topic
-      const subtopics = await courseService.getSubtopics(topic.id);
-      
+      const subtopics = (await courseService.getSubtopics(topic.id)) as Subtopic[];
+
       // Get coding problems for all subtopics
       const allProblems: CodingProblem[] = [];
       for (const subtopic of subtopics) {
@@ -57,7 +51,7 @@ const TopicsView: React.FC<TopicsViewProps> = ({ course, onBackToCourses, onProb
           console.error(`Failed to load problems for subtopic ${subtopic.id}:`, error);
         }
       }
-      
+
       setCodingProblems(allProblems);
     } catch (error) {
       console.error('Failed to load coding problems:', error);
@@ -184,11 +178,11 @@ const TopicsView: React.FC<TopicsViewProps> = ({ course, onBackToCourses, onProb
                           Medium
                         </span>
                       </div>
-                      
+
                       <p className="text-gray-600 text-sm mb-3 line-clamp-2">
                         {problem.description}
                       </p>
-                      
+
                       <div className="flex items-center justify-between text-sm text-gray-500">
                         <div className="flex items-center space-x-4">
                           <span>

@@ -13,7 +13,7 @@ type Video = {
   description?: string;
 };
 
-export type LayoutMode = "video" | "video-chat" | "video-code" | "chat-code" | "video-chat-code";
+export type LayoutMode = "video" | "video-chat" | "video-code" | "code-chat" | "video-chat-code";
 
 type StudentVideosProps = {
   subtopicId: string;
@@ -227,14 +227,6 @@ const StudentVideos = ({
   // --- Layout Helpers ---
 
   const isSplit = layout !== "video";
-  // We subtract gap space roughly in calc if needed, but flex gap handles it well. 
-  // However, for resizable percentage width to work perfectly with gap, we usually need correct calc.
-  // Simple approximation: Width % applies to available space. Flex gap is fixed.
-  // Actually, standard % width with gap will overflow. 
-  // We can use flex-basis logic or simple style width. Let's try style width and ensure box-sizing.
-  // A cleaner way for Resizable Split with Gap:
-  // Left: width: `calc(${leftPanelWidth}% - 8px)` (half gap)
-  // Right: width: `calc(${100 - leftPanelWidth}% - 8px)`
 
   const gapSize = 16; // 1rem
   const halfGap = gapSize / 2;
@@ -266,7 +258,7 @@ const StudentVideos = ({
         >
           {/* Standard Modes */}
           {(layout === 'video' || layout === 'video-chat' || layout === 'video-code') && <VideoComponent />}
-          {(layout === 'chat-code') && <ChatComponent />}
+          {(layout === 'code-chat') && <CodeEditorComponent />}
 
           {/* 3-Pane Vertical Split Mode (Left Side: Video Top, Chat Bottom) */}
           {(layout === 'video-chat-code') && (
@@ -314,8 +306,8 @@ const StudentVideos = ({
             style={styles.right}
           >
             {/* Standard Split Modes */}
-            {layout === 'video-chat' && <ChatComponent />}
-            {(layout === 'video-code' || layout === 'chat-code' || layout === 'video-chat-code') && <CodeEditorComponent />}
+            {(layout === 'video-chat' || layout === 'code-chat') && <ChatComponent />}
+            {(layout === 'video-code' || layout === 'video-chat-code') && <CodeEditorComponent />}
 
             {/* 3-Pane Vertical Split Mode - Using GAP separation instead of border */}
             {/* REMOVED OLD RIGHT PANE LOGIC FOR video-chat-code */}

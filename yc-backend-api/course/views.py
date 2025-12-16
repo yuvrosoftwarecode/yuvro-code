@@ -636,18 +636,129 @@ class StudentViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"])
     def continue_learning(self, request):
         user = request.user
-        last_progress = UserCourseProgress.objects.filter(user=user).order_by("-updated_at").first()
+        # Sort by last_accessed to ensure the most recently viewed subtopic is returned
+        last_progress = UserCourseProgress.objects.filter(user=user).order_by("-last_accessed", "-updated_at").first()
         
         if not last_progress:
              return Response({"message": "No progress found"}, status=200)
              
+        course = last_progress.course
+        
+        # Calculate stats for banner
+        total_lessons = Subtopic.objects.filter(topic__course=course).count()
+        
+        # Calculate percent
+        user_progress_list = UserCourseProgress.objects.filter(user=user, course=course)
+        total_percent_sum = sum(p.progress_percent for p in user_progress_list)
+        
+        avg_percent = 0
+        if total_lessons > 0:
+            avg_percent = round(total_percent_sum / total_lessons)
+            
         # Return necessary details to navigate
         return Response({
-            "course_id": last_progress.course.id,
+            "course_id": course.id,
+            "course_name": course.name,
             "topic_id": last_progress.topic.id if last_progress.topic else None,
             "subtopic_id": last_progress.subtopic.id,
-            "subtopic_name": last_progress.subtopic.name
+            "subtopic_name": last_progress.subtopic.name,
+            "total_lessons": total_lessons,
+            "percent": avg_percent,
+            "lesson": user_progress_list.count() # approximate 'current lesson' count
         })
+
+    @action(detail=False, methods=["get"])
+    def stats(self, request):
+        """
+        Return user learning stats.
+        """
+        user = request.user
+        
+        # Calculate stats
+        completed_count = UserCourseProgress.objects.filter(user=user, is_completed=True).count()
+        
+        # Calculate average progress
+        avg_progress = 0
+        total_minutes = 0
+        
+        progress_records = UserCourseProgress.objects.filter(user=user)
+        
+        if progress_records.exists():
+            # --- Smart Time Estimate ---
+            for p in progress_records:
+                total_minutes += 5 # Base
+                if p.is_videos_watched: total_minutes += 15
+                if p.is_quiz_completed: total_minutes += 10
+                if p.is_coding_completed: total_minutes += 25
+
+            # --- Accurate Avg Progress ---
+            # 1. Group progress by course
+            course_map = {} # {course_id: sum_of_percentages}
+            for p in progress_records:
+                cid = p.course_id
+                course_map[cid] = course_map.get(cid, 0) + p.progress_percent
+            
+            # 2. Calculate % for each course
+            total_course_pct = 0
+            for cid, current_sum in course_map.items():
+                # Count total subtopics in this course
+                total_subs = Subtopic.objects.filter(topic__course_id=cid).count()
+                if total_subs > 0:
+                    # Course % = (Sum of subtopic %) / Count of subtopics
+                    # e.g., 500 / 10 = 50%
+                    c_pct = current_sum / total_subs
+                    # Cap at 100%
+                    c_pct = min(c_pct, 100.0)
+                    total_course_pct += c_pct
+            
+            # 3. Overall Average
+            if len(course_map) > 0:
+                avg_progress = round(total_course_pct / len(course_map))
+        
+        # Format time string "Xh Ym"
+        hours = total_minutes // 60
+        mins = total_minutes % 60
+        
+        time_spent_str = f"{hours}h {mins}m"
+        if hours == 0:
+            time_spent_str = f"{mins}m"
+            
+        return Response({
+            "lessons_completed": completed_count,
+            "time_spent": time_spent_str,
+            "avg_progress": avg_progress
+        })
+
+    @action(detail=False, methods=["get"])
+    def progress(self, request):
+        """
+        Get overall progress percentage for all courses the user has started.
+        Returns: [{'course_id': 'uuid', 'percent': 45.5}, ...]
+        """
+        user = request.user
+        
+        # Get all progress records
+        progress_records = UserCourseProgress.objects.filter(user=user).select_related('course')
+        
+        # Group by course
+        course_stats = {}
+        for p in progress_records:
+            cid = str(p.course.id)
+            if cid not in course_stats:
+                course_stats[cid] = {'sum': 0.0}
+            course_stats[cid]['sum'] += p.progress_percent
+            
+        results = []
+        for cid, stats in course_stats.items():
+            # Count total subtopics for this course
+            total_subs = Subtopic.objects.filter(topic__course_id=cid).count()
+            if total_subs > 0:
+                percent = round(stats['sum'] / total_subs, 1)
+                # Cap at 100% just in case
+                percent = min(percent, 100.0)
+                results.append({'course_id': cid, 'percent': percent})
+                
+        return Response(results)
 
     @action(detail=False, methods=["get"])
     def get_course_progress(self, request):
@@ -702,3 +813,33 @@ class StudentViewSet(viewsets.ViewSet):
         data = {str(item['subtopic']): item for item in serializer.data}
             
         return Response(data)
+
+    @action(detail=False, methods=["post"])
+    def log_access(self, request):
+        """
+        Log access to a subtopic to update 'Continue Learning' banner.
+        Does not change completion status, just updates timestamps.
+        """
+        user = request.user
+        subtopic_id = request.data.get("subtopic_id")
+        
+        if not subtopic_id:
+             return Response({"error": "subtopic_id is required"}, status=400)
+             
+        subtopic = get_object_or_404(Subtopic, id=subtopic_id)
+        
+        # Get or create progress record
+        progress, created = UserCourseProgress.objects.get_or_create(
+            user=user,
+            subtopic=subtopic,
+            defaults={
+                "course": subtopic.topic.course,
+                "topic": subtopic.topic
+            }
+        )
+        
+        # Explicitly update timestamps
+        progress.last_accessed = timezone.now()
+        progress.save(update_fields=['last_accessed', 'updated_at'])
+        
+        return Response({"message": "Access logged"})

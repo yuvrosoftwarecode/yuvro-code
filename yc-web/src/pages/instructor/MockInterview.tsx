@@ -1,7 +1,3 @@
-
-
-
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -47,11 +43,9 @@ interface Contest {
 function mapContestFromBackend(c: any): Contest {
   const rawStatus = String(c.status || 'scheduled').toLowerCase().trim();
   let status = rawStatus;
-  // normalize legacy or different terms
   if (status === 'past') status = 'completed';
   if (status === 'upcoming') status = 'scheduled';
 
-  // Client-side fallback: derive ongoing status if times indicate interview is in-progress
   try {
     const start = c.scheduled_datetime ? new Date(c.scheduled_datetime) : (c.start_datetime ? new Date(c.start_datetime) : null);
     const durationMinutes = Number(c.duration) || 0;
@@ -59,7 +53,6 @@ function mapContestFromBackend(c: any): Contest {
       const now = new Date();
       const end = new Date(start.getTime() + durationMinutes * 60 * 1000);
       if (now >= start && now <= end) {
-        // if backend didn't mark it as ongoing, prefer showing it as ongoing in UI
         if (status !== 'ongoing') {
           console.debug(`Marking interview ${c.id} as ongoing (client-side) based on scheduled_datetime and duration)`);
           status = 'ongoing';
@@ -67,7 +60,6 @@ function mapContestFromBackend(c: any): Contest {
       }
     }
   } catch (e) {
-    // ignore parsing errors
   }
 
   return {
@@ -126,7 +118,6 @@ export default function OwnerContest() {
       const data = await mockInterviewService.getAllMockInterviews();
       if (Array.isArray(data)) {
         const mapped = data.map(mapContestFromBackend);
-        // Debug: log status distribution to help diagnose ongoing/count issues
         const counts = mapped.reduce((acc: Record<string, number>, c) => {
           acc[c.status] = (acc[c.status] || 0) + 1;
           return acc;
@@ -239,7 +230,6 @@ export default function OwnerContest() {
       contest.status,
       contest.startDate
     ].some(field => (field || '').toString().toLowerCase().includes(q));
-    // Normalize status compare and add a robust fallback for ongoing-like values
     const normalizedStatus = (contest.status || '').toString().toLowerCase().trim();
     const matchesTab = selectedTab === 'all' || normalizedStatus === selectedTab || (
       selectedTab === 'ongoing' && (
@@ -249,12 +239,10 @@ export default function OwnerContest() {
     return matchesSearch && matchesTab;
   });
 
-  // Debug: log when the selected tab changes and what the filtered result is
   useEffect(() => {
     try {
       console.debug('MockInterview: selectedTab=', selectedTab, 'filteredCount=', filteredMockInterviews.length, 'statusCounts=', mockInterviews.reduce((acc: Record<string, number>, c) => { acc[c.status] = (acc[c.status] || 0) + 1; return acc; }, {} as Record<string, number>));
     } catch (e) {
-      // ignore
     }
   }, [selectedTab, searchQuery, mockInterviews]);
 
@@ -333,7 +321,6 @@ export default function OwnerContest() {
 
             {currentView === 'list' && (
               <>
-                {/* Stats Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                   <Card className="border border-gray-200">
                     <CardHeader className="pb-3">
@@ -768,7 +755,6 @@ export default function OwnerContest() {
                     </CardContent>
                   </Card>
 
-                  {/* Action Buttons */}
                   <div className="flex justify-end gap-3 pt-6 border-t border-gray-200">
                     <button
                       onClick={() => openEditForm(selectedContest)}

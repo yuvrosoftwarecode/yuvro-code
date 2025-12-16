@@ -121,7 +121,6 @@ class MockInterviewViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = super().get_queryset()
-        # optionally filter by status or type
         status_param = self.request.query_params.get('status')
         type_param = self.request.query_params.get('type')
 

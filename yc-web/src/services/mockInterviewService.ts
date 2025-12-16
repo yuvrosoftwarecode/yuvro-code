@@ -41,7 +41,6 @@ export interface MockInterview {
 export interface CreateMockInterviewData {
   title: string;
   description: string;
-  // Align with backend MockInterview.TYPE_CHOICES
   type: 'coding' | 'system_design' | 'aptitude' | 'behavioral' | 'domain_specific';
   difficulty: 'easy' | 'medium' | 'hard';
   scheduled_datetime: string;
@@ -61,7 +60,6 @@ export interface CompleteMockInterviewData {
 }
 
 class MockInterviewService {
-  // Using central restApiAuthUtil for all requests which handles auth headers & refresh
 
   async getAllMockInterviews(): Promise<MockInterview[]> {
     try {

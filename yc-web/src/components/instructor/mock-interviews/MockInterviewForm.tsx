@@ -342,29 +342,6 @@ export default function InterviewsForm() {
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {/* <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Contest Type *</label>
-                          <select
-                            value={formData.type}
-                            onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
-                            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                          >
-                            <option value="company">Company Contest</option>
-                            <option value="college">College Contest</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Difficulty Level *</label>
-                          <select
-                            value={formData.difficulty}
-                            onChange={(e) => setFormData({ ...formData, difficulty: e.target.value as any })}
-                            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                          >
-                            <option value="Easy">Easy</option>
-                            <option value="Medium">Medium</option>
-                            <option value="Hard">Hard</option>
-                          </select>
-                        </div> */}
                       </div>
                     </CardContent>
                   </Card>
@@ -397,97 +374,83 @@ export default function InterviewsForm() {
                     </select>
                 </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Status *
-        </label>
-        <select
-          value={formData.status}
-          onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-        >
-          <option value="scheduled">Scheduled</option>
-          <option value="ongoing">Ongoing</option>
-          <option value="completed">Completed</option>
-          <option value="cancelled">Cancelled</option>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Status *
+                    </label>
+                    <select
+                      value={formData.status}
+                      onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                    >
+                      <option value="scheduled">Scheduled</option>
+                      <option value="ongoing">Ongoing</option>
+                      <option value="completed">Completed</option>
+                      <option value="cancelled">Cancelled</option>
 
-        </select>
-      </div>
+                    </select>
+                  </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Difficulty *
-        </label>
-        <select
-          value={formData.difficulty}
-          onChange={(e) => setFormData({ ...formData, difficulty: e.target.value })}
-          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-        >
-          <option value="easy">Easy</option>
-          <option value="medium">Medium</option>
-          <option value="hard">Hard</option>
-        </select>
-      </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Difficulty *
+                    </label>
+                    <select
+                      value={formData.difficulty}
+                      onChange={(e) => setFormData({ ...formData, difficulty: e.target.value })}
+                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                    >
+                      <option value="easy">Easy</option>
+                      <option value="medium">Medium</option>
+                      <option value="hard">Hard</option>
+                    </select>
+                  </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Duration (minutes) *
-        </label>
-        <input
-          type="number"
-          value={formData.duration}
-          onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-          min="1"
-          placeholder="e.g., 60"
-          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-        />
-      </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Duration (minutes) *
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.duration}
+                      onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                      min="1"
+                      placeholder="e.g., 60"
+                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                    />
+                  </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Total Marks *
-        </label>
-        <input
-          type="number"
-          value={formData.totalMarks}
-          onChange={(e) => setFormData({ ...formData, totalMarks: e.target.value })}
-          min="1"
-          placeholder="100"
-          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-        />
-      </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Total Marks *
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.totalMarks}
+                      onChange={(e) => setFormData({ ...formData, totalMarks: e.target.value })}
+                      min="1"
+                      placeholder="100"
+                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                    />
+                  </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Passing Marks *
-        </label>
-        <input
-          type="number"
-          value={formData.passingMarks}
-          onChange={(e) => setFormData({ ...formData, passingMarks: e.target.value })}
-          min="0"
-          placeholder="45"
-          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-        />
-      </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Passing Marks *
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.passingMarks}
+                      onChange={(e) => setFormData({ ...formData, passingMarks: e.target.value })}
+                      min="0"
+                      placeholder="45"
+                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                    />
+                  </div>
 
-    </div>
-  </CardContent>
-</Card>
-            
-
-
-
-
-
-
-
-
-
-
-
-
-                  {/* Schedule & Duration Card */}
+                </div>
+              </CardContent>
+            </Card>
                   <Card className="border border-gray-200 shadow-sm">
                     <CardHeader className="pb-4">
                       <CardTitle className="text-lg font-semibold text-gray-900 flex items-center">
@@ -529,7 +492,6 @@ export default function InterviewsForm() {
                       </div>
                     </CardContent>
                   </Card>
-
                   
                     <Card className="border border-gray-200 shadow-sm">
                   <CardHeader className="pb-4">
@@ -539,28 +501,26 @@ export default function InterviewsForm() {
                   </CardHeader>
 
                   <CardContent className="space-y-6">
+                  <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Publish Status
+            </label>
+            <select
+              value={formData.publish_status}
+              onChange={(e) =>
+                setFormData({ ...formData, publish_status: e.target.value })
+              }
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+            >
+              <option value="inactive">Inactive</option>
+              <option value="active">Active</option>
+              <option value="active">Archived</option>
 
-            {/* Publish Status */}
-            <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
-        Publish Status
-      </label>
-      <select
-        value={formData.publish_status}
-        onChange={(e) =>
-          setFormData({ ...formData, publish_status: e.target.value })
-        }
-        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-      >
-        <option value="inactive">Inactive</option>
-        <option value="active">Active</option>
-        <option value="active">Archived</option>
+            </select>
+          </div>
 
-      </select>
-    </div>
-
-  </CardContent>
-</Card>
+        </CardContent>
+      </Card>
 
                 </TabsContent>
 
@@ -579,11 +539,6 @@ export default function InterviewsForm() {
                   </Card>
                 </TabsContent>
 
-                {/* Questions tab content removed */}
-
-                
-
-                {/* Action Buttons */}
                 <div className="flex justify-end gap-3 pt-6 border-t border-gray-200">
                   <button
                     type="button"

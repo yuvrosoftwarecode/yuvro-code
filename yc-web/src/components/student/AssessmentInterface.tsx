@@ -37,6 +37,7 @@ import {
 import CodeEditor from '@/components/ui/code-editor';
 import { submitSkillTest } from "@/services/skillTestService";
 import { toast } from "sonner";
+import { useProctoring } from '@/hooks/useProctoring';
 
 interface Assessment {
   id: string;
@@ -73,6 +74,13 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
   onComplete,
   onBack
 }) => {
+
+  // --------------------- PROCTORING ---------------------
+  useProctoring({
+    assessmentId: assessment.id,
+    assessmentType: 'skill-tests',
+    enabled: true // Always enabled for now, or pass prop
+  });
 
   // --------------------- REAL QUESTIONS ---------------------
   const [questions, setQuestions] = useState<Question[]>(propQuestions);

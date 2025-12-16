@@ -7,7 +7,8 @@ from django.db import models
 from .models import (
     Contest, MockInterview, JobTest, SkillTest,
     ContestSubmission, MockInterviewSubmission, 
-    JobTestSubmission, SkillTestSubmission
+    JobTestSubmission, SkillTestSubmission,
+    SkillTestQuestionActivity
 )
 from .serializers import (
     ContestSerializer, SkillTestSerializer, MockInterviewSerializer
@@ -19,6 +20,7 @@ from course.models import Question
 from django.shortcuts import get_object_or_404
 import random
 from authentication.permissions import IsOwnerOrInstructorOrAdmin
+from .mixins import ProctoringMixin
 
 
 class ContestViewSet(viewsets.ModelViewSet):
@@ -78,9 +80,15 @@ class ContestViewSet(viewsets.ModelViewSet):
         return Response({'status': new_status}, status=status.HTTP_200_OK)
 
 
-class SkillTestViewSet(viewsets.ModelViewSet):
+class SkillTestViewSet(ProctoringMixin, viewsets.ModelViewSet):
     queryset = SkillTest.objects.all()
     serializer_class = SkillTestSerializer
+    
+    # ProctoringMixin Config
+    submission_model = SkillTestSubmission
+    question_activity_model = SkillTestQuestionActivity
+    submission_lookup_field = 'skill_test'
+    submission_related_field = 'skill_test_submission'
     permission_classes = [IsOwnerOrInstructorOrAdmin]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     

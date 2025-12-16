@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Trophy, Users, Calendar, Clock, Building2, GraduationCap, Pencil, Trash2, Eye, FileText, Code, CheckCircle, BookOpen, Plus } from 'lucide-react';
+import { Trophy, Users, Calendar, Clock, Building2, GraduationCap, Pencil, Trash2, Eye, FileText, Code, CheckCircle, BookOpen, Plus, BarChart2 } from 'lucide-react';
 import { toast } from 'sonner';
 import RoleSidebar from '@/components/common/RoleSidebar';
 import RoleHeader from '@/components/common/RoleHeader';
@@ -512,6 +512,13 @@ export default function InstructorSkillTest() {
                                 <TableCell>{skillTest.participants_count}</TableCell>
                                 <TableCell className="text-right">
                                   <div className="flex justify-end gap-2">
+                                    <button
+                                      onClick={() => navigate(`/instructor/skill-tests/${skillTest.id}/analytics`)}
+                                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                                      title="Analytics"
+                                    >
+                                      <BarChart2 className="h-4 w-4" />
+                                    </button>
                                     <button
                                       onClick={() => openEditForm(skillTest)}
                                       className="p-2 text-gray-600 hover:bg-gray-50 rounded-md transition-colors"

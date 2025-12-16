@@ -11,7 +11,8 @@ from .models import (
     SkillTestQuestionActivity
 )
 from .serializers import (
-    ContestSerializer, SkillTestSerializer, MockInterviewSerializer
+    ContestSerializer, SkillTestSerializer, MockInterviewSerializer,
+    SkillTestSubmissionSerializer
 )
 from course.models import Question
 from django.shortcuts import get_object_or_404
@@ -274,3 +275,18 @@ class MockInterviewViewSet(viewsets.ModelViewSet):
             'status': 'submitted',
             'score': total_score
         })
+
+
+class SkillTestSubmissionViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = SkillTestSubmission.objects.all()
+    serializer_class = SkillTestSubmissionSerializer
+    permission_classes = [IsOwnerOrInstructorOrAdmin]
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ['created_at', 'marks']
+    
+    def get_queryset(self):
+        qs = super().get_queryset()
+        skill_test_id = self.request.query_params.get('skill_test')
+        if skill_test_id:
+            qs = qs.filter(skill_test_id=skill_test_id)
+        return qs

@@ -74,14 +74,7 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
   onComplete,
   onBack
 }) => {
-
-  // --------------------- PROCTORING ---------------------
-  useProctoring({
-    assessmentId: assessment.id,
-    assessmentType: 'skill-tests',
-    enabled: true // Always enabled for now, or pass prop
-  });
-
+    
   // --------------------- REAL QUESTIONS ---------------------
   const [questions, setQuestions] = useState<Question[]>(propQuestions);
 
@@ -94,6 +87,31 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [timeLeft, setTimeLeft] = useState(assessment.duration * 60);
   const [answers, setAnswers] = useState<{ [key: string]: any }>({});
+
+  // Derived state for Proctoring
+  const currentQuestionData = questions[currentQuestion];
+  const isCodingQuestion = currentQuestionData?.type === 'coding';
+  const proctoringQuestionId = isCodingQuestion ? currentQuestionData?.id : undefined;
+
+  // --------------------- PROCTORING ---------------------
+
+  // 1. General Proctoring (Always active, logs to Submission)
+  useProctoring({
+    assessmentId: assessment.id,
+    assessmentType: 'skill-tests',
+    enabled: true,
+    questionId: undefined
+  });
+
+  // 2. Question Proctoring (Coding only, logs to Question)
+  useProctoring({
+    assessmentId: assessment.id,
+    assessmentType: 'skill-tests',
+    enabled: isCodingQuestion,
+    questionId: proctoringQuestionId // has value only if isCodingQuestion
+  });
+
+
   const [explanations, setExplanations] = useState<{ [key: string]: string }>({});
   const [flagged, setFlagged] = useState<Set<string>>(new Set());
 
@@ -423,7 +441,7 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
 
   // -------------------- CURRENT QUESTION --------------------
 
-  const currentQuestionData = questions[currentQuestion];
+
   const progress = questions.length ? ((currentQuestion + 1) / questions.length) * 100 : 0;
   const answeredCount = questions.filter(q => {
     if (q.type === 'descriptive') return answers[q.id]?.trim();

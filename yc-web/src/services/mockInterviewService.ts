@@ -1,6 +1,4 @@
-import axios from 'axios';
-
-const API_BASE_URL = import.meta.env.VITE_BACKEND_API_BASE_URL || 'http://localhost:8001/api';
+import { restApiAuthUtil } from '@/utils/RestApiAuthUtil';
 
 export interface MockInterview {
   id: string;
@@ -43,9 +41,10 @@ export interface MockInterview {
 export interface CreateMockInterviewData {
   title: string;
   description: string;
-  type: 'technical' | 'behavioral' | 'system_design' | 'coding';
+  // Align with backend MockInterview.TYPE_CHOICES
+  type: 'coding' | 'system_design' | 'aptitude' | 'behavioral' | 'domain_specific';
   difficulty: 'easy' | 'medium' | 'hard';
-  scheduled_date: string;
+  scheduled_datetime: string;
   duration: number;
   interviewee?: string;
   questions: any[];
@@ -62,20 +61,12 @@ export interface CompleteMockInterviewData {
 }
 
 class MockInterviewService {
-  private getAuthHeaders() {
-    const token = localStorage.getItem('access_token');
-    return {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    };
-  }
+  // Using central restApiAuthUtil for all requests which handles auth headers & refresh
 
   async getAllMockInterviews(): Promise<MockInterview[]> {
     try {
-      const response = await axios.get(`${API_BASE_URL}/mock-interviews/`, {
-        headers: this.getAuthHeaders(),
-      });
-      return response.data;
+      const response = await restApiAuthUtil.get<any[]>('/mock-interviews/');
+      return response;
     } catch (error) {
       console.error('Error fetching mock interviews:', error);
       throw error;
@@ -84,10 +75,8 @@ class MockInterviewService {
 
   async getMockInterview(id: string): Promise<MockInterview> {
     try {
-      const response = await axios.get(`${API_BASE_URL}/mock-interviews/${id}/`, {
-        headers: this.getAuthHeaders(),
-      });
-      return response.data;
+      const response = await restApiAuthUtil.get<any>(`/mock-interviews/${id}/`);
+      return response;
     } catch (error) {
       console.error('Error fetching mock interview:', error);
       throw error;
@@ -96,10 +85,8 @@ class MockInterviewService {
 
   async createMockInterview(data: CreateMockInterviewData): Promise<MockInterview> {
     try {
-      const response = await axios.post(`${API_BASE_URL}/mock-interviews/`, data, {
-        headers: this.getAuthHeaders(),
-      });
-      return response.data;
+      const response = await restApiAuthUtil.post<any>('/mock-interviews/', data);
+      return response;
     } catch (error) {
       console.error('Error creating mock interview:', error);
       throw error;
@@ -108,10 +95,8 @@ class MockInterviewService {
 
   async updateMockInterview(id: string, data: Partial<CreateMockInterviewData>): Promise<MockInterview> {
     try {
-      const response = await axios.patch(`${API_BASE_URL}/mock-interviews/${id}/`, data, {
-        headers: this.getAuthHeaders(),
-      });
-      return response.data;
+      const response = await restApiAuthUtil.patch<any>(`/mock-interviews/${id}/`, data);
+      return response;
     } catch (error) {
       console.error('Error updating mock interview:', error);
       throw error;
@@ -120,9 +105,7 @@ class MockInterviewService {
 
   async deleteMockInterview(id: string): Promise<void> {
     try {
-      await axios.delete(`${API_BASE_URL}/mock-interviews/${id}/`, {
-        headers: this.getAuthHeaders(),
-      });
+      await restApiAuthUtil.delete<void>(`/mock-interviews/${id}/`);
     } catch (error) {
       console.error('Error deleting mock interview:', error);
       throw error;
@@ -131,10 +114,8 @@ class MockInterviewService {
 
   async startInterview(id: string): Promise<MockInterview> {
     try {
-      const response = await axios.post(`${API_BASE_URL}/mock-interviews/${id}/start_interview/`, {}, {
-        headers: this.getAuthHeaders(),
-      });
-      return response.data;
+      const response = await restApiAuthUtil.post<any>(`/mock-interviews/${id}/start_interview/`, {});
+      return response;
     } catch (error) {
       console.error('Error starting interview:', error);
       throw error;
@@ -143,10 +124,8 @@ class MockInterviewService {
 
   async completeInterview(id: string, data: CompleteMockInterviewData): Promise<MockInterview> {
     try {
-      const response = await axios.post(`${API_BASE_URL}/mock-interviews/${id}/complete_interview/`, data, {
-        headers: this.getAuthHeaders(),
-      });
-      return response.data;
+      const response = await restApiAuthUtil.post<any>(`/mock-interviews/${id}/complete_interview/`, data);
+      return response;
     } catch (error) {
       console.error('Error completing interview:', error);
       throw error;
@@ -155,10 +134,8 @@ class MockInterviewService {
 
   async cancelInterview(id: string): Promise<MockInterview> {
     try {
-      const response = await axios.post(`${API_BASE_URL}/mock-interviews/${id}/cancel_interview/`, {}, {
-        headers: this.getAuthHeaders(),
-      });
-      return response.data;
+      const response = await restApiAuthUtil.post<any>(`/mock-interviews/${id}/cancel_interview/`, {});
+      return response;
     } catch (error) {
       console.error('Error cancelling interview:', error);
       throw error;
@@ -167,10 +144,8 @@ class MockInterviewService {
 
   async getMyInterviews(): Promise<MockInterview[]> {
     try {
-      const response = await axios.get(`${API_BASE_URL}/mock-interviews/my_interviews/`, {
-        headers: this.getAuthHeaders(),
-      });
-      return response.data;
+      const response = await restApiAuthUtil.get<any[]>('/mock-interviews/my_interviews/');
+      return response;
     } catch (error) {
       console.error('Error fetching my interviews:', error);
       throw error;
@@ -179,10 +154,8 @@ class MockInterviewService {
 
   async getUpcomingInterviews(): Promise<MockInterview[]> {
     try {
-      const response = await axios.get(`${API_BASE_URL}/mock-interviews/upcoming/`, {
-        headers: this.getAuthHeaders(),
-      });
-      return response.data;
+      const response = await restApiAuthUtil.get<any[]>('/mock-interviews/upcoming/');
+      return response;
     } catch (error) {
       console.error('Error fetching upcoming interviews:', error);
       throw error;

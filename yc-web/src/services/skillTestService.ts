@@ -178,6 +178,26 @@ export const getSkillTestsByTopic = async (topicId: string): Promise<SkillTest[]
   return fetchSkillTests({ topic: topicId });
 };
 
+export const getSkillTestSubmissions = async (skillTestId: string): Promise<any[]> => {
+  try {
+    const response = await restApiAuthUtil.get(`/skill-test-submissions/?skill_test=${skillTestId}`);
+    return response as any[];
+  } catch (error) {
+    console.error('Error fetching submissions:', error);
+    throw error;
+  }
+};
+
+export const getSkillTestSubmission = async (submissionId: string): Promise<any> => {
+  try {
+    const response = await restApiAuthUtil.get(`/skill-test-submissions/${submissionId}/`);
+    return response as any;
+  } catch (error) {
+    console.error('Error fetching submission:', error);
+    throw error;
+  }
+};
+
 export const DIFFICULTY_LEVELS = [
   { value: 'easy', label: 'Easy' },
   { value: 'medium', label: 'Medium' },
@@ -199,6 +219,8 @@ const skillTestService = {
   deleteSkillTest,
   getSkillTestsByCourse,
   getSkillTestsByTopic,
+  getSkillTestSubmissions,
+  getSkillTestSubmission,
   startSkillTest,
   submitSkillTest,
 };

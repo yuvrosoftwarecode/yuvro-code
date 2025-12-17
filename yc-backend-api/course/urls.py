@@ -7,7 +7,7 @@ from .views import (
     VideoViewSet,
     NoteViewSet,
     QuestionViewSet,
-    StudentViewSet,
+    StudentCourseProgressViewSet,
 )
 
 router = DefaultRouter()
@@ -17,7 +17,7 @@ router.register(r"subtopics", SubtopicViewSet)
 router.register(r"videos", VideoViewSet)
 router.register(r"notes", NoteViewSet)
 router.register(r"questions", QuestionViewSet)
-router.register(r"std", StudentViewSet, basename="student")
+router.register(r"student-course-progress", StudentCourseProgressViewSet, basename="student")
 
 
 # The API URLs are now determined automatically by the router

@@ -472,10 +472,10 @@ class QuestionViewSet(viewsets.ModelViewSet):
         return Response({"error": "Not allowed"}, status=403)
 
 
-class StudentViewSet(viewsets.ViewSet):
+class StudentCourseProgressViewSet(viewsets.ViewSet):
     """
     ViewSet to handle student-specific actions like progress, continue learning, etc.
-    Route: /api/course/std/
+    Route: /api/course/student-course-progress/
     """
     permission_classes = [IsAuthenticatedUser]
 

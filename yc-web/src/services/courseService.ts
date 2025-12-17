@@ -305,19 +305,19 @@ export async function deleteNote(id: string) {
 }
 
 export async function markSubtopicComplete(subtopicId: string) {
-  return restApiAuthUtil.post('/course/std/mark_complete/', { subtopic_id: subtopicId });
+  return restApiAuthUtil.post('/course/student-course-progress/mark_complete/', { subtopic_id: subtopicId });
 }
 
 export async function markSubtopicVideoWatched(subtopicId: string) {
-  return restApiAuthUtil.post('/course/std/mark_video_watched/', { subtopic_id: subtopicId });
+  return restApiAuthUtil.post('/course/student-course-progress/mark_video_watched/', { subtopic_id: subtopicId });
 }
 
 export async function fetchCourseProgress(courseId: string) {
-  return restApiAuthUtil.get('/course/std/get_course_progress/', { params: { course_id: courseId } });
+  return restApiAuthUtil.get('/course/student-course-progress/get_course_progress/', { params: { course_id: courseId } });
 }
 
 export async function submitQuiz(subtopicId: string, answers: any, scorePercent: number, isPassed: boolean) {
-  return restApiAuthUtil.post('/course/std/submit_quiz/', {
+  return restApiAuthUtil.post('/course/student-course-progress/submit_quiz/', {
     subtopic_id: subtopicId,
     answers,
     score_percent: scorePercent,
@@ -326,18 +326,18 @@ export async function submitQuiz(subtopicId: string, answers: any, scorePercent:
 }
 
 export async function submitCoding(subtopicId: string, codingStatus: Record<string, boolean>) {
-  return restApiAuthUtil.post('/course/std/submit_coding/', {
+  return restApiAuthUtil.post('/course/student-course-progress/submit_coding/', {
     subtopic_id: subtopicId,
     coding_status: codingStatus
   });
 }
 
 export async function fetchUserCourseProgress(courseId: string) {
-  return restApiAuthUtil.get('/course/std/get_user_progress_details/', { params: { course_id: courseId } });
+  return restApiAuthUtil.get('/course/student-course-progress/get_user_progress_details/', { params: { course_id: courseId } });
 }
 
 export async function logSubtopicAccess(subtopicId: string) {
-  return restApiAuthUtil.post('/course/std/log_access/', { subtopic_id: subtopicId });
+  return restApiAuthUtil.post('/course/student-course-progress/log_access/', { subtopic_id: subtopicId });
 }
 
 const courseService = {

@@ -1,5 +1,8 @@
 from django.db import models
+from django.contrib.auth import get_user_model
 from core.models import BaseModel, BaseTimestampedModel
+
+User = get_user_model()
 
 class Company(BaseModel):
     name = models.CharField(max_length=255)
@@ -77,5 +80,52 @@ class Job(BaseModel):
         ordering = ['-created_at']
 
 
+class JobApplication(BaseTimestampedModel):
+    APPLICATION_STATUS_CHOICES = [
+        ('bookmarked', 'Bookmarked'),
+        ('applied', 'Applied'),
+        ('screening_test_completed', 'Screening Test Completed'),
+        ('under_review', 'Under Review'),
+        ('shortlisted', 'Shortlisted'),
+        ('interview_scheduled', 'Interview Scheduled'),
+        ('interviewed', 'Interviewed'),
+        ('selected', 'Selected'),
+        ('rejected', 'Rejected'),
+        ('withdrawn', 'Withdrawn'),
+    ]
+
+    job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name='applications')
+    applicant = models.ForeignKey(User, on_delete=models.CASCADE, related_name='job_applications')
+    
+    is_bookmarked = models.BooleanField(default=False)
+    is_applied = models.BooleanField(default=False)
+    
+    cover_letter = models.TextField(blank=True, null=True)
+    resume_file = models.FileField(upload_to='resumes/', blank=True, null=True)
+    portfolio_url = models.URLField(blank=True, null=True)
+    
+    status = models.CharField(max_length=31, choices=APPLICATION_STATUS_CHOICES, blank=True, null=True)
+    applied_at = models.DateTimeField(blank=True, null=True)
+    
+    screening_responses = models.JSONField(default=dict, blank=True)
+    
+    recruiter_notes = models.TextField(blank=True, null=True)
+    feedback = models.TextField(blank=True, null=True)
+    
+    interview_scheduled_at = models.DateTimeField(blank=True, null=True)
+    interview_feedback = models.TextField(blank=True, null=True)
+    
+    expected_salary = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
+    expected_currency = models.CharField(max_length=3, choices=Job.CURRENCY_CHOICES, default='USD')
+    
+    available_from = models.DateField(blank=True, null=True)
+    notice_period_days = models.PositiveIntegerField(blank=True, null=True)
+
+    class Meta:
+        ordering = ['-applied_at']
+        unique_together = ['job', 'applicant']  # Prevent duplicate applications
+
+    def __str__(self):
+        return f"{self.applicant.username} applied for {self.job.title} at {self.job.company.name}"
 
 

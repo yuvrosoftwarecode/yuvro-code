@@ -39,6 +39,7 @@ import MockInterviewForm from './components/instructor/mock-interviews/MockInter
 import SkillTestSubmissions from './pages/instructor/SkillTestSubmissions';
 import SubmissionAnalytics from './pages/instructor/SubmissionAnalytics';
 import RecruiterJobs from "./pages/recruiter/Jobs";
+import RecruiterJobApplicants from "./pages/recruiter/JobApplicants";
 import RecruiterCompanies from "./pages/recruiter/Companies";
 import RecruiterCompanyDetail from "./pages/recruiter/CompanyDetail";
 import RecruiterDashboard from "./pages/recruiter/Dashboard";
@@ -208,6 +209,15 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={["recruiter"]}>
                     <RecruiterJobs />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/recruiter/jobs/:jobId/applicants"
+                element={
+                  <ProtectedRoute allowedRoles={["recruiter"]}>
+                    <RecruiterJobApplicants />
                   </ProtectedRoute>
                 }
               />

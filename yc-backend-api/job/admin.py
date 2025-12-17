@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Job, Company
+from .models import Job, Company, JobApplication
 
 
 @admin.register(Company)
@@ -61,3 +61,8 @@ class JobAdmin(admin.ModelAdmin):
     
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('company')
+
+
+@admin.register(JobApplication)
+class JobApplication(admin.ModelAdmin):
+    list_display = ['job', 'applicant', 'status', 'applied_at', 'created_at']

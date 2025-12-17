@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Pencil, Trash, Eye, Filter, Settings, FileText, Building2, Users, Calendar, X, Briefcase, MapPin, DollarSign, Copy, Clock, CheckCircle } from "lucide-react";
+import { Plus, Pencil, Trash, Filter, Settings, FileText, Building2, Users, X, Briefcase, MapPin, DollarSign, Copy, CheckCircle } from "lucide-react";
 import { jobService, Job, Company } from "../../services/jobService";
+import { jobApplicationService } from "../../services/jobApplicationService";
 
 import RoleSidebar from "../../components/common/RoleSidebar";
 import RoleHeader from "../../components/common/RoleHeader";
@@ -61,11 +62,14 @@ const Jobs: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTab, setSelectedTab] = useState('all');
 
+  const [jobsWithApplications, setJobsWithApplications] = useState<any[]>([]);
+
 
 
   useEffect(() => {
     loadJobs();
     loadCompanies();
+    loadJobsWithApplications();
   }, []);
 
   const loadCompanies = async () => {
@@ -148,6 +152,22 @@ const Jobs: React.FC = () => {
     }
   };
 
+  const loadJobsWithApplications = async () => {
+    try {
+      const data = await jobApplicationService.getJobsWithApplications();
+      setJobsWithApplications(data);
+    } catch (error) {
+      console.error("Error fetching jobs with applications:", error);
+    }
+  };
+
+
+
+  const getApplicationsCount = (jobId: string) => {
+    const jobWithApps = jobsWithApplications.find(j => j.id === jobId);
+    return jobWithApps?.applications_count || 0;
+  };
+
   const openAddForm = () => {
     setIsEditing(false);
     setCurrentFormTab('details');
@@ -193,17 +213,17 @@ const Jobs: React.FC = () => {
       title: job.title,
       company_id: job.company.id,
       description: job.description,
-      employment_type: job.employment_type,
+      employment_type: job.employment_type as "full-time",
       experience_min_years: job.experience_min_years,
       experience_max_years: job.experience_max_years,
       locations: job.locations,
       is_remote: job.is_remote,
       min_salary: job.min_salary,
       max_salary: job.max_salary,
-      currency: job.currency,
+      currency: job.currency as "USD",
       skills: job.skills,
       notice_period: job.notice_period,
-      education_level: job.education_level,
+      education_level: job.education_level as "any",
       status: "draft", // Always set to draft for new jobs
       posted_at: undefined,
       expires_at: undefined,
@@ -242,18 +262,18 @@ const Jobs: React.FC = () => {
       title: job.title,
       company_id: job.company.id,
       description: job.description,
-      employment_type: job.employment_type,
+      employment_type: job.employment_type as "full-time",
       experience_min_years: job.experience_min_years,
       experience_max_years: job.experience_max_years,
       locations: job.locations,
       is_remote: job.is_remote,
       min_salary: job.min_salary,
       max_salary: job.max_salary,
-      currency: job.currency,
+      currency: job.currency as "USD",
       skills: job.skills,
       notice_period: job.notice_period,
-      education_level: job.education_level,
-      status: job.status,
+      education_level: job.education_level as "any",
+      status: job.status as "draft",
       posted_at: job.posted_at,
       expires_at: job.expires_at,
     });
@@ -308,6 +328,7 @@ const Jobs: React.FC = () => {
         toast.success('Job posted successfully');
       }
       loadJobs();
+      loadJobsWithApplications();
       setShowJobForm(false);
       setIsEditing(false);
       setSelectedJobId(null);
@@ -330,6 +351,7 @@ const Jobs: React.FC = () => {
       setIsDeleting(true);
       await jobService.deleteJob(deleteJobId);
       setJobs(prev => prev.filter(job => job.id !== deleteJobId));
+      loadJobsWithApplications();
       setIsDeleteModalOpen(false);
       setDeleteJobId(null);
     } catch (err) {
@@ -502,106 +524,126 @@ const Jobs: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Job Cards Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredJobs.map((job) => (
-                    <div key={job.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow">
-                      {/* Header */}
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-gray-900 mb-1">{job.title}</h3>
-                          <p className="text-sm text-gray-600 flex items-center">
-                            <Building2 className="h-4 w-4 mr-1" />
-                            {job.company.name}
-                          </p>
-                        </div>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => openEditForm(job)}
-                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => openDeleteModal(job.id)}
-                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          >
-                            <Trash className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Job Details */}
-                      <div className="space-y-3 mb-4">
-                        <div className="flex items-center text-sm text-gray-600">
-                          <MapPin className="h-4 w-4 mr-2" />
-                          {job.locations.join(', ') || (job.is_remote ? 'Remote' : 'Not specified')}
-                        </div>
-
-                        {job.employment_type && (
-                          <div className="flex items-center text-sm text-gray-600">
-                            <Clock className="h-4 w-4 mr-2" />
-                            {job.employment_type.charAt(0).toUpperCase() + job.employment_type.slice(1).replace('-', ' ')}
-                          </div>
-                        )}
-
-                        {(job.experience_min_years > 0 || job.experience_max_years) && (
-                          <div className="flex items-center text-sm text-gray-600">
-                            <Briefcase className="h-4 w-4 mr-2" />
-                            {job.experience_min_years}-{job.experience_max_years || '+'} years experience
-                          </div>
-                        )}
-
-                        {(job.min_salary || job.max_salary) && (
-                          <div className="flex items-center text-sm text-gray-600">
-                            <DollarSign className="h-4 w-4 mr-2" />
-                            {job.min_salary && job.max_salary
-                              ? `${job.min_salary}-${job.max_salary} ${job.currency}`
-                              : job.min_salary
-                                ? `${job.min_salary}+ ${job.currency}`
-                                : `Up to ${job.max_salary} ${job.currency}`
-                            }
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Skills */}
-                      {job.skills.length > 0 && (
-                        <div className="mb-4">
-                          <div className="flex flex-wrap gap-1">
-                            {job.skills.slice(0, 3).map((skill, idx) => (
-                              <span key={idx} className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-md">
-                                {skill}
+                {/* Job List Table */}
+                <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Job Details
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Company
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Location
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Experience
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Salary
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Status
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Applicants
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {filteredJobs.map((job) => (
+                          <tr key={job.id} className="hover:bg-gray-50">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div>
+                                <div className="text-sm font-medium text-gray-900">{job.title}</div>
+                                <div className="text-sm text-gray-500">{job.employment_type.charAt(0).toUpperCase() + job.employment_type.slice(1).replace('-', ' ')}</div>
+                                {job.skills.length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mt-1">
+                                    {job.skills.slice(0, 2).map((skill, idx) => (
+                                      <span key={idx} className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-md">
+                                        {skill}
+                                      </span>
+                                    ))}
+                                    {job.skills.length > 2 && (
+                                      <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-md">
+                                        +{job.skills.length - 2}
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center">
+                                <Building2 className="h-4 w-4 mr-2 text-gray-400" />
+                                <div className="text-sm text-gray-900">{job.company.name}</div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center text-sm text-gray-900">
+                                <MapPin className="h-4 w-4 mr-1 text-gray-400" />
+                                {job.locations.join(', ') || (job.is_remote ? 'Remote' : 'Not specified')}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {job.experience_min_years > 0 || job.experience_max_years
+                                ? `${job.experience_min_years}-${job.experience_max_years || '+'} years`
+                                : 'Any'
+                              }
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {job.min_salary && job.max_salary
+                                ? `${job.min_salary}-${job.max_salary} ${job.currency}`
+                                : job.min_salary
+                                  ? `${job.min_salary}+ ${job.currency}`
+                                  : job.max_salary
+                                    ? `Up to ${job.max_salary} ${job.currency}`
+                                    : 'Not specified'
+                              }
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(job.status)}`}>
+                                {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
                               </span>
-                            ))}
-                            {job.skills.length > 3 && (
-                              <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-md">
-                                +{job.skills.length - 3}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Footer */}
-                      <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                        <div className="flex items-center gap-2">
-                          <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(job.status)}`}>
-                            {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
-                          </span>
-                          <div className="flex items-center text-xs text-gray-500">
-                            <Eye className="h-3 w-3 mr-1" />
-                            0 applicants
-                          </div>
-                        </div>
-                        {job.posted_at && (
-                          <span className="text-xs text-gray-400">
-                            {new Date(job.posted_at).toLocaleDateString()}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <button
+                                onClick={() => navigate(`/recruiter/jobs/${job.id}/applicants`)}
+                                className="flex items-center text-sm text-blue-600 hover:text-blue-800 transition-colors"
+                              >
+                                <Users className="h-4 w-4 mr-1" />
+                                {getApplicationsCount(job.id)} applicants
+                              </button>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => openEditForm(job)}
+                                  className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                  title="Edit Job"
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </button>
+                                <button
+                                  onClick={() => openDeleteModal(job.id)}
+                                  className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                  title="Delete Job"
+                                >
+                                  <Trash className="h-4 w-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
 
                 {/* Empty State */}
@@ -1073,6 +1115,8 @@ const Jobs: React.FC = () => {
                 </div>
               </div>
             )}
+
+
 
             {/* Delete Confirmation Modal */}
             {isDeleteModalOpen && (

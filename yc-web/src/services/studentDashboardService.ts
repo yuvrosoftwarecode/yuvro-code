@@ -1,4 +1,4 @@
-import { RestApiUtil } from '@/utils/RestApiUtil';
+import restApiUtil from '@/utils/RestApiUtil';
 
 export interface DashboardStats {
   coursesEnrolled: number;

@@ -180,7 +180,7 @@ export const getSkillTestsByTopic = async (topicId: string): Promise<SkillTest[]
 
 export const getSkillTestSubmissions = async (skillTestId: string): Promise<any[]> => {
   try {
-    const response = await restApiAuthUtil.get(`/skill-test-submissions/?skill_test=${skillTestId}`);
+    const response = await restApiAuthUtil.get(`/skill-test/submissions/?skill_test=${skillTestId}`);
     return response as any[];
   } catch (error) {
     console.error('Error fetching submissions:', error);
@@ -190,7 +190,7 @@ export const getSkillTestSubmissions = async (skillTestId: string): Promise<any[
 
 export const getSkillTestSubmission = async (submissionId: string): Promise<any> => {
   try {
-    const response = await restApiAuthUtil.get(`/skill-test-submissions/${submissionId}/`);
+    const response = await restApiAuthUtil.get(`/skill-test/submissions/${submissionId}/`);
     return response as any;
   } catch (error) {
     console.error('Error fetching submission:', error);

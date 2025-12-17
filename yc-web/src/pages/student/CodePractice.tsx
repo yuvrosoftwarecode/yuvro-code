@@ -33,13 +33,6 @@ export interface CodingProblem {
   difficulty: 'Easy' | 'Medium' | 'Hard';
   score: number;
   description: string;
-  inputFormat?: string;
-  outputFormat?: string;
-  examples?: Array<{
-    input: string;
-    output: string;
-    explanation?: string;
-  }>;
   test_cases_basic: Array<{
     input_data: string;
     expected_output: string;
@@ -103,7 +96,7 @@ const CodePractice = () => {
             onViewAnalytics={handleViewAnalytics}
           />
         )}
-        
+
         {currentView === 'topics' && selectedCourse && (
           <TopicSelection
             course={selectedCourse}
@@ -113,7 +106,7 @@ const CodePractice = () => {
             onBack={handleBackToDashboard}
           />
         )}
-        
+
         {currentView === 'problem' && selectedProblem && selectedCourse && selectedTopic && (
           <ProblemSolving
             problem={selectedProblem}
@@ -123,14 +116,14 @@ const CodePractice = () => {
             onViewAnalytics={handleViewAnalytics}
           />
         )}
-        
+
         {currentView === 'analytics' && (
           <ScoreAnalytics
             onBack={handleBackToDashboard}
             onViewInsights={handleViewInsights}
           />
         )}
-        
+
         {currentView === 'insights' && (
           <AIInsights
             onBack={() => setCurrentView('analytics')}

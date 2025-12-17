@@ -51,8 +51,9 @@ export interface ExecutionResult extends CodeSubmission {
     results?: Array<{  // For run-only - detailed test case results
       test_case_id: number;
       passed: boolean;
-      expected: string;
-      actual: string;
+      input_data: string;
+      expected_output: string;
+      actual_output: string;
       error: string;
       execution_time: number;
     }>;
@@ -101,8 +102,9 @@ class CodeExecutorService {
           results: testResults.map((result: any, index: number) => ({
             test_case_id: index,
             passed: result.passed || false,
-            expected: result.expected || '',
-            actual: result.actual || '',
+            input_data: result.input_data || '',
+            expected_output: result.expected_output || '',
+            actual_output: result.actual_output || '',
             error: result.error || '',
             execution_time: result.execution_time || 0
           })),

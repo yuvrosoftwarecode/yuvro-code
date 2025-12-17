@@ -60,25 +60,59 @@ export const useProctoring = ({ assessmentId, assessmentType, enabled, questionI
         };
     }, [logActivity]);
 
-    // 3. Copy/Paste/Context Menu
+    // 3. Copy/Paste/Cut/Context Menu
     useEffect(() => {
-        const handleCopy = () => logActivity('copy_detected');
-        const handlePaste = () => logActivity('paste_detected');
+        const handlePreventDefault = (e: Event) => {
+            e.preventDefault();
+        };
+
+        const handleCopy = (e: ClipboardEvent) => {
+            e.preventDefault();
+            const selectedText = window.getSelection()?.toString() || '';
+            logActivity('copy_detected', { copied_text: selectedText, key: 'Ctrl+C' });
+        }
+
+        const handlePaste = (e: ClipboardEvent) => {
+            e.preventDefault();
+            const pastedText = e.clipboardData?.getData('text') || '';
+            logActivity('paste_detected', { pasted_text: pastedText, key: 'Ctrl+V' });
+        }
+
+        const handleCut = (e: ClipboardEvent) => {
+            e.preventDefault();
+            const selectedText = window.getSelection()?.toString() || '';
+            logActivity('cut_detected', { cut_text: selectedText, key: 'Ctrl+X' });
+        }
+
         const handleContextMenu = (e: MouseEvent) => {
-            // e.preventDefault(); // Optional: block it? user said "detect", not strictly "block" 
+            e.preventDefault();
             logActivity('right_click_detected', { x: e.clientX, y: e.clientY });
+        };
+
+        const handleDragDrop = (e: DragEvent) => {
+            e.preventDefault();
+            // logActivity('drag_drop_detected'); // Optionally log if needed
         };
 
         document.addEventListener('copy', handleCopy);
         document.addEventListener('paste', handlePaste);
+        document.addEventListener('cut', handleCut);
         document.addEventListener('contextmenu', handleContextMenu);
+        // Block drag and drop
+        document.addEventListener('dragstart', handleDragDrop);
+        document.addEventListener('drop', handleDragDrop);
+        document.addEventListener('dragover', handleDragDrop); // Needed to prevent default drop behavior in some browsers
 
         return () => {
             document.removeEventListener('copy', handleCopy);
             document.removeEventListener('paste', handlePaste);
+            document.removeEventListener('cut', handleCut);
             document.removeEventListener('contextmenu', handleContextMenu);
+            document.removeEventListener('dragstart', handleDragDrop);
+            document.removeEventListener('drop', handleDragDrop);
+            document.removeEventListener('dragover', handleDragDrop);
         };
-    }, [logActivity]);
+    }, [enabled, logActivity]);
 
     // 4. Fullscreen Change
     useEffect(() => {
@@ -97,10 +131,25 @@ export const useProctoring = ({ assessmentId, assessmentType, enabled, questionI
     // 5. Keyboard Shortcut Detection
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            // Common suspicious keys
-            if ((e.ctrlKey || e.metaKey) && ['c', 'v', 'x', 'p', 's'].includes(e.key.toLowerCase())) {
-                logActivity('keyboard_shortcut', { key: `Ctrl+${e.key}` });
+            // Block generic shortcuts
+            // Note: We allow Ctrl+C, Ctrl+V, Ctrl+X to bubble up to the copy/paste/cut handlers
+            // so we can capture the data there. Those handlers call preventDefault().
+
+            if ((e.ctrlKey || e.metaKey)) {
+                const key = e.key.toLowerCase();
+
+                // Block these immediately
+                if (['a', 'p', 's'].includes(key)) {
+                    e.preventDefault();
+                    logActivity('keyboard_shortcut', { key: `Ctrl+${key.toUpperCase()}` });
+                }
+                // For C, V, X - we count on them triggering copy/paste/cut events
+                // But we still want to log them as shortcuts? 
+                // Actually, if we let them propagate, the copy/paste/cut event will fire and log 'copy_detected' etc.
+                // We don't need double logs (one for shortcut, one for copy).
+                // So effectively we just let them go.
             }
+
             if (e.key === 'PrintScreen') {
                 logActivity('keyboard_shortcut', { key: 'PrintScreen' });
             }

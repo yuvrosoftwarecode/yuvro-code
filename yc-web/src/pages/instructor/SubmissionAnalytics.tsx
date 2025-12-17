@@ -159,7 +159,19 @@ export default function SubmissionAnalytics() {
                                                                 <div key={i} className={`flex items-center justify-between py-1 px-2 rounded ${log.activity_type.includes('violation') || log.activity_type.includes('detected') ? 'bg-red-50 text-red-700' : 'text-gray-600'
                                                                     }`}>
                                                                     <span>{log.activity_type.replace(/_/g, ' ')}</span>
-                                                                    <span className="text-xs text-gray-400">{format(new Date(log.timestamp), 'h:mm:ss a')}</span>
+                                                                    <div className="flex flex-col items-end">
+                                                                        <span className="text-xs text-gray-400">{format(new Date(log.timestamp), 'h:mm:ss a')}</span>
+                                                                        {log.meta_data && (log.meta_data.copied_text || log.meta_data.pasted_text || log.meta_data.cut_text) && (
+                                                                            <span className="text-xs text-gray-500 italic max-w-xs truncate">
+                                                                                "{log.meta_data.copied_text || log.meta_data.pasted_text || log.meta_data.cut_text}"
+                                                                            </span>
+                                                                        )}
+                                                                        {log.meta_data && log.meta_data.key && (
+                                                                            <span className="text-xs text-gray-500 border px-1 rounded bg-gray-100">
+                                                                                {log.meta_data.key}
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
                                                                 </div>
                                                             ))
                                                         }
@@ -183,13 +195,29 @@ export default function SubmissionAnalytics() {
                             </CardHeader>
                             <CardContent>
                                 <div className="max-h-60 overflow-y-auto space-y-2">
-                                    {(submission.proctoring_events || []).map((event: any, i: number) => (
-                                        <div key={i} className="flex justify-between items-center p-2 border-b last:border-0">
-                                            <span className="font-medium text-gray-700">{event.activity_type.replace(/_/g, ' ')}</span>
-                                            <span className="text-sm text-gray-500">{format(new Date(event.timestamp), 'h:mm:ss a')}</span>
-                                        </div>
-                                    ))}
-                                    {(submission.proctoring_events || []).length === 0 && (
+                                    {([...(submission.proctoring_events || []), ...(submission.general_events || [])]
+                                        .sort((a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+                                        .map((event: any, i: number) => (
+                                            <div key={i} className={`flex justify-between items-center p-2 border-b last:border-0 ${event.activity_type.includes('violation') || event.activity_type.includes('detected') ? 'bg-red-50 text-red-700' : 'text-gray-700'
+                                                }`}>
+                                                <span className="font-medium">{event.activity_type.replace(/_/g, ' ')}</span>
+                                                <div className="flex flex-col items-end">
+                                                    <span className="text-sm text-gray-400">{format(new Date(event.timestamp), 'h:mm:ss a')}</span>
+                                                    {event.meta_data && (event.meta_data.copied_text || event.meta_data.pasted_text || event.meta_data.cut_text) && (
+                                                        <span className="text-xs text-gray-500 italic max-w-[200px] truncate">
+                                                            "{event.meta_data.copied_text || event.meta_data.pasted_text || event.meta_data.cut_text}"
+                                                        </span>
+                                                    )}
+                                                    {event.meta_data && event.meta_data.key && (
+                                                        <span className="text-xs text-gray-500 border px-1 rounded bg-gray-100">
+                                                            {event.meta_data.key}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                    {(submission.proctoring_events || []).length === 0 && (submission.general_events || []).length === 0 && (
                                         <div className="text-center py-4 text-gray-500 italic">No general session events recorded.</div>
                                     )}
                                 </div>

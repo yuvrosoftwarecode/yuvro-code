@@ -201,8 +201,8 @@
           ]
         }
       ],
-      "questions": [  
-      {
+      "questions": [
+        {
           "type": "mcq_single",
           "title": "Array Time Complexity",
           "content": "What is the time complexity of accessing an element in an array by index?",
@@ -211,12 +211,26 @@
           "subtopic_name": "Array Fundamentals",
           "difficulty": "easy",
           "marks": 2,
-          "categories": ["learn"],
+          "categories": [
+            "learn"
+          ],
           "mcq_options": [
-            {"text": "O(1)", "is_correct": true},
-            {"text": "O(n)", "is_correct": false},
-            {"text": "O(log n)", "is_correct": false},
-            {"text": "O(n²)", "is_correct": false}
+            {
+              "text": "O(1)",
+              "is_correct": true
+            },
+            {
+              "text": "O(n)",
+              "is_correct": false
+            },
+            {
+              "text": "O(log n)",
+              "is_correct": false
+            },
+            {
+              "text": "O(n\u00b2)",
+              "is_correct": false
+            }
           ]
         },
         {
@@ -228,12 +242,26 @@
           "subtopic_name": "Array Fundamentals",
           "difficulty": "easy",
           "marks": 2,
-          "categories": ["learn"],
+          "categories": [
+            "learn"
+          ],
           "mcq_options": [
-            {"text": "Contiguous memory locations", "is_correct": true},
-            {"text": "Random memory locations", "is_correct": false},
-            {"text": "Linked memory locations", "is_correct": false},
-            {"text": "Stack memory only", "is_correct": false}
+            {
+              "text": "Contiguous memory locations",
+              "is_correct": true
+            },
+            {
+              "text": "Random memory locations",
+              "is_correct": false
+            },
+            {
+              "text": "Linked memory locations",
+              "is_correct": false
+            },
+            {
+              "text": "Stack memory only",
+              "is_correct": false
+            }
           ]
         },
         {
@@ -245,12 +273,27 @@
           "subtopic_name": "Array Fundamentals",
           "difficulty": "medium",
           "marks": 3,
-          "categories": ["learn", "practice"],
+          "categories": [
+            "learn",
+            "practice"
+          ],
           "mcq_options": [
-            {"text": "Elements are stored in contiguous memory", "is_correct": true},
-            {"text": "Random access is possible", "is_correct": true},
-            {"text": "Size can be changed dynamically", "is_correct": false},
-            {"text": "All elements must be of the same data type", "is_correct": true}
+            {
+              "text": "Elements are stored in contiguous memory",
+              "is_correct": true
+            },
+            {
+              "text": "Random access is possible",
+              "is_correct": true
+            },
+            {
+              "text": "Size can be changed dynamically",
+              "is_correct": false
+            },
+            {
+              "text": "All elements must be of the same data type",
+              "is_correct": true
+            }
           ]
         },
         {
@@ -262,15 +305,44 @@
           "subtopic_name": "Array Fundamentals",
           "difficulty": "easy",
           "marks": 5,
-          "categories": ["learn", "practice"],
+          "categories": [
+            "learn",
+            "practice"
+          ],
           "test_cases_basic": [
-            {"input": "[1, 3, 7, 2, 5]", "output": "7"},
-            {"input": "[-1, -5, -2]", "output": "-1"}
+            {
+              "input": "[1, 3, 7, 2, 5]",
+              "output": "7"
+            },
+            {
+              "input": "[-1, -5, -2]",
+              "output": "-1"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "[42]", "output": "42"},
-            {"input": "[100, 200, 50, 300, 150]", "output": "300"}
-          ]
+            {
+              "input": "[42]",
+              "output": "42"
+            },
+            {
+              "input": "[100, 200, 50, 300, 150]",
+              "output": "300"
+            }
+          ],
+          "examples": [
+            {
+              "input": "[1, 3, 7, 2, 5]",
+              "output": "7",
+              "explanation": "The maximum element is 7."
+            },
+            {
+              "input": "[-1, -5, -2]",
+              "output": "-1",
+              "explanation": "The maximum element is -1."
+            }
+          ],
+          "inputFormat": "A list of integers nums.",
+          "outputFormat": "An integer representing the maximum element."
         },
         {
           "type": "mcq_single",
@@ -281,142 +353,344 @@
           "subtopic_name": "Array Operations",
           "difficulty": "medium",
           "marks": 3,
-          "categories": ["learn", "practice"],
+          "categories": [
+            "learn",
+            "practice"
+          ],
           "mcq_options": [
-            {"text": "O(n)", "is_correct": true},
-            {"text": "O(1)", "is_correct": false},
-            {"text": "O(log n)", "is_correct": false},
-            {"text": "O(n²)", "is_correct": false}
+            {
+              "text": "O(n)",
+              "is_correct": true
+            },
+            {
+              "text": "O(1)",
+              "is_correct": false
+            },
+            {
+              "text": "O(log n)",
+              "is_correct": false
+            },
+            {
+              "text": "O(n\u00b2)",
+              "is_correct": false
+            }
           ]
         },
         {
           "type": "coding",
           "title": "Array Rotation",
-          "content": "Write a function to rotate an array to the right by k steps.",
+          "content": "Given an integer array nums, rotate the array to the right by k steps, where k is non-negative.",
           "level": "subtopic",
           "topic_name": "Arrays and Strings",
           "subtopic_name": "Array Operations",
           "difficulty": "medium",
           "marks": 8,
-          "categories": ["practice", "contest"],
+          "categories": [
+            "practice",
+            "contest"
+          ],
           "test_cases_basic": [
-            {"input": "nums = [1,2,3,4,5,6,7], k = 3", "output": "[5,6,7,1,2,3,4]"},
-            {"input": "nums = [-1,-100,3,99], k = 2", "output": "[3,99,-1,-100]"}
+            {
+              "input": "[1,2,3,4,5,6,7]\n3",
+              "output": "[5,6,7,1,2,3,4]"
+            },
+            {
+              "input": "[-1,-100,3,99]\n2",
+              "output": "[3,99,-1,-100]"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "nums = [1], k = 1", "output": "[1]"},
-            {"input": "nums = [1,2], k = 3", "output": "[2,1]"}
-          ]
+            {
+              "input": "[1]\n1",
+              "output": "[1]"
+            },
+            {
+              "input": "[1,2]\n3",
+              "output": "[2,1]"
+            }
+          ],
+          "examples": [
+            {
+              "input": "[1,2,3,4,5,6,7]\n3",
+              "output": "[5,6,7,1,2,3,4]",
+              "explanation": "rotate 1 steps to the right: [7,1,2,3,4,5,6]\nrotate 2 steps to the right: [6,7,1,2,3,4,5]\nrotate 3 steps to the right: [5,6,7,1,2,3,4]"
+            },
+            {
+              "input": "[-1,-100,3,99]\n2",
+              "output": "[3,99,-1,-100]",
+              "explanation": "rotate 1 steps to the right: [99,-1,-100,3]\nrotate 2 steps to the right: [3,99,-1,-100]"
+            }
+          ],
+          "inputFormat": "The first line contains the array `nums`.\nThe second line contains the integer `k`.",
+          "outputFormat": "The rotated array."
         },
         {
           "type": "coding",
           "title": "Remove Duplicates from Sorted Array",
-          "content": "Remove duplicates from a sorted array in-place and return the new length.",
+          "content": "Given an integer array nums sorted in non-decreasing order, remove the duplicates in-place such that each unique element appears only once. The relative order of the elements should be kept the same. Then return the number of unique elements in nums.",
           "level": "subtopic",
           "topic_name": "Arrays and Strings",
           "subtopic_name": "Array Operations",
           "difficulty": "easy",
           "marks": 6,
-          "categories": ["practice", "mock_interview"],
+          "categories": [
+            "practice",
+            "mock_interview"
+          ],
           "test_cases_basic": [
-            {"input": "[1,1,2]", "output": "2, nums = [1,2,_]"},
-            {"input": "[0,0,1,1,1,2,2,3,3,4]", "output": "5, nums = [0,1,2,3,4,_,_,_,_,_]"}
+            {
+              "input": "[1,1,2]",
+              "output": "2"
+            },
+            {
+              "input": "[0,0,1,1,1,2,2,3,3,4]",
+              "output": "5"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "[1]", "output": "1, nums = [1]"},
-            {"input": "[1,1,1,1]", "output": "1, nums = [1,_,_,_]"}
-          ]
+            {
+              "input": "[1]",
+              "output": "1"
+            },
+            {
+              "input": "[1,1,1,1]",
+              "output": "1"
+            }
+          ],
+          "examples": [
+            {
+              "input": "[1,1,2]",
+              "output": "2\n[1,2,_]",
+              "explanation": "Your function should return k = 2, with the first two elements of nums being 1 and 2 respectively."
+            },
+            {
+              "input": "[0,0,1,1,1,2,2,3,3,4]",
+              "output": "5\n[0,1,2,3,4,_,_,_,_,_]",
+              "explanation": "Your function should return k = 5, with the first five elements of nums being 0, 1, 2, 3, and 4 respectively."
+            }
+          ],
+          "inputFormat": "An integer array `nums` sorted in non-decreasing order.",
+          "outputFormat": "An integer k representing the number of unique elements."
         },
         {
           "type": "mcq_single",
           "title": "String Immutability",
-          "content": "In most programming languages, strings are:",
+          "content": "In most programming languages (like Java and Python), strings are immutable. What does this mean?",
           "level": "subtopic",
           "topic_name": "Arrays and Strings",
           "subtopic_name": "String Manipulation",
           "difficulty": "easy",
           "marks": 2,
-          "categories": ["learn"],
+          "categories": [
+            "learn"
+          ],
           "mcq_options": [
-            {"text": "Immutable", "is_correct": true},
-            {"text": "Mutable", "is_correct": false},
-            {"text": "Both mutable and immutable", "is_correct": false},
-            {"text": "Neither mutable nor immutable", "is_correct": false}
+            {
+              "text": "Once created, their content cannot be changed.",
+              "is_correct": true
+            },
+            {
+              "text": "They can be modified freely.",
+              "is_correct": false
+            },
+            {
+              "text": "They cannot be assigned to a new variable.",
+              "is_correct": false
+            },
+            {
+              "text": "They consume constant memory.",
+              "is_correct": false
+            }
           ]
         },
         {
           "type": "coding",
           "title": "Reverse String",
-          "content": "Write a function to reverse a string in-place using a character array.",
+          "content": "Write a function that reverses a string. The input string is given as an array of characters.",
           "level": "subtopic",
           "topic_name": "Arrays and Strings",
           "subtopic_name": "String Manipulation",
           "difficulty": "easy",
           "marks": 4,
-          "categories": ["learn", "practice"],
+          "categories": [
+            "learn",
+            "practice"
+          ],
           "test_cases_basic": [
-            {"input": "['h','e','l','l','o']", "output": "['o','l','l','e','h']"},
-            {"input": "['H','a','n','n','a','h']", "output": "['h','a','n','n','a','H']"}
+            {
+              "input": "[\"h\",\"e\",\"l\",\"l\",\"o\"]",
+              "output": "[\"o\",\"l\",\"l\",\"e\",\"h\"]"
+            },
+            {
+              "input": "[\"H\",\"a\",\"n\",\"n\",\"a\",\"h\"]",
+              "output": "[\"h\",\"a\",\"n\",\"n\",\"a\",\"H\"]"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "['a']", "output": "['a']"},
-            {"input": "['A',' ','m','a','n']", "output": "['n','a','m',' ','A']"}
-          ]
+            {
+              "input": "[\"a\"]",
+              "output": "[\"a\"]"
+            },
+            {
+              "input": "[\"A\",\" \",\"m\",\"a\",\"n\"]",
+              "output": "[\"n\",\"a\",\"m\",\" \",\"A\"]"
+            }
+          ],
+          "examples": [
+            {
+              "input": "[\"h\",\"e\",\"l\",\"l\",\"o\"]",
+              "output": "[\"o\",\"l\",\"l\",\"e\",\"h\"]"
+            },
+            {
+              "input": "[\"H\",\"a\",\"n\",\"n\",\"a\",\"h\"]",
+              "output": "[\"h\",\"a\",\"n\",\"n\",\"a\",\"H\"]"
+            }
+          ],
+          "inputFormat": "An array of characters `s`.",
+          "outputFormat": "The reversed array of characters."
         },
         {
           "type": "coding",
           "title": "Valid Anagram",
-          "content": "Given two strings s and t, return true if t is an anagram of s, and false otherwise.",
+          "content": "Given two strings s and t, return true if t is an anagram of s, and false otherwise. An Anagram is a word or phrase formed by rearranging the letters of a different word or phrase, typically using all the original letters exactly once.",
           "level": "subtopic",
           "topic_name": "Arrays and Strings",
           "subtopic_name": "String Manipulation",
           "difficulty": "easy",
           "marks": 5,
-          "categories": ["practice", "contest"],
+          "categories": [
+            "practice",
+            "contest"
+          ],
           "test_cases_basic": [
-            {"input": "s = 'anagram', t = 'nagaram'", "output": "true"},
-            {"input": "s = 'rat', t = 'car'", "output": "false"}
+            {
+              "input": "\"anagram\"\n\"nagaram\"",
+              "output": "true"
+            },
+            {
+              "input": "\"rat\"\n\"car\"",
+              "output": "false"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "s = 'a', t = 'ab'", "output": "false"},
-            {"input": "s = 'listen', t = 'silent'", "output": "true"}
-          ]
+            {
+              "input": "\"a\"\n\"ab\"",
+              "output": "false"
+            },
+            {
+              "input": "\"listen\"\n\"silent\"",
+              "output": "true"
+            }
+          ],
+          "examples": [
+            {
+              "input": "\"anagram\"\n\"nagaram\"",
+              "output": "true"
+            },
+            {
+              "input": "\"rat\"\n\"car\"",
+              "output": "false"
+            }
+          ],
+          "inputFormat": "Two strings `s` and `t` on separate lines.",
+          "outputFormat": "`true` if `t` is an anagram of `s`, otherwise `false`."
         },
         {
           "type": "coding",
-          "title": "Two Sum Problem",
-          "content": "Given an array of integers and a target sum, return indices of two numbers that add up to the target.",
+          "title": "Two Sum",
+          "content": "Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target. You may assume that each input would have exactly one solution, and you may not use the same element twice. You can return the answer in any order.",
           "level": "topic",
           "topic_name": "Arrays and Strings",
           "difficulty": "medium",
           "marks": 8,
-          "categories": ["practice", "contest", "mock_interview"],
+          "categories": [
+            "practice",
+            "contest",
+            "mock_interview"
+          ],
           "test_cases_basic": [
-            {"input": "nums = [2,7,11,15], target = 9", "output": "[0,1]"},
-            {"input": "nums = [3,2,4], target = 6", "output": "[1,2]"}
+            {
+              "input": "[2,7,11,15]\n9",
+              "output": "[0,1]"
+            },
+            {
+              "input": "[3,2,4]\n6",
+              "output": "[1,2]"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "nums = [3,3], target = 6", "output": "[0,1]"},
-            {"input": "nums = [1,2,3,4,5], target = 8", "output": "[2,4]"}
-          ]
+            {
+              "input": "[3,3]\n6",
+              "output": "[0,1]"
+            },
+            {
+              "input": "[1,2,3,4,5]\n8",
+              "output": "[2,4]"
+            }
+          ],
+          "examples": [
+            {
+              "input": "[2,7,11,15]\n9",
+              "output": "[0,1]",
+              "explanation": "Because nums[0] + nums[1] == 9, we return [0, 1]."
+            },
+            {
+              "input": "[3,2,4]\n6",
+              "output": "[1,2]"
+            },
+            {
+              "input": "[3,3]\n6",
+              "output": "[0,1]"
+            }
+          ],
+          "inputFormat": "The first line contains the array `nums`.\nThe second line contains the integer `target`.",
+          "outputFormat": "An array containing the two indices."
         },
         {
           "type": "coding",
           "title": "Container With Most Water",
-          "content": "Given n non-negative integers representing an elevation map, find two lines that together with the x-axis forms a container that holds the most water.",
+          "content": "You are given an integer array height of length n. There are n vertical lines drawn such that the two endpoints of the ith line are (i, 0) and (i, height[i]). Find two lines that together with the x-axis form a container, such that the container contains the most water. Return the maximum amount of water a container can store. Notice that you may not slant the container.",
           "level": "topic",
           "topic_name": "Arrays and Strings",
           "difficulty": "hard",
           "marks": 12,
-          "categories": ["contest", "mock_interview"],
+          "categories": [
+            "contest",
+            "mock_interview"
+          ],
           "test_cases_basic": [
-            {"input": "[1,8,6,2,5,4,8,3,7]", "output": "49"},
-            {"input": "[1,1]", "output": "1"}
+            {
+              "input": "[1,8,6,2,5,4,8,3,7]",
+              "output": "49"
+            },
+            {
+              "input": "[1,1]",
+              "output": "1"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "[4,3,2,1,4]", "output": "16"},
-            {"input": "[1,2,1]", "output": "2"}
-          ]
+            {
+              "input": "[4,3,2,1,4]",
+              "output": "16"
+            },
+            {
+              "input": "[1,2,1]",
+              "output": "2"
+            }
+          ],
+          "examples": [
+            {
+              "input": "[1,8,6,2,5,4,8,3,7]",
+              "output": "49",
+              "explanation": "The above vertical lines are represented by array [1,8,6,2,5,4,8,3,7]. In this case, the max area of water (blue section) the container can contain is 49."
+            },
+            {
+              "input": "[1,1]",
+              "output": "1"
+            }
+          ],
+          "inputFormat": "An integer array `height`.",
+          "outputFormat": "An integer representing the maximum water."
         },
         {
           "type": "mcq_single",
@@ -427,51 +701,121 @@
           "subtopic_name": "Singly Linked Lists",
           "difficulty": "easy",
           "marks": 2,
-          "categories": ["learn"],
+          "categories": [
+            "learn"
+          ],
           "mcq_options": [
-            {"text": "Data and pointer to next node", "is_correct": true},
-            {"text": "Only data", "is_correct": false},
-            {"text": "Only pointer", "is_correct": false},
-            {"text": "Index and data", "is_correct": false}
+            {
+              "text": "Data and pointer to next node",
+              "is_correct": true
+            },
+            {
+              "text": "Only data",
+              "is_correct": false
+            },
+            {
+              "text": "Only pointer",
+              "is_correct": false
+            },
+            {
+              "text": "Index and data",
+              "is_correct": false
+            }
           ]
         },
         {
           "type": "coding",
           "title": "Insert at Beginning of Linked List",
-          "content": "Write a function to insert a new node at the beginning of a singly linked list.",
+          "content": "Given the head of a singly linked list and an integer `val`, insert a new node with value `val` at the beginning of the list and return the new head.",
           "level": "subtopic",
           "topic_name": "Linked Lists",
           "subtopic_name": "Singly Linked Lists",
           "difficulty": "easy",
           "marks": 5,
-          "categories": ["learn", "practice"],
+          "categories": [
+            "learn",
+            "practice"
+          ],
           "test_cases_basic": [
-            {"input": "list: 2->3->4, value: 1", "output": "1->2->3->4"},
-            {"input": "list: null, value: 5", "output": "5"}
+            {
+              "input": "[2,3,4]\n1",
+              "output": "[1,2,3,4]"
+            },
+            {
+              "input": "[]\n5",
+              "output": "[5]"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "list: 10, value: 20", "output": "20->10"},
-            {"input": "list: 1->2->3->4->5, value: 0", "output": "0->1->2->3->4->5"}
-          ]
+            {
+              "input": "[10]\n20",
+              "output": "[20,10]"
+            },
+            {
+              "input": "[1,2,3,4,5]\n0",
+              "output": "[0,1,2,3,4,5]"
+            }
+          ],
+          "examples": [
+            {
+              "input": "[2,3,4]\n1",
+              "output": "[1,2,3,4]"
+            },
+            {
+              "input": "[]\n5",
+              "output": "[5]"
+            }
+          ],
+          "inputFormat": "The first line contains the linked list `head` as an array.\nThe second line contains the integer `val`.",
+          "outputFormat": "The new linked list as an array."
         },
         {
           "type": "coding",
-          "title": "Delete Node from Linked List",
-          "content": "Write a function to delete the first occurrence of a given value from a singly linked list.",
+          "title": "Delete Node in a Linked List",
+          "content": "There is a singly-linked list head and we want to delete a node node in it. You are given the node to be deleted. You will not be given access to the first node of head. All the values of the linked list are unique, and it is guaranteed that the given node node is not the last node in the linked list.",
           "level": "subtopic",
           "topic_name": "Linked Lists",
           "subtopic_name": "Singly Linked Lists",
           "difficulty": "medium",
           "marks": 7,
-          "categories": ["practice", "mock_interview"],
+          "categories": [
+            "practice",
+            "mock_interview"
+          ],
           "test_cases_basic": [
-            {"input": "list: 1->2->3->4, value: 3", "output": "1->2->4"},
-            {"input": "list: 1->2->2->3, value: 2", "output": "1->2->3"}
+            {
+              "input": "[4,5,1,9]\n5",
+              "output": "[4,1,9]"
+            },
+            {
+              "input": "[4,5,1,9]\n1",
+              "output": "[4,5,9]"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "list: 1, value: 1", "output": "null"},
-            {"input": "list: 1->2->3, value: 4", "output": "1->2->3"}
-          ]
+            {
+              "input": "[1,2,3,4]\n3",
+              "output": "[1,2,4]"
+            },
+            {
+              "input": "[0,1]\n0",
+              "output": "[1]"
+            }
+          ],
+          "examples": [
+            {
+              "input": "[4,5,1,9]\n5",
+              "output": "[4,1,9]",
+              "explanation": "You are given the second node with value 5, the linked list should become 4 -> 1 -> 9 after calling your function."
+            },
+            {
+              "input": "[4,5,1,9]\n1",
+              "output": "[4,5,9]",
+              "explanation": "You are given the third node with value 1, the linked list should become 4 -> 5 -> 9 after calling your function."
+            }
+          ],
+          "inputFormat": "The linked list `head` and value `node` to delete. (Note: standard input format depends on judge, here assuming value based)",
+          "outputFormat": "The modified linked list found by traversing from head."
         },
         {
           "type": "mcq_single",
@@ -482,86 +826,202 @@
           "subtopic_name": "Doubly and Circular Linked Lists",
           "difficulty": "easy",
           "marks": 2,
-          "categories": ["learn"],
+          "categories": [
+            "learn"
+          ],
           "mcq_options": [
-            {"text": "Bidirectional traversal", "is_correct": true},
-            {"text": "Less memory usage", "is_correct": false},
-            {"text": "Faster insertion", "is_correct": false},
-            {"text": "Better cache performance", "is_correct": false}
+            {
+              "text": "Bidirectional traversal",
+              "is_correct": true
+            },
+            {
+              "text": "Less memory usage",
+              "is_correct": false
+            },
+            {
+              "text": "Faster insertion",
+              "is_correct": false
+            },
+            {
+              "text": "Better cache performance",
+              "is_correct": false
+            }
           ]
         },
         {
           "type": "coding",
-          "title": "Implement Doubly Linked List",
-          "content": "Implement a doubly linked list with insert, delete, and search operations.",
+          "title": "Design Linked List",
+          "content": "Design your implementation of the linked list. You can choose to use a singly or doubly linked list. A node in a singly linked list should have two attributes: val and next. val is the value of the current node, and next is a pointer/reference to the next node. If you want to use the doubly linked list, you will need one more attribute prev to indicate the previous node in the linked list. Assume all nodes in the linked list are 0-indexed.",
           "level": "subtopic",
           "topic_name": "Linked Lists",
           "subtopic_name": "Doubly and Circular Linked Lists",
           "difficulty": "medium",
           "marks": 10,
-          "categories": ["practice", "contest"],
+          "categories": [
+            "practice",
+            "contest"
+          ],
           "test_cases_basic": [
-            {"input": "insert(1), insert(2), insert(3)", "output": "1<->2<->3"},
-            {"input": "insert(1), delete(1)", "output": "null"}
+            {
+              "input": "[\"MyLinkedList\", \"addAtHead\", \"addAtTail\", \"addAtIndex\", \"get\", \"deleteAtIndex\", \"get\"]\n[[], [1], [3], [1, 2], [1], [1], [1]]",
+              "output": "[null, null, null, null, 2, null, 3]"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "insert(1), insert(2), insert(3), delete(2)", "output": "1<->3"},
-            {"input": "multiple operations", "output": "correct final state"}
-          ]
+            {
+              "input": "[\"MyLinkedList\",\"addAtHead\",\"get\",\"addAtHead\",\"addAtHead\",\"deleteAtIndex\",\"addAtHead\",\"get\",\"get\",\"get\",\"addAtHead\",\"deleteAtIndex\"]\n[[],[4],[1],[1],[5],[3],[7],[3],[3],[3],[1],[4]]",
+              "output": "[null,null,-1,null,null,null,null,4,4,4,null,null]"
+            }
+          ],
+          "examples": [
+            {
+              "input": "[\"MyLinkedList\", \"addAtHead\", \"addAtTail\", \"addAtIndex\", \"get\", \"deleteAtIndex\", \"get\"]\n[[], [1], [3], [1, 2], [1], [1], [1]]",
+              "output": "[null, null, null, null, 2, null, 3]",
+              "explanation": "MyLinkedList myLinkedList = new MyLinkedList();\nmyLinkedList.addAtHead(1);\nmyLinkedList.addAtTail(3);\nmyLinkedList.addAtIndex(1, 2);    // linked list becomes 1->2->3\nmyLinkedList.get(1);              // return 2\nmyLinkedList.deleteAtIndex(1);    // now the linked list is 1->3\nmyLinkedList.get(1);              // return 3"
+            }
+          ],
+          "inputFormat": "A list of method calls and their arguments.",
+          "outputFormat": "A list of return values."
         },
         {
           "type": "coding",
           "title": "Reverse Linked List",
-          "content": "Write a function to reverse a singly linked list iteratively and recursively.",
+          "content": "Given the head of a singly linked list, reverse the list, and return the reversed list.",
           "level": "topic",
           "topic_name": "Linked Lists",
           "difficulty": "medium",
           "marks": 8,
-          "categories": ["practice", "contest", "mock_interview"],
+          "categories": [
+            "practice",
+            "contest",
+            "mock_interview"
+          ],
           "test_cases_basic": [
-            {"input": "1->2->3->4->5", "output": "5->4->3->2->1"},
-            {"input": "1->2", "output": "2->1"}
+            {
+              "input": "[1,2,3,4,5]",
+              "output": "[5,4,3,2,1]"
+            },
+            {
+              "input": "[1,2]",
+              "output": "[2,1]"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "null", "output": "null"},
-            {"input": "1", "output": "1"}
-          ]
+            {
+              "input": "[]",
+              "output": "[]"
+            },
+            {
+              "input": "[1]",
+              "output": "[1]"
+            }
+          ],
+          "examples": [
+            {
+              "input": "[1,2,3,4,5]",
+              "output": "[5,4,3,2,1]"
+            },
+            {
+              "input": "[1,2]",
+              "output": "[2,1]"
+            }
+          ],
+          "inputFormat": "The linked list `head` as an array.",
+          "outputFormat": "The reversed linked list as an array."
         },
         {
           "type": "coding",
-          "title": "Detect Cycle in Linked List",
-          "content": "Write a function to detect if a linked list has a cycle using Floyd's cycle detection algorithm.",
+          "title": "Linked List Cycle",
+          "content": "Given head, the head of a linked list, determine if the linked list has a cycle in it. There is a cycle in a linked list if there is some node in the list that can be reached again by continuously following the next pointer. Internally, pos is used to denote the index of the node that tail's next pointer is connected to. Note that pos is not passed as a parameter.",
           "level": "topic",
           "topic_name": "Linked Lists",
           "difficulty": "medium",
           "marks": 10,
-          "categories": ["practice", "contest", "mock_interview"],
+          "categories": [
+            "practice",
+            "contest",
+            "mock_interview"
+          ],
           "test_cases_basic": [
-            {"input": "1->2->3->4->2 (cycle)", "output": "true"},
-            {"input": "1->2->3->4->null", "output": "false"}
+            {
+              "input": "[3,2,0,-4]\n1",
+              "output": "true"
+            },
+            {
+              "input": "[1,2]\n0",
+              "output": "true"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "1->1 (self cycle)", "output": "true"},
-            {"input": "null", "output": "false"}
-          ]
+            {
+              "input": "[1]\n-1",
+              "output": "false"
+            },
+            {
+              "input": "[]\n-1",
+              "output": "false"
+            }
+          ],
+          "examples": [
+            {
+              "input": "[3,2,0,-4]\n1",
+              "output": "true",
+              "explanation": "There is a cycle in the linked list, where the tail connects to the 1st node (0-indexed)."
+            },
+            {
+              "input": "[1,2]\n0",
+              "output": "true",
+              "explanation": "There is a cycle in the linked list, where the tail connects to the 0th node."
+            }
+          ],
+          "inputFormat": "Abstract representation involves `head` content and `pos`.",
+          "outputFormat": "`true` if there is a cycle, otherwise `false`."
         },
         {
           "type": "coding",
           "title": "Merge Two Sorted Lists",
-          "content": "Merge two sorted linked lists and return it as a new sorted list.",
+          "content": "You are given the heads of two sorted linked lists list1 and list2. Merge the two lists into one sorted list. The list should be made by splicing together the nodes of the first two lists. Return the head of the merged linked list.",
           "level": "topic",
           "topic_name": "Linked Lists",
           "difficulty": "medium",
           "marks": 10,
-          "categories": ["practice", "contest", "mock_interview"],
+          "categories": [
+            "practice",
+            "contest",
+            "mock_interview"
+          ],
           "test_cases_basic": [
-            {"input": "l1 = [1,2,4], l2 = [1,3,4]", "output": "[1,1,2,3,4,4]"},
-            {"input": "l1 = [], l2 = [0]", "output": "[0]"}
+            {
+              "input": "[1,2,4]\n[1,3,4]",
+              "output": "[1,1,2,3,4,4]"
+            },
+            {
+              "input": "[]\n[]",
+              "output": "[]"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "l1 = [], l2 = []", "output": "[]"},
-            {"input": "l1 = [1,5,9], l2 = [2,4,6,8,10]", "output": "[1,2,4,5,6,8,9,10]"}
-          ]
+            {
+              "input": "[]\n[0]",
+              "output": "[0]"
+            },
+            {
+              "input": "[1,5,9]\n[2,4,6,8,10]",
+              "output": "[1,2,4,5,6,8,9,10]"
+            }
+          ],
+          "examples": [
+            {
+              "input": "[1,2,4]\n[1,3,4]",
+              "output": "[1,1,2,3,4,4]"
+            },
+            {
+              "input": "[]\n[]",
+              "output": "[]"
+            }
+          ],
+          "inputFormat": "Two arrays `list1` and `list2` representing the sorted linked lists.",
+          "outputFormat": "The merged sorted linked list as an array."
         },
         {
           "type": "mcq_single",
@@ -572,12 +1032,27 @@
           "subtopic_name": "Binary Trees",
           "difficulty": "medium",
           "marks": 3,
-          "categories": ["learn", "practice"],
+          "categories": [
+            "learn",
+            "practice"
+          ],
           "mcq_options": [
-            {"text": "2^k", "is_correct": true},
-            {"text": "2^(k-1)", "is_correct": false},
-            {"text": "k^2", "is_correct": false},
-            {"text": "2*k", "is_correct": false}
+            {
+              "text": "2^k",
+              "is_correct": true
+            },
+            {
+              "text": "2^(k-1)",
+              "is_correct": false
+            },
+            {
+              "text": "k^2",
+              "is_correct": false
+            },
+            {
+              "text": "2*k",
+              "is_correct": false
+            }
           ]
         },
         {
@@ -589,14 +1064,30 @@
           "subtopic_name": "Binary Trees",
           "difficulty": "medium",
           "marks": 8,
-          "categories": ["learn", "practice", "mock_interview"],
+          "categories": [
+            "learn",
+            "practice",
+            "mock_interview"
+          ],
           "test_cases_basic": [
-            {"input": "[1,null,2,3]", "output": "[1,3,2]"},
-            {"input": "[]", "output": "[]"}
+            {
+              "input": "[1,null,2,3]",
+              "output": "[1,3,2]"
+            },
+            {
+              "input": "[]",
+              "output": "[]"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "[1,2,3,4,5,6,7]", "output": "[4,2,5,1,6,3,7]"},
-            {"input": "[1]", "output": "[1]"}
+            {
+              "input": "[1,2,3,4,5,6,7]",
+              "output": "[4,2,5,1,6,3,7]"
+            },
+            {
+              "input": "[1]",
+              "output": "[1]"
+            }
           ]
         },
         {
@@ -608,14 +1099,30 @@
           "subtopic_name": "Binary Trees",
           "difficulty": "medium",
           "marks": 8,
-          "categories": ["practice", "contest", "mock_interview"],
+          "categories": [
+            "practice",
+            "contest",
+            "mock_interview"
+          ],
           "test_cases_basic": [
-            {"input": "[3,9,20,null,null,15,7]", "output": "[[3],[9,20],[15,7]]"},
-            {"input": "[1]", "output": "[[1]]"}
+            {
+              "input": "[3,9,20,null,null,15,7]",
+              "output": "[[3],[9,20],[15,7]]"
+            },
+            {
+              "input": "[1]",
+              "output": "[[1]]"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "[]", "output": "[]"},
-            {"input": "[1,2,3,4,5,6,7]", "output": "[[1],[2,3],[4,5,6,7]]"}
+            {
+              "input": "[]",
+              "output": "[]"
+            },
+            {
+              "input": "[1,2,3,4,5,6,7]",
+              "output": "[[1],[2,3],[4,5,6,7]]"
+            }
           ]
         },
         {
@@ -627,12 +1134,27 @@
           "subtopic_name": "Binary Search Trees",
           "difficulty": "medium",
           "marks": 3,
-          "categories": ["learn", "practice"],
+          "categories": [
+            "learn",
+            "practice"
+          ],
           "mcq_options": [
-            {"text": "O(log n)", "is_correct": true},
-            {"text": "O(n)", "is_correct": false},
-            {"text": "O(1)", "is_correct": false},
-            {"text": "O(n log n)", "is_correct": false}
+            {
+              "text": "O(log n)",
+              "is_correct": true
+            },
+            {
+              "text": "O(n)",
+              "is_correct": false
+            },
+            {
+              "text": "O(1)",
+              "is_correct": false
+            },
+            {
+              "text": "O(n log n)",
+              "is_correct": false
+            }
           ]
         },
         {
@@ -644,14 +1166,30 @@
           "subtopic_name": "Binary Search Trees",
           "difficulty": "medium",
           "marks": 10,
-          "categories": ["practice", "contest", "mock_interview"],
+          "categories": [
+            "practice",
+            "contest",
+            "mock_interview"
+          ],
           "test_cases_basic": [
-            {"input": "[2,1,3]", "output": "true"},
-            {"input": "[5,1,4,null,null,3,6]", "output": "false"}
+            {
+              "input": "[2,1,3]",
+              "output": "true"
+            },
+            {
+              "input": "[5,1,4,null,null,3,6]",
+              "output": "false"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "[10,5,15,null,null,6,20]", "output": "false"},
-            {"input": "[]", "output": "true"}
+            {
+              "input": "[10,5,15,null,null,6,20]",
+              "output": "false"
+            },
+            {
+              "input": "[]",
+              "output": "true"
+            }
           ]
         },
         {
@@ -663,14 +1201,29 @@
           "subtopic_name": "Binary Search Trees",
           "difficulty": "medium",
           "marks": 8,
-          "categories": ["practice", "contest"],
+          "categories": [
+            "practice",
+            "contest"
+          ],
           "test_cases_basic": [
-            {"input": "root = [4,2,7,1,3], val = 5", "output": "[4,2,7,1,3,5]"},
-            {"input": "root = [40,20,60,10,30,50,70], val = 25", "output": "[40,20,60,10,30,50,70,null,null,25]"}
+            {
+              "input": "[4,2,7,1,3]\n5",
+              "output": "[4,2,7,1,3,5]"
+            },
+            {
+              "input": "[40,20,60,10,30,50,70]\n25",
+              "output": "[40,20,60,10,30,50,70,null,null,25]"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "root = [], val = 5", "output": "[5]"},
-            {"input": "root = [5], val = 3", "output": "[5,3]"}
+            {
+              "input": "[]\n5",
+              "output": "[5]"
+            },
+            {
+              "input": "[5]\n3",
+              "output": "[5,3]"
+            }
           ]
         },
         {
@@ -682,12 +1235,27 @@
           "subtopic_name": "Graph Algorithms",
           "difficulty": "easy",
           "marks": 3,
-          "categories": ["learn", "practice"],
+          "categories": [
+            "learn",
+            "practice"
+          ],
           "mcq_options": [
-            {"text": "Adjacency Matrix", "is_correct": true},
-            {"text": "Adjacency List", "is_correct": true},
-            {"text": "Edge List", "is_correct": true},
-            {"text": "Binary Tree", "is_correct": false}
+            {
+              "text": "Adjacency Matrix",
+              "is_correct": true
+            },
+            {
+              "text": "Adjacency List",
+              "is_correct": true
+            },
+            {
+              "text": "Edge List",
+              "is_correct": true
+            },
+            {
+              "text": "Binary Tree",
+              "is_correct": false
+            }
           ]
         },
         {
@@ -699,14 +1267,30 @@
           "subtopic_name": "Graph Algorithms",
           "difficulty": "medium",
           "marks": 10,
-          "categories": ["practice", "contest", "mock_interview"],
+          "categories": [
+            "practice",
+            "contest",
+            "mock_interview"
+          ],
           "test_cases_basic": [
-            {"input": "graph = {0: [1, 2], 1: [2], 2: [0, 3], 3: [3]}, start = 2", "output": "[2, 0, 3, 1]"},
-            {"input": "graph = {0: [1], 1: [0]}, start = 0", "output": "[0, 1]"}
+            {
+              "input": "{0: [1, 2], 1: [2], 2: [0, 3], 3: [3]}\n2",
+              "output": "[2, 0, 3, 1]"
+            },
+            {
+              "input": "{0: [1], 1: [0]}\n0",
+              "output": "[0, 1]"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "graph = {0: []}, start = 0", "output": "[0]"},
-            {"input": "graph = {0: [1,2,3], 1: [0], 2: [0], 3: [0]}, start = 0", "output": "[0, 1, 2, 3]"}
+            {
+              "input": "{0: []}\n0",
+              "output": "[0]"
+            },
+            {
+              "input": "{0: [1,2,3], 1: [0], 2: [0], 3: [0]}\n0",
+              "output": "[0, 1, 2, 3]"
+            }
           ]
         },
         {
@@ -718,14 +1302,30 @@
           "subtopic_name": "Graph Algorithms",
           "difficulty": "medium",
           "marks": 10,
-          "categories": ["practice", "contest", "mock_interview"],
+          "categories": [
+            "practice",
+            "contest",
+            "mock_interview"
+          ],
           "test_cases_basic": [
-            {"input": "graph = {0: [1, 2], 1: [2], 2: [0, 3], 3: [3]}, start = 2", "output": "[2, 0, 1, 3] or [2, 3, 0, 1]"},
-            {"input": "graph = {0: [1], 1: [0]}, start = 0", "output": "[0, 1]"}
+            {
+              "input": "{0: [1, 2], 1: [2], 2: [0, 3], 3: [3]}\n2",
+              "output": "[2, 0, 1, 3] or [2, 3, 0, 1]"
+            },
+            {
+              "input": "{0: [1], 1: [0]}\n0",
+              "output": "[0, 1]"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "graph = {0: []}, start = 0", "output": "[0]"},
-            {"input": "disconnected graph", "output": "visits only connected component"}
+            {
+              "input": "{0: []}\n0",
+              "output": "[0]"
+            },
+            {
+              "input": "disconnected graph",
+              "output": "visits only connected component"
+            }
           ]
         },
         {
@@ -736,15 +1336,44 @@
           "topic_name": "Trees and Graphs",
           "difficulty": "hard",
           "marks": 12,
-          "categories": ["contest", "mock_interview"],
+          "categories": [
+            "contest",
+            "mock_interview"
+          ],
           "test_cases_basic": [
-            {"input": "[['1','1','1','1','0'],['1','1','0','1','0'],['1','1','0','0','0'],['0','0','0','0','0']]", "output": "1"},
-            {"input": "[['1','1','0','0','0'],['1','1','0','0','0'],['0','0','1','0','0'],['0','0','0','1','1']]", "output": "3"}
+            {
+              "input": "[['1','1','1','1','0'],['1','1','0','1','0'],['1','1','0','0','0'],['0','0','0','0','0']]",
+              "output": "1"
+            },
+            {
+              "input": "[['1','1','0','0','0'],['1','1','0','0','0'],['0','0','1','0','0'],['0','0','0','1','1']]",
+              "output": "3"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "[['1']]", "output": "1"},
-            {"input": "[['0']]", "output": "0"}
-          ]
+            {
+              "input": "[['1']]",
+              "output": "1"
+            },
+            {
+              "input": "[['0']]",
+              "output": "0"
+            }
+          ],
+          "examples": [
+            {
+              "input": "[\n  ['1','1','1','1','0'],\n  ['1','1','0','1','0'],\n  ['1','1','0','0','0'],\n  ['0','0','0','0','0']\n]",
+              "output": "1",
+              "explanation": "There is only one island (connected group of 1s)."
+            },
+            {
+              "input": "[\n  ['1','1','0','0','0'],\n  ['1','1','0','0','0'],\n  ['0','0','1','0','0'],\n  ['0','0','0','1','1']\n]",
+              "output": "3",
+              "explanation": "There are three islands: one at top-left, one in the middle, and one at bottom-right."
+            }
+          ],
+          "inputFormat": "A 2D array `grid` of characters '1' and '0'.",
+          "outputFormat": "An integer representing the number of islands."
         },
         {
           "type": "coding",
@@ -754,15 +1383,44 @@
           "topic_name": "Trees and Graphs",
           "difficulty": "hard",
           "marks": 15,
-          "categories": ["contest", "mock_interview"],
+          "categories": [
+            "contest",
+            "mock_interview"
+          ],
           "test_cases_basic": [
-            {"input": "numCourses = 2, prerequisites = [[1,0]]", "output": "true"},
-            {"input": "numCourses = 2, prerequisites = [[1,0],[0,1]]", "output": "false"}
+            {
+              "input": "2\n[[1,0]]",
+              "output": "true"
+            },
+            {
+              "input": "2\n[[1,0],[0,1]]",
+              "output": "false"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "numCourses = 4, prerequisites = [[1,0],[2,0],[3,1],[3,2]]", "output": "true"},
-            {"input": "numCourses = 1, prerequisites = []", "output": "true"}
-          ]
+            {
+              "input": "4\n[[1,0],[2,0],[3,1],[3,2]]",
+              "output": "true"
+            },
+            {
+              "input": "1\n[]",
+              "output": "true"
+            }
+          ],
+          "examples": [
+            {
+              "input": "2\n[[1,0]]",
+              "output": "true",
+              "explanation": "There are a total of 2 courses to take. To take course 1 you should have finished course 0. So it is possible."
+            },
+            {
+              "input": "2\n[[1,0],[0,1]]",
+              "output": "false",
+              "explanation": "There are a total of 2 courses to take. To take course 1 you should have finished course 0, and to take course 0 you should also have finished course 1. So it is impossible."
+            }
+          ],
+          "inputFormat": "An integer `numCourses` and a 2D array `prerequisites`.",
+          "outputFormat": "`true` if it is possible to finish all courses, otherwise `false`."
         },
         {
           "type": "mcq_single",
@@ -771,35 +1429,83 @@
           "level": "course",
           "difficulty": "easy",
           "marks": 2,
-          "categories": ["learn", "practice"],
+          "categories": [
+            "learn",
+            "practice"
+          ],
           "mcq_options": [
-            {"text": "Upper bound of algorithm's time complexity", "is_correct": true},
-            {"text": "Exact running time of algorithm", "is_correct": false},
-            {"text": "Lower bound of algorithm's time complexity", "is_correct": false},
-            {"text": "Average case complexity", "is_correct": false}
+            {
+              "text": "Upper bound of algorithm's time complexity",
+              "is_correct": true
+            },
+            {
+              "text": "Exact running time of algorithm",
+              "is_correct": false
+            },
+            {
+              "text": "Lower bound of algorithm's time complexity",
+              "is_correct": false
+            },
+            {
+              "text": "Average case complexity",
+              "is_correct": false
+            }
           ]
         },
         {
           "type": "coding",
           "title": "Implement Binary Search",
-          "content": "Write a function to implement binary search algorithm that returns the index of target element in a sorted array.",
+          "content": "Given an array of integers nums which is sorted in ascending order, and an integer target, write a function to search target in nums. If target exists, then return its index. Otherwise, return -1. You must write an algorithm with O(log n) runtime complexity.",
           "level": "course",
           "difficulty": "medium",
           "marks": 10,
-          "categories": ["practice", "contest", "mock_interview"],
+          "categories": [
+            "practice",
+            "contest",
+            "mock_interview"
+          ],
           "test_cases_basic": [
-            {"input": "arr = [1,2,3,4,5], target = 3", "output": "2"},
-            {"input": "arr = [1,3,5,7,9], target = 7", "output": "3"}
+            {
+              "input": "[-1,0,3,5,9,12]\n9",
+              "output": "4"
+            },
+            {
+              "input": "[-1,0,3,5,9,12]\n2",
+              "output": "-1"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "arr = [], target = 1", "output": "-1"},
-            {"input": "arr = [1], target = 1", "output": "0"},
-            {"input": "arr = [1,2,3,4,5,6,7,8,9,10], target = 11", "output": "-1"}
-          ]
+            {
+              "input": "[]\n1",
+              "output": "-1"
+            },
+            {
+              "input": "[1]\n1",
+              "output": "0"
+            },
+            {
+              "input": "[1,2,3,4,5,6,7,8,9,10]\n11",
+              "output": "-1"
+            }
+          ],
+          "examples": [
+            {
+              "input": "[-1,0,3,5,9,12]\n9",
+              "output": "4",
+              "explanation": "9 exists in nums and its index is 4"
+            },
+            {
+              "input": "[-1,0,3,5,9,12]\n2",
+              "output": "-1",
+              "explanation": "2 does not exist in nums so return -1"
+            }
+          ],
+          "inputFormat": "A sorted integer array `nums` and an integer `target`.",
+          "outputFormat": "The index of `target` in `nums`, or -1 if not found."
         }
       ]
-    },   
- {
+    },
+    {
       "short_code": "PY101",
       "name": "Python Programming Fundamentals",
       "category": "programming_languages",
@@ -988,12 +1694,26 @@
           "subtopic_name": "Python Syntax and Variables",
           "difficulty": "easy",
           "marks": 2,
-          "categories": ["learn"],
+          "categories": [
+            "learn"
+          ],
           "mcq_options": [
-            {"text": "Indentation", "is_correct": true},
-            {"text": "Curly braces {}", "is_correct": false},
-            {"text": "Parentheses ()", "is_correct": false},
-            {"text": "Square brackets []", "is_correct": false}
+            {
+              "text": "Indentation",
+              "is_correct": true
+            },
+            {
+              "text": "Curly braces {}",
+              "is_correct": false
+            },
+            {
+              "text": "Parentheses ()",
+              "is_correct": false
+            },
+            {
+              "text": "Square brackets []",
+              "is_correct": false
+            }
           ]
         },
         {
@@ -1005,12 +1725,27 @@
           "subtopic_name": "Python Syntax and Variables",
           "difficulty": "easy",
           "marks": 3,
-          "categories": ["learn", "practice"],
+          "categories": [
+            "learn",
+            "practice"
+          ],
           "mcq_options": [
-            {"text": "int", "is_correct": true},
-            {"text": "str", "is_correct": true},
-            {"text": "bool", "is_correct": true},
-            {"text": "char", "is_correct": false}
+            {
+              "text": "int",
+              "is_correct": true
+            },
+            {
+              "text": "str",
+              "is_correct": true
+            },
+            {
+              "text": "bool",
+              "is_correct": true
+            },
+            {
+              "text": "char",
+              "is_correct": false
+            }
           ]
         },
         {
@@ -1022,14 +1757,29 @@
           "subtopic_name": "Python Syntax and Variables",
           "difficulty": "easy",
           "marks": 5,
-          "categories": ["learn", "practice"],
+          "categories": [
+            "learn",
+            "practice"
+          ],
           "test_cases_basic": [
-            {"input": "Create int, float, str, bool variables", "output": "Print types: <class 'int'>, <class 'float'>, <class 'str'>, <class 'bool'>"},
-            {"input": "x = 10, y = 3.14, name = 'Python', flag = True", "output": "Correct type identification"}
+            {
+              "input": "Create int, float, str, bool variables",
+              "output": "Print types: <class 'int'>, <class 'float'>, <class 'str'>, <class 'bool'>"
+            },
+            {
+              "input": "10, y = 3.14, name = 'Python', flag = True",
+              "output": "Correct type identification"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "Dynamic typing example", "output": "Variable type changes correctly"},
-            {"input": "None type variable", "output": "<class 'NoneType'>"}
+            {
+              "input": "Dynamic typing example",
+              "output": "Variable type changes correctly"
+            },
+            {
+              "input": "None type variable",
+              "output": "<class 'NoneType'>"
+            }
           ]
         },
         {
@@ -1041,12 +1791,26 @@
           "subtopic_name": "Control Structures",
           "difficulty": "easy",
           "marks": 2,
-          "categories": ["learn"],
+          "categories": [
+            "learn"
+          ],
           "mcq_options": [
-            {"text": "if condition:", "is_correct": true},
-            {"text": "if (condition) {", "is_correct": false},
-            {"text": "if condition then", "is_correct": false},
-            {"text": "IF condition:", "is_correct": false}
+            {
+              "text": "if condition:",
+              "is_correct": true
+            },
+            {
+              "text": "if (condition) {",
+              "is_correct": false
+            },
+            {
+              "text": "if condition then",
+              "is_correct": false
+            },
+            {
+              "text": "IF condition:",
+              "is_correct": false
+            }
           ]
         },
         {
@@ -1058,14 +1822,29 @@
           "subtopic_name": "Control Structures",
           "difficulty": "medium",
           "marks": 8,
-          "categories": ["practice", "contest"],
+          "categories": [
+            "practice",
+            "contest"
+          ],
           "test_cases_basic": [
-            {"input": "Numbers 1-15", "output": "1, 2, Fizz, 4, Buzz, Fizz, 7, 8, Fizz, Buzz, 11, Fizz, 13, 14, FizzBuzz"},
-            {"input": "Check multiples of 3 and 5", "output": "Correct Fizz, Buzz, FizzBuzz output"}
+            {
+              "input": "Numbers 1-15",
+              "output": "1, 2, Fizz, 4, Buzz, Fizz, 7, 8, Fizz, Buzz, 11, Fizz, 13, 14, FizzBuzz"
+            },
+            {
+              "input": "Check multiples of 3 and 5",
+              "output": "Correct Fizz, Buzz, FizzBuzz output"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "Edge cases: 0, negative numbers", "output": "Handle edge cases appropriately"},
-            {"input": "Large range", "output": "Efficient execution for large ranges"}
+            {
+              "input": "Edge cases: 0, negative numbers",
+              "output": "Handle edge cases appropriately"
+            },
+            {
+              "input": "Large range",
+              "output": "Efficient execution for large ranges"
+            }
           ]
         },
         {
@@ -1077,14 +1856,29 @@
           "subtopic_name": "Control Structures",
           "difficulty": "medium",
           "marks": 10,
-          "categories": ["practice", "mock_interview"],
+          "categories": [
+            "practice",
+            "mock_interview"
+          ],
           "test_cases_basic": [
-            {"input": "User guesses correctly", "output": "Congratulations message"},
-            {"input": "User guess too high/low", "output": "Appropriate hint messages"}
+            {
+              "input": "User guesses correctly",
+              "output": "Congratulations message"
+            },
+            {
+              "input": "User guess too high/low",
+              "output": "Appropriate hint messages"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "Invalid input handling", "output": "Error handling for non-numeric input"},
-            {"input": "Limited attempts", "output": "Game ends after max attempts"}
+            {
+              "input": "Invalid input handling",
+              "output": "Error handling for non-numeric input"
+            },
+            {
+              "input": "Limited attempts",
+              "output": "Game ends after max attempts"
+            }
           ]
         },
         {
@@ -1096,12 +1890,26 @@
           "subtopic_name": "Functions and Modules",
           "difficulty": "easy",
           "marks": 2,
-          "categories": ["learn"],
+          "categories": [
+            "learn"
+          ],
           "mcq_options": [
-            {"text": "def", "is_correct": true},
-            {"text": "function", "is_correct": false},
-            {"text": "func", "is_correct": false},
-            {"text": "define", "is_correct": false}
+            {
+              "text": "def",
+              "is_correct": true
+            },
+            {
+              "text": "function",
+              "is_correct": false
+            },
+            {
+              "text": "func",
+              "is_correct": false
+            },
+            {
+              "text": "define",
+              "is_correct": false
+            }
           ]
         },
         {
@@ -1113,14 +1921,29 @@
           "subtopic_name": "Functions and Modules",
           "difficulty": "easy",
           "marks": 6,
-          "categories": ["learn", "practice"],
+          "categories": [
+            "learn",
+            "practice"
+          ],
           "test_cases_basic": [
-            {"input": "calculate(10, 5, '+')", "output": "15"},
-            {"input": "calculate(10, 3, '/')", "output": "3.333..."}
+            {
+              "input": "calculate(10, 5, '+')",
+              "output": "15"
+            },
+            {
+              "input": "calculate(10, 3, '/')",
+              "output": "3.333..."
+            }
           ],
           "test_cases_advanced": [
-            {"input": "calculate(10, 0, '/')", "output": "Handle division by zero"},
-            {"input": "calculate(5, 3, '%')", "output": "Handle invalid operation"}
+            {
+              "input": "calculate(10, 0, '/')",
+              "output": "Handle division by zero"
+            },
+            {
+              "input": "calculate(5, 3, '%')",
+              "output": "Handle invalid operation"
+            }
           ]
         },
         {
@@ -1132,14 +1955,29 @@
           "subtopic_name": "Functions and Modules",
           "difficulty": "medium",
           "marks": 8,
-          "categories": ["practice", "contest"],
+          "categories": [
+            "practice",
+            "contest"
+          ],
           "test_cases_basic": [
-            {"input": "factorial(5)", "output": "120"},
-            {"input": "factorial(0)", "output": "1"}
+            {
+              "input": "factorial(5)",
+              "output": "120"
+            },
+            {
+              "input": "factorial(0)",
+              "output": "1"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "factorial(10)", "output": "3628800"},
-            {"input": "factorial(-1)", "output": "Handle negative input"}
+            {
+              "input": "factorial(10)",
+              "output": "3628800"
+            },
+            {
+              "input": "factorial(-1)",
+              "output": "Handle negative input"
+            }
           ]
         },
         {
@@ -1150,14 +1988,30 @@
           "topic_name": "Python Basics",
           "difficulty": "medium",
           "marks": 10,
-          "categories": ["practice", "contest", "mock_interview"],
+          "categories": [
+            "practice",
+            "contest",
+            "mock_interview"
+          ],
           "test_cases_basic": [
-            {"input": "is_prime(17)", "output": "True"},
-            {"input": "primes_up_to(10)", "output": "[2, 3, 5, 7]"}
+            {
+              "input": "is_prime(17)",
+              "output": "True"
+            },
+            {
+              "input": "primes_up_to(10)",
+              "output": "[2, 3, 5, 7]"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "is_prime(1)", "output": "False"},
-            {"input": "primes_up_to(100)", "output": "All primes up to 100"}
+            {
+              "input": "is_prime(1)",
+              "output": "False"
+            },
+            {
+              "input": "primes_up_to(100)",
+              "output": "All primes up to 100"
+            }
           ]
         },
         {
@@ -1169,12 +2023,26 @@
           "subtopic_name": "Lists and Tuples",
           "difficulty": "easy",
           "marks": 2,
-          "categories": ["learn"],
+          "categories": [
+            "learn"
+          ],
           "mcq_options": [
-            {"text": "Mutable", "is_correct": true},
-            {"text": "Immutable", "is_correct": false},
-            {"text": "Depends on content", "is_correct": false},
-            {"text": "Neither", "is_correct": false}
+            {
+              "text": "Mutable",
+              "is_correct": true
+            },
+            {
+              "text": "Immutable",
+              "is_correct": false
+            },
+            {
+              "text": "Depends on content",
+              "is_correct": false
+            },
+            {
+              "text": "Neither",
+              "is_correct": false
+            }
           ]
         },
         {
@@ -1186,14 +2054,29 @@
           "subtopic_name": "Lists and Tuples",
           "difficulty": "easy",
           "marks": 6,
-          "categories": ["learn", "practice"],
+          "categories": [
+            "learn",
+            "practice"
+          ],
           "test_cases_basic": [
-            {"input": "[1, 2, 3, 4, 5]", "output": "max=5, min=1, sum=15, avg=3.0"},
-            {"input": "[-1, 0, 1]", "output": "max=1, min=-1, sum=0, avg=0.0"}
+            {
+              "input": "[1, 2, 3, 4, 5]",
+              "output": "5, min=1, sum=15, avg=3.0"
+            },
+            {
+              "input": "[-1, 0, 1]",
+              "output": "1, min=-1, sum=0, avg=0.0"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "[]", "output": "Handle empty list"},
-            {"input": "[42]", "output": "Single element list"}
+            {
+              "input": "[]",
+              "output": "Handle empty list"
+            },
+            {
+              "input": "[42]",
+              "output": "Single element list"
+            }
           ]
         },
         {
@@ -1205,14 +2088,29 @@
           "subtopic_name": "Lists and Tuples",
           "difficulty": "medium",
           "marks": 8,
-          "categories": ["practice", "contest"],
+          "categories": [
+            "practice",
+            "contest"
+          ],
           "test_cases_basic": [
-            {"input": "Squares 1-10", "output": "[1, 4, 9, 16, 25, 36, 49, 64, 81, 100]"},
-            {"input": "Even numbers from [1,2,3,4,5,6]", "output": "[2, 4, 6]"}
+            {
+              "input": "Squares 1-10",
+              "output": "[1, 4, 9, 16, 25, 36, 49, 64, 81, 100]"
+            },
+            {
+              "input": "Even numbers from [1,2,3,4,5,6]",
+              "output": "[2, 4, 6]"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "Nested list comprehension", "output": "Correct nested structure"},
-            {"input": "Conditional list comprehension", "output": "Proper filtering"}
+            {
+              "input": "Nested list comprehension",
+              "output": "Correct nested structure"
+            },
+            {
+              "input": "Conditional list comprehension",
+              "output": "Proper filtering"
+            }
           ]
         },
         {
@@ -1224,12 +2122,27 @@
           "subtopic_name": "Dictionaries and Sets",
           "difficulty": "medium",
           "marks": 3,
-          "categories": ["learn", "practice"],
+          "categories": [
+            "learn",
+            "practice"
+          ],
           "mcq_options": [
-            {"text": "Immutable objects only", "is_correct": true},
-            {"text": "Any object", "is_correct": false},
-            {"text": "Strings and numbers only", "is_correct": false},
-            {"text": "Mutable objects only", "is_correct": false}
+            {
+              "text": "Immutable objects only",
+              "is_correct": true
+            },
+            {
+              "text": "Any object",
+              "is_correct": false
+            },
+            {
+              "text": "Strings and numbers only",
+              "is_correct": false
+            },
+            {
+              "text": "Mutable objects only",
+              "is_correct": false
+            }
           ]
         },
         {
@@ -1241,14 +2154,29 @@
           "subtopic_name": "Dictionaries and Sets",
           "difficulty": "medium",
           "marks": 8,
-          "categories": ["practice", "mock_interview"],
+          "categories": [
+            "practice",
+            "mock_interview"
+          ],
           "test_cases_basic": [
-            {"input": "'hello world hello'", "output": "{'hello': 2, 'world': 1}"},
-            {"input": "'python is great python'", "output": "{'python': 2, 'is': 1, 'great': 1}"}
+            {
+              "input": "'hello world hello'",
+              "output": "{'hello': 2, 'world': 1}"
+            },
+            {
+              "input": "'python is great python'",
+              "output": "{'python': 2, 'is': 1, 'great': 1}"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "Handle punctuation and case", "output": "Proper text processing"},
-            {"input": "Empty string", "output": "{}"}
+            {
+              "input": "Handle punctuation and case",
+              "output": "Proper text processing"
+            },
+            {
+              "input": "Empty string",
+              "output": "{}"
+            }
           ]
         },
         {
@@ -1260,14 +2188,30 @@
           "subtopic_name": "Dictionaries and Sets",
           "difficulty": "medium",
           "marks": 10,
-          "categories": ["practice", "contest", "mock_interview"],
+          "categories": [
+            "practice",
+            "contest",
+            "mock_interview"
+          ],
           "test_cases_basic": [
-            {"input": "[1,2,3,4], [3,4,5,6]", "output": "common=[3,4], only_first=[1,2], only_second=[5,6], all_unique=[1,2,3,4,5,6]"},
-            {"input": "[1,1,2], [2,2,3]", "output": "Handle duplicates correctly"}
+            {
+              "input": "[1,2,3,4], [3,4,5,6]",
+              "output": "[3,4], only_first=[1,2], only_second=[5,6], all_unique=[1,2,3,4,5,6]"
+            },
+            {
+              "input": "[1,1,2], [2,2,3]",
+              "output": "Handle duplicates correctly"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "[], [1,2,3]", "output": "Handle empty lists"},
-            {"input": "Large lists", "output": "Efficient set operations"}
+            {
+              "input": "[], [1,2,3]",
+              "output": "Handle empty lists"
+            },
+            {
+              "input": "Large lists",
+              "output": "Efficient set operations"
+            }
           ]
         },
         {
@@ -1278,14 +2222,30 @@
           "topic_name": "Data Structures in Python",
           "difficulty": "hard",
           "marks": 15,
-          "categories": ["practice", "contest", "mock_interview"],
+          "categories": [
+            "practice",
+            "contest",
+            "mock_interview"
+          ],
           "test_cases_basic": [
-            {"input": "Add students and grades", "output": "Proper data structure management"},
-            {"input": "Calculate class average", "output": "Correct mathematical calculations"}
+            {
+              "input": "Add students and grades",
+              "output": "Proper data structure management"
+            },
+            {
+              "input": "Calculate class average",
+              "output": "Correct mathematical calculations"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "Handle edge cases", "output": "Empty classes, invalid grades"},
-            {"input": "Complex queries", "output": "Top N students, grade distributions"}
+            {
+              "input": "Handle edge cases",
+              "output": "Empty classes, invalid grades"
+            },
+            {
+              "input": "Complex queries",
+              "output": "Top N students, grade distributions"
+            }
           ]
         },
         {
@@ -1297,12 +2257,26 @@
           "subtopic_name": "Classes and Objects",
           "difficulty": "easy",
           "marks": 2,
-          "categories": ["learn"],
+          "categories": [
+            "learn"
+          ],
           "mcq_options": [
-            {"text": "class", "is_correct": true},
-            {"text": "Class", "is_correct": false},
-            {"text": "object", "is_correct": false},
-            {"text": "def", "is_correct": false}
+            {
+              "text": "class",
+              "is_correct": true
+            },
+            {
+              "text": "Class",
+              "is_correct": false
+            },
+            {
+              "text": "object",
+              "is_correct": false
+            },
+            {
+              "text": "def",
+              "is_correct": false
+            }
           ]
         },
         {
@@ -1314,14 +2288,29 @@
           "subtopic_name": "Classes and Objects",
           "difficulty": "easy",
           "marks": 6,
-          "categories": ["learn", "practice"],
+          "categories": [
+            "learn",
+            "practice"
+          ],
           "test_cases_basic": [
-            {"input": "Person('Alice', 25)", "output": "Create person object with correct attributes"},
-            {"input": "person.birthday()", "output": "Age increases by 1"}
+            {
+              "input": "Person('Alice', 25)",
+              "output": "Create person object with correct attributes"
+            },
+            {
+              "input": "person.birthday()",
+              "output": "Age increases by 1"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "Multiple person objects", "output": "Independent object states"},
-            {"input": "String representation", "output": "Proper __str__ method"}
+            {
+              "input": "Multiple person objects",
+              "output": "Independent object states"
+            },
+            {
+              "input": "String representation",
+              "output": "Proper __str__ method"
+            }
           ]
         },
         {
@@ -1333,14 +2322,29 @@
           "subtopic_name": "Classes and Objects",
           "difficulty": "medium",
           "marks": 10,
-          "categories": ["practice", "mock_interview"],
+          "categories": [
+            "practice",
+            "mock_interview"
+          ],
           "test_cases_basic": [
-            {"input": "deposit(100), withdraw(50)", "output": "balance = 50"},
-            {"input": "withdraw(200) with balance 100", "output": "Insufficient funds error"}
+            {
+              "input": "deposit(100), withdraw(50)",
+              "output": "50"
+            },
+            {
+              "input": "withdraw(200) with balance 100",
+              "output": "Insufficient funds error"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "Negative deposit/withdrawal", "output": "Handle invalid amounts"},
-            {"input": "Account history tracking", "output": "Transaction logging"}
+            {
+              "input": "Negative deposit/withdrawal",
+              "output": "Handle invalid amounts"
+            },
+            {
+              "input": "Account history tracking",
+              "output": "Transaction logging"
+            }
           ]
         },
         {
@@ -1352,12 +2356,26 @@
           "subtopic_name": "Inheritance and Polymorphism",
           "difficulty": "easy",
           "marks": 2,
-          "categories": ["learn"],
+          "categories": [
+            "learn"
+          ],
           "mcq_options": [
-            {"text": "class Child(Parent):", "is_correct": true},
-            {"text": "class Child extends Parent:", "is_correct": false},
-            {"text": "class Child inherits Parent:", "is_correct": false},
-            {"text": "class Child -> Parent:", "is_correct": false}
+            {
+              "text": "class Child(Parent):",
+              "is_correct": true
+            },
+            {
+              "text": "class Child extends Parent:",
+              "is_correct": false
+            },
+            {
+              "text": "class Child inherits Parent:",
+              "is_correct": false
+            },
+            {
+              "text": "class Child -> Parent:",
+              "is_correct": false
+            }
           ]
         },
         {
@@ -1369,14 +2387,29 @@
           "subtopic_name": "Inheritance and Polymorphism",
           "difficulty": "medium",
           "marks": 8,
-          "categories": ["practice", "contest"],
+          "categories": [
+            "practice",
+            "contest"
+          ],
           "test_cases_basic": [
-            {"input": "Dog().make_sound()", "output": "'Woof!'"},
-            {"input": "Cat().make_sound()", "output": "'Meow!'"}
+            {
+              "input": "Dog().make_sound()",
+              "output": "'Woof!'"
+            },
+            {
+              "input": "Cat().make_sound()",
+              "output": "'Meow!'"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "Polymorphic behavior", "output": "Same method call, different behavior"},
-            {"input": "super() usage", "output": "Proper parent method calling"}
+            {
+              "input": "Polymorphic behavior",
+              "output": "Same method call, different behavior"
+            },
+            {
+              "input": "super() usage",
+              "output": "Proper parent method calling"
+            }
           ]
         },
         {
@@ -1388,14 +2421,30 @@
           "subtopic_name": "Inheritance and Polymorphism",
           "difficulty": "medium",
           "marks": 10,
-          "categories": ["practice", "contest", "mock_interview"],
+          "categories": [
+            "practice",
+            "contest",
+            "mock_interview"
+          ],
           "test_cases_basic": [
-            {"input": "Rectangle(5, 3).area()", "output": "15"},
-            {"input": "Circle(5).area()", "output": "78.54 (approximately)"}
+            {
+              "input": "Rectangle(5, 3).area()",
+              "output": "15"
+            },
+            {
+              "input": "Circle(5).area()",
+              "output": "78.54 (approximately)"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "List of different shapes", "output": "Polymorphic area calculations"},
-            {"input": "Abstract base class", "output": "Proper abstraction implementation"}
+            {
+              "input": "List of different shapes",
+              "output": "Polymorphic area calculations"
+            },
+            {
+              "input": "Abstract base class",
+              "output": "Proper abstraction implementation"
+            }
           ]
         },
         {
@@ -1406,14 +2455,29 @@
           "topic_name": "Object-Oriented Programming",
           "difficulty": "hard",
           "marks": 20,
-          "categories": ["contest", "mock_interview"],
+          "categories": [
+            "contest",
+            "mock_interview"
+          ],
           "test_cases_basic": [
-            {"input": "Add books, borrow book", "output": "Proper state management"},
-            {"input": "Search by author/title", "output": "Correct search results"}
+            {
+              "input": "Add books, borrow book",
+              "output": "Proper state management"
+            },
+            {
+              "input": "Search by author/title",
+              "output": "Correct search results"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "Multiple copies of same book", "output": "Handle inventory correctly"},
-            {"input": "Overdue books tracking", "output": "Date management and penalties"}
+            {
+              "input": "Multiple copies of same book",
+              "output": "Handle inventory correctly"
+            },
+            {
+              "input": "Overdue books tracking",
+              "output": "Date management and penalties"
+            }
           ]
         },
         {
@@ -1423,19 +2487,35 @@
           "level": "course",
           "difficulty": "hard",
           "marks": 15,
-          "categories": ["practice", "contest", "mock_interview"],
+          "categories": [
+            "practice",
+            "contest",
+            "mock_interview"
+          ],
           "test_cases_basic": [
-            {"input": "Sample text file", "output": "Correct statistics calculation"},
-            {"input": "Empty file", "output": "Handle empty file gracefully"}
+            {
+              "input": "Sample text file",
+              "output": "Correct statistics calculation"
+            },
+            {
+              "input": "Empty file",
+              "output": "Handle empty file gracefully"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "Large text files", "output": "Efficient processing"},
-            {"input": "Unicode characters", "output": "Proper encoding handling"}
+            {
+              "input": "Large text files",
+              "output": "Efficient processing"
+            },
+            {
+              "input": "Unicode characters",
+              "output": "Proper encoding handling"
+            }
           ]
         }
       ]
-    },    {
-
+    },
+    {
       "short_code": "WEB101",
       "name": "Web Development Fundamentals",
       "category": "web_development",
@@ -1624,12 +2704,26 @@
           "subtopic_name": "HTML Basics",
           "difficulty": "easy",
           "marks": 2,
-          "categories": ["learn"],
+          "categories": [
+            "learn"
+          ],
           "mcq_options": [
-            {"text": "<html>", "is_correct": true},
-            {"text": "<body>", "is_correct": false},
-            {"text": "<head>", "is_correct": false},
-            {"text": "<document>", "is_correct": false}
+            {
+              "text": "<html>",
+              "is_correct": true
+            },
+            {
+              "text": "<body>",
+              "is_correct": false
+            },
+            {
+              "text": "<head>",
+              "is_correct": false
+            },
+            {
+              "text": "<document>",
+              "is_correct": false
+            }
           ]
         },
         {
@@ -1641,12 +2735,27 @@
           "subtopic_name": "HTML Basics",
           "difficulty": "medium",
           "marks": 3,
-          "categories": ["learn", "practice"],
+          "categories": [
+            "learn",
+            "practice"
+          ],
           "mcq_options": [
-            {"text": "<header>", "is_correct": true},
-            {"text": "<nav>", "is_correct": true},
-            {"text": "<section>", "is_correct": true},
-            {"text": "<div>", "is_correct": false}
+            {
+              "text": "<header>",
+              "is_correct": true
+            },
+            {
+              "text": "<nav>",
+              "is_correct": true
+            },
+            {
+              "text": "<section>",
+              "is_correct": true
+            },
+            {
+              "text": "<div>",
+              "is_correct": false
+            }
           ]
         },
         {
@@ -1658,14 +2767,29 @@
           "subtopic_name": "HTML Basics",
           "difficulty": "easy",
           "marks": 6,
-          "categories": ["learn", "practice"],
+          "categories": [
+            "learn",
+            "practice"
+          ],
           "test_cases_basic": [
-            {"input": "Form structure", "output": "Proper form element with fields"},
-            {"input": "Input types", "output": "Correct input types for each field"}
+            {
+              "input": "Form structure",
+              "output": "Proper form element with fields"
+            },
+            {
+              "input": "Input types",
+              "output": "Correct input types for each field"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "Accessibility", "output": "Proper labels and ARIA attributes"},
-            {"input": "Validation", "output": "HTML5 validation attributes"}
+            {
+              "input": "Accessibility",
+              "output": "Proper labels and ARIA attributes"
+            },
+            {
+              "input": "Validation",
+              "output": "HTML5 validation attributes"
+            }
           ]
         },
         {
@@ -1677,12 +2801,27 @@
           "subtopic_name": "CSS Styling",
           "difficulty": "medium",
           "marks": 3,
-          "categories": ["learn", "practice"],
+          "categories": [
+            "learn",
+            "practice"
+          ],
           "mcq_options": [
-            {"text": "ID selector (#id)", "is_correct": true},
-            {"text": "Class selector (.class)", "is_correct": false},
-            {"text": "Element selector (div)", "is_correct": false},
-            {"text": "Universal selector (*)", "is_correct": false}
+            {
+              "text": "ID selector (#id)",
+              "is_correct": true
+            },
+            {
+              "text": "Class selector (.class)",
+              "is_correct": false
+            },
+            {
+              "text": "Element selector (div)",
+              "is_correct": false
+            },
+            {
+              "text": "Universal selector (*)",
+              "is_correct": false
+            }
           ]
         },
         {
@@ -1694,14 +2833,29 @@
           "subtopic_name": "CSS Styling",
           "difficulty": "medium",
           "marks": 8,
-          "categories": ["practice", "contest"],
+          "categories": [
+            "practice",
+            "contest"
+          ],
           "test_cases_basic": [
-            {"input": "Flexbox layout", "output": "Proper flex container and items"},
-            {"input": "Logo and menu positioning", "output": "Logo left, menu right"}
+            {
+              "input": "Flexbox layout",
+              "output": "Proper flex container and items"
+            },
+            {
+              "input": "Logo and menu positioning",
+              "output": "Logo left, menu right"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "Responsive behavior", "output": "Works on different screen sizes"},
-            {"input": "Hover effects", "output": "Interactive menu items"}
+            {
+              "input": "Responsive behavior",
+              "output": "Works on different screen sizes"
+            },
+            {
+              "input": "Hover effects",
+              "output": "Interactive menu items"
+            }
           ]
         },
         {
@@ -1713,14 +2867,30 @@
           "subtopic_name": "CSS Styling",
           "difficulty": "medium",
           "marks": 10,
-          "categories": ["practice", "contest", "mock_interview"],
+          "categories": [
+            "practice",
+            "contest",
+            "mock_interview"
+          ],
           "test_cases_basic": [
-            {"input": "Grid container", "output": "Proper grid-template-areas"},
-            {"input": "Layout areas", "output": "Header, sidebar, main, footer positioned correctly"}
+            {
+              "input": "Grid container",
+              "output": "Proper grid-template-areas"
+            },
+            {
+              "input": "Layout areas",
+              "output": "Header, sidebar, main, footer positioned correctly"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "Responsive grid", "output": "Layout adapts to screen size"},
-            {"input": "Grid gap and alignment", "output": "Proper spacing and alignment"}
+            {
+              "input": "Responsive grid",
+              "output": "Layout adapts to screen size"
+            },
+            {
+              "input": "Grid gap and alignment",
+              "output": "Proper spacing and alignment"
+            }
           ]
         },
         {
@@ -1732,12 +2902,27 @@
           "subtopic_name": "Responsive Design",
           "difficulty": "medium",
           "marks": 3,
-          "categories": ["learn", "practice"],
+          "categories": [
+            "learn",
+            "practice"
+          ],
           "mcq_options": [
-            {"text": "@media (max-width: 768px)", "is_correct": true},
-            {"text": "@media screen and (width < 768px)", "is_correct": false},
-            {"text": "@media (screen-width: 768px)", "is_correct": false},
-            {"text": "@media max-width: 768px", "is_correct": false}
+            {
+              "text": "@media (max-width: 768px)",
+              "is_correct": true
+            },
+            {
+              "text": "@media screen and (width < 768px)",
+              "is_correct": false
+            },
+            {
+              "text": "@media (screen-width: 768px)",
+              "is_correct": false
+            },
+            {
+              "text": "@media max-width: 768px",
+              "is_correct": false
+            }
           ]
         },
         {
@@ -1749,14 +2934,30 @@
           "subtopic_name": "Responsive Design",
           "difficulty": "medium",
           "marks": 10,
-          "categories": ["practice", "contest", "mock_interview"],
+          "categories": [
+            "practice",
+            "contest",
+            "mock_interview"
+          ],
           "test_cases_basic": [
-            {"input": "Desktop layout", "output": "3 cards per row"},
-            {"input": "Mobile layout", "output": "1 card per row"}
+            {
+              "input": "Desktop layout",
+              "output": "3 cards per row"
+            },
+            {
+              "input": "Mobile layout",
+              "output": "1 card per row"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "Smooth transitions", "output": "Responsive breakpoints work smoothly"},
-            {"input": "Card content", "output": "Images and text scale properly"}
+            {
+              "input": "Smooth transitions",
+              "output": "Responsive breakpoints work smoothly"
+            },
+            {
+              "input": "Card content",
+              "output": "Images and text scale properly"
+            }
           ]
         },
         {
@@ -1767,14 +2968,29 @@
           "topic_name": "HTML and CSS",
           "difficulty": "hard",
           "marks": 20,
-          "categories": ["contest", "mock_interview"],
+          "categories": [
+            "contest",
+            "mock_interview"
+          ],
           "test_cases_basic": [
-            {"input": "Page structure", "output": "All sections present and properly structured"},
-            {"input": "Responsive design", "output": "Works on all device sizes"}
+            {
+              "input": "Page structure",
+              "output": "All sections present and properly structured"
+            },
+            {
+              "input": "Responsive design",
+              "output": "Works on all device sizes"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "Visual design", "output": "Professional appearance with good typography"},
-            {"input": "Performance", "output": "Optimized CSS and fast loading"}
+            {
+              "input": "Visual design",
+              "output": "Professional appearance with good typography"
+            },
+            {
+              "input": "Performance",
+              "output": "Optimized CSS and fast loading"
+            }
           ]
         },
         {
@@ -1786,12 +3002,26 @@
           "subtopic_name": "JavaScript Basics",
           "difficulty": "easy",
           "marks": 2,
-          "categories": ["learn"],
+          "categories": [
+            "learn"
+          ],
           "mcq_options": [
-            {"text": "let", "is_correct": true},
-            {"text": "var", "is_correct": false},
-            {"text": "const", "is_correct": false},
-            {"text": "variable", "is_correct": false}
+            {
+              "text": "let",
+              "is_correct": true
+            },
+            {
+              "text": "var",
+              "is_correct": false
+            },
+            {
+              "text": "const",
+              "is_correct": false
+            },
+            {
+              "text": "variable",
+              "is_correct": false
+            }
           ]
         },
         {
@@ -1803,14 +3033,29 @@
           "subtopic_name": "JavaScript Basics",
           "difficulty": "easy",
           "marks": 6,
-          "categories": ["learn", "practice"],
+          "categories": [
+            "learn",
+            "practice"
+          ],
           "test_cases_basic": [
-            {"input": "calculate(10, 5, '+')", "output": "15"},
-            {"input": "calculate(10, 3, '/')", "output": "3.333..."}
+            {
+              "input": "calculate(10, 5, '+')",
+              "output": "15"
+            },
+            {
+              "input": "calculate(10, 3, '/')",
+              "output": "3.333..."
+            }
           ],
           "test_cases_advanced": [
-            {"input": "calculate(10, 0, '/')", "output": "Handle division by zero"},
-            {"input": "calculate(5, 3, '%')", "output": "Handle invalid operator"}
+            {
+              "input": "calculate(10, 0, '/')",
+              "output": "Handle division by zero"
+            },
+            {
+              "input": "calculate(5, 3, '%')",
+              "output": "Handle invalid operator"
+            }
           ]
         },
         {
@@ -1822,14 +3067,29 @@
           "subtopic_name": "JavaScript Basics",
           "difficulty": "medium",
           "marks": 8,
-          "categories": ["practice", "contest"],
+          "categories": [
+            "practice",
+            "contest"
+          ],
           "test_cases_basic": [
-            {"input": "[1,2,3,4,5] filter even", "output": "[2,4]"},
-            {"input": "[1,2,3] map to squares", "output": "[1,4,9]"}
+            {
+              "input": "[1,2,3,4,5] filter even",
+              "output": "[2,4]"
+            },
+            {
+              "input": "[1,2,3] map to squares",
+              "output": "[1,4,9]"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "Empty array handling", "output": "Proper edge case handling"},
-            {"input": "Chaining methods", "output": "Method chaining works correctly"}
+            {
+              "input": "Empty array handling",
+              "output": "Proper edge case handling"
+            },
+            {
+              "input": "Chaining methods",
+              "output": "Method chaining works correctly"
+            }
           ]
         },
         {
@@ -1841,12 +3101,26 @@
           "subtopic_name": "DOM Manipulation",
           "difficulty": "easy",
           "marks": 2,
-          "categories": ["learn"],
+          "categories": [
+            "learn"
+          ],
           "mcq_options": [
-            {"text": "document.getElementById()", "is_correct": true},
-            {"text": "document.getElement()", "is_correct": false},
-            {"text": "document.selectById()", "is_correct": false},
-            {"text": "document.querySelector()", "is_correct": false}
+            {
+              "text": "document.getElementById()",
+              "is_correct": true
+            },
+            {
+              "text": "document.getElement()",
+              "is_correct": false
+            },
+            {
+              "text": "document.selectById()",
+              "is_correct": false
+            },
+            {
+              "text": "document.querySelector()",
+              "is_correct": false
+            }
           ]
         },
         {
@@ -1858,14 +3132,30 @@
           "subtopic_name": "DOM Manipulation",
           "difficulty": "medium",
           "marks": 12,
-          "categories": ["practice", "contest", "mock_interview"],
+          "categories": [
+            "practice",
+            "contest",
+            "mock_interview"
+          ],
           "test_cases_basic": [
-            {"input": "Add task", "output": "New task appears in list"},
-            {"input": "Remove task", "output": "Task is removed from list"}
+            {
+              "input": "Add task",
+              "output": "New task appears in list"
+            },
+            {
+              "input": "Remove task",
+              "output": "Task is removed from list"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "Mark complete", "output": "Task styling changes"},
-            {"input": "Empty input handling", "output": "Prevents adding empty tasks"}
+            {
+              "input": "Mark complete",
+              "output": "Task styling changes"
+            },
+            {
+              "input": "Empty input handling",
+              "output": "Prevents adding empty tasks"
+            }
           ]
         },
         {
@@ -1877,14 +3167,29 @@
           "subtopic_name": "DOM Manipulation",
           "difficulty": "medium",
           "marks": 10,
-          "categories": ["practice", "mock_interview"],
+          "categories": [
+            "practice",
+            "mock_interview"
+          ],
           "test_cases_basic": [
-            {"input": "Valid email format", "output": "Email validation passes"},
-            {"input": "Password matching", "output": "Passwords match validation"}
+            {
+              "input": "Valid email format",
+              "output": "Email validation passes"
+            },
+            {
+              "input": "Password matching",
+              "output": "Passwords match validation"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "Real-time validation", "output": "Validation occurs as user types"},
-            {"input": "Error message display", "output": "Clear error messages shown"}
+            {
+              "input": "Real-time validation",
+              "output": "Validation occurs as user types"
+            },
+            {
+              "input": "Error message display",
+              "output": "Clear error messages shown"
+            }
           ]
         },
         {
@@ -1895,14 +3200,29 @@
           "topic_name": "JavaScript Fundamentals",
           "difficulty": "hard",
           "marks": 18,
-          "categories": ["contest", "mock_interview"],
+          "categories": [
+            "contest",
+            "mock_interview"
+          ],
           "test_cases_basic": [
-            {"input": "Data fetching", "output": "Successfully retrieves and displays data"},
-            {"input": "User interactions", "output": "Responds to user input correctly"}
+            {
+              "input": "Data fetching",
+              "output": "Successfully retrieves and displays data"
+            },
+            {
+              "input": "User interactions",
+              "output": "Responds to user input correctly"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "Error handling", "output": "Gracefully handles network errors"},
-            {"input": "Performance", "output": "Efficient DOM updates"}
+            {
+              "input": "Error handling",
+              "output": "Gracefully handles network errors"
+            },
+            {
+              "input": "Performance",
+              "output": "Efficient DOM updates"
+            }
           ]
         },
         {
@@ -1914,12 +3234,26 @@
           "subtopic_name": "React Basics",
           "difficulty": "easy",
           "marks": 2,
-          "categories": ["learn"],
+          "categories": [
+            "learn"
+          ],
           "mcq_options": [
-            {"text": "function Component() { return <div>Hello</div>; }", "is_correct": true},
-            {"text": "const Component = <div>Hello</div>;", "is_correct": false},
-            {"text": "class Component() { return <div>Hello</div>; }", "is_correct": false},
-            {"text": "component Component() { return <div>Hello</div>; }", "is_correct": false}
+            {
+              "text": "function Component() { return <div>Hello</div>; }",
+              "is_correct": true
+            },
+            {
+              "text": "const Component = <div>Hello</div>;",
+              "is_correct": false
+            },
+            {
+              "text": "class Component() { return <div>Hello</div>; }",
+              "is_correct": false
+            },
+            {
+              "text": "component Component() { return <div>Hello</div>; }",
+              "is_correct": false
+            }
           ]
         },
         {
@@ -1931,14 +3265,29 @@
           "subtopic_name": "React Basics",
           "difficulty": "easy",
           "marks": 8,
-          "categories": ["learn", "practice"],
+          "categories": [
+            "learn",
+            "practice"
+          ],
           "test_cases_basic": [
-            {"input": "Initial state", "output": "Counter starts at 0"},
-            {"input": "Increment button", "output": "Count increases by 1"}
+            {
+              "input": "Initial state",
+              "output": "Counter starts at 0"
+            },
+            {
+              "input": "Increment button",
+              "output": "Count increases by 1"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "Decrement button", "output": "Count decreases by 1"},
-            {"input": "State management", "output": "State updates correctly"}
+            {
+              "input": "Decrement button",
+              "output": "Count decreases by 1"
+            },
+            {
+              "input": "State management",
+              "output": "State updates correctly"
+            }
           ]
         },
         {
@@ -1950,14 +3299,29 @@
           "subtopic_name": "React Basics",
           "difficulty": "easy",
           "marks": 6,
-          "categories": ["learn", "practice"],
+          "categories": [
+            "learn",
+            "practice"
+          ],
           "test_cases_basic": [
-            {"input": "Props: name='John', age=25", "output": "Hello John, you are 25 years old"},
-            {"input": "Different props", "output": "Displays correct information"}
+            {
+              "input": "Props: name='John', age=25",
+              "output": "Hello John, you are 25 years old"
+            },
+            {
+              "input": "Different props",
+              "output": "Displays correct information"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "Default props", "output": "Handles missing props gracefully"},
-            {"input": "Prop validation", "output": "PropTypes validation works"}
+            {
+              "input": "Default props",
+              "output": "Handles missing props gracefully"
+            },
+            {
+              "input": "Prop validation",
+              "output": "PropTypes validation works"
+            }
           ]
         },
         {
@@ -1969,12 +3333,26 @@
           "subtopic_name": "Modern JavaScript",
           "difficulty": "easy",
           "marks": 2,
-          "categories": ["learn"],
+          "categories": [
+            "learn"
+          ],
           "mcq_options": [
-            {"text": "const func = () => {}", "is_correct": true},
-            {"text": "const func = -> {}", "is_correct": false},
-            {"text": "const func = function() => {}", "is_correct": false},
-            {"text": "arrow func = () => {}", "is_correct": false}
+            {
+              "text": "const func = () => {}",
+              "is_correct": true
+            },
+            {
+              "text": "const func = -> {}",
+              "is_correct": false
+            },
+            {
+              "text": "const func = function() => {}",
+              "is_correct": false
+            },
+            {
+              "text": "arrow func = () => {}",
+              "is_correct": false
+            }
           ]
         },
         {
@@ -1986,14 +3364,30 @@
           "subtopic_name": "Modern JavaScript",
           "difficulty": "medium",
           "marks": 10,
-          "categories": ["practice", "contest", "mock_interview"],
+          "categories": [
+            "practice",
+            "contest",
+            "mock_interview"
+          ],
           "test_cases_basic": [
-            {"input": "Successful API call", "output": "Returns fetched data"},
-            {"input": "API error", "output": "Handles error gracefully"}
+            {
+              "input": "Successful API call",
+              "output": "Returns fetched data"
+            },
+            {
+              "input": "API error",
+              "output": "Handles error gracefully"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "Loading states", "output": "Manages loading indicators"},
-            {"input": "Timeout handling", "output": "Handles request timeouts"}
+            {
+              "input": "Loading states",
+              "output": "Manages loading indicators"
+            },
+            {
+              "input": "Timeout handling",
+              "output": "Handles request timeouts"
+            }
           ]
         },
         {
@@ -2005,14 +3399,29 @@
           "subtopic_name": "Modern JavaScript",
           "difficulty": "medium",
           "marks": 8,
-          "categories": ["practice", "contest"],
+          "categories": [
+            "practice",
+            "contest"
+          ],
           "test_cases_basic": [
-            {"input": "Object destructuring", "output": "Extracts properties correctly"},
-            {"input": "Array spread", "output": "Combines arrays properly"}
+            {
+              "input": "Object destructuring",
+              "output": "Extracts properties correctly"
+            },
+            {
+              "input": "Array spread",
+              "output": "Combines arrays properly"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "Nested destructuring", "output": "Handles complex structures"},
-            {"input": "Default values", "output": "Uses default values when needed"}
+            {
+              "input": "Nested destructuring",
+              "output": "Handles complex structures"
+            },
+            {
+              "input": "Default values",
+              "output": "Uses default values when needed"
+            }
           ]
         },
         {
@@ -2023,14 +3432,29 @@
           "topic_name": "Frontend Frameworks",
           "difficulty": "hard",
           "marks": 25,
-          "categories": ["contest", "mock_interview"],
+          "categories": [
+            "contest",
+            "mock_interview"
+          ],
           "test_cases_basic": [
-            {"input": "CRUD operations", "output": "All todo operations work correctly"},
-            {"input": "State management", "output": "React state managed properly"}
+            {
+              "input": "CRUD operations",
+              "output": "All todo operations work correctly"
+            },
+            {
+              "input": "State management",
+              "output": "React state managed properly"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "Local storage", "output": "Persists data between sessions"},
-            {"input": "Component structure", "output": "Well-organized component hierarchy"}
+            {
+              "input": "Local storage",
+              "output": "Persists data between sessions"
+            },
+            {
+              "input": "Component structure",
+              "output": "Well-organized component hierarchy"
+            }
           ]
         },
         {
@@ -2040,14 +3464,29 @@
           "level": "course",
           "difficulty": "hard",
           "marks": 30,
-          "categories": ["contest", "mock_interview"],
+          "categories": [
+            "contest",
+            "mock_interview"
+          ],
           "test_cases_basic": [
-            {"input": "Website structure", "output": "All sections present and functional"},
-            {"input": "Responsive design", "output": "Works on all devices"}
+            {
+              "input": "Website structure",
+              "output": "All sections present and functional"
+            },
+            {
+              "input": "Responsive design",
+              "output": "Works on all devices"
+            }
           ],
           "test_cases_advanced": [
-            {"input": "Interactive elements", "output": "JavaScript interactions work smoothly"},
-            {"input": "Performance optimization", "output": "Fast loading and optimized code"}
+            {
+              "input": "Interactive elements",
+              "output": "JavaScript interactions work smoothly"
+            },
+            {
+              "input": "Performance optimization",
+              "output": "Fast loading and optimized code"
+            }
           ]
         }
       ]

@@ -33,7 +33,7 @@ A modern full-stack web application built with Django REST Framework backend, Re
 4. **Access observability dashboards:**
    - **Grafana**: http://localhost:3001 (admin/admin)
    - **Jaeger Tracing**: http://localhost:16686
-   - **Prometheus**: http://localhost:9090
+   - **Prometheus**: http://localhost:9094
    - **Loki Logs**: http://localhost:3100
 
 ## 📁 Project Structure
@@ -238,7 +238,7 @@ docker-compose up -d jaeger otel-collector prometheus grafana loki
 - **Jaeger**: http://localhost:16686
   - Distributed trace visualization
   - Service dependency mapping
-- **Prometheus**: http://localhost:9090
+- **Prometheus**: http://localhost:9094
   - Raw metrics and custom queries
 - **Loki**: http://localhost:3100
   - Log aggregation and querying API
@@ -430,4 +430,4 @@ make check-all
 
 Grafana: http://localhost:3001 (admin/admin)
 Jaeger: http://localhost:16686
-Prometheus: http://localhost:9090
+Prometheus: http://localhost:9094

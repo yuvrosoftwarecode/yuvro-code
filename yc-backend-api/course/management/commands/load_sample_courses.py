@@ -233,8 +233,62 @@ class Command(BaseCommand):
         if question_data['type'] in ['mcq_single', 'mcq_multiple']:
             question_kwargs['mcq_options'] = question_data.get('mcq_options', [])
         elif question_data['type'] == 'coding':
-            question_kwargs['test_cases_basic'] = question_data.get('test_cases_basic', [])
-            question_kwargs['test_cases_advanced'] = question_data.get('test_cases_advanced', [])
+            # Helper to normalize test cases
+            def normalize_test_cases(tc_list):
+                normalized = []
+                for tc in tc_list:
+                    new_tc = tc.copy()
+                    # Rename 'output' to 'expected_output' if present
+                    if 'output' in new_tc and 'expected_output' not in new_tc:
+                        new_tc['expected_output'] = new_tc.pop('output')
+                    # Rename 'input' to 'input_data' if present (optional, but good for consistency if model changed, though currently model uses JSON so structure is flexible, but code executor expects input_data?)
+                    # Wait, code executor expects input_data. Frontend maps t.input_data.
+                    # Does frontend get t.input or t.input_data?
+                    # The JSON has "input".
+                    # Let's check frontend ProblemSolving.tsx map.
+                    
+                    # Frontend mapping:
+                    # input_data: typeof t.input_data === 'string' ? t.input_data : JSON.stringify(t.input_data || t.input), 
+                    # Wait, frontend ProblemSolving.tsx:
+                    # input_data: typeof t.input_data === 'string' ? t.input_data : JSON.stringify(t.input_data),
+                    # IT DOES NOT CHECK t.input!
+                    
+                    # So I MUST also rename 'input' to 'input_data'.
+                    if 'input' in new_tc and 'input_data' not in new_tc:
+                         new_tc['input_data'] = new_tc.pop('input')
+                    
+                    normalized.append(new_tc)
+                return normalized
+
+            question_kwargs['test_cases_basic'] = normalize_test_cases(question_data.get('test_cases_basic', []))
+            question_kwargs['test_cases_advanced'] = normalize_test_cases(question_data.get('test_cases_advanced', []))
+            
+            # Enrich content with new fields if present (since we can't add new columns)
+            rich_content = [question_data['content']]
+            
+            input_format = question_data.get('inputFormat')
+            if input_format:
+                rich_content.append(f"\n**Input Format**\n{input_format}")
+                
+            output_format = question_data.get('outputFormat')
+            if output_format:
+                rich_content.append(f"\n**Output Format**\n{output_format}")
+                
+            examples = question_data.get('examples', [])
+            if examples:
+                rich_content.append("\n**Examples**")
+                for i, ex in enumerate(examples):
+                    # Format as code block
+                    # explanation might be present
+                    explanation = ex.get('explanation', '')
+                    example_str = f"**Example {i+1}**\n```\nInput: {ex['input']}\nOutput: {ex['output']}\n```"
+                    if explanation:
+                        example_str += f"\n*Explanation: {explanation}*"
+                    rich_content.append(example_str)
+            
+            question_kwargs['content'] = "\n\n".join(rich_content)
+
+
         
         # Check if question already exists to avoid duplicates
         existing_question = Question.objects.filter(

@@ -26,7 +26,7 @@ fi
 
 # Test Prometheus
 echo "📈 Testing Prometheus..."
-if curl -s http://localhost:9090/-/healthy > /dev/null; then
+if curl -s http://localhost:9094/-/healthy > /dev/null; then
     echo "✅ Prometheus is healthy"
 else
     echo "❌ Prometheus is not responding"
@@ -71,7 +71,7 @@ echo ""
 echo "📊 Access your dashboards:"
 echo "   • Grafana: http://localhost:3001 (admin/admin)"
 echo "   • Jaeger: http://localhost:16686"
-echo "   • Prometheus: http://localhost:9090"
+echo "   • Prometheus: http://localhost:9094"
 echo "   • Loki: http://localhost:3100"
 echo ""
 echo "🚀 Next steps:"

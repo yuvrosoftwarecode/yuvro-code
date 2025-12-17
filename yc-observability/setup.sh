@@ -54,8 +54,8 @@ else
 fi
 
 # Check Prometheus
-if curl -s http://localhost:9090/-/healthy > /dev/null; then
-    echo "✅ Prometheus is running at http://localhost:9090"
+if curl -s http://localhost:9094/-/healthy > /dev/null; then
+    echo "✅ Prometheus is running at http://localhost:9094"
 else
     echo "⚠️  Prometheus might not be ready yet"
 fi
@@ -73,7 +73,7 @@ echo ""
 echo "📊 Access your dashboards:"
 echo "   • Grafana: http://localhost:3001 (admin/admin)"
 echo "   • Jaeger: http://localhost:16686"
-echo "   • Prometheus: http://localhost:9090"
+echo "   • Prometheus: http://localhost:9094"
 echo ""
 echo "🔧 Next steps:"
 echo "   1. Start your application services: docker-compose up -d"

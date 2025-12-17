@@ -153,10 +153,11 @@ class TestCaseService:
                 for i, test_result in enumerate(result.get("test_results", [])):
                     results.append(
                         {
-                            "test_case_id": i,  # Use index as ID since we don't have separate TestCase model
+                            "test_case_id": i,
                             "passed": test_result.get("passed", False),
-                            "expected": test_result.get("expected", ""),
-                            "actual": test_result.get("actual", ""),
+                            "input_data": test_result.get("input_data", ""),
+                            "expected_output": test_result.get("expected_output", ""),
+                            "actual_output": test_result.get("actual_output", ""),
                             "error": test_result.get("error", ""),
                             "execution_time": test_result.get("execution_time", 0),
                         }

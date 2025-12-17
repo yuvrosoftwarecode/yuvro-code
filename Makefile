@@ -265,15 +265,15 @@ observability-dashboards:
 	@echo "🌐 Opening observability dashboards..."
 	@echo "Grafana: http://localhost:3001 (admin/admin)"
 	@echo "Jaeger: http://localhost:16686"
-	@echo "Prometheus: http://localhost:9090"
+	@echo "Prometheus: http://localhost:9094"
 	@if command -v open >/dev/null 2>&1; then \
 		open http://localhost:3001 & \
 		open http://localhost:16686 & \
-		open http://localhost:9090 & \
+		open http://localhost:9094 & \
 	elif command -v xdg-open >/dev/null 2>&1; then \
 		xdg-open http://localhost:3001 & \
 		xdg-open http://localhost:16686 & \
-		xdg-open http://localhost:9090 & \
+		xdg-open http://localhost:9094 & \
 	else \
 		echo "Please open the URLs manually in your browser"; \
 	fi

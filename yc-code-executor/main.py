@@ -65,8 +65,9 @@ class ExecutionResult(BaseModel):
 
 class TestResult(BaseModel):
     passed: bool
-    expected: str
-    actual: str
+    input_data: str
+    expected_output: str
+    actual_output: str
     error: str
     execution_time: float
 
@@ -116,6 +117,66 @@ LANGUAGE_CONFIGS = {
     }
 }
 
+PYTHON_DRIVER_CODE = """
+import sys
+import json
+import ast
+
+def _driver_execution():
+    # check if Solution class exists
+    if 'Solution' not in globals():
+        return
+
+    try:
+        sol = globals()['Solution']()
+        # Find method
+        methods = [m for m in dir(sol) if callable(getattr(sol, m)) and not m.startswith('_')]
+        if not methods:
+            return
+        
+        # Use first available method
+        method = getattr(sol, methods[0])
+        
+        # Read input
+        input_str = sys.stdin.read().strip()
+        if not input_str:
+            return
+            
+        # Parse args
+        args = []
+        # Support multi-line inputs as separate arguments
+        for line in input_str.split('\\n'):
+            line = line.strip()
+            if not line: continue
+            try:
+                arg = json.loads(line)
+            except:
+                try:
+                    arg = ast.literal_eval(line)
+                except:
+                    arg = line
+            args.append(arg)
+            
+        # Call method
+        result = method(*args)
+        
+        # Print result
+        if result is not None:
+            # formatted output
+            if isinstance(result, (list, dict, tuple)):
+                print(json.dumps(result, separators=(',', ':')))
+            elif isinstance(result, bool):
+                print('true' if result else 'false')
+            else:
+                print(result)
+                
+    except Exception as e:
+        print(f"Runtime Error: {str(e)}", file=sys.stderr)
+
+if __name__ == '__main__':
+    _driver_execution()
+"""
+
 class CodeExecutorService:
     @staticmethod
     async def execute_code(code: str, language: str, input_data: str = "", timeout: int = 10) -> Dict[str, Any]:
@@ -157,6 +218,8 @@ class CodeExecutorService:
                 
                 with open(filepath, 'w') as f:
                     f.write(code)
+                    if language == 'python':
+                        f.write(PYTHON_DRIVER_CODE)
 
                 # Prepare and execute command
                 start_time = time.time()
@@ -401,23 +464,37 @@ async def execute_code_with_tests(request: CodeExecutionWithTestsRequest):
             if test_result['success']:
                 actual_output = test_result['output'].strip()
                 expected_output = test_case.expected_output.strip()
-                passed = actual_output == expected_output
                 
-                if passed:
-                    passed_count += 1
-                
-                test_results.append(TestResult(
-                    passed=passed,
-                    expected=expected_output,
-                    actual=actual_output,
-                    error=test_result.get('error', ''),
-                    execution_time=test_result['execution_time']
-                ))
+                if not expected_output:
+                    # Fail test cases with empty expected output to prevent false positives
+                    test_results.append(TestResult(
+                        passed=False,
+                        input_data=test_case.input_data,
+                        expected_output="[NotEmptyString]",
+                        actual_output=actual_output,
+                        error="Invalid test case: Expected output cannot be empty",
+                        execution_time=test_result['execution_time']
+                    ))
+                else:
+                    passed = actual_output == expected_output
+                    
+                    if passed:
+                        passed_count += 1
+                    
+                    test_results.append(TestResult(
+                        passed=passed,
+                        input_data=test_case.input_data,
+                        expected_output=expected_output,
+                        actual_output=actual_output,
+                        error=test_result.get('error', ''),
+                        execution_time=test_result['execution_time']
+                    ))
             else:
                 test_results.append(TestResult(
                     passed=False,
-                    expected=test_case.expected_output,
-                    actual='',
+                    input_data=test_case.input_data,
+                    expected_output=test_case.expected_output,
+                    actual_output='',
                     error=test_result['error'],
                     execution_time=test_result['execution_time']
                 ))

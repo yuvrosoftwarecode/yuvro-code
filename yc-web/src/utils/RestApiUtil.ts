@@ -48,6 +48,7 @@ class RestApiUtil {
             ...fetchOptions,
         };
 
+
         try {
             const response = await fetch(url, config);
             const duration = performance.now() - startTime;

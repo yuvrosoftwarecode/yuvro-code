@@ -156,6 +156,30 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/student/code-practice/courses/:courseId"
+                element={
+                  <ProtectedRoute allowedRoles={["student"]}>
+                    <CodePractice />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/student/code-practice/courses/:courseId/topics/:topicId"
+                element={
+                  <ProtectedRoute allowedRoles={["student"]}>
+                    <CodePractice />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/student/code-practice/courses/:courseId/topics/:topicId/questions/:problemId"
+                element={
+                  <ProtectedRoute allowedRoles={["student"]}>
+                    <CodePractice />
+                  </ProtectedRoute>
+                }
+              />
 
               <Route
                 path="/instructor/dashboard"

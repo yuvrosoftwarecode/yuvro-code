@@ -312,32 +312,32 @@
           "test_cases_basic": [
             {
               "input": "[1, 3, 7, 2, 5]",
-              "output": "7"
+              "expected_output": "7"
             },
             {
               "input": "[-1, -5, -2]",
-              "output": "-1"
+              "expected_output": "-1"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "[42]",
-              "output": "42"
+              "expected_output": "42"
             },
             {
               "input": "[100, 200, 50, 300, 150]",
-              "output": "300"
+              "expected_output": "300"
             }
           ],
           "examples": [
             {
               "input": "[1, 3, 7, 2, 5]",
-              "output": "7",
+              "expected_output": "7",
               "explanation": "The maximum element is 7."
             },
             {
               "input": "[-1, -5, -2]",
-              "output": "-1",
+              "expected_output": "-1",
               "explanation": "The maximum element is -1."
             }
           ],
@@ -392,32 +392,32 @@
           "test_cases_basic": [
             {
               "input": "[1,2,3,4,5,6,7]\n3",
-              "output": "[5,6,7,1,2,3,4]"
+              "expected_output": "[5,6,7,1,2,3,4]"
             },
             {
               "input": "[-1,-100,3,99]\n2",
-              "output": "[3,99,-1,-100]"
+              "expected_output": "[3,99,-1,-100]"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "[1]\n1",
-              "output": "[1]"
+              "expected_output": "[1]"
             },
             {
               "input": "[1,2]\n3",
-              "output": "[2,1]"
+              "expected_output": "[2,1]"
             }
           ],
           "examples": [
             {
               "input": "[1,2,3,4,5,6,7]\n3",
-              "output": "[5,6,7,1,2,3,4]",
+              "expected_output": "[5,6,7,1,2,3,4]",
               "explanation": "rotate 1 steps to the right: [7,1,2,3,4,5,6]\nrotate 2 steps to the right: [6,7,1,2,3,4,5]\nrotate 3 steps to the right: [5,6,7,1,2,3,4]"
             },
             {
               "input": "[-1,-100,3,99]\n2",
-              "output": "[3,99,-1,-100]",
+              "expected_output": "[3,99,-1,-100]",
               "explanation": "rotate 1 steps to the right: [99,-1,-100,3]\nrotate 2 steps to the right: [3,99,-1,-100]"
             }
           ],
@@ -440,32 +440,32 @@
           "test_cases_basic": [
             {
               "input": "[1,1,2]",
-              "output": "2"
+              "expected_output": "2"
             },
             {
               "input": "[0,0,1,1,1,2,2,3,3,4]",
-              "output": "5"
+              "expected_output": "5"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "[1]",
-              "output": "1"
+              "expected_output": "1"
             },
             {
               "input": "[1,1,1,1]",
-              "output": "1"
+              "expected_output": "1"
             }
           ],
           "examples": [
             {
               "input": "[1,1,2]",
-              "output": "2\n[1,2,_]",
+              "expected_output": "2\n[1,2,_]",
               "explanation": "Your function should return k = 2, with the first two elements of nums being 1 and 2 respectively."
             },
             {
               "input": "[0,0,1,1,1,2,2,3,3,4]",
-              "output": "5\n[0,1,2,3,4,_,_,_,_,_]",
+              "expected_output": "5\n[0,1,2,3,4,_,_,_,_,_]",
               "explanation": "Your function should return k = 5, with the first five elements of nums being 0, 1, 2, 3, and 4 respectively."
             }
           ],
@@ -519,31 +519,31 @@
           "test_cases_basic": [
             {
               "input": "[\"h\",\"e\",\"l\",\"l\",\"o\"]",
-              "output": "[\"o\",\"l\",\"l\",\"e\",\"h\"]"
+              "expected_output": "[\"o\",\"l\",\"l\",\"e\",\"h\"]"
             },
             {
               "input": "[\"H\",\"a\",\"n\",\"n\",\"a\",\"h\"]",
-              "output": "[\"h\",\"a\",\"n\",\"n\",\"a\",\"H\"]"
+              "expected_output": "[\"h\",\"a\",\"n\",\"n\",\"a\",\"H\"]"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "[\"a\"]",
-              "output": "[\"a\"]"
+              "expected_output": "[\"a\"]"
             },
             {
               "input": "[\"A\",\" \",\"m\",\"a\",\"n\"]",
-              "output": "[\"n\",\"a\",\"m\",\" \",\"A\"]"
+              "expected_output": "[\"n\",\"a\",\"m\",\" \",\"A\"]"
             }
           ],
           "examples": [
             {
               "input": "[\"h\",\"e\",\"l\",\"l\",\"o\"]",
-              "output": "[\"o\",\"l\",\"l\",\"e\",\"h\"]"
+              "expected_output": "[\"o\",\"l\",\"l\",\"e\",\"h\"]"
             },
             {
               "input": "[\"H\",\"a\",\"n\",\"n\",\"a\",\"h\"]",
-              "output": "[\"h\",\"a\",\"n\",\"n\",\"a\",\"H\"]"
+              "expected_output": "[\"h\",\"a\",\"n\",\"n\",\"a\",\"H\"]"
             }
           ],
           "inputFormat": "An array of characters `s`.",
@@ -565,31 +565,31 @@
           "test_cases_basic": [
             {
               "input": "\"anagram\"\n\"nagaram\"",
-              "output": "true"
+              "expected_output": "true"
             },
             {
               "input": "\"rat\"\n\"car\"",
-              "output": "false"
+              "expected_output": "false"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "\"a\"\n\"ab\"",
-              "output": "false"
+              "expected_output": "false"
             },
             {
               "input": "\"listen\"\n\"silent\"",
-              "output": "true"
+              "expected_output": "true"
             }
           ],
           "examples": [
             {
               "input": "\"anagram\"\n\"nagaram\"",
-              "output": "true"
+              "expected_output": "true"
             },
             {
               "input": "\"rat\"\n\"car\"",
-              "output": "false"
+              "expected_output": "false"
             }
           ],
           "inputFormat": "Two strings `s` and `t` on separate lines.",
@@ -611,36 +611,36 @@
           "test_cases_basic": [
             {
               "input": "[2,7,11,15]\n9",
-              "output": "[0,1]"
+              "expected_output": "[0,1]"
             },
             {
               "input": "[3,2,4]\n6",
-              "output": "[1,2]"
+              "expected_output": "[1,2]"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "[3,3]\n6",
-              "output": "[0,1]"
+              "expected_output": "[0,1]"
             },
             {
               "input": "[1,2,3,4,5]\n8",
-              "output": "[2,4]"
+              "expected_output": "[2,4]"
             }
           ],
           "examples": [
             {
               "input": "[2,7,11,15]\n9",
-              "output": "[0,1]",
+              "expected_output": "[0,1]",
               "explanation": "Because nums[0] + nums[1] == 9, we return [0, 1]."
             },
             {
               "input": "[3,2,4]\n6",
-              "output": "[1,2]"
+              "expected_output": "[1,2]"
             },
             {
               "input": "[3,3]\n6",
-              "output": "[0,1]"
+              "expected_output": "[0,1]"
             }
           ],
           "inputFormat": "The first line contains the array `nums`.\nThe second line contains the integer `target`.",
@@ -661,32 +661,32 @@
           "test_cases_basic": [
             {
               "input": "[1,8,6,2,5,4,8,3,7]",
-              "output": "49"
+              "expected_output": "49"
             },
             {
               "input": "[1,1]",
-              "output": "1"
+              "expected_output": "1"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "[4,3,2,1,4]",
-              "output": "16"
+              "expected_output": "16"
             },
             {
               "input": "[1,2,1]",
-              "output": "2"
+              "expected_output": "2"
             }
           ],
           "examples": [
             {
               "input": "[1,8,6,2,5,4,8,3,7]",
-              "output": "49",
+              "expected_output": "49",
               "explanation": "The above vertical lines are represented by array [1,8,6,2,5,4,8,3,7]. In this case, the max area of water (blue section) the container can contain is 49."
             },
             {
               "input": "[1,1]",
-              "output": "1"
+              "expected_output": "1"
             }
           ],
           "inputFormat": "An integer array `height`.",
@@ -739,31 +739,31 @@
           "test_cases_basic": [
             {
               "input": "[2,3,4]\n1",
-              "output": "[1,2,3,4]"
+              "expected_output": "[1,2,3,4]"
             },
             {
               "input": "[]\n5",
-              "output": "[5]"
+              "expected_output": "[5]"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "[10]\n20",
-              "output": "[20,10]"
+              "expected_output": "[20,10]"
             },
             {
               "input": "[1,2,3,4,5]\n0",
-              "output": "[0,1,2,3,4,5]"
+              "expected_output": "[0,1,2,3,4,5]"
             }
           ],
           "examples": [
             {
               "input": "[2,3,4]\n1",
-              "output": "[1,2,3,4]"
+              "expected_output": "[1,2,3,4]"
             },
             {
               "input": "[]\n5",
-              "output": "[5]"
+              "expected_output": "[5]"
             }
           ],
           "inputFormat": "The first line contains the linked list `head` as an array.\nThe second line contains the integer `val`.",
@@ -785,32 +785,32 @@
           "test_cases_basic": [
             {
               "input": "[4,5,1,9]\n5",
-              "output": "[4,1,9]"
+              "expected_output": "[4,1,9]"
             },
             {
               "input": "[4,5,1,9]\n1",
-              "output": "[4,5,9]"
+              "expected_output": "[4,5,9]"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "[1,2,3,4]\n3",
-              "output": "[1,2,4]"
+              "expected_output": "[1,2,4]"
             },
             {
               "input": "[0,1]\n0",
-              "output": "[1]"
+              "expected_output": "[1]"
             }
           ],
           "examples": [
             {
               "input": "[4,5,1,9]\n5",
-              "output": "[4,1,9]",
+              "expected_output": "[4,1,9]",
               "explanation": "You are given the second node with value 5, the linked list should become 4 -> 1 -> 9 after calling your function."
             },
             {
               "input": "[4,5,1,9]\n1",
-              "output": "[4,5,9]",
+              "expected_output": "[4,5,9]",
               "explanation": "You are given the third node with value 1, the linked list should become 4 -> 5 -> 9 after calling your function."
             }
           ],
@@ -864,19 +864,19 @@
           "test_cases_basic": [
             {
               "input": "[\"MyLinkedList\", \"addAtHead\", \"addAtTail\", \"addAtIndex\", \"get\", \"deleteAtIndex\", \"get\"]\n[[], [1], [3], [1, 2], [1], [1], [1]]",
-              "output": "[null, null, null, null, 2, null, 3]"
+              "expected_output": "[null, null, null, null, 2, null, 3]"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "[\"MyLinkedList\",\"addAtHead\",\"get\",\"addAtHead\",\"addAtHead\",\"deleteAtIndex\",\"addAtHead\",\"get\",\"get\",\"get\",\"addAtHead\",\"deleteAtIndex\"]\n[[],[4],[1],[1],[5],[3],[7],[3],[3],[3],[1],[4]]",
-              "output": "[null,null,-1,null,null,null,null,4,4,4,null,null]"
+              "expected_output": "[null,null,-1,null,null,null,null,4,4,4,null,null]"
             }
           ],
           "examples": [
             {
               "input": "[\"MyLinkedList\", \"addAtHead\", \"addAtTail\", \"addAtIndex\", \"get\", \"deleteAtIndex\", \"get\"]\n[[], [1], [3], [1, 2], [1], [1], [1]]",
-              "output": "[null, null, null, null, 2, null, 3]",
+              "expected_output": "[null, null, null, null, 2, null, 3]",
               "explanation": "MyLinkedList myLinkedList = new MyLinkedList();\nmyLinkedList.addAtHead(1);\nmyLinkedList.addAtTail(3);\nmyLinkedList.addAtIndex(1, 2);    // linked list becomes 1->2->3\nmyLinkedList.get(1);              // return 2\nmyLinkedList.deleteAtIndex(1);    // now the linked list is 1->3\nmyLinkedList.get(1);              // return 3"
             }
           ],
@@ -899,31 +899,31 @@
           "test_cases_basic": [
             {
               "input": "[1,2,3,4,5]",
-              "output": "[5,4,3,2,1]"
+              "expected_output": "[5,4,3,2,1]"
             },
             {
               "input": "[1,2]",
-              "output": "[2,1]"
+              "expected_output": "[2,1]"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "[]",
-              "output": "[]"
+              "expected_output": "[]"
             },
             {
               "input": "[1]",
-              "output": "[1]"
+              "expected_output": "[1]"
             }
           ],
           "examples": [
             {
               "input": "[1,2,3,4,5]",
-              "output": "[5,4,3,2,1]"
+              "expected_output": "[5,4,3,2,1]"
             },
             {
               "input": "[1,2]",
-              "output": "[2,1]"
+              "expected_output": "[2,1]"
             }
           ],
           "inputFormat": "The linked list `head` as an array.",
@@ -945,32 +945,32 @@
           "test_cases_basic": [
             {
               "input": "[3,2,0,-4]\n1",
-              "output": "true"
+              "expected_output": "true"
             },
             {
               "input": "[1,2]\n0",
-              "output": "true"
+              "expected_output": "true"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "[1]\n-1",
-              "output": "false"
+              "expected_output": "false"
             },
             {
               "input": "[]\n-1",
-              "output": "false"
+              "expected_output": "false"
             }
           ],
           "examples": [
             {
               "input": "[3,2,0,-4]\n1",
-              "output": "true",
+              "expected_output": "true",
               "explanation": "There is a cycle in the linked list, where the tail connects to the 1st node (0-indexed)."
             },
             {
               "input": "[1,2]\n0",
-              "output": "true",
+              "expected_output": "true",
               "explanation": "There is a cycle in the linked list, where the tail connects to the 0th node."
             }
           ],
@@ -993,31 +993,31 @@
           "test_cases_basic": [
             {
               "input": "[1,2,4]\n[1,3,4]",
-              "output": "[1,1,2,3,4,4]"
+              "expected_output": "[1,1,2,3,4,4]"
             },
             {
               "input": "[]\n[]",
-              "output": "[]"
+              "expected_output": "[]"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "[]\n[0]",
-              "output": "[0]"
+              "expected_output": "[0]"
             },
             {
               "input": "[1,5,9]\n[2,4,6,8,10]",
-              "output": "[1,2,4,5,6,8,9,10]"
+              "expected_output": "[1,2,4,5,6,8,9,10]"
             }
           ],
           "examples": [
             {
               "input": "[1,2,4]\n[1,3,4]",
-              "output": "[1,1,2,3,4,4]"
+              "expected_output": "[1,1,2,3,4,4]"
             },
             {
               "input": "[]\n[]",
-              "output": "[]"
+              "expected_output": "[]"
             }
           ],
           "inputFormat": "Two arrays `list1` and `list2` representing the sorted linked lists.",
@@ -1072,21 +1072,21 @@
           "test_cases_basic": [
             {
               "input": "[1,null,2,3]",
-              "output": "[1,3,2]"
+              "expected_output": "[1,3,2]"
             },
             {
               "input": "[]",
-              "output": "[]"
+              "expected_output": "[]"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "[1,2,3,4,5,6,7]",
-              "output": "[4,2,5,1,6,3,7]"
+              "expected_output": "[4,2,5,1,6,3,7]"
             },
             {
               "input": "[1]",
-              "output": "[1]"
+              "expected_output": "[1]"
             }
           ]
         },
@@ -1107,21 +1107,21 @@
           "test_cases_basic": [
             {
               "input": "[3,9,20,null,null,15,7]",
-              "output": "[[3],[9,20],[15,7]]"
+              "expected_output": "[[3],[9,20],[15,7]]"
             },
             {
               "input": "[1]",
-              "output": "[[1]]"
+              "expected_output": "[[1]]"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "[]",
-              "output": "[]"
+              "expected_output": "[]"
             },
             {
               "input": "[1,2,3,4,5,6,7]",
-              "output": "[[1],[2,3],[4,5,6,7]]"
+              "expected_output": "[[1],[2,3],[4,5,6,7]]"
             }
           ]
         },
@@ -1174,21 +1174,21 @@
           "test_cases_basic": [
             {
               "input": "[2,1,3]",
-              "output": "true"
+              "expected_output": "true"
             },
             {
               "input": "[5,1,4,null,null,3,6]",
-              "output": "false"
+              "expected_output": "false"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "[10,5,15,null,null,6,20]",
-              "output": "false"
+              "expected_output": "false"
             },
             {
               "input": "[]",
-              "output": "true"
+              "expected_output": "true"
             }
           ]
         },
@@ -1208,21 +1208,21 @@
           "test_cases_basic": [
             {
               "input": "[4,2,7,1,3]\n5",
-              "output": "[4,2,7,1,3,5]"
+              "expected_output": "[4,2,7,1,3,5]"
             },
             {
               "input": "[40,20,60,10,30,50,70]\n25",
-              "output": "[40,20,60,10,30,50,70,null,null,25]"
+              "expected_output": "[40,20,60,10,30,50,70,null,null,25]"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "[]\n5",
-              "output": "[5]"
+              "expected_output": "[5]"
             },
             {
               "input": "[5]\n3",
-              "output": "[5,3]"
+              "expected_output": "[5,3]"
             }
           ]
         },
@@ -1275,21 +1275,21 @@
           "test_cases_basic": [
             {
               "input": "{0: [1, 2], 1: [2], 2: [0, 3], 3: [3]}\n2",
-              "output": "[2, 0, 3, 1]"
+              "expected_output": "[2, 0, 3, 1]"
             },
             {
               "input": "{0: [1], 1: [0]}\n0",
-              "output": "[0, 1]"
+              "expected_output": "[0, 1]"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "{0: []}\n0",
-              "output": "[0]"
+              "expected_output": "[0]"
             },
             {
               "input": "{0: [1,2,3], 1: [0], 2: [0], 3: [0]}\n0",
-              "output": "[0, 1, 2, 3]"
+              "expected_output": "[0, 1, 2, 3]"
             }
           ]
         },
@@ -1310,21 +1310,21 @@
           "test_cases_basic": [
             {
               "input": "{0: [1, 2], 1: [2], 2: [0, 3], 3: [3]}\n2",
-              "output": "[2, 0, 1, 3] or [2, 3, 0, 1]"
+              "expected_output": "[2, 0, 1, 3] or [2, 3, 0, 1]"
             },
             {
               "input": "{0: [1], 1: [0]}\n0",
-              "output": "[0, 1]"
+              "expected_output": "[0, 1]"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "{0: []}\n0",
-              "output": "[0]"
+              "expected_output": "[0]"
             },
             {
               "input": "disconnected graph",
-              "output": "visits only connected component"
+              "expected_output": "visits only connected component"
             }
           ]
         },
@@ -1343,32 +1343,32 @@
           "test_cases_basic": [
             {
               "input": "[['1','1','1','1','0'],['1','1','0','1','0'],['1','1','0','0','0'],['0','0','0','0','0']]",
-              "output": "1"
+              "expected_output": "1"
             },
             {
               "input": "[['1','1','0','0','0'],['1','1','0','0','0'],['0','0','1','0','0'],['0','0','0','1','1']]",
-              "output": "3"
+              "expected_output": "3"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "[['1']]",
-              "output": "1"
+              "expected_output": "1"
             },
             {
               "input": "[['0']]",
-              "output": "0"
+              "expected_output": "0"
             }
           ],
           "examples": [
             {
               "input": "[\n  ['1','1','1','1','0'],\n  ['1','1','0','1','0'],\n  ['1','1','0','0','0'],\n  ['0','0','0','0','0']\n]",
-              "output": "1",
+              "expected_output": "1",
               "explanation": "There is only one island (connected group of 1s)."
             },
             {
               "input": "[\n  ['1','1','0','0','0'],\n  ['1','1','0','0','0'],\n  ['0','0','1','0','0'],\n  ['0','0','0','1','1']\n]",
-              "output": "3",
+              "expected_output": "3",
               "explanation": "There are three islands: one at top-left, one in the middle, and one at bottom-right."
             }
           ],
@@ -1390,32 +1390,32 @@
           "test_cases_basic": [
             {
               "input": "2\n[[1,0]]",
-              "output": "true"
+              "expected_output": "true"
             },
             {
               "input": "2\n[[1,0],[0,1]]",
-              "output": "false"
+              "expected_output": "false"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "4\n[[1,0],[2,0],[3,1],[3,2]]",
-              "output": "true"
+              "expected_output": "true"
             },
             {
               "input": "1\n[]",
-              "output": "true"
+              "expected_output": "true"
             }
           ],
           "examples": [
             {
               "input": "2\n[[1,0]]",
-              "output": "true",
+              "expected_output": "true",
               "explanation": "There are a total of 2 courses to take. To take course 1 you should have finished course 0. So it is possible."
             },
             {
               "input": "2\n[[1,0],[0,1]]",
-              "output": "false",
+              "expected_output": "false",
               "explanation": "There are a total of 2 courses to take. To take course 1 you should have finished course 0, and to take course 0 you should also have finished course 1. So it is impossible."
             }
           ],
@@ -1467,36 +1467,36 @@
           "test_cases_basic": [
             {
               "input": "[-1,0,3,5,9,12]\n9",
-              "output": "4"
+              "expected_output": "4"
             },
             {
               "input": "[-1,0,3,5,9,12]\n2",
-              "output": "-1"
+              "expected_output": "-1"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "[]\n1",
-              "output": "-1"
+              "expected_output": "-1"
             },
             {
               "input": "[1]\n1",
-              "output": "0"
+              "expected_output": "0"
             },
             {
               "input": "[1,2,3,4,5,6,7,8,9,10]\n11",
-              "output": "-1"
+              "expected_output": "-1"
             }
           ],
           "examples": [
             {
               "input": "[-1,0,3,5,9,12]\n9",
-              "output": "4",
+              "expected_output": "4",
               "explanation": "9 exists in nums and its index is 4"
             },
             {
               "input": "[-1,0,3,5,9,12]\n2",
-              "output": "-1",
+              "expected_output": "-1",
               "explanation": "2 does not exist in nums so return -1"
             }
           ],
@@ -1764,21 +1764,21 @@
           "test_cases_basic": [
             {
               "input": "Create int, float, str, bool variables",
-              "output": "Print types: <class 'int'>, <class 'float'>, <class 'str'>, <class 'bool'>"
+              "expected_output": "Print types: <class 'int'>, <class 'float'>, <class 'str'>, <class 'bool'>"
             },
             {
               "input": "10, y = 3.14, name = 'Python', flag = True",
-              "output": "Correct type identification"
+              "expected_output": "Correct type identification"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "Dynamic typing example",
-              "output": "Variable type changes correctly"
+              "expected_output": "Variable type changes correctly"
             },
             {
               "input": "None type variable",
-              "output": "<class 'NoneType'>"
+              "expected_output": "<class 'NoneType'>"
             }
           ]
         },
@@ -1829,21 +1829,21 @@
           "test_cases_basic": [
             {
               "input": "Numbers 1-15",
-              "output": "1, 2, Fizz, 4, Buzz, Fizz, 7, 8, Fizz, Buzz, 11, Fizz, 13, 14, FizzBuzz"
+              "expected_output": "1, 2, Fizz, 4, Buzz, Fizz, 7, 8, Fizz, Buzz, 11, Fizz, 13, 14, FizzBuzz"
             },
             {
               "input": "Check multiples of 3 and 5",
-              "output": "Correct Fizz, Buzz, FizzBuzz output"
+              "expected_output": "Correct Fizz, Buzz, FizzBuzz output"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "Edge cases: 0, negative numbers",
-              "output": "Handle edge cases appropriately"
+              "expected_output": "Handle edge cases appropriately"
             },
             {
               "input": "Large range",
-              "output": "Efficient execution for large ranges"
+              "expected_output": "Efficient execution for large ranges"
             }
           ]
         },
@@ -1863,21 +1863,21 @@
           "test_cases_basic": [
             {
               "input": "User guesses correctly",
-              "output": "Congratulations message"
+              "expected_output": "Congratulations message"
             },
             {
               "input": "User guess too high/low",
-              "output": "Appropriate hint messages"
+              "expected_output": "Appropriate hint messages"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "Invalid input handling",
-              "output": "Error handling for non-numeric input"
+              "expected_output": "Error handling for non-numeric input"
             },
             {
               "input": "Limited attempts",
-              "output": "Game ends after max attempts"
+              "expected_output": "Game ends after max attempts"
             }
           ]
         },
@@ -1928,21 +1928,21 @@
           "test_cases_basic": [
             {
               "input": "calculate(10, 5, '+')",
-              "output": "15"
+              "expected_output": "15"
             },
             {
               "input": "calculate(10, 3, '/')",
-              "output": "3.333..."
+              "expected_output": "3.333..."
             }
           ],
           "test_cases_advanced": [
             {
               "input": "calculate(10, 0, '/')",
-              "output": "Handle division by zero"
+              "expected_output": "Handle division by zero"
             },
             {
               "input": "calculate(5, 3, '%')",
-              "output": "Handle invalid operation"
+              "expected_output": "Handle invalid operation"
             }
           ]
         },
@@ -1962,21 +1962,21 @@
           "test_cases_basic": [
             {
               "input": "factorial(5)",
-              "output": "120"
+              "expected_output": "120"
             },
             {
               "input": "factorial(0)",
-              "output": "1"
+              "expected_output": "1"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "factorial(10)",
-              "output": "3628800"
+              "expected_output": "3628800"
             },
             {
               "input": "factorial(-1)",
-              "output": "Handle negative input"
+              "expected_output": "Handle negative input"
             }
           ]
         },
@@ -1996,21 +1996,21 @@
           "test_cases_basic": [
             {
               "input": "is_prime(17)",
-              "output": "True"
+              "expected_output": "True"
             },
             {
               "input": "primes_up_to(10)",
-              "output": "[2, 3, 5, 7]"
+              "expected_output": "[2, 3, 5, 7]"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "is_prime(1)",
-              "output": "False"
+              "expected_output": "False"
             },
             {
               "input": "primes_up_to(100)",
-              "output": "All primes up to 100"
+              "expected_output": "All primes up to 100"
             }
           ]
         },
@@ -2061,21 +2061,21 @@
           "test_cases_basic": [
             {
               "input": "[1, 2, 3, 4, 5]",
-              "output": "5, min=1, sum=15, avg=3.0"
+              "expected_output": "5, min=1, sum=15, avg=3.0"
             },
             {
               "input": "[-1, 0, 1]",
-              "output": "1, min=-1, sum=0, avg=0.0"
+              "expected_output": "1, min=-1, sum=0, avg=0.0"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "[]",
-              "output": "Handle empty list"
+              "expected_output": "Handle empty list"
             },
             {
               "input": "[42]",
-              "output": "Single element list"
+              "expected_output": "Single element list"
             }
           ]
         },
@@ -2095,21 +2095,21 @@
           "test_cases_basic": [
             {
               "input": "Squares 1-10",
-              "output": "[1, 4, 9, 16, 25, 36, 49, 64, 81, 100]"
+              "expected_output": "[1, 4, 9, 16, 25, 36, 49, 64, 81, 100]"
             },
             {
               "input": "Even numbers from [1,2,3,4,5,6]",
-              "output": "[2, 4, 6]"
+              "expected_output": "[2, 4, 6]"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "Nested list comprehension",
-              "output": "Correct nested structure"
+              "expected_output": "Correct nested structure"
             },
             {
               "input": "Conditional list comprehension",
-              "output": "Proper filtering"
+              "expected_output": "Proper filtering"
             }
           ]
         },
@@ -2161,21 +2161,21 @@
           "test_cases_basic": [
             {
               "input": "'hello world hello'",
-              "output": "{'hello': 2, 'world': 1}"
+              "expected_output": "{'hello': 2, 'world': 1}"
             },
             {
               "input": "'python is great python'",
-              "output": "{'python': 2, 'is': 1, 'great': 1}"
+              "expected_output": "{'python': 2, 'is': 1, 'great': 1}"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "Handle punctuation and case",
-              "output": "Proper text processing"
+              "expected_output": "Proper text processing"
             },
             {
               "input": "Empty string",
-              "output": "{}"
+              "expected_output": "{}"
             }
           ]
         },
@@ -2196,21 +2196,21 @@
           "test_cases_basic": [
             {
               "input": "[1,2,3,4], [3,4,5,6]",
-              "output": "[3,4], only_first=[1,2], only_second=[5,6], all_unique=[1,2,3,4,5,6]"
+              "expected_output": "[3,4], only_first=[1,2], only_second=[5,6], all_unique=[1,2,3,4,5,6]"
             },
             {
               "input": "[1,1,2], [2,2,3]",
-              "output": "Handle duplicates correctly"
+              "expected_output": "Handle duplicates correctly"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "[], [1,2,3]",
-              "output": "Handle empty lists"
+              "expected_output": "Handle empty lists"
             },
             {
               "input": "Large lists",
-              "output": "Efficient set operations"
+              "expected_output": "Efficient set operations"
             }
           ]
         },
@@ -2230,21 +2230,21 @@
           "test_cases_basic": [
             {
               "input": "Add students and grades",
-              "output": "Proper data structure management"
+              "expected_output": "Proper data structure management"
             },
             {
               "input": "Calculate class average",
-              "output": "Correct mathematical calculations"
+              "expected_output": "Correct mathematical calculations"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "Handle edge cases",
-              "output": "Empty classes, invalid grades"
+              "expected_output": "Empty classes, invalid grades"
             },
             {
               "input": "Complex queries",
-              "output": "Top N students, grade distributions"
+              "expected_output": "Top N students, grade distributions"
             }
           ]
         },
@@ -2295,21 +2295,21 @@
           "test_cases_basic": [
             {
               "input": "Person('Alice', 25)",
-              "output": "Create person object with correct attributes"
+              "expected_output": "Create person object with correct attributes"
             },
             {
               "input": "person.birthday()",
-              "output": "Age increases by 1"
+              "expected_output": "Age increases by 1"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "Multiple person objects",
-              "output": "Independent object states"
+              "expected_output": "Independent object states"
             },
             {
               "input": "String representation",
-              "output": "Proper __str__ method"
+              "expected_output": "Proper __str__ method"
             }
           ]
         },
@@ -2329,21 +2329,21 @@
           "test_cases_basic": [
             {
               "input": "deposit(100), withdraw(50)",
-              "output": "50"
+              "expected_output": "50"
             },
             {
               "input": "withdraw(200) with balance 100",
-              "output": "Insufficient funds error"
+              "expected_output": "Insufficient funds error"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "Negative deposit/withdrawal",
-              "output": "Handle invalid amounts"
+              "expected_output": "Handle invalid amounts"
             },
             {
               "input": "Account history tracking",
-              "output": "Transaction logging"
+              "expected_output": "Transaction logging"
             }
           ]
         },
@@ -2394,21 +2394,21 @@
           "test_cases_basic": [
             {
               "input": "Dog().make_sound()",
-              "output": "'Woof!'"
+              "expected_output": "'Woof!'"
             },
             {
               "input": "Cat().make_sound()",
-              "output": "'Meow!'"
+              "expected_output": "'Meow!'"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "Polymorphic behavior",
-              "output": "Same method call, different behavior"
+              "expected_output": "Same method call, different behavior"
             },
             {
               "input": "super() usage",
-              "output": "Proper parent method calling"
+              "expected_output": "Proper parent method calling"
             }
           ]
         },
@@ -2429,21 +2429,21 @@
           "test_cases_basic": [
             {
               "input": "Rectangle(5, 3).area()",
-              "output": "15"
+              "expected_output": "15"
             },
             {
               "input": "Circle(5).area()",
-              "output": "78.54 (approximately)"
+              "expected_output": "78.54 (approximately)"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "List of different shapes",
-              "output": "Polymorphic area calculations"
+              "expected_output": "Polymorphic area calculations"
             },
             {
               "input": "Abstract base class",
-              "output": "Proper abstraction implementation"
+              "expected_output": "Proper abstraction implementation"
             }
           ]
         },
@@ -2462,21 +2462,21 @@
           "test_cases_basic": [
             {
               "input": "Add books, borrow book",
-              "output": "Proper state management"
+              "expected_output": "Proper state management"
             },
             {
               "input": "Search by author/title",
-              "output": "Correct search results"
+              "expected_output": "Correct search results"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "Multiple copies of same book",
-              "output": "Handle inventory correctly"
+              "expected_output": "Handle inventory correctly"
             },
             {
               "input": "Overdue books tracking",
-              "output": "Date management and penalties"
+              "expected_output": "Date management and penalties"
             }
           ]
         },
@@ -2495,21 +2495,21 @@
           "test_cases_basic": [
             {
               "input": "Sample text file",
-              "output": "Correct statistics calculation"
+              "expected_output": "Correct statistics calculation"
             },
             {
               "input": "Empty file",
-              "output": "Handle empty file gracefully"
+              "expected_output": "Handle empty file gracefully"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "Large text files",
-              "output": "Efficient processing"
+              "expected_output": "Efficient processing"
             },
             {
               "input": "Unicode characters",
-              "output": "Proper encoding handling"
+              "expected_output": "Proper encoding handling"
             }
           ]
         }
@@ -2774,21 +2774,21 @@
           "test_cases_basic": [
             {
               "input": "Form structure",
-              "output": "Proper form element with fields"
+              "expected_output": "Proper form element with fields"
             },
             {
               "input": "Input types",
-              "output": "Correct input types for each field"
+              "expected_output": "Correct input types for each field"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "Accessibility",
-              "output": "Proper labels and ARIA attributes"
+              "expected_output": "Proper labels and ARIA attributes"
             },
             {
               "input": "Validation",
-              "output": "HTML5 validation attributes"
+              "expected_output": "HTML5 validation attributes"
             }
           ]
         },
@@ -2840,21 +2840,21 @@
           "test_cases_basic": [
             {
               "input": "Flexbox layout",
-              "output": "Proper flex container and items"
+              "expected_output": "Proper flex container and items"
             },
             {
               "input": "Logo and menu positioning",
-              "output": "Logo left, menu right"
+              "expected_output": "Logo left, menu right"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "Responsive behavior",
-              "output": "Works on different screen sizes"
+              "expected_output": "Works on different screen sizes"
             },
             {
               "input": "Hover effects",
-              "output": "Interactive menu items"
+              "expected_output": "Interactive menu items"
             }
           ]
         },
@@ -2875,21 +2875,21 @@
           "test_cases_basic": [
             {
               "input": "Grid container",
-              "output": "Proper grid-template-areas"
+              "expected_output": "Proper grid-template-areas"
             },
             {
               "input": "Layout areas",
-              "output": "Header, sidebar, main, footer positioned correctly"
+              "expected_output": "Header, sidebar, main, footer positioned correctly"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "Responsive grid",
-              "output": "Layout adapts to screen size"
+              "expected_output": "Layout adapts to screen size"
             },
             {
               "input": "Grid gap and alignment",
-              "output": "Proper spacing and alignment"
+              "expected_output": "Proper spacing and alignment"
             }
           ]
         },
@@ -2942,21 +2942,21 @@
           "test_cases_basic": [
             {
               "input": "Desktop layout",
-              "output": "3 cards per row"
+              "expected_output": "3 cards per row"
             },
             {
               "input": "Mobile layout",
-              "output": "1 card per row"
+              "expected_output": "1 card per row"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "Smooth transitions",
-              "output": "Responsive breakpoints work smoothly"
+              "expected_output": "Responsive breakpoints work smoothly"
             },
             {
               "input": "Card content",
-              "output": "Images and text scale properly"
+              "expected_output": "Images and text scale properly"
             }
           ]
         },
@@ -2975,21 +2975,21 @@
           "test_cases_basic": [
             {
               "input": "Page structure",
-              "output": "All sections present and properly structured"
+              "expected_output": "All sections present and properly structured"
             },
             {
               "input": "Responsive design",
-              "output": "Works on all device sizes"
+              "expected_output": "Works on all device sizes"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "Visual design",
-              "output": "Professional appearance with good typography"
+              "expected_output": "Professional appearance with good typography"
             },
             {
               "input": "Performance",
-              "output": "Optimized CSS and fast loading"
+              "expected_output": "Optimized CSS and fast loading"
             }
           ]
         },
@@ -3040,21 +3040,21 @@
           "test_cases_basic": [
             {
               "input": "calculate(10, 5, '+')",
-              "output": "15"
+              "expected_output": "15"
             },
             {
               "input": "calculate(10, 3, '/')",
-              "output": "3.333..."
+              "expected_output": "3.333..."
             }
           ],
           "test_cases_advanced": [
             {
               "input": "calculate(10, 0, '/')",
-              "output": "Handle division by zero"
+              "expected_output": "Handle division by zero"
             },
             {
               "input": "calculate(5, 3, '%')",
-              "output": "Handle invalid operator"
+              "expected_output": "Handle invalid operator"
             }
           ]
         },
@@ -3074,21 +3074,21 @@
           "test_cases_basic": [
             {
               "input": "[1,2,3,4,5] filter even",
-              "output": "[2,4]"
+              "expected_output": "[2,4]"
             },
             {
               "input": "[1,2,3] map to squares",
-              "output": "[1,4,9]"
+              "expected_output": "[1,4,9]"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "Empty array handling",
-              "output": "Proper edge case handling"
+              "expected_output": "Proper edge case handling"
             },
             {
               "input": "Chaining methods",
-              "output": "Method chaining works correctly"
+              "expected_output": "Method chaining works correctly"
             }
           ]
         },
@@ -3140,21 +3140,21 @@
           "test_cases_basic": [
             {
               "input": "Add task",
-              "output": "New task appears in list"
+              "expected_output": "New task appears in list"
             },
             {
               "input": "Remove task",
-              "output": "Task is removed from list"
+              "expected_output": "Task is removed from list"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "Mark complete",
-              "output": "Task styling changes"
+              "expected_output": "Task styling changes"
             },
             {
               "input": "Empty input handling",
-              "output": "Prevents adding empty tasks"
+              "expected_output": "Prevents adding empty tasks"
             }
           ]
         },
@@ -3174,21 +3174,21 @@
           "test_cases_basic": [
             {
               "input": "Valid email format",
-              "output": "Email validation passes"
+              "expected_output": "Email validation passes"
             },
             {
               "input": "Password matching",
-              "output": "Passwords match validation"
+              "expected_output": "Passwords match validation"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "Real-time validation",
-              "output": "Validation occurs as user types"
+              "expected_output": "Validation occurs as user types"
             },
             {
               "input": "Error message display",
-              "output": "Clear error messages shown"
+              "expected_output": "Clear error messages shown"
             }
           ]
         },
@@ -3207,21 +3207,21 @@
           "test_cases_basic": [
             {
               "input": "Data fetching",
-              "output": "Successfully retrieves and displays data"
+              "expected_output": "Successfully retrieves and displays data"
             },
             {
               "input": "User interactions",
-              "output": "Responds to user input correctly"
+              "expected_output": "Responds to user input correctly"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "Error handling",
-              "output": "Gracefully handles network errors"
+              "expected_output": "Gracefully handles network errors"
             },
             {
               "input": "Performance",
-              "output": "Efficient DOM updates"
+              "expected_output": "Efficient DOM updates"
             }
           ]
         },
@@ -3272,21 +3272,21 @@
           "test_cases_basic": [
             {
               "input": "Initial state",
-              "output": "Counter starts at 0"
+              "expected_output": "Counter starts at 0"
             },
             {
               "input": "Increment button",
-              "output": "Count increases by 1"
+              "expected_output": "Count increases by 1"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "Decrement button",
-              "output": "Count decreases by 1"
+              "expected_output": "Count decreases by 1"
             },
             {
               "input": "State management",
-              "output": "State updates correctly"
+              "expected_output": "State updates correctly"
             }
           ]
         },
@@ -3306,21 +3306,21 @@
           "test_cases_basic": [
             {
               "input": "Props: name='John', age=25",
-              "output": "Hello John, you are 25 years old"
+              "expected_output": "Hello John, you are 25 years old"
             },
             {
               "input": "Different props",
-              "output": "Displays correct information"
+              "expected_output": "Displays correct information"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "Default props",
-              "output": "Handles missing props gracefully"
+              "expected_output": "Handles missing props gracefully"
             },
             {
               "input": "Prop validation",
-              "output": "PropTypes validation works"
+              "expected_output": "PropTypes validation works"
             }
           ]
         },
@@ -3372,21 +3372,21 @@
           "test_cases_basic": [
             {
               "input": "Successful API call",
-              "output": "Returns fetched data"
+              "expected_output": "Returns fetched data"
             },
             {
               "input": "API error",
-              "output": "Handles error gracefully"
+              "expected_output": "Handles error gracefully"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "Loading states",
-              "output": "Manages loading indicators"
+              "expected_output": "Manages loading indicators"
             },
             {
               "input": "Timeout handling",
-              "output": "Handles request timeouts"
+              "expected_output": "Handles request timeouts"
             }
           ]
         },
@@ -3406,21 +3406,21 @@
           "test_cases_basic": [
             {
               "input": "Object destructuring",
-              "output": "Extracts properties correctly"
+              "expected_output": "Extracts properties correctly"
             },
             {
               "input": "Array spread",
-              "output": "Combines arrays properly"
+              "expected_output": "Combines arrays properly"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "Nested destructuring",
-              "output": "Handles complex structures"
+              "expected_output": "Handles complex structures"
             },
             {
               "input": "Default values",
-              "output": "Uses default values when needed"
+              "expected_output": "Uses default values when needed"
             }
           ]
         },
@@ -3439,21 +3439,21 @@
           "test_cases_basic": [
             {
               "input": "CRUD operations",
-              "output": "All todo operations work correctly"
+              "expected_output": "All todo operations work correctly"
             },
             {
               "input": "State management",
-              "output": "React state managed properly"
+              "expected_output": "React state managed properly"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "Local storage",
-              "output": "Persists data between sessions"
+              "expected_output": "Persists data between sessions"
             },
             {
               "input": "Component structure",
-              "output": "Well-organized component hierarchy"
+              "expected_output": "Well-organized component hierarchy"
             }
           ]
         },
@@ -3471,21 +3471,21 @@
           "test_cases_basic": [
             {
               "input": "Website structure",
-              "output": "All sections present and functional"
+              "expected_output": "All sections present and functional"
             },
             {
               "input": "Responsive design",
-              "output": "Works on all devices"
+              "expected_output": "Works on all devices"
             }
           ],
           "test_cases_advanced": [
             {
               "input": "Interactive elements",
-              "output": "JavaScript interactions work smoothly"
+              "expected_output": "JavaScript interactions work smoothly"
             },
             {
               "input": "Performance optimization",
-              "output": "Fast loading and optimized code"
+              "expected_output": "Fast loading and optimized code"
             }
           ]
         }

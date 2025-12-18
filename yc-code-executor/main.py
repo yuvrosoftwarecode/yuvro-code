@@ -41,11 +41,11 @@ app.add_middleware(
 class CodeExecutionRequest(BaseModel):
     code: str
     language: str
-    input_data: str = ""
+    input: str = ""
     timeout: int = 10
 
 class TestCase(BaseModel):
-    input_data: str
+    input: str
     expected_output: str
     weight: int = 1
 
@@ -53,6 +53,7 @@ class CodeExecutionWithTestsRequest(BaseModel):
     code: str
     language: str
     test_cases: List[TestCase]
+    test_cases_custom: Optional[List[TestCase]] = []
     timeout: int = 10
 
 class ExecutionResult(BaseModel):
@@ -65,7 +66,7 @@ class ExecutionResult(BaseModel):
 
 class TestResult(BaseModel):
     passed: bool
-    input_data: str
+    input: str
     expected_output: str
     actual_output: str
     error: str
@@ -179,14 +180,14 @@ if __name__ == '__main__':
 
 class CodeExecutorService:
     @staticmethod
-    async def execute_code(code: str, language: str, input_data: str = "", timeout: int = 10) -> Dict[str, Any]:
+    async def execute_code(code: str, language: str, input: str = "", timeout: int = 10) -> Dict[str, Any]:
         """Execute code and return results"""
         with tracer.start_as_current_span(
             f"execute_code_{language}",
             attributes={
                 "code.language": language,
                 "code.length": len(code),
-                "input.length": len(input_data),
+                "input.length": len(input),
                 "timeout": timeout
             }
         ) as span:
@@ -306,7 +307,7 @@ class CodeExecutorService:
                 # Execute with timeout
                 try:
                     stdout, stderr = await asyncio.wait_for(
-                        process.communicate(input=input_data.encode()),
+                        process.communicate(input=input.encode()),
                         timeout=timeout
                     )
                     
@@ -424,7 +425,7 @@ async def execute_code(request: CodeExecutionRequest):
         result = await CodeExecutorService.execute_code(
             request.code,
             request.language,
-            request.input_data,
+            request.input,
             request.timeout
         )
         return ExecutionResult(**result)
@@ -452,12 +453,15 @@ async def execute_code_with_tests(request: CodeExecutionWithTestsRequest):
         test_results = []
         passed_count = 0
         
+        # Combine basic and custom test cases
+        all_test_cases = request.test_cases + (request.test_cases_custom or [])
+        
         # Run each test case
-        for test_case in request.test_cases:
+        for test_case in all_test_cases:
             test_result = await CodeExecutorService.execute_code(
                 request.code,
                 request.language,
-                test_case.input_data,
+                test_case.input,
                 request.timeout
             )
             
@@ -466,10 +470,9 @@ async def execute_code_with_tests(request: CodeExecutionWithTestsRequest):
                 expected_output = test_case.expected_output.strip()
                 
                 if not expected_output:
-                    # Fail test cases with empty expected output to prevent false positives
                     test_results.append(TestResult(
                         passed=False,
-                        input_data=test_case.input_data,
+                        input=test_case.input,
                         expected_output="[NotEmptyString]",
                         actual_output=actual_output,
                         error="Invalid test case: Expected output cannot be empty",
@@ -483,7 +486,7 @@ async def execute_code_with_tests(request: CodeExecutionWithTestsRequest):
                     
                     test_results.append(TestResult(
                         passed=passed,
-                        input_data=test_case.input_data,
+                        input=test_case.input,
                         expected_output=expected_output,
                         actual_output=actual_output,
                         error=test_result.get('error', ''),
@@ -492,7 +495,7 @@ async def execute_code_with_tests(request: CodeExecutionWithTestsRequest):
             else:
                 test_results.append(TestResult(
                     passed=False,
-                    input_data=test_case.input_data,
+                    input=test_case.input,
                     expected_output=test_case.expected_output,
                     actual_output='',
                     error=test_result['error'],
@@ -503,7 +506,7 @@ async def execute_code_with_tests(request: CodeExecutionWithTestsRequest):
             execution_result=ExecutionResult(**basic_result),
             test_results=test_results,
             total_passed=passed_count,
-            total_tests=len(request.test_cases),
+            total_tests=len(all_test_cases),
             plagiarism_score=0.0
         )
         

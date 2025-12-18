@@ -29,7 +29,7 @@ print(hello())
     payload = {
         "code": code,
         "language": "python",
-        "input_data": "",
+        "input": "",
         "timeout": 10
     }
     
@@ -52,7 +52,7 @@ public class Solution {
     payload = {
         "code": code,
         "language": "java",
-        "input_data": "",
+        "input": "",
         "timeout": 15
     }
     
@@ -77,17 +77,17 @@ print(add_numbers(a, b))
         "language": "python",
         "test_cases": [
             {
-                "input_data": "2 3",
+                "input": "2 3",
                 "expected_output": "5",
                 "weight": 1
             },
             {
-                "input_data": "10 20",
+                "input": "10 20",
                 "expected_output": "30",
                 "weight": 1
             },
             {
-                "input_data": "-5 5",
+                "input": "-5 5",
                 "expected_output": "0",
                 "weight": 1
             }

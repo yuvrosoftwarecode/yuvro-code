@@ -56,7 +56,6 @@ class CodeExecutorViewSet(viewsets.ModelViewSet):
             )
 
             try:
-                # Run test cases using FastAPI (this includes code execution)
                 test_cases_data = data.get("test_cases", [])
                 test_results = TestCaseService.run_test_cases(
                     submission, test_cases_data
@@ -68,7 +67,6 @@ class CodeExecutorViewSet(viewsets.ModelViewSet):
                 # Check plagiarism
                 plagiarism_results = PlagiarismService.check_plagiarism(submission)
 
-                # Update submission with results
                 submission.status = "completed" if test_results["success"] else "error"
                 submission.output = test_results.get("output", "")
                 submission.error_message = test_results.get("error", "")
@@ -94,7 +92,6 @@ class CodeExecutorViewSet(viewsets.ModelViewSet):
                     "summary": f"{test_results['passed']} out of {test_results['total']} test cases passed",
                 }
 
-                # Also ensure the main response has the execution stats
                 response_data["execution_time"] = test_results.get("execution_time", 0)
                 response_data["memory_usage"] = test_results.get("memory_usage", 0)
 

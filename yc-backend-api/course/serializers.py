@@ -193,6 +193,15 @@ class QuestionSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "created_at", "updated_at", "created_by"]
 
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        request = self.context.get('request')
+        if request and hasattr(request, 'user') and request.user.is_authenticated:
+            # If the user is a student, hide advanced test cases
+            if getattr(request.user, 'role', '') == 'student':
+                ret.pop('test_cases_advanced', None)
+        return ret
+
     def validate(self, data):
         """
         Validate question data based on type and level

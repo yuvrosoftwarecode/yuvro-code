@@ -19,19 +19,18 @@ class CodeExecutorService:
 
     @classmethod
     def execute_code(
-        cls, code: str, language: str, input_data: str = ""
+        cls, code: str, language: str, input: str = ""
     ) -> Dict[str, Any]:
         """Execute code using FastAPI service"""
         service = cls()
 
         try:
-            # Call FastAPI service
             response = requests.post(
                 f"{service.fastapi_url}/execute",
                 json={
                     "code": code,
                     "language": language,
-                    "input_data": input_data,
+                    "input": input,
                     "timeout": 15,
                 },
                 timeout=30,
@@ -94,40 +93,14 @@ class TestCaseService:
             return {"passed": 0, "total": 0, "results": [], "success": True}
 
         try:
-            # Prepare test cases for FastAPI
             test_cases_data = []
             for test_case in test_cases:
-                # Handle different test case formats
-                input_data = ""
-                expected_output = ""
-
-                # Handle different test case formats
-                if "input" in test_case:
-                    # New format from course API
-                    input_data = str(test_case["input"])
-                elif "input_data" in test_case:
-                    # Old format
-                    input_data = test_case["input_data"]
-                else:
-                    input_data = ""
-
-                # Handle expected output
-                if "expected" in test_case:
-                    # New format from course API
-                    expected_output = str(test_case["expected"])
-                elif "expected_output" in test_case:
-                    # Old format
-                    expected_out = test_case["expected_output"]
-                    if isinstance(expected_out, (list, dict)):
-                        expected_output = json.dumps(expected_out)
-                    else:
-                        expected_output = str(expected_out)
-                else:
-                    expected_output = ""
+                input_val = str(test_case.get("input", ""))
+                expected_output = str(test_case.get("expected_output", ""))
 
                 test_cases_data.append(
                     {
-                        "input_data": input_data,
+                        "input": input_val,
                         "expected_output": expected_output,
                         "weight": test_case.get("weight", 1),
                     }
@@ -148,14 +121,13 @@ class TestCaseService:
             if response.status_code == 200:
                 result = response.json()
 
-                # Convert FastAPI response to our format
                 results = []
                 for i, test_result in enumerate(result.get("test_results", [])):
                     results.append(
                         {
                             "test_case_id": i,
                             "passed": test_result.get("passed", False),
-                            "input_data": test_result.get("input_data", ""),
+                            "input": test_result.get("input", ""),
                             "expected_output": test_result.get("expected_output", ""),
                             "actual_output": test_result.get("actual_output", ""),
                             "error": test_result.get("error", ""),

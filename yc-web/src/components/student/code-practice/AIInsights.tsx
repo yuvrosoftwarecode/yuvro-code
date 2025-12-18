@@ -28,7 +28,7 @@ const AIInsights = ({ onBack, onGeneratePracticeSet }: AIInsightsProps) => {
     const generateInsights = async () => {
       try {
         const submissions = await codeExecutorService.getSubmissions();
-        
+
         const generatedInsights: Insight[] = [];
 
         // Analyze language usage
@@ -38,7 +38,7 @@ const AIInsights = ({ onBack, onGeneratePracticeSet }: AIInsightsProps) => {
         });
 
         const mostUsedLanguage = Object.entries(languageStats)
-          .sort(([,a], [,b]) => b - a)[0];
+          .sort(([, a], [, b]) => b - a)[0];
 
         if (mostUsedLanguage) {
           generatedInsights.push({
@@ -51,8 +51,8 @@ const AIInsights = ({ onBack, onGeneratePracticeSet }: AIInsightsProps) => {
         }
 
         // Analyze success rate
-        const successRate = submissions.length > 0 
-          ? (submissions.filter(s => s.status === 'completed').length / submissions.length) * 100 
+        const successRate = submissions.length > 0
+          ? (submissions.filter(s => s.status === 'completed').length / submissions.length) * 100
           : 0;
 
         if (successRate > 70) {
@@ -75,8 +75,8 @@ const AIInsights = ({ onBack, onGeneratePracticeSet }: AIInsightsProps) => {
 
         // Analyze execution time
         const executionTimes = submissions.filter(s => s.execution_time > 0).map(s => s.execution_time);
-        const avgExecutionTime = executionTimes.length > 0 
-          ? executionTimes.reduce((sum, time) => sum + time, 0) / executionTimes.length 
+        const avgExecutionTime = executionTimes.length > 0
+          ? executionTimes.reduce((sum, time) => sum + time, 0) / executionTimes.length
           : 0;
 
         if (avgExecutionTime > 1.5) {
@@ -128,7 +128,7 @@ const AIInsights = ({ onBack, onGeneratePracticeSet }: AIInsightsProps) => {
 
   const handleGeneratePracticeSet = async () => {
     setGeneratingPractice(true);
-    
+
     // Simulate AI practice set generation
     setTimeout(() => {
       toast.success('AI-powered practice set generated! Redirecting to topics...');
@@ -154,7 +154,7 @@ const AIInsights = ({ onBack, onGeneratePracticeSet }: AIInsightsProps) => {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-6 max-w-7xl">
+      <div className="container mx-auto px-[1px] py-6 max-w-7xl">
         <div className="animate-pulse space-y-6">
           <div className="h-6 bg-gray-200 rounded w-1/4"></div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -168,7 +168,7 @@ const AIInsights = ({ onBack, onGeneratePracticeSet }: AIInsightsProps) => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-7xl">
+    <div className="container mx-auto px-[1px] py-6 max-w-7xl">
       {/* Breadcrumb */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -179,7 +179,7 @@ const AIInsights = ({ onBack, onGeneratePracticeSet }: AIInsightsProps) => {
           <span>/</span>
           <span className="text-foreground font-medium">AI Insights</span>
         </div>
-        <Button 
+        <Button
           onClick={handleGeneratePracticeSet}
           disabled={generatingPractice}
           className="gap-1"
@@ -204,7 +204,7 @@ const AIInsights = ({ onBack, onGeneratePracticeSet }: AIInsightsProps) => {
         {insights.map((insight, index) => {
           const Icon = insight.icon;
           const typeInfo = getInsightTypeInfo(insight.type);
-          
+
           return (
             <Card key={index} className="hover:shadow-lg transition-all duration-300">
               <CardHeader>
@@ -268,9 +268,9 @@ const AIInsights = ({ onBack, onGeneratePracticeSet }: AIInsightsProps) => {
               </p>
             </div>
           </div>
-          
+
           <div className="flex justify-center pt-4">
-            <Button 
+            <Button
               onClick={handleGeneratePracticeSet}
               disabled={generatingPractice}
               size="lg"

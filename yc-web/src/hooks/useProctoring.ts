@@ -135,24 +135,45 @@ export const useProctoring = ({ assessmentId, assessmentType, enabled, questionI
             // Note: We allow Ctrl+C, Ctrl+V, Ctrl+X to bubble up to the copy/paste/cut handlers
             // so we can capture the data there. Those handlers call preventDefault().
 
-            if ((e.ctrlKey || e.metaKey)) {
-                const key = e.key.toLowerCase();
+            const key = e.key.toLowerCase();
+            const ctrlOrMeta = e.ctrlKey || e.metaKey;
+            const shift = e.shiftKey;
 
+            // 1. Common Developer Tools Shortcuts
+            // F12
+            if (e.key === 'F12') {
+                e.preventDefault();
+                logActivity('keyboard_shortcut', { key: 'F12', description: 'Developer Tools attempt' });
+            }
+
+            // Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C
+            if (ctrlOrMeta && shift && ['i', 'j', 'c'].includes(key)) {
+                e.preventDefault();
+                logActivity('keyboard_shortcut', {
+                    key: `Ctrl+Shift+${key.toUpperCase()}`,
+                    description: 'Developer Tools (Inspect/Console/Element) attempt'
+                });
+            }
+
+            // Ctrl+U (View Source)
+            if (ctrlOrMeta && key === 'u') {
+                e.preventDefault();
+                logActivity('keyboard_shortcut', { key: 'Ctrl+U', description: 'View Source attempt' });
+            }
+
+            // 2. Block other sensitive shortcuts
+            if (ctrlOrMeta) {
                 // Block these immediately
                 if (['a', 'p', 's'].includes(key)) {
                     e.preventDefault();
                     logActivity('keyboard_shortcut', { key: `Ctrl+${key.toUpperCase()}` });
                 }
-                // For C, V, X - we count on them triggering copy/paste/cut events
-                // But we still want to log them as shortcuts? 
-                // Actually, if we let them propagate, the copy/paste/cut event will fire and log 'copy_detected' etc.
-                // We don't need double logs (one for shortcut, one for copy).
-                // So effectively we just let them go.
             }
 
             if (e.key === 'PrintScreen') {
                 logActivity('keyboard_shortcut', { key: 'PrintScreen' });
             }
+
             // Alt+Tab usually blurs, but might capture Alt
             if (e.altKey && e.key === 'Tab') {
                 logActivity('keyboard_shortcut', { key: 'Alt+Tab' });

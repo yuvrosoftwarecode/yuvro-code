@@ -41,8 +41,9 @@ import RecruiterCompanies from "./pages/recruiter/Companies";
 import RecruiterCompanyDetail from "./pages/recruiter/CompanyDetail";
 import RecruiterDashboard from "./pages/recruiter/Dashboard";
 import RecruiterProfile from "./pages/recruiter/Profile";
+// @ts-ignore
 import AddJob from "./components/student/AddJob";
-import JobFiltersSidebar from "@/components/student/jobs/ApplicationTracker";
+import ApplicationTracker from "@/components/student/jobs/ApplicationTracker";
 
 
 function App() {
@@ -62,7 +63,7 @@ function App() {
               <Route path="/recruiter/jobs" element={<RecruiterJobs />} />
               {/* <Route path="/" element={<JobList />} /> */}
               <Route path="/add-job" element={<AddJob />} />
-              <Route path="/student/JobFiltersSidebar" element={<JobFiltersSidebar />} />
+              <Route path="/student/applications" element={<ApplicationTracker appliedJobs={[]} />} />
 
 
               {/* Protected routes */}

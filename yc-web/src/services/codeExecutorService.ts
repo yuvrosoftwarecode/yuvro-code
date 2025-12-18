@@ -151,9 +151,8 @@ class CodeExecutorService {
     return restApiAuthUtil.get(`/code/submissions/${id}/`);
   }
 
-  async getPlagiarismReports(minSimilarity?: number): Promise<PlagiarismReport[]> {
-    const params = minSimilarity ? { min_similarity: minSimilarity.toString() } : undefined;
-    return restApiAuthUtil.get('/code/plagiarism/', { params });
+  async getSupportedLanguagesAndTemplates(): Promise<any> {
+    return restApiUtilCodeExecuter.get('/supported-languages-and-templates');
   }
 }
 

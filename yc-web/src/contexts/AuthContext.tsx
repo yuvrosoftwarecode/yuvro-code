@@ -222,8 +222,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = (): void => {
     authService.logoutUser().finally(() => {
-      // Clear user data from localStorage
-      localStorage.removeItem('user');
+      // Clear all user data and cached responses from localStorage
+      localStorage.clear();
       dispatch({ type: 'LOGOUT' });
     });
   };

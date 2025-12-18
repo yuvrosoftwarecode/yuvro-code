@@ -2,9 +2,10 @@ import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ChevronLeft, Play, Send, Maximize2, Minimize2, Plus, Trash2, Clock, CheckCircle2, XCircle, Zap, MemoryStick, Activity, Shield, Sparkles, X, FlaskConical, Terminal } from 'lucide-react';
+import { ChevronLeft, Play, Send, Maximize2, Minimize2, Plus, Trash2, Clock, CheckCircle2, XCircle, Zap, MemoryStick, Activity, Shield, Sparkles, X, FlaskConical, Terminal, BookOpen } from 'lucide-react';
 import CodeEditor from '@/components/CodeEditor';
 import codeExecutorService from '@/services/codeExecutorService';
+import ExampleCodeGallery from '@/components/code-execution/ExampleCodeGallery';
 import type { Course, Topic, CodingProblem } from '@/pages/student/CodePractice';
 import { ResizablePanel, ResizablePanelGroup, ResizableHandle } from '@/components/ui/resizable';
 import { toast } from 'sonner';
@@ -48,6 +49,10 @@ const ProblemSolving = ({ problem, course, topic, onBack }: ProblemSolvingProps)
   const [showOutput, setShowOutput] = useState(false);
   const [showAiChat, setShowAiChat] = useState(false);
   const [activeBottomTab, setActiveBottomTab] = useState<'output' | 'testcases'>('output');
+  const [apiTemplates, setApiTemplates] = useState<Record<string, string>>({});
+  const [languageCodes, setLanguageCodes] = useState<Record<string, string>>({});
+  const [showExamples, setShowExamples] = useState(false);
+  const prevLanguageRef = useRef(language);
 
   const handleToggleAiChat = () => {
     const nextShow = !showAiChat;
@@ -68,6 +73,46 @@ const ProblemSolving = ({ problem, course, topic, onBack }: ProblemSolvingProps)
   useEffect(() => {
     setChatSessionId(`chat-${problem.id}-${crypto.randomUUID()}`);
   }, [problem.id]);
+
+  useEffect(() => {
+    const fetchTemplates = async () => {
+      const CACHE_KEY = 'code_templates_cache';
+      const cached = localStorage.getItem(CACHE_KEY);
+
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          setApiTemplates(parsed);
+          if (parsed[language]) {
+            setCode(parsed[language]);
+          }
+          // Still fetch in background to keep it fresh
+        } catch (e) {
+          console.warn('Failed to parse cached templates:', e);
+        }
+      }
+
+      try {
+        const data = await codeExecutorService.getSupportedLanguagesAndTemplates();
+        const templateMap: Record<string, string> = {};
+        if (data.details) {
+          Object.entries(data.details).forEach(([lang, config]: [string, any]) => {
+            templateMap[lang] = config.template;
+          });
+        }
+        setApiTemplates(templateMap);
+        localStorage.setItem(CACHE_KEY, JSON.stringify(templateMap));
+
+        // Initial code set if templates are now available and not set by cache
+        if (!cached && templateMap[language]) {
+          setCode(templateMap[language]);
+        }
+      } catch (err) {
+        console.error('Failed to fetch templates:', err);
+      }
+    };
+    fetchTemplates();
+  }, []);
 
   // Auto-enable AI Buddy in fullscreen mode
   useEffect(() => {
@@ -91,26 +136,146 @@ const ProblemSolving = ({ problem, course, topic, onBack }: ProblemSolvingProps)
     return () => window.removeEventListener('keydown', handler);
   }, [isEditorFullscreen]);
 
-  // templates for new files
-  const templates: Record<string, string> = {
-    python: `# Python solution template\n\nif __name__ == "__main__":\n    pass\n`,
-    javascript: `// JavaScript solution template\n\nfunction solution() {\n  // ...\n}\n`,
-    java: `// Java solution template\npublic class Solution {\n  public static void main(String[] args) {\n  }\n}\n`,
-    cpp: `// C++ template\n#include <bits/stdc++.h>\nusing namespace std;\nint main(){\n  return 0;\n}\n`,
-  };
-
   const mounted = useRef(false);
 
   useEffect(() => {
-    // Initialize or update code template
-    setCode(templates[language] ?? templates.python);
+    // 1. Save current code for the previous language
+    const prevLang = prevLanguageRef.current;
+    if (prevLang && code) {
+      setLanguageCodes(prev => ({ ...prev, [prevLang]: code }));
+    }
+    prevLanguageRef.current = language;
+
+    // 2. Load code for the new language if it exists, otherwise use template
+    const savedCode = languageCodes[language];
+    const currentTemplate = apiTemplates[language];
+
+    // Fallback templates with detailed input examples
+    const fallbackTemplates: Record<string, string> = {
+      python: `class Solution:
+    def solve(self, *args):
+        # Competitive Programming Template - Python
+        # Each line of your test case input is passed as an argument in *args.
+        # Arguments are automatically parsed as JSON/Numbers if possible.
+
+        # Example: If your input lines are: "Hello", 42, [1, 2, 3]
+        # You can access them like this:
+        # input_str = args[0] if len(args) > 0 else ""
+        # num = args[1] if len(args) > 1 else 0
+        # list_data = args[2] if len(args) > 2 else []
+
+        # Start your logic below:
+        return None
+`,
+      javascript: `"use strict";
+
+const fs = require('fs');
+
+/**
+ * Competitive Programming Template - Node.js
+ * Reads stdin and parses lines. Often inputs are JSON strings.
+ */
+function solve() {
+    const lines = fs.readFileSync(0, 'utf8').split('\\n').filter(line => line.trim());
+    if (lines.length === 0) return;
+
+    // Example: parse first line as a JSON array
+    try {
+        const data = JSON.parse(lines[0]);
+        // Your logic here
+    } catch (e) {
+        // Fallback for non-JSON input
+        const data = lines[0];
+    }
+}
+
+solve();
+`,
+      java: `import java.util.*;
+
+/**
+ * Competitive Programming Template - Java
+ */
+public class Solution {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        
+        // For array inputs, the platform provides [count] followed by [elements]
+        if (sc.hasNextInt()) {
+            int n = sc.nextInt();
+            int[] arr = new int[n];
+            for(int i = 0; i < n; i++) {
+                arr[i] = sc.nextInt();
+            }
+            // Your logic here
+        }
+    }
+}
+`,
+      cpp: `#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+/**
+ * Competitive Programming Template - C++
+ */
+int main() {
+    // Faster I/O
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int n;
+    // For array inputs, the platform provides [count] followed by [elements]
+    if (cin >> n) {
+        vector<int> arr(n);
+        for(int i = 0; i < n; i++) {
+            cin >> arr[i];
+        }
+        // Your logic here
+    }
+
+    return 0;
+}
+`,
+      c: `#include <stdio.h>
+#include <stdlib.h>
+
+/**
+ * Competitive Programming Template - C
+ */
+int main() {
+    int n;
+    // For array inputs, the platform provides [count] followed by [elements]
+    if (scanf("%d", &n) == 1) {
+        int* arr = (int*)malloc(n * sizeof(int));
+        for(int i = 0; i < n; i++) {
+            scanf("%d", &arr[i]);
+        }
+        
+        // Your logic here
+        
+        free(arr);
+    }
+    return 0;
+}
+`
+    };
+
+    const targetTemplate = currentTemplate || fallbackTemplates[language] || fallbackTemplates.python;
+
+    if (savedCode) {
+      setCode(savedCode);
+    } else {
+      setCode(targetTemplate);
+    }
 
     if (!mounted.current) {
       mounted.current = true;
       return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [language]);
+  }, [language, apiTemplates]);
 
   // difficulty badge style (pure Tailwind)
   const difficultyBadgeClass =
@@ -154,13 +319,15 @@ const ProblemSolving = ({ problem, course, topic, onBack }: ProblemSolvingProps)
         problem_title: problem.title,
       });
 
-      setOutput(res.output ?? res.error_message ?? '');
+      setOutput(res.output || res.error_message || '');
       setTestResults(res.test_results ?? null);
       setExecutionMetrics({
         execution_time: res.execution_time,
         memory_usage: res.memory_usage,
         status: res.status,
+        plagiarism_score: res.plagiarism_score,
       });
+
 
       if (res.status === 'completed') {
         const passed = res.test_results?.passed ?? 0;
@@ -207,7 +374,9 @@ const ProblemSolving = ({ problem, course, topic, onBack }: ProblemSolvingProps)
         execution_time: res.execution_time,
         memory_usage: res.memory_usage,
         status: res.status,
+        plagiarism_score: res.plagiarism_score,
       });
+
 
       if (res.status === 'completed') {
         const passed = res.test_results?.passed ?? 0;
@@ -514,6 +683,16 @@ ${code}
 
                       <div className="flex items-center gap-2">
                         <Button
+                          onClick={() => setShowExamples(true)}
+                          size="sm"
+                          className="h-8 border border-gray-200 text-xs bg-white text-gray-700 hover:bg-gray-100"
+                          variant="outline"
+                        >
+                          <BookOpen className="h-3.5 w-3.5 mr-1.5 text-blue-500" />
+                          Examples
+                        </Button>
+
+                        <Button
                           onClick={handleToggleAiChat}
                           size="sm"
                           className={`h-8 border border-gray-200 text-xs ${showAiChat ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
@@ -615,33 +794,15 @@ ${code}
                               </TabsList>
                               <TabsContent value="output" className="flex-1 overflow-auto p-4 m-0">
                                 <div className="space-y-6">
-                                  {/* 1. Plagiarism Check - First */}
-                                  {executionMetrics && (
-                                    <div className="bg-gradient-to-br from-slate-50 to-gray-50 p-4 rounded-xl border border-slate-200">
-                                      <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                                        <Shield className="h-4 w-4 text-slate-600" />
-                                        Plagiarism Check
-                                      </h4>
-                                      <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-                                          <CheckCircle2 className="h-5 w-5 text-green-600" />
-                                        </div>
-                                        <div>
-                                          <div className="text-sm font-medium text-gray-800">Original Code</div>
-                                          <div className="text-xs text-gray-500">No plagiarism detected</div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  )}
+                                  {/* Execution Metrics */}
 
-                                  {/* 2. Execution Metrics - Second */}
                                   {executionMetrics && (
                                     <div>
                                       <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                                         <Zap className="h-4 w-4 text-amber-500" />
                                         Execution Metrics
                                       </h4>
-                                      <div className="grid grid-cols-3 gap-3">
+                                      <div className="grid grid-cols-4 gap-3">
                                         {executionMetrics.execution_time !== undefined && (
                                           <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-100">
                                             <div className="flex items-center gap-2 mb-1">
@@ -687,7 +848,25 @@ ${code}
                                             </div>
                                           </div>
                                         )}
+                                        {executionMetrics.plagiarism_score !== undefined && (
+                                          <div className={`p-4 rounded-xl border ${executionMetrics.plagiarism_score > 0.7
+                                            ? 'bg-gradient-to-br from-red-50 to-orange-50 border-red-100'
+                                            : 'bg-gradient-to-br from-teal-50 to-cyan-50 border-teal-100'
+                                            }`}>
+                                            <div className="flex items-center gap-2 mb-1">
+                                              <Shield className={`h-4 w-4 ${executionMetrics.plagiarism_score > 0.7 ? 'text-red-600' : 'text-teal-600'}`} />
+                                              <span className={`text-xs font-medium uppercase tracking-wide ${executionMetrics.plagiarism_score > 0.7 ? 'text-red-600' : 'text-teal-600'}`}>Plagiarism</span>
+                                            </div>
+                                            <div className="text-lg font-bold text-gray-800">
+                                              {(executionMetrics.plagiarism_score * 100).toFixed(0)}%
+                                              <span className={`text-xs font-medium ml-2 ${executionMetrics.plagiarism_score > 0.7 ? 'text-red-500' : 'text-teal-500'}`}>
+                                                {executionMetrics.plagiarism_score > 0.7 ? 'Flagged' : 'Clear'}
+                                              </span>
+                                            </div>
+                                          </div>
+                                        )}
                                       </div>
+
                                     </div>
                                   )}
 
@@ -939,6 +1118,16 @@ ${code}
 
               <div className="flex items-center gap-3 shrink-0 ml-4 relative z-[10001]">
                 <Button
+                  onClick={() => setShowExamples(true)}
+                  size="default"
+                  className="h-10 border border-gray-200 text-sm font-bold px-4 bg-white text-gray-700 hover:bg-gray-100"
+                  variant="outline"
+                >
+                  <BookOpen className="h-4 w-4 mr-2 text-blue-500" />
+                  Examples
+                </Button>
+
+                <Button
                   onClick={handleToggleAiChat}
                   size="default"
                   className={`h-10 border border-gray-200 text-sm font-bold px-4 ${showAiChat ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
@@ -1048,7 +1237,7 @@ ${code}
                                         <Zap className="h-4 w-4 text-amber-500" />
                                         Execution Metrics
                                       </h4>
-                                      <div className="grid grid-cols-3 gap-4">
+                                      <div className="grid grid-cols-4 gap-4">
                                         {executionMetrics.execution_time !== undefined && (
                                           <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100 shadow-sm">
                                             <div className="text-xs font-medium text-blue-600 uppercase mb-1">Time</div>
@@ -1070,7 +1259,22 @@ ${code}
                                             <div className={`text-xl font-bold capitalize ${executionMetrics.status === 'completed' ? 'text-green-900' : 'text-amber-900'}`}>{executionMetrics.status}</div>
                                           </div>
                                         )}
+                                        {executionMetrics.plagiarism_score !== undefined && (
+                                          <div className={`p-4 rounded-xl border shadow-sm ${executionMetrics.plagiarism_score > 0.7
+                                            ? 'bg-red-50/50 border-red-100'
+                                            : 'bg-teal-50/50 border-teal-100'
+                                            }`}>
+                                            <div className={`text-xs font-medium uppercase mb-1 ${executionMetrics.plagiarism_score > 0.7 ? 'text-red-600' : 'text-teal-600'}`}>Plagiarism</div>
+                                            <div className="text-xl font-bold text-gray-900">
+                                              {(executionMetrics.plagiarism_score * 100).toFixed(0)}%
+                                              <span className={`text-xs font-medium ml-2 ${executionMetrics.plagiarism_score > 0.7 ? 'text-red-500' : 'text-teal-500'}`}>
+                                                {executionMetrics.plagiarism_score > 0.7 ? 'Flagged' : 'Clear'}
+                                              </span>
+                                            </div>
+                                          </div>
+                                        )}
                                       </div>
+
                                     </div>
                                   )}
 
@@ -1231,7 +1435,14 @@ ${code}
           </div>
         )
       }
-    </div >
+      {showExamples && (
+        <ExampleCodeGallery
+          currentLanguage={language}
+          onClose={() => setShowExamples(false)}
+          onApplyCode={(exampleCode) => setCode(exampleCode)}
+        />
+      )}
+    </div>
   );
 };
 

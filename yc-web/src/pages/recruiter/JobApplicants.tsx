@@ -72,7 +72,7 @@ const JobApplicants: React.FC = () => {
     return status.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
   };
 
-  const filteredApplications = applications.filter(app => 
+  const filteredApplications = applications.filter(app =>
     selectedStatus === 'all' || app.status === selectedStatus
   );
 
@@ -93,10 +93,6 @@ const JobApplicants: React.FC = () => {
       >
         <ArrowLeft className="h-4 w-4" />
         <span>Back to Jobs</span>
-      </button>
-      <button className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
-        <Download className="h-4 w-4" />
-        <span>Export Applications</span>
       </button>
     </>
   );
@@ -206,8 +202,8 @@ const JobApplicants: React.FC = () => {
                   <User className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No applications found</h3>
                   <p className="text-gray-600">
-                    {selectedStatus === 'all' 
-                      ? 'No one has applied to this job yet.' 
+                    {selectedStatus === 'all'
+                      ? 'No one has applied to this job yet.'
                       : `No applications with status "${getStatusText(selectedStatus)}".`
                     }
                   </p>
@@ -261,9 +257,9 @@ const JobApplicants: React.FC = () => {
                             {application.portfolio_url && (
                               <div className="flex items-center text-sm text-gray-600">
                                 <ExternalLink className="h-4 w-4 mr-2" />
-                                <a 
-                                  href={application.portfolio_url} 
-                                  target="_blank" 
+                                <a
+                                  href={application.portfolio_url}
+                                  target="_blank"
                                   rel="noopener noreferrer"
                                   className="text-blue-600 hover:text-blue-800"
                                 >
@@ -290,7 +286,7 @@ const JobApplicants: React.FC = () => {
                           <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(application.status)}`}>
                             {getStatusText(application.status)}
                           </span>
-                          
+
                           <select
                             value={application.status}
                             onChange={(e) => handleStatusUpdate(application.id, e.target.value)}

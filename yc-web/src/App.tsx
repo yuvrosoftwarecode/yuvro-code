@@ -14,7 +14,7 @@ import InstructorDashboard from './pages/instructor/Dashboard';
 import Courses from './pages/instructor/Courses';
 
 import CourseEdit from './components/instructor/courses/CourseEdit';
-import Jobs from './pages/instructor/Jobs';
+
 import Users from './pages/instructor/Users';
 import StudentDashboard from './pages/student/StudentDashboard';
 import CourseDetail from './components/student/CourseDetail';
@@ -207,7 +207,7 @@ function App() {
               <Route
                 path="/recruiter/jobs"
                 element={
-                  <ProtectedRoute allowedRoles={["recruiter"]}>
+                  <ProtectedRoute allowedRoles={["admin", "instructor", "recruiter"]}>
                     <RecruiterJobs />
                   </ProtectedRoute>
                 }
@@ -216,7 +216,7 @@ function App() {
               <Route
                 path="/recruiter/jobs/:jobId/applicants"
                 element={
-                  <ProtectedRoute allowedRoles={["recruiter"]}>
+                  <ProtectedRoute allowedRoles={["admin", "instructor", "recruiter"]}>
                     <RecruiterJobApplicants />
                   </ProtectedRoute>
                 }
@@ -269,14 +269,7 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-              <Route
-                path="/instructor/jobs"
-                element={
-                  <ProtectedRoute allowedRoles={["admin", "instructor", "recruiter"]}>
-                    <Jobs />
-                  </ProtectedRoute>
-                }
-              />
+
 
               <Route
                 path="/instructor/users"

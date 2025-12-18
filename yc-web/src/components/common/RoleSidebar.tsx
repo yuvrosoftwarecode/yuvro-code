@@ -77,7 +77,7 @@ const sidebarItems: SidebarItem[] = [
     label: 'Jobs',
     icon: Briefcase,
     path: '/recruiter/jobs',
-    roles: ['admin', 'recruiter']
+    roles: ['admin', 'recruiter', 'instructor']
   },
   {
     id: 'contests',

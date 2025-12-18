@@ -45,7 +45,7 @@ const Jobs: React.FC = () => {
     is_remote: false,
     min_salary: undefined as number | undefined,
     max_salary: undefined as number | undefined,
-    currency: "USD" as const,
+    currency: "IND" as const,
     skills: [] as string[],
     notice_period: undefined as number | undefined,
     education_level: "any" as const,
@@ -183,7 +183,7 @@ const Jobs: React.FC = () => {
       is_remote: false,
       min_salary: undefined,
       max_salary: undefined,
-      currency: "USD",
+      currency: "IND",
       skills: [],
       notice_period: undefined,
       education_level: "any",
@@ -220,7 +220,7 @@ const Jobs: React.FC = () => {
       is_remote: job.is_remote,
       min_salary: job.min_salary,
       max_salary: job.max_salary,
-      currency: job.currency as "USD",
+      currency: job.currency as "IND",
       skills: job.skills,
       notice_period: job.notice_period,
       education_level: job.education_level as "any",
@@ -269,7 +269,7 @@ const Jobs: React.FC = () => {
       is_remote: job.is_remote,
       min_salary: job.min_salary,
       max_salary: job.max_salary,
-      currency: job.currency as "USD",
+      currency: job.currency as "IND",
       skills: job.skills,
       notice_period: job.notice_period,
       education_level: job.education_level as "any",
@@ -465,7 +465,9 @@ const Jobs: React.FC = () => {
                       <h3 className="text-md font-medium text-gray-600">Total Applicants</h3>
                     </div>
                     <div className="flex items-center justify-between">
-                      <div className="text-2xl font-bold">0</div>
+                      <div className="text-2xl font-bold">
+                        {jobsWithApplications.reduce((acc, job) => acc + (job.applications_count || 0), 0)}
+                      </div>
                       <Users className="h-8 w-8 text-gray-600" />
                     </div>
                   </div>
@@ -902,8 +904,8 @@ const Jobs: React.FC = () => {
                                 onChange={(e) => setFormData({ ...formData, currency: e.target.value as any })}
                                 className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                               >
-                                <option value="USD">USD</option>
                                 <option value="INR">INR</option>
+                                <option value="USD">USD</option>
                                 <option value="EUR">EUR</option>
                                 <option value="GBP">GBP</option>
                               </select>

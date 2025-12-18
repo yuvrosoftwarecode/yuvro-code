@@ -19,7 +19,7 @@ const ApplyJobDialog: React.FC<ApplyJobDialogProps> = ({ isOpen, onClose, job, o
     cover_letter: '',
     portfolio_url: '',
     expected_salary: undefined,
-    expected_currency: 'USD',
+    expected_currency: 'IND',
     available_from: '',
     notice_period_days: undefined
   });
@@ -28,7 +28,7 @@ const ApplyJobDialog: React.FC<ApplyJobDialogProps> = ({ isOpen, onClose, job, o
 
   const handleSubmit = async () => {
     if (!job) return;
-    
+
     setIsSubmitting(true);
     try {
       const submitData: JobApplicationData = {
@@ -42,17 +42,17 @@ const ApplyJobDialog: React.FC<ApplyJobDialogProps> = ({ isOpen, onClose, job, o
       };
 
       await onSubmit(submitData);
-      
+
       // Reset form
       setApplicationData({
         cover_letter: '',
         portfolio_url: '',
         expected_salary: undefined,
-        expected_currency: 'USD',
+        expected_currency: 'IND',
         available_from: '',
         notice_period_days: undefined
       });
-      
+
       onClose();
     } catch (error) {
       console.error('Error submitting application:', error);
@@ -84,7 +84,7 @@ const ApplyJobDialog: React.FC<ApplyJobDialogProps> = ({ isOpen, onClose, job, o
               rows={4}
             />
           </div>
-          
+
           <div>
             <Label htmlFor="portfolio_url">Portfolio URL (Optional)</Label>
             <Input
@@ -104,9 +104,9 @@ const ApplyJobDialog: React.FC<ApplyJobDialogProps> = ({ isOpen, onClose, job, o
                 type="number"
                 placeholder="50000"
                 value={applicationData.expected_salary || ''}
-                onChange={(e) => setApplicationData(prev => ({ 
-                  ...prev, 
-                  expected_salary: e.target.value ? parseFloat(e.target.value) : undefined 
+                onChange={(e) => setApplicationData(prev => ({
+                  ...prev,
+                  expected_salary: e.target.value ? parseFloat(e.target.value) : undefined
                 }))}
               />
             </div>
@@ -118,8 +118,8 @@ const ApplyJobDialog: React.FC<ApplyJobDialogProps> = ({ isOpen, onClose, job, o
                 onChange={(e) => setApplicationData(prev => ({ ...prev, expected_currency: e.target.value }))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value="USD">USD</option>
                 <option value="INR">INR</option>
+                <option value="USD">USD</option>
                 <option value="EUR">EUR</option>
                 <option value="GBP">GBP</option>
               </select>
@@ -143,9 +143,9 @@ const ApplyJobDialog: React.FC<ApplyJobDialogProps> = ({ isOpen, onClose, job, o
                 type="number"
                 placeholder="30"
                 value={applicationData.notice_period_days || ''}
-                onChange={(e) => setApplicationData(prev => ({ 
-                  ...prev, 
-                  notice_period_days: e.target.value ? parseInt(e.target.value) : undefined 
+                onChange={(e) => setApplicationData(prev => ({
+                  ...prev,
+                  notice_period_days: e.target.value ? parseInt(e.target.value) : undefined
                 }))}
               />
             </div>

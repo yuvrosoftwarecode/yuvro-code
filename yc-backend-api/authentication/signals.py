@@ -21,9 +21,6 @@ def save_user_profile(sender, instance, **kwargs):
 
 @receiver(post_save, sender=User)
 def assign_user_group(sender, instance, created, **kwargs):
-    """
-    Assign user to a group based on their role.
-    """
     from django.contrib.auth.models import Group
     
     if instance.role:

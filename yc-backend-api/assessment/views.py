@@ -121,39 +121,6 @@ class SkillTestViewSet(ProctoringMixin, viewsets.ModelViewSet):
             
         return qs
 
-
-class MockInterviewViewSet(viewsets.ModelViewSet):
-    queryset = MockInterview.objects.all()
-    serializer_class = MockInterviewSerializer
-    permission_classes = [IsOwnerOrInstructorOrAdmin]
-    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-
-    search_fields = ['title', 'description']
-    ordering_fields = ['scheduled_datetime']
-
-    def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user)
-
-    def get_queryset(self):
-        qs = super().get_queryset()
-        status_param = self.request.query_params.get('status')
-        type_param = self.request.query_params.get('type')
-
-        q = Q()
-        if status_param:
-            q &= Q(status=status_param)
-
-        if type_param:
-            q &= Q(type=type_param)
-
-        if q:
-            qs = qs.filter(q)
-
-        for obj in qs:
-            obj.update_status()
-
-        return qs
-
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def start(self, request, pk=None):
         skill_test = self.get_object()
@@ -275,6 +242,40 @@ class MockInterviewViewSet(viewsets.ModelViewSet):
             'status': 'submitted',
             'score': total_score
         })
+
+class MockInterviewViewSet(viewsets.ModelViewSet):
+    queryset = MockInterview.objects.all()
+    serializer_class = MockInterviewSerializer
+    permission_classes = [IsOwnerOrInstructorOrAdmin]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+
+    search_fields = ['title', 'description']
+    ordering_fields = ['scheduled_datetime']
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        status_param = self.request.query_params.get('status')
+        type_param = self.request.query_params.get('type')
+
+        q = Q()
+        if status_param:
+            q &= Q(status=status_param)
+
+        if type_param:
+            q &= Q(type=type_param)
+
+        if q:
+            qs = qs.filter(q)
+
+        for obj in qs:
+            obj.update_status()
+
+        return qs
+
+    
 
 
 class SkillTestSubmissionViewSet(viewsets.ReadOnlyModelViewSet):

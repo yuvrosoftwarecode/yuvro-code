@@ -173,11 +173,17 @@ class ProctoringMixin:
             if image_path:
                 event['image_path'] = image_path
         
+        # Define non-violation events that shouldn't be counted as proctoring violations
         proctoring_types = dict(BaseQuestionActivity.PROCTORING_ACTIVITY_TYPES).keys()
+        non_violation_types = ['snapshot', 'camera_enabled', 'camera_disabled']
         
-        if activity_type in proctoring_types or activity_type == 'snapshot' or image_file:     
+        is_proctoring = (activity_type in proctoring_types or activity_type == 'snapshot' or image_file)
+        is_violation = is_proctoring and (activity_type not in non_violation_types)
+
+        if is_violation:     
              submission.proctoring_events.append(event)
         else:
+             # Snapshots and Camera Status are logged but kept in general events
              submission.general_events.append(event)
              
         submission.save()

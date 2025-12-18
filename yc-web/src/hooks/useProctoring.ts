@@ -163,5 +163,106 @@ export const useProctoring = ({ assessmentId, assessmentType, enabled, questionI
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [logActivity]);
 
+    // 6. Camera Snapshot Logic
+    useEffect(() => {
+        if (!enabled) return;
+
+        let stream: MediaStream | null = null;
+        let intervalId: NodeJS.Timeout;
+        const video = document.createElement('video');
+        const canvas = document.createElement('canvas');
+
+        const takeAndUploadSnapshot = async (mediaStream: MediaStream) => {
+            if (!mediaStream.active) return;
+
+            try {
+                // Ensure video is playing
+                if (video.paused || video.ended) {
+                    video.srcObject = mediaStream;
+                    await video.play().catch(() => { });
+                }
+
+                // Wait for video to be ready (metadata loaded)
+                if (video.readyState === 0) {
+                    return; // Skip if not ready
+                }
+
+                canvas.width = video.videoWidth || 640;
+                canvas.height = video.videoHeight || 480;
+
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                    canvas.toBlob(async (blob) => {
+                        if (blob) {
+                            const formData = new FormData();
+                            formData.append('snapshot', blob, 'snapshot.png');
+                            // Add required fields expected by backend check
+                            formData.append('activity_type', 'snapshot');
+                            formData.append('timestamp', new Date().toISOString());
+                            if (questionId) {
+                                formData.append('question_id', questionId);
+                            }
+
+                            const url = `${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8001/api'}/${assessmentType}/${assessmentId}/log-activity/`;
+                            const token = restApiAuthUtil.getAuthToken();
+
+                            try {
+                                await fetch(url, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Authorization': `Bearer ${token}`
+                                    },
+                                    body: formData
+                                });
+                            } catch (err) {
+                                console.error('Snapshot upload failed', err);
+                            }
+                        }
+                    }, 'image/png');
+                }
+            } catch (err) {
+                console.error('Snapshot capture error', err);
+            }
+        };
+
+        const initCamera = async () => {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: true });
+
+                // Initial snapshot
+                // We need to wait a bit for the video to start
+                video.srcObject = stream;
+                video.onloadedmetadata = async () => {
+                    await video.play();
+                    takeAndUploadSnapshot(stream as MediaStream);
+                };
+
+                // Interval snapshot
+                intervalId = setInterval(() => {
+                    if (stream) {
+                        takeAndUploadSnapshot(stream);
+                    }
+                }, 15000); // 15 seconds
+
+            } catch (err) {
+                console.error('Failed to access camera for proctoring', err);
+                logActivity('camera_disabled', { error: String(err) });
+            }
+        };
+
+        logActivity('camera_enabled');
+        initCamera();
+
+        return () => {
+            if (intervalId) clearInterval(intervalId);
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            video.srcObject = null;
+        };
+    }, [assessmentId, assessmentType, enabled, logActivity]); // Re-init if these change (e.g. enabled toggles)
+
     return { logActivity };
 };

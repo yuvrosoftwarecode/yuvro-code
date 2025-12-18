@@ -165,10 +165,17 @@ class ProctoringMixin:
             'activity_type': activity_type,
             'meta_data': meta_data
         }
+
+        # Handle Camera Snapshot for Submission Level
+        image_file = request.FILES.get('snapshot')
+        if image_file:
+            image_path = self._save_snapshot(image_file, request.user, submission)
+            if image_path:
+                event['image_path'] = image_path
         
         proctoring_types = dict(BaseQuestionActivity.PROCTORING_ACTIVITY_TYPES).keys()
         
-        if activity_type in proctoring_types or activity_type == 'snapshot':     
+        if activity_type in proctoring_types or activity_type == 'snapshot' or image_file:     
              submission.proctoring_events.append(event)
         else:
              submission.general_events.append(event)

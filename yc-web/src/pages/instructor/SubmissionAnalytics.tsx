@@ -43,7 +43,7 @@ export default function SubmissionAnalytics() {
     }
 
     // Calculate stats
-    const totalViolations = (submission.proctoring_events?.length || 0) +
+    const totalViolations = (submission.proctoring_events?.filter((e: any) => !['snapshot', 'camera_enabled', 'camera_disabled'].includes(e.activity_type)).length || 0) +
         (submission.question_activities?.reduce((acc: number, q: any) => acc + (q.violation_count || 0), 0) || 0);
 
     const questionActivities = submission.question_activities || [];
@@ -154,6 +154,7 @@ export default function SubmissionAnalytics() {
                                                     <div className="space-y-1 max-h-40 overflow-y-auto">
                                                         {/* Merge and sort navigation & proctoring activities */}
                                                         {[...(activity.navigation_activities || []), ...(activity.proctoring_activities || [])]
+                                                            .filter((log: any) => !['snapshot', 'camera_enabled', 'camera_disabled'].includes(log.activity_type))
                                                             .sort((a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
                                                             .map((log: any, i: number) => (
                                                                 <div key={i} className={`flex items-center justify-between py-1 px-2 rounded ${log.activity_type.includes('violation') || log.activity_type.includes('detected') ? 'bg-red-50 text-red-700' : 'text-gray-600'
@@ -196,6 +197,7 @@ export default function SubmissionAnalytics() {
                             <CardContent>
                                 <div className="max-h-60 overflow-y-auto space-y-2">
                                     {([...(submission.proctoring_events || []), ...(submission.general_events || [])]
+                                        .filter((event: any) => !['snapshot', 'camera_enabled', 'camera_disabled'].includes(event.activity_type))
                                         .sort((a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
                                         .map((event: any, i: number) => (
                                             <div key={i} className={`flex justify-between items-center p-2 border-b last:border-0 ${event.activity_type.includes('violation') || event.activity_type.includes('detected') ? 'bg-red-50 text-red-700' : 'text-gray-700'

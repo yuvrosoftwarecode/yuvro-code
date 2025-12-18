@@ -6,7 +6,6 @@ interface ApplicationCardProps {
 }
 
 const ApplicationCard: React.FC<ApplicationCardProps> = ({ application }) => {
-  // Safety check for application data
   if (!application || !application.job || !application.job.company) {
     return null;
   }

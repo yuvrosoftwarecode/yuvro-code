@@ -43,7 +43,6 @@ const ApplyJobDialog: React.FC<ApplyJobDialogProps> = ({ isOpen, onClose, job, o
 
       await onSubmit(submitData);
 
-      // Reset form
       setApplicationData({
         cover_letter: '',
         portfolio_url: '',

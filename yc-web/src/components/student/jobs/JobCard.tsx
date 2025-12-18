@@ -21,7 +21,6 @@ const JobCard: React.FC<JobCardProps> = ({
   showBookmarkDate, 
   bookmarkDate 
 }) => {
-  // Safety check for job data
   if (!job || !job.company) {
     return null;
   }
@@ -72,15 +71,14 @@ const JobCard: React.FC<JobCardProps> = ({
   };
 
   const getMatchPercentage = (job: Job) => {
-    // Simple matching algorithm based on skills
-    const userSkills = ['React', 'TypeScript', 'JavaScript']; // This would come from user profile
+    const userSkills = ['React', 'TypeScript', 'JavaScript']; 
     const matchingSkills = job.skills.filter(skill => 
       userSkills.some(userSkill => 
         userSkill.toLowerCase() === skill.toLowerCase()
       )
     );
     const percentage = Math.min(Math.round((matchingSkills.length / Math.max(job.skills.length, 1)) * 100), 100);
-    return Math.max(percentage, 60); // Minimum 60% for demo purposes
+    return Math.max(percentage, 60); 
   };
 
   return (

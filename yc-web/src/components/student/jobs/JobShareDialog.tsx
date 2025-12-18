@@ -139,7 +139,6 @@ const JobShareDialog: React.FC<JobShareDialogProps> = ({ job, isOpen, onClose })
             Share Via
           </label>
           <div className="grid grid-cols-2 gap-3">
-            {/* LinkedIn */}
             <button
               onClick={() => handleShare('linkedin')}
               className="flex items-center justify-center gap-2 p-3 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors"
@@ -149,7 +148,6 @@ const JobShareDialog: React.FC<JobShareDialogProps> = ({ job, isOpen, onClose })
               <span className="text-sm font-medium text-gray-700">LinkedIn</span>
             </button>
 
-            {/* WhatsApp */}
             <button
               onClick={() => handleShare('whatsapp')}
               className="flex items-center justify-center gap-2 p-3 border border-gray-200 rounded-lg hover:bg-green-50 hover:border-green-300 transition-colors"
@@ -159,7 +157,6 @@ const JobShareDialog: React.FC<JobShareDialogProps> = ({ job, isOpen, onClose })
               <span className="text-sm font-medium text-gray-700">WhatsApp</span>
             </button>
 
-            {/* Facebook */}
             <button
               onClick={() => handleShare('facebook')}
               className="flex items-center justify-center gap-2 p-3 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors"
@@ -169,7 +166,6 @@ const JobShareDialog: React.FC<JobShareDialogProps> = ({ job, isOpen, onClose })
               <span className="text-sm font-medium text-gray-700">Facebook</span>
             </button>
 
-            {/* Twitter */}
             <button
               onClick={() => handleShare('twitter')}
               className="flex items-center justify-center gap-2 p-3 border border-gray-200 rounded-lg hover:bg-sky-50 hover:border-sky-300 transition-colors"
@@ -179,7 +175,6 @@ const JobShareDialog: React.FC<JobShareDialogProps> = ({ job, isOpen, onClose })
               <span className="text-sm font-medium text-gray-700">Twitter</span>
             </button>
 
-            {/* Email */}
             <button
               onClick={() => handleShare('email')}
               className="flex items-center justify-center gap-2 p-3 border border-gray-200 rounded-lg hover:bg-orange-50 hover:border-orange-300 transition-colors"
@@ -189,7 +184,6 @@ const JobShareDialog: React.FC<JobShareDialogProps> = ({ job, isOpen, onClose })
               <span className="text-sm font-medium text-gray-700">Email</span>
             </button>
 
-            {/* Native Share (if available) */}
             {'share' in navigator && (
               <button
                 onClick={handleNativeShare}
@@ -215,7 +209,6 @@ const JobShareDialog: React.FC<JobShareDialogProps> = ({ job, isOpen, onClose })
           </div>
         </div>
 
-        {/* Info */}
         <div className="bg-blue-50 rounded-lg p-3 text-sm text-blue-700">
           <p>
             <strong>Note:</strong> When your link is shared, others can view this job and apply directly.

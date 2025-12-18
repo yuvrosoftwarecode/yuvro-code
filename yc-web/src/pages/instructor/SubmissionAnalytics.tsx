@@ -224,6 +224,58 @@ export default function SubmissionAnalytics() {
                             </CardContent>
                         </Card>
 
+                        {/* Proctoring Snapshots */}
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Proctoring Snapshots</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                                    {/* Combine all events that might have images */}
+                                    {([...(submission.proctoring_events || []), ...(submission.general_events || [])]
+                                        .filter((e: any) => e.image_path || (e.activity_type === 'snapshot' && e.image_path))
+                                        .sort((a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+                                        .map((event: any, i: number) => {
+                                            // Construct URL
+                                            // If path starts with uploads/, prepend API base URL + /media/ (or just match serve logic)
+                                            // Our settings serve /media/ mapped to uploads/
+                                            let imgUrl = event.image_path;
+                                            if (imgUrl && imgUrl.startsWith('uploads')) {
+                                                const relativePath = imgUrl.replace('uploads', '');
+                                                // Ensure clean path join
+                                                const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8001/api';
+                                                // We need root base URL, not /api
+                                                const rootUrl = baseUrl.replace('/api', '');
+                                                imgUrl = `${rootUrl}/media${relativePath}`;
+                                            }
+
+                                            return (
+                                                <div key={`snap-${i}`} className="group relative border rounded-lg overflow-hidden cursor-pointer bg-black">
+                                                    <div className="aspect-video">
+                                                        <img
+                                                            src={imgUrl}
+                                                            alt={`Snapshot ${i + 1}`}
+                                                            className="object-cover w-full h-full opacity-90 group-hover:opacity-100 transition-opacity"
+                                                            onClick={() => window.open(imgUrl, '_blank')}
+                                                        />
+                                                    </div>
+                                                    <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs p-1 truncate">
+                                                        {format(new Date(event.timestamp), 'h:mm:ss a')}
+                                                    </div>
+                                                </div>
+                                            )
+                                        })
+                                    )}
+                                    {([...(submission.proctoring_events || []), ...(submission.general_events || [])]
+                                        .filter((e: any) => e.image_path).length === 0 && (
+                                            <div className="col-span-full text-center py-8 text-gray-500 italic">
+                                                No proctoring snapshots available.
+                                            </div>
+                                        ))}
+                                </div>
+                            </CardContent>
+                        </Card>
+
                     </div>
                 </div>
             </div>

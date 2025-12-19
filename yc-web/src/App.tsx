@@ -44,6 +44,7 @@ import RecruiterProfile from "./pages/recruiter/Profile";
 // @ts-ignore
 import AddJob from "./components/student/AddJob";
 import ApplicationTracker from "@/components/student/jobs/ApplicationTracker";
+import CodeEditorTool from './pages/common/CodeEditorTool';
 
 
 function App() {
@@ -414,6 +415,15 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={["admin", "instructor", "recruiter"]}>
                     <MockInterviewForm />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/tools/code-editor"
+                element={
+                  <ProtectedRoute allowedRoles={["admin", "instructor", "recruiter"]}>
+                    <CodeEditorTool />
                   </ProtectedRoute>
                 }
               />

@@ -572,7 +572,9 @@ async def execute_code(request: CodeExecutionRequest):
 async def execute_code_with_tests(request: CodeExecutionWithTestsRequest):
     """Execute code and run test cases"""
     try:
-        if not request.test_cases:
+        # Check if we have any test cases (either basic or custom)
+        all_test_cases = request.test_cases + (request.test_cases_custom or [])
+        if not all_test_cases:
             raise HTTPException(status_code=400, detail="No test cases provided")
 
         language = request.language

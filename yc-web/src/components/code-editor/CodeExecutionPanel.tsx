@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import CodeEditor from '../CodeEditor';
+import MonacoCodeEditor from './MonacoCodeEditor';
 import ExecutionResults from './ExecutionResults';
 import TestCaseViewer from './TestCaseViewer';
 import CustomTestCaseManager from './CustomTestCaseManager';
+import ExampleCodeGallery from './ExampleCodeGallery';
 import codeExecutorService, {
   CodeExecutionRequest,
   ExecutionResult
@@ -105,6 +106,7 @@ const CodeExecutionPanel: React.FC<CodeExecutionPanelProps> = ({
   const [result, setResult] = useState<ExecutionResult | null>(null);
   const [activeTab, setActiveTab] = useState<'editor' | 'output' | 'tests' | 'custom-tests'>('editor');
   const [customTestCases, setCustomTestCases] = useState<any[]>([]);
+  const [showExamples, setShowExamples] = useState(false);
 
   // Get test cases from the problem and combine with custom test cases
   const problemTestCases = problem?.test_cases_basic || [];
@@ -191,7 +193,7 @@ const CodeExecutionPanel: React.FC<CodeExecutionPanelProps> = ({
       };
 
       console.log('Submitting request:', request);
-      
+
       // Submit solution via Django API (saves to database)
       const executionResult = await codeExecutorService.submitSolution(request);
       console.log('Submit Solution Result:', executionResult);
@@ -200,7 +202,7 @@ const CodeExecutionPanel: React.FC<CodeExecutionPanelProps> = ({
     } catch (error: any) {
       console.error('Code submission failed:', error);
       console.error('Error details:', error.response?.data || error.message);
-      
+
       // Set an error result so something shows up
       const errorResult = {
         id: 0,
@@ -220,15 +222,15 @@ const CodeExecutionPanel: React.FC<CodeExecutionPanelProps> = ({
         plagiarism_details: null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        test_results: { 
-          passed: 0, 
-          total: 0, 
+        test_results: {
+          passed: 0,
+          total: 0,
           success: false,
           summary: 'Submission failed due to error'
         },
         plagiarism_flagged: false
       };
-      
+
       setResult(errorResult);
     } finally {
       setIsExecuting(false);
@@ -264,7 +266,7 @@ const CodeExecutionPanel: React.FC<CodeExecutionPanelProps> = ({
     <div className={`bg-white rounded-lg shadow-lg p-6 ${className}`}>
       <div className="mb-4">
         <h3 className="text-lg font-semibold mb-2">{problem?.title || modeInfo.title}</h3>
-        
+
         <div className="flex items-center gap-4 mb-4">
           <select
             value={language}
@@ -277,7 +279,7 @@ const CodeExecutionPanel: React.FC<CodeExecutionPanelProps> = ({
               </option>
             ))}
           </select>
-          
+
           <div className="flex space-x-2">
             {showRunButton && (
               <button
@@ -295,7 +297,7 @@ const CodeExecutionPanel: React.FC<CodeExecutionPanelProps> = ({
                 {isExecuting ? 'Running...' : 'Run Code'}
               </button>
             )}
-            
+
             {showSubmitButton && (
               <button
                 onClick={handleSubmit}
@@ -314,14 +316,14 @@ const CodeExecutionPanel: React.FC<CodeExecutionPanelProps> = ({
             )}
           </div>
         </div>
-        
+
         {/* Mode-specific info */}
         {modeInfo.showHint && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
             <div className="flex items-start space-x-2">
               <div className="text-blue-600 mt-0.5">💡</div>
               <div className="text-blue-800">
-                <strong>Run Code:</strong> Test with visible test cases for debugging. 
+                <strong>Run Code:</strong> Test with visible test cases for debugging.
                 {showSubmitButton && (
                   <>
                     <strong className="ml-2">Submit Solution:</strong> Final evaluation with hidden test cases - shows only execution stats and score.
@@ -366,11 +368,12 @@ const CodeExecutionPanel: React.FC<CodeExecutionPanelProps> = ({
 
       {/* Tab Content */}
       {activeTab === 'editor' && (
-        <CodeEditor
+        <MonacoCodeEditor
           value={code}
           onChange={setCode}
           language={language}
           height="500px"
+          onShowExamples={() => setShowExamples(true)}
         />
       )}
 
@@ -386,6 +389,17 @@ const CodeExecutionPanel: React.FC<CodeExecutionPanelProps> = ({
         <CustomTestCaseManager
           customTestCases={customTestCases}
           onTestCasesChange={setCustomTestCases}
+        />
+      )}
+
+      {showExamples && (
+        <ExampleCodeGallery
+          currentLanguage={language}
+          onClose={() => setShowExamples(false)}
+          onApplyCode={(exampleCode) => {
+            setCode(exampleCode);
+            setShowExamples(false);
+          }}
         />
       )}
     </div>

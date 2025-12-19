@@ -141,7 +141,7 @@ const ExampleCodeGallery: React.FC<ExampleCodeGalleryProps> = ({ onClose, curren
 
     if (isLoading) {
         return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+            <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 backdrop-blur-sm">
                 <div className="bg-white rounded-2xl p-12 flex flex-col items-center gap-4">
                     <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
                     <p className="text-gray-600 font-medium">Loading example problems...</p>
@@ -152,7 +152,7 @@ const ExampleCodeGallery: React.FC<ExampleCodeGalleryProps> = ({ onClose, curren
 
     return (
         <div
-            className="fixed inset-0 z-50 flex flex-col items-center justify-start bg-black/60 backdrop-blur-sm pt-20 pb-4 px-4 animate-in fade-in duration-200"
+            className="fixed inset-0 z-[10000] flex flex-col items-center justify-start bg-black/60 backdrop-blur-sm pt-20 pb-4 px-4 animate-in fade-in duration-200"
             onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
         >
             <div className="bg-white rounded-3xl shadow-2xl w-[98vw] max-w-[1600px] flex-1 flex flex-col overflow-hidden border border-gray-200 animate-in zoom-in-95 duration-300">
@@ -388,19 +388,7 @@ const ExampleCodeGallery: React.FC<ExampleCodeGalleryProps> = ({ onClose, curren
                                             </pre>
                                         </div>
 
-                                        {/* Applying Code Floating Bar */}
-                                        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-4 group-hover:translate-y-0">
-                                            <Button
-                                                onClick={() => {
-                                                    onApplyCode(solutionCode);
-                                                    onClose();
-                                                }}
-                                                className="bg-green-600 hover:bg-green-700 text-white font-black px-8 h-12 rounded-2xl shadow-2xl gap-2 flex items-center border-4 border-white"
-                                            >
-                                                <Zap className="h-5 w-5 fill-current" />
-                                                IMPORT SOLUTION TO EDITOR
-                                            </Button>
-                                        </div>
+                
                                     </div>
                                 </div>
                             </div>

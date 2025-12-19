@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import Navigation from '@/components/common/Navigation';
 import CourseDashboard from '@/components/student/code-practice/CourseDashboard';
 import TopicSelection from '@/components/student/code-practice/TopicSelection';
-import ProblemSolving from '@/components/student/code-practice/ProblemSolving';
+import { CodeEditorWithAI } from '@/components/code-editor';
 import ScoreAnalytics from '@/components/student/code-practice/ScoreAnalytics';
 import AIInsights from '@/components/student/code-practice/AIInsights';
 import { fetchCourseById, fetchTopicsByCourse } from '@/services/courseService';
@@ -247,7 +247,7 @@ const CodePractice = () => {
             )}
 
             {currentView === 'problem' && selectedProblem && selectedCourse && selectedTopic && (
-              <ProblemSolving
+              <CodeEditorWithAI
                 problem={selectedProblem}
                 course={selectedCourse}
                 topic={selectedTopic}

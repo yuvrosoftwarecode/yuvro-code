@@ -1,5 +1,5 @@
 import React from 'react';
-import { CodeExecutionPanel } from './code-execution';
+import { CodeExecutionPanel } from './code-editor';
 import { ExecutionResult } from '../services/codeExecutorService';
 
 interface CodeExecutorProps {

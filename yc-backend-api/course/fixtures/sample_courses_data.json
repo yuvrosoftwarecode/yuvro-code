@@ -212,7 +212,8 @@
           "difficulty": "easy",
           "marks": 2,
           "categories": [
-            "learn"
+            "learn",
+            "skill_test"
           ],
           "mcq_options": [
             {
@@ -243,7 +244,8 @@
           "difficulty": "easy",
           "marks": 2,
           "categories": [
-            "learn"
+            "learn",
+            "skill_test"
           ],
           "mcq_options": [
             {
@@ -275,7 +277,8 @@
           "marks": 3,
           "categories": [
             "learn",
-            "practice"
+            "practice",
+            "skill_test"
           ],
           "mcq_options": [
             {
@@ -606,7 +609,8 @@
           "categories": [
             "practice",
             "contest",
-            "mock_interview"
+            "mock_interview",
+            "skill_test"
           ],
           "test_cases_basic": [
             {

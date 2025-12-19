@@ -1,0 +1,55 @@
+{
+  "contests": [
+    {
+      "title": "Weekly Coding Challenge #1",
+      "description": "Weekly programming contest featuring algorithmic problems of varying difficulty levels",
+      "instructions": "Solve as many problems as you can within the time limit. Problems are arranged in increasing order of difficulty.",
+      "difficulty": "medium",
+      "duration": 180,
+      "total_marks": 300,
+      "passing_marks": 150,
+      "organizer": "YuvroCode Programming Club",
+      "type": "college",
+      "prize": "Certificate and Coding Swag",
+      "enable_proctoring": false,
+      "course_short_code": "DS101",
+      "publish_status": "active",
+      "start_days_from_now": 3,
+      "questions_random_config": {"mcq_single": 3, "mcq_multiple": 2, "coding": 3, "descriptive": 2}
+    },
+    {
+      "title": "Tech Giants Coding Contest",
+      "description": "Company-sponsored coding contest simulating technical interview rounds",
+      "instructions": "This contest simulates real technical interviews. Focus on clean code, optimal solutions, and proper documentation.",
+      "difficulty": "hard",
+      "duration": 240,
+      "total_marks": 500,
+      "passing_marks": 250,
+      "organizer": "Tech Innovations Inc",
+      "type": "company",
+      "prize": "Internship Opportunities and Cash Prizes",
+      "enable_proctoring": true,
+      "course_short_code": "DS101",
+      "publish_status": "active",
+      "start_days_from_now": 7,
+      "questions_random_config": {"mcq_single": 3, "mcq_multiple": 2, "coding": 3, "descriptive": 2}
+    },
+    {
+      "title": "Python Programming Marathon",
+      "description": "Extended programming contest focused on Python development and problem-solving",
+      "instructions": "Use Python to solve complex programming challenges. Libraries like NumPy and Pandas are allowed for data problems.",
+      "difficulty": "medium",
+      "duration": 300,
+      "total_marks": 400,
+      "passing_marks": 200,
+      "organizer": "Python Developers Community",
+      "type": "college",
+      "prize": "Python Learning Resources and Certificates",
+      "enable_proctoring": false,
+      "course_short_code": "PY101",
+      "publish_status": "active",
+      "start_days_from_now": 10,
+      "questions_random_config": {"mcq_single": 3, "mcq_multiple": 2, "coding": 3, "descriptive": 2}
+    }
+  ]
+}

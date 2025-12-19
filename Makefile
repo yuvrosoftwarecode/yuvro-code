@@ -96,7 +96,6 @@ logs:
 		docker compose logs -f $(SERVICE); \
 	fi
 
-# Setup and cleanup
 setup:
 	@echo "Setting up YC Full-Stack Application..."
 	@echo "Checking dependencies..."
@@ -105,19 +104,8 @@ setup:
 	@echo "Creating environment files..."
 	@cp yc-backend-api/.env.example yc-backend-api/.env 2>/dev/null || echo "Backend .env already exists"
 	@cp yc-web/.env.example yc-web/.env 2>/dev/null || echo "Frontend .env already exists"
-	docker compose exec backend python manage.py setup_local_testing
-	@echo "Setup complete! Run 'make dev' to start the application."
-
-setup-testing:
-	@echo "Setting up test data for local development..."
-	docker compose exec backend python manage.py setup_local_testing
-	docker compose exec backend python manage.py load_sample_courses --clear
-
-
-setup-testing-fresh:
-	@echo "Setting up fresh test data (clearing existing data)..."
 	docker compose exec backend python manage.py setup_local_testing --clear
-	docker compose exec backend python manage.py load_sample_courses --clear
+	@echo "Setup complete! Run 'make dev' to start the application."
 
 
 clean:

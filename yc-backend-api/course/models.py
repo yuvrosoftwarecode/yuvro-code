@@ -426,7 +426,7 @@ class Question(models.Model):
             for category in self.categories:
                 if category not in valid_categories:
                     raise ValidationError(f"Invalid category: {category}")
-        
+
         # Validate MCQ fields
         if self.type in ["mcq_single", "mcq_multiple"]:
             if not self.mcq_options or not isinstance(self.mcq_options, list) or len(self.mcq_options) < 2:

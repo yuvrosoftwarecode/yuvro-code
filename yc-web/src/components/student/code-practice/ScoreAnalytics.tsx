@@ -30,16 +30,16 @@ const ScoreAnalytics = ({ onBack, onViewInsights }: ScoreAnalyticsProps) => {
     const loadAnalytics = async () => {
       try {
         const submissions = await codeExecutorService.getSubmissions();
-        
+
         // Calculate statistics
         const totalSubmissions = submissions.length;
         const successfulSubmissions = submissions.filter(s => s.status === 'completed').length;
         const totalScore = submissions.reduce((sum, s) => sum + (s.test_cases_passed * 10), 0); // Assuming 10 points per test case
         const averageScore = totalSubmissions > 0 ? totalScore / totalSubmissions : 0;
-        
+
         const executionTimes = submissions.filter(s => s.execution_time > 0).map(s => s.execution_time);
-        const averageExecutionTime = executionTimes.length > 0 
-          ? executionTimes.reduce((sum, time) => sum + time, 0) / executionTimes.length 
+        const averageExecutionTime = executionTimes.length > 0
+          ? executionTimes.reduce((sum, time) => sum + time, 0) / executionTimes.length
           : 0;
 
         // Language distribution
@@ -108,7 +108,7 @@ const ScoreAnalytics = ({ onBack, onViewInsights }: ScoreAnalyticsProps) => {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-6 max-w-7xl">
+      <div className="container mx-auto px-[1px] py-6 max-w-7xl">
         <div className="animate-pulse space-y-6">
           <div className="h-6 bg-gray-200 rounded w-1/4"></div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -128,7 +128,7 @@ const ScoreAnalytics = ({ onBack, onViewInsights }: ScoreAnalyticsProps) => {
 
   if (!stats) {
     return (
-      <div className="container mx-auto px-4 py-6 max-w-7xl">
+      <div className="container mx-auto px-[1px] py-6 max-w-7xl">
         <div className="text-center py-12">
           <TrendingUp className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-foreground mb-2">No Analytics Data</h3>
@@ -141,7 +141,7 @@ const ScoreAnalytics = ({ onBack, onViewInsights }: ScoreAnalyticsProps) => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-3 max-w-9xl">
+    <div className="container mx-auto px-[1px] py-3 max-w-9xl">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 mb-3 text-sm">
         <div className="flex items-center gap-2 py-1 text-sm text-muted-foreground">
@@ -183,7 +183,7 @@ const ScoreAnalytics = ({ onBack, onViewInsights }: ScoreAnalyticsProps) => {
               <div>
                 <p className="text-sm text-gray-600">Success Rate</p>
                 <p className="text-3xl font-bold text-gray-900">
-                  {stats.totalSubmissions > 0 
+                  {stats.totalSubmissions > 0
                     ? Math.round((stats.successfulSubmissions / stats.totalSubmissions) * 100)
                     : 0}%
                 </p>
@@ -240,7 +240,7 @@ const ScoreAnalytics = ({ onBack, onViewInsights }: ScoreAnalyticsProps) => {
                       <span className="text-muted-foreground">{count} ({percentage.toFixed(1)}%)</span>
                     </div>
                     <div className="w-full bg-muted rounded-full h-2">
-                      <div 
+                      <div
                         className="bg-gradient-to-r from-blue-500 to-teal-500 h-2 rounded-full transition-all duration-300"
                         style={{ width: `${percentage}%` }}
                       ></div>
@@ -302,7 +302,7 @@ const ScoreAnalytics = ({ onBack, onViewInsights }: ScoreAnalyticsProps) => {
                   </div>
                 </div>
               ))}
-              
+
               {stats.recentSubmissions.length === 0 && (
                 <div className="text-center py-8 text-muted-foreground">
                   <Target className="h-8 w-8 mx-auto mb-2" />

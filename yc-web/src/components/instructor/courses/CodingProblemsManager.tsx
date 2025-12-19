@@ -1,4 +1,3 @@
-// src/components/admin/CodingProblemsManager.tsx
 import React, { useEffect, useState } from "react";
 import {
   Card,
@@ -26,7 +25,9 @@ type CodingProblem = {
   title: string;
   description: string;
   input: string;
-  test_cases: any; // server returns JSON
+  test_cases: any;
+  test_cases_basic?: any[];
+  test_cases_advanced?: any[];
   created_at?: string;
 };
 
@@ -114,8 +115,6 @@ const CodingProblemsManager: React.FC<Props> = ({ subtopicId }) => {
       return;
     }
 
-    // parse test cases JSON
-    // Parse basic test cases
     let parsedBasic: any = [];
     try {
       parsedBasic = JSON.parse(basicTestCasesText);
@@ -269,7 +268,7 @@ const CodingProblemsManager: React.FC<Props> = ({ subtopicId }) => {
                 className="w-full border rounded px-3 py-2 min-h-[120px]"
                 value={basicTestCasesText}
                 onChange={(e) => setBasicTestCasesText(e.target.value)}
-                placeholder='[{"input_data":"1 2", "expected_output":"3"}]'
+                placeholder='[{"input":"1 2", "expected_output":"3"}]'
               />
               <p className="text-xs text-muted-foreground mt-1">
                 Visible to students. Must be a JSON array.
@@ -282,7 +281,7 @@ const CodingProblemsManager: React.FC<Props> = ({ subtopicId }) => {
                 className="w-full border rounded px-3 py-2 min-h-[120px]"
                 value={advancedTestCasesText}
                 onChange={(e) => setAdvancedTestCasesText(e.target.value)}
-                placeholder='[{"input_data":"1000 2000","expected_output":"3000"}]'
+                placeholder='[{"input":"1000 2000","expected_output":"3000"}]'
               />
               <p className="text-xs text-muted-foreground mt-1">
                 Used for evaluation during submissions.

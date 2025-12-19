@@ -1,27 +1,19 @@
 import { useEffect, useState, useRef } from "react";
 import { fetchQuestions, Question } from "@/services/questionService";
-import { submitCoding } from "@/services/courseService";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Code, Play, CheckCircle, ArrowLeft, Terminal, Sparkles, X } from "lucide-react";
-import CodeEditor from "../CodeEditor";
-import { toast } from "sonner";
-import AIChatContainer from '@/components/student/LearnCertify/AIChatWidget/AIChatContainer';
+import { Code, CheckCircle, Terminal } from "lucide-react";
+import { CodeEditorWithAI, CodeEditorWithAIHandle } from "@/components/code-editor";
 
 interface StudentCodingEmbedProps {
   subtopicId: string;
   onComplete?: (status: boolean) => void;
 }
 
-const PaneWrapper = ({ children, className = "", style }: { children: React.ReactNode; className?: string; style?: React.CSSProperties }) => (
-  <div
-    className={`w-full h-full bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100 ${className}`}
-    style={style}
-  >
-    {children}
-  </div>
-);
+// Import types from CodePractice for compatibility
+import type { Course, Topic, CodingProblem } from '@/pages/student/CodePractice';
+
+// Layout components removed as CodeEditorWithAI handles layout internally
 
 const StudentCodingEmbed = ({ subtopicId, onComplete }: StudentCodingEmbedProps) => {
   const [isCompleted, setIsCompleted] = useState(false);
@@ -32,28 +24,34 @@ const StudentCodingEmbed = ({ subtopicId, onComplete }: StudentCodingEmbedProps)
   const [viewMode, setViewMode] = useState<'list' | 'workspace'>('list');
   const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);
 
-  // Resize State
-  const [leftWidth, setLeftWidth] = useState(50); // Percentage
-  const [isResizing, setIsResizing] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  // AI Chat State
-  const [showAiChat, setShowAiChat] = useState(false);
-  const [chatSessionId, setChatSessionId] = useState("");
-
-  // Editor State
-  const [code, setCode] = useState("");
-  const [language, setLanguage] = useState("python");
+  // CodeEditorWithAI ref
+  const codeEditorRef = useRef<CodeEditorWithAIHandle>(null);
 
   // Track solved questions IDs
   const [solvedMap, setSolvedMap] = useState<Record<string, boolean>>({});
+
+  // Mock course and topic data for CodeEditorWithAI
+  const mockCourse: Course = {
+    id: subtopicId,
+    name: "Coding Practice",
+    icon: "💻",
+    progress: 0,
+    totalProblems: questions.length,
+    solvedProblems: Object.keys(solvedMap).length,
+    category: "practice"
+  };
+
+  const mockTopic: Topic = {
+    id: subtopicId,
+    name: "Coding Problems",
+    problemCount: questions.length,
+    order_index: 1
+  };
 
   useEffect(() => {
     setSolvedMap({});
     setViewMode('list');
     setSelectedQuestion(null);
-    setShowAiChat(false);
-    setChatSessionId(`chat-${subtopicId}-${crypto.randomUUID()}`);
   }, [subtopicId]);
 
   useEffect(() => {
@@ -72,26 +70,7 @@ const StudentCodingEmbed = ({ subtopicId, onComplete }: StudentCodingEmbedProps)
     }
   }, [solvedMap, questions, loading, onComplete]);
 
-  // Resize Handlers
-  const startResizing = (e: React.MouseEvent) => {
-    setIsResizing(true);
-    e.preventDefault();
-  };
-
-  const stopResizing = () => {
-    setIsResizing(false);
-  };
-
-  const handleResize = (e: React.MouseEvent) => {
-    if (!isResizing) return;
-
-    const container = e.currentTarget.getBoundingClientRect();
-    const newWidth = ((e.clientX - container.left) / container.width) * 100;
-
-    if (newWidth > 20 && newWidth < 80) { // Limits
-      setLeftWidth(newWidth);
-    }
-  };
+  // Layout and interaction handlers
 
   const loadCodingQuestions = async () => {
     setLoading(true);
@@ -112,8 +91,6 @@ const StudentCodingEmbed = ({ subtopicId, onComplete }: StudentCodingEmbedProps)
 
   const handleSelectQuestion = (q: Question) => {
     setSelectedQuestion(q);
-    // Determine starter code based on language (could be dynamic later)
-    setCode(`# Write your solution for: ${q.title}\n\ndef solution():\n    pass`);
     setViewMode('workspace');
   };
 
@@ -122,44 +99,23 @@ const StudentCodingEmbed = ({ subtopicId, onComplete }: StudentCodingEmbedProps)
     setSelectedQuestion(null);
   };
 
-  const handleSimulateSubmit = () => {
-    if (!selectedQuestion) return;
+  // Note: CodeEditorWithAI handles submissions internally
+  // We could add a callback here if needed to track completion status
 
-    // Simulate success for now (Real execution would usually happen via an API)
-    const newSolved = { ...solvedMap, [selectedQuestion.id]: true };
-    setSolvedMap(newSolved);
-    toast.success("Solution Submitted Successfully!");
-
-    const allSolved = questions.every(q => q.id === selectedQuestion.id ? true : newSolved[q.id]);
-
-    submitCoding(subtopicId, newSolved)
-      .then(() => {
-        if (allSolved) {
-          setIsCompleted(true);
-          if (onComplete) onComplete(true);
-        } else {
-          if (onComplete) onComplete(false); // Update progress even if partial
-        }
-      })
-      .catch(err => {
-        console.error("Backend submit failed", err);
-        toast.error("Failed to save progress");
-      });
+  // Convert Question to CodingProblem format
+  const convertToCodingProblem = (question: Question): CodingProblem => {
+    return {
+      id: question.id,
+      title: question.title || 'Coding Problem',
+      difficulty: (question.difficulty as 'Easy' | 'Medium' | 'Hard') || 'Medium',
+      score: 100,
+      description: question.content || '',
+      test_cases_basic: question.test_cases_basic || [],
+      test_cases_advanced: []
+    };
   };
 
-  const getProblemContext = () => {
-    if (!selectedQuestion) return "";
-    return `
-Problem: ${selectedQuestion.title}
-Difficulty: ${selectedQuestion.difficulty}
-
-Description:
-${selectedQuestion.content}
-
-Current Code (${language}):
-${code}
-    `.trim();
-  };
+  // Problem context removed as CodeExecutionPanel handles this internally
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -191,8 +147,8 @@ ${code}
   // ===================== LIST VIEW =====================
   if (viewMode === 'list') {
     return (
-      <div className="space-y-6 animate-fade-in">
-        <div className="flex items-center justify-between mb-4">
+      <div className="space-y-6 animate-fade-in px-8 py-6">
+        <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
             <Code className="h-5 w-5 text-indigo-600" />
             <h3 className="text-lg font-semibold text-gray-900">
@@ -204,7 +160,7 @@ ${code}
           </Badge>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {questions.map((question, index) => (
             <Card
               key={question.id}
@@ -239,153 +195,20 @@ ${code}
   }
 
   // ===================== WORKSPACE VIEW =====================
-  const gapSize = 24; // 1.5rem gap
-  const halfGap = gapSize / 2;
-
-  // Calculate widths accounting for gap
-  const styles = {
-    left: { width: `calc(${leftWidth}% - ${halfGap}px)` },
-    right: { width: `calc(${100 - leftWidth}% - ${halfGap}px)` }
-  };
 
   return (
-    <div className="flex flex-col h-full relative select-none bg-gray-50/50">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2 bg-white border-b border-gray-200 shadow-sm z-10">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={handleBackToList} className="gap-1 pl-0 sm:pl-2 text-gray-600 hover:text-gray-900">
-            <ArrowLeft className="h-4 w-4" /> Back
-          </Button>
-          <div className="h-5 w-px bg-gray-300" />
-          <h3 className="font-semibold text-base text-gray-900 line-clamp-1">
-            {selectedQuestion?.title}
-          </h3>
-          <Badge className={getDifficultyColor(selectedQuestion?.difficulty || 'easy')}>
-            {selectedQuestion?.difficulty}
-          </Badge>
-        </div>
-
-        <div className="flex gap-2">
-          <Button
-            size="sm"
-            className="bg-green-600 hover:bg-green-700 text-white"
-            onClick={handleSimulateSubmit}
-          >
-            {solvedMap[selectedQuestion!.id] ? "Solved ✓" : "Submit"}
-          </Button>
-        </div>
-      </div>
-
-      {/* Split Pane Content */}
-      <div
-        ref={containerRef}
-        className="flex-1 flex overflow-hidden p-4 gap-6 box-border relative"
-        onMouseMove={handleResize}
-        onMouseUp={stopResizing}
-        onMouseLeave={stopResizing}
-      >
-
-        {/* Left: Problem Description */}
-        <PaneWrapper className="flex flex-col" style={styles.left}>
-          {/* Header with Icon and Toggle */}
-          <div className="bg-gray-50/80 px-4 py-3 border-b border-gray-100 flex items-center justify-between backdrop-blur-sm">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-white rounded shadow-sm border border-gray-100">
-                <Code className="w-4 h-4 text-blue-600" />
-              </div>
-              <span className="font-semibold text-sm text-gray-700">Problem Description</span>
-            </div>
-
-            <Button
-              onClick={() => setShowAiChat(!showAiChat)}
-              size="sm"
-              className={`h-7 text-xs border ${showAiChat ? 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'} transition-all`}
-              variant="outline"
-            >
-              {showAiChat ? <X className="h-3 w-3 mr-1" /> : <Sparkles className="h-3 w-3 mr-1" />}
-              {showAiChat ? 'Close AI' : 'AI Help'}
-            </Button>
-          </div>
-
-          {showAiChat ? (
-            <AIChatContainer
-              className="w-full h-full border-none shadow-none rounded-none"
-              contextGetter={getProblemContext}
-              welcomeMessage={`I can help you understand "${selectedQuestion?.title || 'this problem'}". Ask me anything!`}
-              persistenceKey={chatSessionId}
-              chatTitle={selectedQuestion?.title || "Coding Help"}
-              onNewChat={() => setChatSessionId(`chat-${selectedQuestion?.id}-${crypto.randomUUID()}`)}
-            />
-          ) : (
-            <div className="flex-1 overflow-y-auto p-5 space-y-8 animate-fade-in">
-              <div className="prose prose-sm prose-slate max-w-none">
-                <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-gray-600">
-                  {selectedQuestion?.content}
-                </pre>
-              </div>
-
-              {/* Test Cases */}
-              {selectedQuestion?.test_cases_basic && selectedQuestion.test_cases_basic.length > 0 && (
-                <div>
-                  <h4 className="font-semibold text-sm mb-4 text-gray-900 flex items-center gap-2">
-                    <Terminal className="w-4 h-4 text-gray-500" />
-                    Sample Test Cases
-                  </h4>
-                  <div className="space-y-4">
-                    {selectedQuestion.test_cases_basic.map((testCase, index) => (
-                      <div key={index} className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs font-mono">
-                          <div>
-                            <span className="font-semibold text-slate-500 block mb-2 uppercase tracking-wider text-[10px]">Input</span>
-                            <div className="bg-white p-3 rounded-lg border border-slate-200 text-slate-700 overflow-x-auto shadow-sm">
-                              {testCase.input}
-                            </div>
-                          </div>
-                          <div>
-                            <span className="font-semibold text-slate-500 block mb-2 uppercase tracking-wider text-[10px]">Expected Output</span>
-                            <div className="bg-white p-3 rounded-lg border border-slate-200 text-slate-700 overflow-x-auto shadow-sm">
-                              {testCase.expected_output}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </PaneWrapper>
-
-        {/* Resizer Handle */}
-        <div
-          className="w-4 flex items-center justify-center cursor-col-resize hover:bg-indigo-100/50 active:bg-indigo-100 rounded-full group z-10 -ml-6 -mr-6 relative transition-colors"
-          onMouseDown={startResizing}
-        >
-          <div className="w-1 h-8 bg-gray-300 rounded-full group-hover:bg-indigo-500 transition-colors shadow-sm" />
-        </div>
-
-        {/* Right: Code Editor */}
-        <PaneWrapper className="flex flex-col" style={styles.right}>
-          <div className="bg-gray-50/80 px-4 py-3 border-b border-gray-100 flex items-center gap-2 backdrop-blur-sm">
-            <div className="p-1.5 bg-white rounded shadow-sm border border-gray-100">
-              <Terminal className="w-4 h-4 text-indigo-600" />
-            </div>
-            <span className="font-semibold text-sm text-gray-700">Solution</span>
-          </div>
-
-          <div className="flex-1 overflow-hidden relative">
-            <CodeEditor
-              value={code}
-              onChange={setCode}
-              language={language}
-              onLanguageChange={setLanguage}
-              height="100%"
-            />
-          </div>
-        </PaneWrapper>
-
-      </div>
+    <div className="h-full w-full relative">
+      {/* CodeEditorWithAI - Let it handle its own layout and fullscreen */}
+      <CodeEditorWithAI
+        ref={codeEditorRef}
+        problem={convertToCodingProblem(selectedQuestion!)}
+        course={mockCourse}
+        topic={mockTopic}
+        onBack={handleBackToList}
+        initialFullscreen={false}
+        initialEditorOpen={true}
+        isEmbedded={false}
+      />
     </div>
   );
 };

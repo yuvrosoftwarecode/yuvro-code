@@ -41,11 +41,11 @@ app.add_middleware(
 class CodeExecutionRequest(BaseModel):
     code: str
     language: str
-    input_data: str = ""
+    input: str = ""
     timeout: int = 10
 
 class TestCase(BaseModel):
-    input_data: str
+    input: str
     expected_output: str
     weight: int = 1
 
@@ -53,6 +53,7 @@ class CodeExecutionWithTestsRequest(BaseModel):
     code: str
     language: str
     test_cases: List[TestCase]
+    test_cases_custom: Optional[List[TestCase]] = []
     timeout: int = 10
 
 class ExecutionResult(BaseModel):
@@ -65,8 +66,9 @@ class ExecutionResult(BaseModel):
 
 class TestResult(BaseModel):
     passed: bool
-    expected: str
-    actual: str
+    input: str
+    expected_output: str
+    actual_output: str
     error: str
     execution_time: float
 
@@ -91,35 +93,247 @@ LANGUAGE_CONFIGS = {
     'python': {
         'extension': '.py',
         'command': ['python3'],
-        'timeout': 10
+        'timeout': 10,
+        'template': """class Solution:
+    def solve(self, *args):
+        # Competitive Programming Template - Python
+        # Each line of your test case input is passed as an argument in *args.
+        # Arguments are automatically parsed as JSON/Numbers if possible.
+
+        # Example: If your input lines are: "Hello", 42, [1, 2, 3]
+        # You can access them like this:
+        # input_str = args[0] if len(args) > 0 else ""
+        # num = args[1] if len(args) > 1 else 0
+        # list_data = args[2] if len(args) > 2 else []
+
+        # Start your logic below:
+        return None
+"""
     },
     'javascript': {
         'extension': '.js',
         'command': ['node'],
-        'timeout': 10
+        'timeout': 10,
+        'template': """"use strict";
+
+const fs = require('fs');
+
+/**
+ * Competitive Programming Template - Node.js
+ * Reads stdin and parses lines. Often inputs are JSON strings.
+ */
+function solve() {
+    const lines = fs.readFileSync(0, 'utf8').split('\\n').filter(line => line.trim());
+    if (lines.length === 0) return;
+
+    // Example: parse first line as a JSON array
+    try {
+        const data = JSON.parse(lines[0]);
+        // Your logic here
+    } catch (e) {
+        // Fallback for non-JSON input
+        const data = lines[0];
+    }
+}
+
+solve();
+"""
     },
     'java': {
         'extension': '.java',
         'compile_command': ['javac', '-cp', '.'],
         'run_command': ['java', '-cp', '.'],
-        'timeout': 15
+        'timeout': 15,
+        'template': """import java.util.*;
+
+/**
+ * Competitive Programming Template - Java
+ */
+public class Solution {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        
+        // For array inputs, the platform provides [count] followed by [elements]
+        if (sc.hasNextInt()) {
+            int n = sc.nextInt();
+            int[] arr = new int[n];
+            for(int i = 0; i < n; i++) {
+                arr[i] = sc.nextInt();
+            }
+            // Your logic here
+        }
+    }
+}
+"""
     },
     'cpp': {
         'extension': '.cpp',
         'compile_command': ['g++', '-o'],
-        'timeout': 15
+        'timeout': 15,
+        'template': """#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+/**
+ * Competitive Programming Template - C++
+ */
+int main() {
+    // Faster I/O
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int n;
+    // For array inputs, the platform provides [count] followed by [elements]
+    if (cin >> n) {
+        vector<int> arr(n);
+        for(int i = 0; i < n; i++) {
+            cin >> arr[i];
+        }
+        // Your logic here
+    }
+
+    return 0;
+}
+"""
     },
     'c': {
         'extension': '.c',
         'compile_command': ['gcc', '-o'],
-        'timeout': 15
+        'timeout': 15,
+        'template': """#include <stdio.h>
+#include <stdlib.h>
+
+/**
+ * Competitive Programming Template - C
+ */
+int main() {
+    int n;
+    // For array inputs, the platform provides [count] followed by [elements]
+    if (scanf("%d", &n) == 1) {
+        int* arr = (int*)malloc(n * sizeof(int));
+        for(int i = 0; i < n; i++) {
+            scanf("%d", &arr[i]);
+        }
+        
+        // Your logic here
+        
+        free(arr);
+    }
+    return 0;
+}
+"""
     }
 }
+
+PYTHON_DRIVER_CODE = """
+import sys
+import json
+import ast
+
+def _driver_execution():
+    # check if Solution class exists
+    if 'Solution' not in globals():
+        return
+
+    try:
+        sol = globals()['Solution']()
+        # Find method
+        methods = [m for m in dir(sol) if callable(getattr(sol, m)) and not m.startswith('_')]
+        if not methods:
+            return
+        
+        # Use first available method
+        method = getattr(sol, methods[0])
+        
+        # Read input
+        input_str = sys.stdin.read().strip()
+        if not input_str:
+            return
+            
+        # Parse args
+        args = []
+        # Support multi-line inputs as separate arguments
+        for line in input_str.split('\\n'):
+            line = line.strip()
+            if not line: continue
+            try:
+                arg = json.loads(line)
+            except:
+                try:
+                    arg = ast.literal_eval(line)
+                except:
+                    arg = line
+            args.append(arg)
+            
+        # Call method
+        result = method(*args)
+        
+        # Print result
+        if result is not None:
+            # formatted output
+            if isinstance(result, (list, dict, tuple)):
+                print(json.dumps(result, separators=(',', ':')))
+            elif isinstance(result, bool):
+                print('true' if result else 'false')
+            else:
+                print(result)
+                
+    except Exception as e:
+        print(f"Runtime Error: {str(e)}", file=sys.stderr)
+
+if __name__ == '__main__':
+    _driver_execution()
+"""
 
 class CodeExecutorService:
     @staticmethod
     async def execute_code(code: str, language: str, input_data: str = "", timeout: int = 10) -> Dict[str, Any]:
         """Execute code and return results"""
+        if language in ['cpp', 'c', 'java']:
+            try:
+                processed_lines = []
+                for line in input_data.split('\n'):
+                    line = line.strip()
+                    if not line: continue
+                    try:
+                        data = json.loads(line)
+                        if isinstance(data, list):
+                            processed_lines.append(str(len(data)))
+                            processed_lines.append(" ".join(map(str, data)))
+                        else:
+                            processed_lines.append(str(data))
+                    except:
+                        # Fallback for Malformed or string-quoted arrays like "[1, 2, 3]"
+                        if line.startswith('[') and line.endswith(']'):
+                            # remove brackets and commas
+                            content = line[1:-1].replace(',', ' ')
+                            parts = content.split()
+                            if parts:
+                                processed_lines.append(str(len(parts)))
+                                processed_lines.append(" ".join(parts))
+                            else:
+                                processed_lines.append(line)
+                        else:
+                            processed_lines.append(line)
+                if processed_lines:
+                    input_data = "\n".join(processed_lines)
+            except:
+                pass
+
+        if language not in LANGUAGE_CONFIGS:
+            return {
+                'success': False,
+                'error': f'Unsupported language: {language}',
+                'output': '',
+                'execution_time': 0,
+                'memory_usage': 0,
+                'status': 'error'
+            }
+
+        config = LANGUAGE_CONFIGS[language]
+
         with tracer.start_as_current_span(
             f"execute_code_{language}",
             attributes={
@@ -130,191 +344,177 @@ class CodeExecutorService:
             }
         ) as span:
             start_time = time.time()
-            
-            if language not in LANGUAGE_CONFIGS:
-                result = {
-                    'success': False,
-                    'error': f'Unsupported language: {language}',
-                    'output': '',
-                    'execution_time': 0,
-                    'memory_usage': 0,
-                    'status': 'error'
-                }
-                record_code_execution(language, 'error', 0)
-                return result
-
-        config = LANGUAGE_CONFIGS[language]
-        
-        with tempfile.TemporaryDirectory() as temp_dir:
-            try:
-                # Create source file
-                if language == 'java':
-                    filename = f"Solution{config['extension']}"
-                else:
-                    filename = f"solution{config['extension']}"
-                    
-                filepath = os.path.join(temp_dir, filename)
-                
-                with open(filepath, 'w') as f:
-                    f.write(code)
-
-                # Prepare and execute command
-                start_time = time.time()
-                
-                if language == 'java':
-                    # Compile Java
-                    compile_cmd = config['compile_command'] + [filename]
-                    compile_process = await asyncio.create_subprocess_exec(
-                        *compile_cmd,
-                        cwd=temp_dir,
-                        stdout=asyncio.subprocess.PIPE,
-                        stderr=asyncio.subprocess.PIPE
-                    )
-                    
-                    compile_stdout, compile_stderr = await asyncio.wait_for(
-                        compile_process.communicate(), timeout=timeout
-                    )
-                    
-                    if compile_process.returncode != 0:
-                        return {
-                            'success': False,
-                            'error': compile_stderr.decode(),
-                            'output': '',
-                            'execution_time': time.time() - start_time,
-                            'memory_usage': 0,
-                            'status': 'compilation_error'
-                        }
-                    
-                    # Run Java
-                    run_cmd = config['run_command'] + ['Solution']
-                    process = await asyncio.create_subprocess_exec(
-                        *run_cmd,
-                        cwd=temp_dir,
-                        stdin=asyncio.subprocess.PIPE,
-                        stdout=asyncio.subprocess.PIPE,
-                        stderr=asyncio.subprocess.PIPE
-                    )
-                    
-                elif language in ['cpp', 'c']:
-                    # Compile C/C++
-                    output_file = os.path.join(temp_dir, 'solution')
-                    compile_cmd = config['compile_command'] + [output_file, filename]
-                    compile_process = await asyncio.create_subprocess_exec(
-                        *compile_cmd,
-                        cwd=temp_dir,
-                        stdout=asyncio.subprocess.PIPE,
-                        stderr=asyncio.subprocess.PIPE
-                    )
-                    
-                    compile_stdout, compile_stderr = await asyncio.wait_for(
-                        compile_process.communicate(), timeout=timeout
-                    )
-                    
-                    if compile_process.returncode != 0:
-                        return {
-                            'success': False,
-                            'error': compile_stderr.decode(),
-                            'output': '',
-                            'execution_time': time.time() - start_time,
-                            'memory_usage': 0,
-                            'status': 'compilation_error'
-                        }
-                    
-                    # Run compiled binary
-                    process = await asyncio.create_subprocess_exec(
-                        output_file,
-                        cwd=temp_dir,
-                        stdin=asyncio.subprocess.PIPE,
-                        stdout=asyncio.subprocess.PIPE,
-                        stderr=asyncio.subprocess.PIPE
-                    )
-                    
-                else:
-                    # Direct execution for Python/JavaScript
-                    cmd = config['command'] + [filename]
-                    process = await asyncio.create_subprocess_exec(
-                        *cmd,
-                        cwd=temp_dir,
-                        stdin=asyncio.subprocess.PIPE,
-                        stdout=asyncio.subprocess.PIPE,
-                        stderr=asyncio.subprocess.PIPE
-                    )
-
-                # Execute with timeout
+            with tempfile.TemporaryDirectory() as temp_dir:
                 try:
-                    stdout, stderr = await asyncio.wait_for(
-                        process.communicate(input=input_data.encode()),
-                        timeout=timeout
-                    )
-                    
-                    execution_time = time.time() - start_time
-                    
-                    # Get memory usage (approximate)
-                    memory_usage = 0
-                    try:
-                        if process.pid:
-                            ps_process = psutil.Process(process.pid)
-                            memory_info = ps_process.memory_info()
-                            memory_usage = memory_info.rss / 1024 / 1024  # MB
-                    except:
-                        pass
-                    
-                    if process.returncode == 0:
-                        result = {
-                            'success': True,
-                            'output': stdout.decode().strip(),
-                            'error': stderr.decode().strip(),
-                            'execution_time': execution_time,
-                            'memory_usage': memory_usage,
-                            'status': 'completed'
-                        }
-                        span.set_attribute("execution.success", True)
-                        span.set_attribute("execution.time", execution_time)
-                        span.set_attribute("execution.memory_mb", memory_usage)
-                        record_code_execution(language, 'success', execution_time, int(memory_usage * 1024 * 1024))
-                        return result
+                    # Create source file
+                    if language == 'java':
+                        filename = f"Solution{config['extension']}"
                     else:
-                        result = {
-                            'success': False,
-                            'output': stdout.decode().strip(),
-                            'error': stderr.decode().strip(),
-                            'execution_time': execution_time,
-                            'memory_usage': memory_usage,
-                            'status': 'runtime_error'
-                        }
-                        span.set_attribute("execution.success", False)
-                        span.set_attribute("execution.error", stderr.decode().strip())
-                        record_code_execution(language, 'runtime_error', execution_time)
+                        filename = f"solution{config['extension']}"
+                        
+                    filepath = os.path.join(temp_dir, filename)
+                    
+                    with open(filepath, 'w') as f:
+                        f.write(code)
+                        if language == 'python':
+                            f.write(PYTHON_DRIVER_CODE)
+
+                    # Prepare and execute command
+                    start_time = time.time()
+                    
+                    process = None
+                    if language == 'java':
+                        # Compile Java
+                        compile_cmd = config['compile_command'] + [filename]
+                        compile_process = await asyncio.create_subprocess_exec(
+                            *compile_cmd,
+                            cwd=temp_dir,
+                            stdout=asyncio.subprocess.PIPE,
+                            stderr=asyncio.subprocess.PIPE
+                        )
+                        
+                        compile_stdout, compile_stderr = await asyncio.wait_for(
+                            compile_process.communicate(), timeout=timeout
+                        )
+                        
+                        if compile_process.returncode != 0:
+                            res = {
+                                'success': False,
+                                'error': compile_stderr.decode(),
+                                'output': '',
+                                'execution_time': time.time() - start_time,
+                                'memory_usage': 0,
+                                'status': 'compilation_error'
+                            }
+                            record_code_execution(language, 'compilation_error', res['execution_time'])
+                            return res
+                        
+                        # Run Java
+                        run_cmd = config['run_command'] + ['Solution']
+                        process = await asyncio.create_subprocess_exec(
+                            *run_cmd,
+                            cwd=temp_dir,
+                            stdin=asyncio.subprocess.PIPE,
+                            stdout=asyncio.subprocess.PIPE,
+                            stderr=asyncio.subprocess.PIPE
+                        )
+                        
+                    elif language in ['cpp', 'c']:
+                        # Compile C/C++
+                        output_file = os.path.join(temp_dir, 'solution')
+                        compile_cmd = config['compile_command'] + [output_file, filename]
+                        compile_process = await asyncio.create_subprocess_exec(
+                            *compile_cmd,
+                            cwd=temp_dir,
+                            stdout=asyncio.subprocess.PIPE,
+                            stderr=asyncio.subprocess.PIPE
+                        )
+                        
+                        compile_stdout, compile_stderr = await asyncio.wait_for(
+                            compile_process.communicate(), timeout=timeout
+                        )
+                        
+                        if compile_process.returncode != 0:
+                            res = {
+                                'success': False,
+                                'error': compile_stderr.decode(),
+                                'output': '',
+                                'execution_time': time.time() - start_time,
+                                'memory_usage': 0,
+                                'status': 'compilation_error'
+                            }
+                            record_code_execution(language, 'compilation_error', res['execution_time'])
+                            return res
+                        
+                        # Run compiled binary
+                        process = await asyncio.create_subprocess_exec(
+                            output_file,
+                            cwd=temp_dir,
+                            stdin=asyncio.subprocess.PIPE,
+                            stdout=asyncio.subprocess.PIPE,
+                            stderr=asyncio.subprocess.PIPE
+                        )
+                        
+                    else:
+                        # Direct execution for Python/JavaScript
+                        cmd = config['command'] + [filename]
+                        process = await asyncio.create_subprocess_exec(
+                            *cmd,
+                            cwd=temp_dir,
+                            stdin=asyncio.subprocess.PIPE,
+                            stdout=asyncio.subprocess.PIPE,
+                            stderr=asyncio.subprocess.PIPE
+                        )
+
+                    # Execute with timeout
+                    try:
+                        stdout, stderr = await asyncio.wait_for(
+                            process.communicate(input=input_data.encode()),
+                            timeout=timeout
+                        )
+                        
+                        execution_time = time.time() - start_time
+                        
+                        # Get memory usage
+                        memory_usage = 0
+                        try:
+                            if process.pid:
+                                ps_process = psutil.Process(process.pid)
+                                memory_info = ps_process.memory_info()
+                                memory_usage = memory_info.rss / 1024 / 1024
+                        except:
+                            pass
+                        
+                        if process.returncode == 0:
+                            result = {
+                                'success': True,
+                                'output': stdout.decode().strip(),
+                                'error': stderr.decode().strip(),
+                                'execution_time': execution_time,
+                                'memory_usage': memory_usage,
+                                'status': 'completed'
+                            }
+                        else:
+                            result = {
+                                'success': False,
+                                'output': stdout.decode().strip(),
+                                'error': stderr.decode().strip(),
+                                'execution_time': execution_time,
+                                'memory_usage': memory_usage,
+                                'status': 'runtime_error'
+                            }
+                        
+                        record_code_execution(language, result['status'], execution_time)
                         return result
 
-                except asyncio.TimeoutError:
-                    process.kill()
-                    result = {
-                        'success': False,
-                        'error': f'Code execution timed out after {timeout} seconds',
-                        'output': '',
-                        'execution_time': timeout,
-                        'memory_usage': 0,
-                        'status': 'timeout'
-                    }
-                    span.set_attribute("execution.success", False)
-                    span.set_attribute("execution.timeout", True)
-                    record_code_execution(language, 'timeout', timeout)
-                    return result
+                    except asyncio.TimeoutError:
+                        if process:
+                            try:
+                                process.kill()
+                            except:
+                                pass
+                        res = {
+                            'success': False,
+                            'error': f'Execution timed out after {timeout} seconds',
+                            'output': '',
+                            'execution_time': timeout,
+                            'memory_usage': 0,
+                            'status': 'timeout'
+                        }
+                        record_code_execution(language, 'timeout', timeout)
+                        return res
 
-            except Exception as e:
-                result = {
-                    'success': False,
-                    'error': str(e),
-                    'output': '',
-                    'execution_time': time.time() - start_time,
-                    'memory_usage': 0,
-                    'status': 'error'
-                }
-                span.set_attribute("execution.success", False)
-                span.set_attribute("execution.error", str(e))
-                record_code_execution(language, 'error', time.time() - start_time)
-                return result
+                except Exception as e:
+                    res = {
+                        'success': False,
+                        'error': str(e),
+                        'output': '',
+                        'execution_time': 0,
+                        'memory_usage': 0,
+                        'status': 'error'
+                    }
+                    record_code_execution(language, 'error', 0)
+                    return res
 
     @staticmethod
     def calculate_similarity(code1: str, code2: str) -> float:
@@ -361,7 +561,7 @@ async def execute_code(request: CodeExecutionRequest):
         result = await CodeExecutorService.execute_code(
             request.code,
             request.language,
-            request.input_data,
+            request.input,
             request.timeout
         )
         return ExecutionResult(**result)
@@ -372,64 +572,181 @@ async def execute_code(request: CodeExecutionRequest):
 async def execute_code_with_tests(request: CodeExecutionWithTestsRequest):
     """Execute code and run test cases"""
     try:
-        # Validate that test cases are provided
-        if not request.test_cases or len(request.test_cases) == 0:
-            raise HTTPException(
-                status_code=400, 
-                detail="No test cases provided. At least one test case is required."
-            )
-        # First execute the code without input to check for basic errors
-        basic_result = await CodeExecutorService.execute_code(
-            request.code,
-            request.language,
-            "",
-            request.timeout
-        )
+        # Check if we have any test cases (either basic or custom)
+        all_test_cases = request.test_cases + (request.test_cases_custom or [])
+        if not all_test_cases:
+            raise HTTPException(status_code=400, detail="No test cases provided")
+
+        language = request.language
+        if language not in LANGUAGE_CONFIGS:
+            raise HTTPException(status_code=400, detail=f"Unsupported language: {language}")
+
+        config = LANGUAGE_CONFIGS[language]
         
-        test_results = []
-        passed_count = 0
-        
-        # Run each test case
-        for test_case in request.test_cases:
-            test_result = await CodeExecutorService.execute_code(
-                request.code,
-                request.language,
-                test_case.input_data,
-                request.timeout
-            )
-            
-            if test_result['success']:
-                actual_output = test_result['output'].strip()
-                expected_output = test_case.expected_output.strip()
-                passed = actual_output == expected_output
-                
-                if passed:
-                    passed_count += 1
-                
-                test_results.append(TestResult(
-                    passed=passed,
-                    expected=expected_output,
-                    actual=actual_output,
-                    error=test_result.get('error', ''),
-                    execution_time=test_result['execution_time']
-                ))
+        # 1. First, compile the code once if needed
+        with tempfile.TemporaryDirectory() as temp_dir:
+            if language == 'java':
+                filename = "Solution.java"
             else:
-                test_results.append(TestResult(
-                    passed=False,
-                    expected=test_case.expected_output,
-                    actual='',
-                    error=test_result['error'],
-                    execution_time=test_result['execution_time']
-                ))
-        
-        return CodeExecutionResponse(
-            execution_result=ExecutionResult(**basic_result),
-            test_results=test_results,
-            total_passed=passed_count,
-            total_tests=len(request.test_cases),
-            plagiarism_score=0.0
-        )
-        
+                filename = f"solution{config['extension']}"
+            
+            filepath = os.path.join(temp_dir, filename)
+            with open(filepath, 'w') as f:
+                f.write(request.code)
+                if language == 'python':
+                    f.write(PYTHON_DRIVER_CODE)
+
+            # Compilation step (if applicable)
+            is_compiled = 'compile_command' in config
+            if is_compiled:
+                if language == 'java':
+                    compile_cmd = config['compile_command'] + [filename]
+                elif language in ['cpp', 'c']:
+                    output_file = os.path.join(temp_dir, 'solution')
+                    compile_cmd = config['compile_command'] + [output_file, filename]
+                
+                compile_process = await asyncio.create_subprocess_exec(
+                    *compile_cmd,
+                    cwd=temp_dir,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE
+                )
+                stdout, stderr = await asyncio.wait_for(compile_process.communicate(), timeout=request.timeout)
+                
+                if compile_process.returncode != 0:
+                    # Return error for all tests if compilation failed
+                    test_results = [
+                        TestResult(
+                            passed=False,
+                            input=tc.input,
+                            expected_output=tc.expected_output,
+                            actual_output='',
+                            error=stderr.decode(),
+                            execution_time=0
+                        ) for tc in (request.test_cases + (request.test_cases_custom or []))
+                    ]
+                    return CodeExecutionResponse(
+                        execution_result=ExecutionResult(
+                            success=False,
+                            output='',
+                            error=stderr.decode(),
+                            execution_time=0,
+                            memory_usage=0,
+                            status='compilation_error'
+                        ),
+                        test_results=test_results,
+                        total_passed=0,
+                        total_tests=len(test_results)
+                    )
+
+            # 2. Run all test cases using the compiled binary (or source for script langs)
+            test_results = []
+            passed_count = 0
+            all_test_cases = request.test_cases + (request.test_cases_custom or [])
+
+            for test_case in all_test_cases:
+                # Pre-process input for this test case
+                input_data = test_case.input
+                if language in ['cpp', 'c', 'java']:
+                    try:
+                        processed_lines = []
+                        for line in input_data.split('\n'):
+                            line = line.strip()
+                            if not line: continue
+                            try:
+                                data = json.loads(line)
+                                if isinstance(data, list):
+                                    processed_lines.append(str(len(data)))
+                                    processed_lines.append(" ".join(map(str, data)))
+                                else:
+                                    processed_lines.append(str(data))
+                            except:
+                                if line.startswith('[') and line.endswith(']'):
+                                    content = line[1:-1].replace(',', ' ')
+                                    parts = content.split()
+                                    if parts:
+                                        processed_lines.append(str(len(parts)))
+                                        processed_lines.append(" ".join(parts))
+                                    else:
+                                        processed_lines.append(line)
+                                else:
+                                    processed_lines.append(line)
+                        if processed_lines:
+                            input_data = "\n".join(processed_lines)
+                    except:
+                        pass
+
+                # Run process
+                start_time = time.time()
+                if language == 'java':
+                    run_cmd = config['run_command'] + ['Solution']
+                elif language in ['cpp', 'c']:
+                    run_cmd = [os.path.join(temp_dir, 'solution')]
+                else:
+                    run_cmd = config['command'] + [filename]
+
+                process = await asyncio.create_subprocess_exec(
+                    *run_cmd,
+                    cwd=temp_dir,
+                    stdin=asyncio.subprocess.PIPE,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE
+                )
+
+                try:
+                    # Ensure input ends with newline
+                    if input_data and not input_data.endswith('\n'):
+                        input_data = input_data + '\n'
+                    stdout, stderr = await asyncio.wait_for(
+                        process.communicate(input=input_data.encode()),
+                        timeout=request.timeout
+                    )
+                    execution_time = time.time() - start_time
+
+
+                    actual_output = stdout.decode().strip()
+                    expected_output = test_case.expected_output.strip()
+                    
+                    passed = actual_output == expected_output
+                    if passed: passed_count += 1
+                    
+                    test_results.append(TestResult(
+                        passed=passed,
+                        input=test_case.input,
+                        expected_output=expected_output,
+                        actual_output=actual_output,
+                        error=stderr.decode() if not passed else "",
+                        execution_time=execution_time
+                    ))
+                except asyncio.TimeoutError:
+                    try: process.kill()
+                    except: pass
+                    test_results.append(TestResult(
+                        passed=False,
+                        input=test_case.input,
+                        expected_output=test_case.expected_output,
+                        actual_output='',
+                        error='Timeout',
+                        execution_time=request.timeout
+                    ))
+
+            # Determine basic_result (first test or summary)
+            basic_result = ExecutionResult(
+                success=passed_count == len(all_test_cases),
+                output=test_results[0].actual_output if test_results else "",
+                error="",
+                execution_time=sum(t.execution_time for t in test_results),
+                memory_usage=0,
+                status='completed'
+            )
+
+            return CodeExecutionResponse(
+                execution_result=basic_result,
+                test_results=test_results,
+                total_passed=passed_count,
+                total_tests=len(all_test_cases)
+            )
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -450,19 +767,377 @@ async def check_plagiarism(request: PlagiarismCheckRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/supported-languages")
+@app.get("/supported-languages-and-templates")
 async def get_supported_languages():
-    """Get list of supported programming languages"""
+    """Get list of supported programming languages, their templates, and example problems"""
     return {
         "languages": list(LANGUAGE_CONFIGS.keys()),
         "details": {
             lang: {
                 "extension": config["extension"],
-                "timeout": config["timeout"]
+                "timeout": config["timeout"],
+                "template": config.get("template", "")
             }
             for lang, config in LANGUAGE_CONFIGS.items()
+        },
+        "example_problems": EXAMPLE_PROBLEMS
+    }
+
+# Example problems with solutions for all languages
+EXAMPLE_PROBLEMS = [
+    {
+        "id": "reverse-string",
+        "title": "Reverse a String",
+        "description": "Write a function that reverses an input string. The input will be a single string on one line.",
+        "test_cases": [
+            {"input": "hello", "expected_output": "olleh"},
+            {"input": "world", "expected_output": "dlrow"},
+            {"input": "OpenAI", "expected_output": "IAnepO"},
+        ],
+        "solutions": {
+            "python": '''class Solution:
+    def solve(self, *args):
+        input_str = args[0] if len(args) > 0 else ""
+        return input_str[::-1]
+''',
+            "javascript": '''"use strict";
+const fs = require('fs');
+function solve() {
+    const lines = fs.readFileSync(0, 'utf8').split('\\n').filter(l => l.trim());
+    if (lines.length === 0) return;
+    console.log(lines[0].split('').reverse().join(''));
+}
+solve();
+''',
+            "java": '''import java.util.*;
+public class Solution {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        if (sc.hasNextLine()) {
+            String s = sc.nextLine();
+            System.out.println(new StringBuilder(s).reverse().toString());
         }
     }
+}
+''',
+            "cpp": '''#include <iostream>
+#include <string>
+#include <algorithm>
+using namespace std;
+int main() {
+    string s;
+    if (getline(cin, s)) {
+        reverse(s.begin(), s.end());
+        cout << s << endl;
+    }
+    return 0;
+}
+''',
+            "c": '''#include <stdio.h>
+#include <string.h>
+int main() {
+    char s[1000];
+    if (fgets(s, sizeof(s), stdin)) {
+        s[strcspn(s, "\\n")] = 0;
+        int len = strlen(s);
+        for(int i = 0; i < len / 2; i++) {
+            char t = s[i];
+            s[i] = s[len - 1 - i];
+            s[len - 1 - i] = t;
+        }
+        printf("%s\\n", s);
+    }
+    return 0;
+}
+'''
+        }
+    },
+    {
+        "id": "find-max",
+        "title": "Find Maximum in Array",
+        "description": "Find the largest element in an array of integers. Input is a JSON array like [1, 3, 7, 2, 5].",
+        "test_cases": [
+            {"input": "[1, 3, 7, 2, 5]", "expected_output": "7"},
+            {"input": "[-1, -5, -2]", "expected_output": "-1"},
+            {"input": "[42]", "expected_output": "42"},
+        ],
+        "solutions": {
+            "python": '''class Solution:
+    def solve(self, *args):
+        arr = args[0] if len(args) > 0 else []
+        if not arr: return None
+        return max(arr)
+''',
+            "javascript": '''"use strict";
+const fs = require('fs');
+function solve() {
+    const lines = fs.readFileSync(0, 'utf8').split('\\n').filter(l => l.trim());
+    if (lines.length === 0) return;
+    const arr = JSON.parse(lines[0]);
+    console.log(Math.max(...arr));
+}
+solve();
+''',
+            "java": '''import java.util.*;
+public class Solution {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        if (sc.hasNextInt()) {
+            int n = sc.nextInt();
+            int max = Integer.MIN_VALUE;
+            for(int i = 0; i < n; i++) {
+                int v = sc.nextInt();
+                if (v > max) max = v;
+            }
+            System.out.println(max);
+        }
+    }
+}
+''',
+            "cpp": '''#include <iostream>
+#include <climits>
+using namespace std;
+int main() {
+    int n;
+    if (cin >> n) {
+        int maxVal = INT_MIN;
+        for(int i = 0; i < n; i++) {
+            int v; cin >> v;
+            if (v > maxVal) maxVal = v;
+        }
+        cout << maxVal << endl;
+    }
+    return 0;
+}
+''',
+            "c": '''#include <stdio.h>
+#include <limits.h>
+int main() {
+    int n;
+    if (scanf("%d", &n) == 1) {
+        int maxVal = INT_MIN;
+        for(int i = 0; i < n; i++) {
+            int v; scanf("%d", &v);
+            if (v > maxVal) maxVal = v;
+        }
+        printf("%d\\n", maxVal);
+    }
+    return 0;
+}
+'''
+        }
+    },
+    {
+        "id": "even-odd",
+        "title": "Even or Odd",
+        "description": "Given an integer, determine if it is even or odd. Output 'Even' or 'Odd'.",
+        "test_cases": [
+            {"input": "4", "expected_output": "Even"},
+            {"input": "7", "expected_output": "Odd"},
+            {"input": "0", "expected_output": "Even"},
+        ],
+        "solutions": {
+            "python": '''class Solution:
+    def solve(self, *args):
+        num = args[0] if len(args) > 0 else 0
+        return "Even" if num % 2 == 0 else "Odd"
+''',
+            "javascript": '''"use strict";
+const fs = require('fs');
+function solve() {
+    const lines = fs.readFileSync(0, 'utf8').split('\\n').filter(l => l.trim());
+    if (lines.length === 0) return;
+    const num = parseInt(lines[0]);
+    console.log(num % 2 === 0 ? "Even" : "Odd");
+}
+solve();
+''',
+            "java": '''import java.util.*;
+public class Solution {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        if (sc.hasNextInt()) {
+            int n = sc.nextInt();
+            System.out.println(n % 2 == 0 ? "Even" : "Odd");
+        }
+    }
+}
+''',
+            "cpp": '''#include <iostream>
+using namespace std;
+int main() {
+    int n;
+    if (cin >> n) {
+        cout << (n % 2 == 0 ? "Even" : "Odd") << endl;
+    }
+    return 0;
+}
+''',
+            "c": '''#include <stdio.h>
+int main() {
+    int n;
+    if (scanf("%d", &n) == 1) {
+        printf("%s\\n", n % 2 == 0 ? "Even" : "Odd");
+    }
+    return 0;
+}
+'''
+        }
+    },
+    {
+        "id": "factorial",
+        "title": "Factorial (Recursive)",
+        "description": "Calculate the factorial of a non-negative integer n using recursion. factorial(n) = n * factorial(n-1), with factorial(0) = 1.",
+        "test_cases": [
+            {"input": "5", "expected_output": "120"},
+            {"input": "0", "expected_output": "1"},
+            {"input": "7", "expected_output": "5040"},
+        ],
+        "solutions": {
+            "python": '''class Solution:
+    def solve(self, *args):
+        n = args[0] if len(args) > 0 else 0
+        def factorial(x):
+            if x <= 1: return 1
+            return x * factorial(x - 1)
+        return factorial(n)
+''',
+            "javascript": '''"use strict";
+const fs = require('fs');
+function factorial(n) {
+    if (n <= 1) return 1;
+    return n * factorial(n - 1);
+}
+function solve() {
+    const lines = fs.readFileSync(0, 'utf8').split('\\n').filter(l => l.trim());
+    if (lines.length === 0) return;
+    console.log(factorial(parseInt(lines[0])));
+}
+solve();
+''',
+            "java": '''import java.util.*;
+public class Solution {
+    static long factorial(int n) {
+        if (n <= 1) return 1;
+        return n * factorial(n - 1);
+    }
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        if (sc.hasNextInt()) {
+            System.out.println(factorial(sc.nextInt()));
+        }
+    }
+}
+''',
+            "cpp": '''#include <iostream>
+using namespace std;
+long long factorial(int n) {
+    if (n <= 1) return 1;
+    return n * factorial(n - 1);
+}
+int main() {
+    int n;
+    if (cin >> n) {
+        cout << factorial(n) << endl;
+    }
+    return 0;
+}
+''',
+            "c": '''#include <stdio.h>
+long long factorial(int n) {
+    if (n <= 1) return 1;
+    return n * factorial(n - 1);
+}
+int main() {
+    int n;
+    if (scanf("%d", &n) == 1) {
+        printf("%lld\\n", factorial(n));
+    }
+    return 0;
+}
+'''
+        }
+    },
+    {
+        "id": "fibonacci",
+        "title": "Fibonacci (Recursive)",
+        "description": "Calculate the nth Fibonacci number using recursion. fib(0)=0, fib(1)=1, fib(n)=fib(n-1)+fib(n-2).",
+        "test_cases": [
+            {"input": "6", "expected_output": "8"},
+            {"input": "0", "expected_output": "0"},
+            {"input": "10", "expected_output": "55"},
+        ],
+        "solutions": {
+            "python": '''class Solution:
+    def solve(self, *args):
+        n = args[0] if len(args) > 0 else 0
+        def fib(x):
+            if x <= 0: return 0
+            if x == 1: return 1
+            return fib(x - 1) + fib(x - 2)
+        return fib(n)
+''',
+            "javascript": '''"use strict";
+const fs = require('fs');
+function fib(n) {
+    if (n <= 0) return 0;
+    if (n === 1) return 1;
+    return fib(n - 1) + fib(n - 2);
+}
+function solve() {
+    const lines = fs.readFileSync(0, 'utf8').split('\\n').filter(l => l.trim());
+    if (lines.length === 0) return;
+    console.log(fib(parseInt(lines[0])));
+}
+solve();
+''',
+            "java": '''import java.util.*;
+public class Solution {
+    static int fib(int n) {
+        if (n <= 0) return 0;
+        if (n == 1) return 1;
+        return fib(n - 1) + fib(n - 2);
+    }
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        if (sc.hasNextInt()) {
+            System.out.println(fib(sc.nextInt()));
+        }
+    }
+}
+''',
+            "cpp": '''#include <iostream>
+using namespace std;
+int fib(int n) {
+    if (n <= 0) return 0;
+    if (n == 1) return 1;
+    return fib(n - 1) + fib(n - 2);
+}
+int main() {
+    int n;
+    if (cin >> n) {
+        cout << fib(n) << endl;
+    }
+    return 0;
+}
+''',
+            "c": '''#include <stdio.h>
+int fib(int n) {
+    if (n <= 0) return 0;
+    if (n == 1) return 1;
+    return fib(n - 1) + fib(n - 2);
+}
+int main() {
+    int n;
+    if (scanf("%d", &n) == 1) {
+        printf("%d\\n", fib(n));
+    }
+    return 0;
+}
+'''
+        }
+    }
+]
 
 if __name__ == "__main__":
     import uvicorn

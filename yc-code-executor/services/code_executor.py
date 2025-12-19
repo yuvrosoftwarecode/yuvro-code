@@ -60,7 +60,7 @@ class CodeExecutorService:
         self.temp_dir_base = '/tmp/code_execution'
         os.makedirs(self.temp_dir_base, exist_ok=True)
     
-    def execute(self, code: str, language: str, input_data: str = "", 
+    def execute(self, code: str, language: str, input: str = "", 
                 timeout: int = None, memory_limit: int = None) -> Dict[str, Any]:
         """Execute code with security constraints"""
         
@@ -92,9 +92,8 @@ class CodeExecutorService:
                     if not compile_result['success']:
                         return compile_result
                 
-                # Execute code
                 return self._execute_code(
-                    config['command'], filepath, temp_dir, input_data, 
+                    config['command'], filepath, temp_dir, input, 
                     timeout, memory_limit
                 )
                 
@@ -167,7 +166,7 @@ class CodeExecutorService:
             }
     
     def _execute_code(self, command: list, filepath: str, temp_dir: str, 
-                     input_data: str, timeout: int, memory_limit: int) -> Dict[str, Any]:
+                     input: str, timeout: int, memory_limit: int) -> Dict[str, Any]:
         """Execute compiled/interpreted code with resource limits"""
         
         # Prepare execution command
@@ -204,12 +203,9 @@ class CodeExecutorService:
                 preexec_fn=set_limits
             )
             
-            # Monitor memory usage
             try:
                 ps_process = psutil.Process(process.pid)
-                
-                # Communicate with timeout
-                stdout, stderr = process.communicate(input=input_data, timeout=timeout)
+                stdout, stderr = process.communicate(input=input, timeout=timeout)
                 
                 # Get memory usage
                 try:
@@ -219,7 +215,7 @@ class CodeExecutorService:
                     max_memory = 0
                 
             except psutil.NoSuchProcess:
-                stdout, stderr = process.communicate(input=input_data, timeout=timeout)
+                stdout, stderr = process.communicate(input=input, timeout=timeout)
             
             execution_time = time.time() - start_time
             

@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { 
-  Code2, Database, Cpu, FileCode, Braces, Terminal, 
-  Trophy, Target, Brain, CheckCircle2 
+import {
+  Code2, Database, Cpu, FileCode, Braces, Terminal,
+  Trophy, Target, Brain, CheckCircle2
 } from 'lucide-react';
 import { fetchCourses } from '@/services/courseService';
 import type { Course } from '@/pages/student/CodePractice';
@@ -71,7 +71,7 @@ const CourseDashboard = ({ onCourseSelect, onViewAnalytics }: CourseDashboardPro
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white px-8 py-8">
+      <div className="min-h-screen bg-white px-[1px] py-8">
         <div className="max-w-[1600px] mx-auto animate-pulse space-y-8">
           <div className="h-8 bg-gray-200 rounded w-1/4"></div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -85,7 +85,7 @@ const CourseDashboard = ({ onCourseSelect, onViewAnalytics }: CourseDashboardPro
   }
 
   return (
-    <div className="min-h-screen bg-white px-8 py-8">
+    <div className="min-h-screen bg-white px-[1px] py-8">
       <div className="max-w-[1600px] mx-auto space-y-8">
         <div className="flex items-center justify-between">
           <div>
@@ -95,7 +95,7 @@ const CourseDashboard = ({ onCourseSelect, onViewAnalytics }: CourseDashboardPro
             </p>
           </div>
 
-          <Button 
+          <Button
             onClick={onViewAnalytics}
             className="bg-gradient-to-r from-blue-500 to-teal-500 text-white border-0 hover:opacity-90"
           >

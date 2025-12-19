@@ -114,6 +114,7 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
 
   const [explanations, setExplanations] = useState<{ [key: string]: string }>({});
   const [flagged, setFlagged] = useState<Set<string>>(new Set());
+  const [showExamples, setShowExamples] = useState(false);
 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState('javascript');
@@ -398,16 +399,23 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
             </div>
 
             <div className={isCodeEditorFullscreen ? 'h-[60vh]' : 'h-80'}>
-              <CodeEditor
-                language={selectedLanguage}
+              <CodeExecutionPanel
+                problem={{
+                  id: question.id,
+                  title: question.title || 'Coding Question',
+                  description: question.content || '',
+                  test_cases_basic: question.test_cases_basic || []
+                }}
                 initialCode={answers[question.id] || ''}
-                onCodeChange={(value) => handleAnswerChange(question.id, value)}
-                placeholder={`Write your ${selectedLanguage} solution here...`}
-                showLanguageSelector={false}
-                showRunButton={false}
-                showCopyButton={false}
-                showResetButton={false}
-                showFullscreenToggle={false}
+                onSubmissionComplete={(result) => {
+                  // Handle submission result if needed
+                  console.log('Code execution result:', result);
+                }}
+                mode="exam"
+                showTestCases={true}
+                allowCustomTestCases={false}
+                showSubmitButton={false}
+                className="h-full"
               />
             </div>
 
@@ -747,6 +755,16 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
         </AlertDialogContent>
       </AlertDialog>
 
+      {showExamples && (
+        <ExampleCodeGallery
+          currentLanguage={selectedLanguage}
+          onClose={() => setShowExamples(false)}
+          onApplyCode={(exampleCode) => {
+            handleAnswerChange(currentQuestionData.id, exampleCode);
+            setShowExamples(false);
+          }}
+        />
+      )}
     </div>
   );
 };

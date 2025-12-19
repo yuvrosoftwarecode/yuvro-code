@@ -309,7 +309,7 @@ export const fetchRandomQuestions = async (
 ): Promise<Question[]> => {
   try {
     const allQuestions = await fetchQuestions(filters);
-    
+
     // Shuffle and return random questions
     const shuffled = allQuestions.sort(() => 0.5 - Math.random());
     return shuffled.slice(0, count);

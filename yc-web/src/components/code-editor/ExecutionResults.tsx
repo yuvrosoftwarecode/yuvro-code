@@ -3,7 +3,7 @@ import { ExecutionResult } from '../../services/codeExecutorService';
 import PerformanceMetrics from './PerformanceMetrics';
 
 interface ExecutionResultsProps {
-  result: ExecutionResult;
+  result: ExecutionResult | null;
   isExecuting: boolean;
 }
 

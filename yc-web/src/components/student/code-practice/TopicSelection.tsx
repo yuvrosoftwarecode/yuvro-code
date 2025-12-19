@@ -116,23 +116,22 @@ const TopicSelection = ({
       // Load questions from question service with category 'practice' and type 'coding'
       const questions = await fetchQuestions(filters);
 
-      // Transform questions to CodingProblem format
       const transformedProblems: CodingProblem[] = questions.map((q) => ({
         id: q.id,
         title: q.title,
-        difficulty: q.difficulty === 'easy' ? 'Easy' : 
-                   q.difficulty === 'medium' ? 'Medium' : 'Hard',
+        difficulty: q.difficulty === 'easy' ? 'Easy' :
+          q.difficulty === 'medium' ? 'Medium' : 'Hard',
         score: q.marks,
         description: q.content,
-        test_cases_basic: q.test_cases_basic?.map(tc => ({
-          input_data: tc.input,
-          expected_output: tc.expected_output,
-          weight: 1
+        test_cases_basic: q.test_cases_basic?.map((tc: any) => ({
+          input: tc.input || '',
+          expected_output: tc.expected_output || '',
+          weight: tc.weight || 1
         })) || [],
-        test_cases_advanced: q.test_cases_advanced?.map(tc => ({
-          input_data: tc.input,
-          expected_output: tc.expected_output,
-          weight: 1
+        test_cases_advanced: q.test_cases_advanced?.map((tc: any) => ({
+          input: tc.input || '',
+          expected_output: tc.expected_output || '',
+          weight: tc.weight || 1
         })) || [],
       }));
 
@@ -177,11 +176,10 @@ const TopicSelection = ({
   }
 
   return (
-    <div className="container mx-auto px-4 py-3 max-w-9xl">
+    <div className="container mx-auto px-[1px] py-3 max-w-9xl">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 mb-3 text-sm text-gray-500">
-        <Button variant="ghost" size="sm" onClick={onBack} className="gap-1">
-          <ChevronLeft className="h-4 w-4" />
+        <Button variant="ghost" size="sm" onClick={onBack} className="h-auto p-0 hover:bg-transparent hover:text-gray-900 transition-colors">
           Code Practice
         </Button>
         <span>/</span>
@@ -200,19 +198,17 @@ const TopicSelection = ({
               <button
                 key={topic.id}
                 onClick={() => onTopicSelect(topic)}
-                className={`w-full text-left p-3 rounded-lg transition ${
-                  selectedTopic?.id === topic.id
-                    ? 'bg-black text-white'
-                    : 'hover:bg-gray-100 text-gray-800'
-                }`}
+                className={`w-full text-left p-3 rounded-lg transition ${selectedTopic?.id === topic.id
+                  ? 'bg-black text-white'
+                  : 'hover:bg-gray-100 text-gray-800'
+                  }`}
               >
                 <div className="font-medium">{topic.name}</div>
                 <div
-                  className={`text-xs ${
-                    selectedTopic?.id === topic.id
-                      ? 'text-white'
-                      : 'text-gray-500'
-                  }`}
+                  className={`text-xs ${selectedTopic?.id === topic.id
+                    ? 'text-white'
+                    : 'text-gray-500'
+                    }`}
                 >
                   {topic.problemCount} problems
                 </div>

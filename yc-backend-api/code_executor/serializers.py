@@ -55,7 +55,7 @@ class CodeExecutionRequestSerializer(serializers.Serializer):
     test_cases = serializers.ListField(
         child=serializers.DictField(),
         required=False,
-        help_text="List of test case objects with input_data, expected_output, is_hidden, weight",
+        help_text="List of test case objects with input, expected_output, is_hidden, weight",
     )
 
 

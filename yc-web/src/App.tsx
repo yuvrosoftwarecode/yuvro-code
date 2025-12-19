@@ -43,8 +43,10 @@ import RecruiterCompanies from "./pages/recruiter/Companies";
 import RecruiterCompanyDetail from "./pages/recruiter/CompanyDetail";
 import RecruiterDashboard from "./pages/recruiter/Dashboard";
 import RecruiterProfile from "./pages/recruiter/Profile";
+// @ts-ignore
 import AddJob from "./components/student/AddJob";
-import JobFiltersSidebar from "@/components/student/jobs/ApplicationTracker";
+import ApplicationTracker from "@/components/student/jobs/ApplicationTracker";
+import CodeEditorTool from './pages/common/CodeEditorTool';
 
 
 function App() {
@@ -64,7 +66,7 @@ function App() {
               <Route path="/recruiter/jobs" element={<RecruiterJobs />} />
               {/* <Route path="/" element={<JobList />} /> */}
               <Route path="/add-job" element={<AddJob />} />
-              <Route path="/student/JobFiltersSidebar" element={<JobFiltersSidebar />} />
+              <Route path="/student/applications" element={<ApplicationTracker appliedJobs={[]} />} />
 
 
               {/* Protected routes */}
@@ -152,6 +154,30 @@ function App() {
 
               <Route
                 path="/student/code-practice"
+                element={
+                  <ProtectedRoute allowedRoles={["student"]}>
+                    <CodePractice />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/student/code-practice/courses/:courseId"
+                element={
+                  <ProtectedRoute allowedRoles={["student"]}>
+                    <CodePractice />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/student/code-practice/courses/:courseId/topics/:topicId"
+                element={
+                  <ProtectedRoute allowedRoles={["student"]}>
+                    <CodePractice />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/student/code-practice/courses/:courseId/topics/:topicId/questions/:problemId"
                 element={
                   <ProtectedRoute allowedRoles={["student"]}>
                     <CodePractice />
@@ -409,6 +435,15 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={["admin", "instructor", "recruiter"]}>
                     <MockInterviewForm />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/tools/code-editor"
+                element={
+                  <ProtectedRoute allowedRoles={["admin", "instructor", "recruiter"]}>
+                    <CodeEditorTool />
                   </ProtectedRoute>
                 }
               />

@@ -72,7 +72,7 @@ const TestCaseViewer: React.FC<TestCaseViewerProps> = ({ testCases, result }) =>
                   Input:
                 </label>
                 <pre className="bg-white p-3 rounded border text-sm overflow-x-auto">
-                  {testCase.input_data || testCase.input || 'No input required'}
+                  {testCase.input || 'No input required'}
                 </pre>
               </div>
               <div>
@@ -80,7 +80,7 @@ const TestCaseViewer: React.FC<TestCaseViewerProps> = ({ testCases, result }) =>
                   Expected Output:
                 </label>
                 <pre className="bg-white p-3 rounded border text-sm overflow-x-auto">
-                  {testCase.expected_output || testCase.expected}
+                  {testCase.expected_output}
                 </pre>
               </div>
             </div>
@@ -91,7 +91,7 @@ const TestCaseViewer: React.FC<TestCaseViewerProps> = ({ testCases, result }) =>
                   Your Output:
                 </label>
                 <pre className="bg-red-50 text-red-800 p-3 rounded border border-red-200 text-sm overflow-x-auto">
-                  {testResult.actual || 'No output'}
+                  {testResult.actual_output || 'No output'}
                 </pre>
                 {testResult.error && (
                   <div className="mt-2">

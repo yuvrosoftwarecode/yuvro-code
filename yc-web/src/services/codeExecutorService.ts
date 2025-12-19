@@ -47,12 +47,13 @@ export interface ExecutionResult extends CodeSubmission {
     success: boolean;
     execution_time?: number;
     memory_usage?: number;
-    summary?: string; // For submissions - sanitized summary without test case details
-    results?: Array<{  // For run-only - detailed test case results
+    summary?: string;
+    results?: Array<{
       test_case_id: number;
       passed: boolean;
-      expected: string;
-      actual: string;
+      input: string;
+      expected_output: string;
+      actual_output: string;
       error: string;
       execution_time: number;
     }>;
@@ -61,15 +62,26 @@ export interface ExecutionResult extends CodeSubmission {
 }
 
 class CodeExecutorService {
-  async runCode(request: { code: string; language: string; test_cases: any[]; problem_title?: string }): Promise<ExecutionResult> {
+  async runCode(request: {
+    code: string;
+    language: string;
+    test_cases: any[];
+    test_cases_custom?: any[];
+    problem_title?: string
+  }): Promise<ExecutionResult> {
     try {
-      const data = await restApiUtilCodeExecuter.post('/execute-with-tests', {
+      const data: any = await restApiUtilCodeExecuter.post('/execute-with-tests', {
         code: request.code,
         language: request.language,
-        test_cases: request.test_cases.map(tc => ({
-          input_data: tc.input_data || tc.input || '',
-          expected_output: tc.expected_output || tc.expected || '',
+        test_cases: (request.test_cases || []).map(tc => ({
+          input: tc.input || '',
+          expected_output: tc.expected_output || '',
           weight: tc.weight || 1
+        })),
+        test_cases_custom: (request.test_cases_custom || []).map(tc => ({
+          input: tc.input || '',
+          expected_output: tc.expected_output || '',
+          weight: 1
         })),
         timeout: 10
       });
@@ -101,8 +113,9 @@ class CodeExecutorService {
           results: testResults.map((result: any, index: number) => ({
             test_case_id: index,
             passed: result.passed || false,
-            expected: result.expected || '',
-            actual: result.actual || '',
+            input: result.input || '',
+            expected_output: result.expected_output || '',
+            actual_output: result.actual_output || '',
             error: result.error || '',
             execution_time: result.execution_time || 0
           })),
@@ -125,7 +138,7 @@ class CodeExecutorService {
     }
   }
 
-  async executeCode(request: CodeExecutionRequest): Promise<ExecutionResult> {
+  async executeCode(request: CodeExecutionRequest & { test_cases: any[] }): Promise<ExecutionResult> {
     return this.submitSolution(request);
   }
 
@@ -138,9 +151,8 @@ class CodeExecutorService {
     return restApiAuthUtil.get(`/code/submissions/${id}/`);
   }
 
-  async getPlagiarismReports(minSimilarity?: number): Promise<PlagiarismReport[]> {
-    const params = minSimilarity ? { min_similarity: minSimilarity.toString() } : undefined;
-    return restApiAuthUtil.get('/code/plagiarism/', { params });
+  async getSupportedLanguagesAndTemplates(): Promise<any> {
+    return restApiUtilCodeExecuter.get('/supported-languages-and-templates');
   }
 }
 

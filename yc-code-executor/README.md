@@ -60,7 +60,7 @@ Execute code and return basic results.
 {
   "code": "print('Hello World')",
   "language": "python",
-  "input_data": "",
+  "input": "",
   "timeout": 10
 }
 ```
@@ -90,7 +90,7 @@ Execute code against multiple test cases.
   "language": "python",
   "test_cases": [
     {
-      "input_data": "5",
+      "input": "5",
       "expected_output": "10",
       "weight": 1
     }
@@ -113,8 +113,9 @@ Execute code against multiple test cases.
   "test_results": [
     {
       "passed": true,
-      "expected": "10",
-      "actual": "10",
+      "input": "5",
+      "expected_output": "10",
+      "actual_output": "10",
       "error": "",
       "execution_time": 0.045
     }
@@ -240,6 +241,7 @@ const response = await fetch('http://localhost:8002/execute-with-tests', {
     code: userCode,
     language: selectedLanguage,
     test_cases: testCases,
+    input: "",
     timeout: 15
   })
 });

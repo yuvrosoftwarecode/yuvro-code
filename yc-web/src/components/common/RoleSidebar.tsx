@@ -17,7 +17,8 @@ import {
   FileText,
   HelpCircle,
   CheckCircle,
-  Building2
+  Building2,
+  Code
 } from 'lucide-react';
 
 interface SidebarItem {
@@ -90,6 +91,13 @@ const sidebarItems: SidebarItem[] = [
     label: 'Contests',
     icon: Trophy,
     path: '/instructor/contests',
+    roles: ['admin', 'instructor', 'recruiter']
+  },
+  {
+    id: 'code-editor',
+    label: 'Code Editor',
+    icon: Code,
+    path: '/tools/code-editor',
     roles: ['admin', 'instructor', 'recruiter']
   }
 ];

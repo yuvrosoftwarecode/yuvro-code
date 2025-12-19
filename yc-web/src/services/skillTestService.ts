@@ -57,7 +57,7 @@ export interface CreateSkillTestData {
   topic?: string;
 }
 
-export interface UpdateSkillTestData extends Partial<CreateSkillTestData> {}
+export interface UpdateSkillTestData extends Partial<CreateSkillTestData> { }
 
 export interface SkillTestFilters {
   course?: string;
@@ -66,7 +66,21 @@ export interface SkillTestFilters {
   search?: string;
 }
 
+
+export interface StartTestResponse {
+  submission_id: string;
+  status: string;
+  duration: number;
+  questions: any[]; // Using any[] for now, ideally strictly typed
+}
+
+export interface SubmitTestResponse {
+  status: string;
+  score: number;
+}
+
 // API Functions
+
 export const fetchSkillTests = async (filters?: SkillTestFilters): Promise<SkillTest[]> => {
   try {
     const params = new URLSearchParams();
@@ -129,6 +143,32 @@ export const deleteSkillTest = async (id: string): Promise<void> => {
   }
 };
 
+
+
+export const startSkillTest = async (testId: string): Promise<StartTestResponse> => {
+  try {
+    const response = await restApiAuthUtil.post(`/skill-tests/${testId}/start/`, {});
+    return response as StartTestResponse;
+  } catch (error) {
+    console.error('Error starting skill test:', error);
+    throw error;
+  }
+};
+
+export const submitSkillTest = async (testId: string, submissionId: string, answers: any): Promise<SubmitTestResponse> => {
+  try {
+    const response = await restApiAuthUtil.post(`/skill-tests/${testId}/submit/`, {
+      submission_id: submissionId,
+      answers
+    });
+    return response as SubmitTestResponse;
+  } catch (error) {
+    console.error('Error submitting skill test:', error);
+    throw error;
+  }
+};
+
+
 // Utility functions
 export const getSkillTestsByCourse = async (courseId: string): Promise<SkillTest[]> => {
   return fetchSkillTests({ course: courseId });
@@ -136,6 +176,26 @@ export const getSkillTestsByCourse = async (courseId: string): Promise<SkillTest
 
 export const getSkillTestsByTopic = async (topicId: string): Promise<SkillTest[]> => {
   return fetchSkillTests({ topic: topicId });
+};
+
+export const getSkillTestSubmissions = async (skillTestId: string): Promise<any[]> => {
+  try {
+    const response = await restApiAuthUtil.get(`/skill-test/submissions/?skill_test=${skillTestId}`);
+    return response as any[];
+  } catch (error) {
+    console.error('Error fetching submissions:', error);
+    throw error;
+  }
+};
+
+export const getSkillTestSubmission = async (submissionId: string): Promise<any> => {
+  try {
+    const response = await restApiAuthUtil.get(`/skill-test/submissions/${submissionId}/`);
+    return response as any;
+  } catch (error) {
+    console.error('Error fetching submission:', error);
+    throw error;
+  }
 };
 
 export const DIFFICULTY_LEVELS = [
@@ -159,6 +219,10 @@ const skillTestService = {
   deleteSkillTest,
   getSkillTestsByCourse,
   getSkillTestsByTopic,
+  getSkillTestSubmissions,
+  getSkillTestSubmission,
+  startSkillTest,
+  submitSkillTest,
 };
 
 export default skillTestService;

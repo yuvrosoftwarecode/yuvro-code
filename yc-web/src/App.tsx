@@ -36,6 +36,8 @@ import SkillTestForm from './components/instructor/skill-tests/SkillTestForm';
 import InstructorProfile from './pages/instructor/Profile';
 import InstructorMockInterview from './pages/instructor/MockInterview';
 import MockInterviewForm from './components/instructor/mock-interviews/MockInterviewForm';
+import SkillTestSubmissions from './pages/instructor/SkillTestSubmissions';
+import SubmissionAnalytics from './pages/instructor/SubmissionAnalytics';
 import RecruiterJobs from "./pages/recruiter/Jobs";
 import RecruiterCompanies from "./pages/recruiter/Companies";
 import RecruiterCompanyDetail from "./pages/recruiter/CompanyDetail";
@@ -388,6 +390,24 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={["admin", "instructor"]}>
                     <SkillTestForm />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/instructor/skill-tests/:skillTestId/analytics"
+                element={
+                  <ProtectedRoute allowedRoles={["admin", "instructor"]}>
+                    <SkillTestSubmissions />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/instructor/skill-tests/submissions/:submissionId"
+                element={
+                  <ProtectedRoute allowedRoles={["admin", "instructor"]}>
+                    <SubmissionAnalytics />
                   </ProtectedRoute>
                 }
               />

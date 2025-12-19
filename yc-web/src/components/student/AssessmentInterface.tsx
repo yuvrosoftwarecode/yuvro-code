@@ -34,9 +34,10 @@ import {
   EyeOff,
   Maximize
 } from 'lucide-react';
-import { CodeExecutionPanel } from '@/components/code-editor';
-import { fetchQuestions } from "@/services/questionService";
-import ExampleCodeGallery from '@/components/code-editor/ExampleCodeGallery';
+import CodeEditor from '@/components/ui/code-editor';
+import { submitSkillTest } from "@/services/skillTestService";
+import { toast } from "sonner";
+import { useProctoring } from '@/hooks/useProctoring';
 
 interface Assessment {
   id: string;
@@ -60,53 +61,57 @@ interface Question {
 
 interface AssessmentInterfaceProps {
   assessment: Assessment;
+  questions: Question[];
+  submissionId: string;
   onComplete: (stats?: { answeredCount: number; totalQuestions: number; timeSpent: number }) => void;
   onBack: () => void;
 }
 
 const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
   assessment,
+  questions: propQuestions,
+  submissionId,
   onComplete,
   onBack
 }) => {
-
+    
   // --------------------- REAL QUESTIONS ---------------------
-  const [questions, setQuestions] = useState<Question[]>([]);
+  const [questions, setQuestions] = useState<Question[]>(propQuestions);
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        // Fetch both MCQ and coding questions for skill test
-        const [mcqQuestions, codingQuestions] = await Promise.all([
-          fetchQuestions({
-            topic: assessment.topicId,
-            categories: 'skill_test',
-            type: 'mcq_single'
-          }),
-          fetchQuestions({
-            topic: assessment.topicId,
-            categories: 'skill_test',
-            type: 'coding'
-          })
-        ]);
-
-        // Combine and shuffle questions
-        const allQuestions = [...mcqQuestions, ...codingQuestions];
-        const shuffledQuestions = allQuestions.sort(() => 0.5 - Math.random());
-
-        setQuestions(shuffledQuestions);
-      } catch (err) {
-        console.error("Failed to load skill test questions", err);
-      }
-    };
-    load();
-  }, [assessment.topicId]);
+    setQuestions(propQuestions);
+  }, [propQuestions]);
 
   // --------------------- STATES ---------------------
 
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [timeLeft, setTimeLeft] = useState(assessment.duration * 60);
   const [answers, setAnswers] = useState<{ [key: string]: any }>({});
+
+  // Derived state for Proctoring
+  const currentQuestionData = questions[currentQuestion];
+  const isCodingQuestion = currentQuestionData?.type === 'coding';
+  const proctoringQuestionId = isCodingQuestion ? currentQuestionData?.id : undefined;
+
+  // --------------------- PROCTORING ---------------------
+
+  // 1. General Proctoring (Always active, logs to Submission)
+  useProctoring({
+    assessmentId: assessment.id,
+    assessmentType: 'skill-tests',
+    enabled: true,
+    questionId: undefined
+  });
+
+  // 2. Question Proctoring (Coding only, logs to Question)
+  useProctoring({
+    assessmentId: assessment.id,
+    assessmentType: 'skill-tests',
+    enabled: isCodingQuestion,
+    questionId: proctoringQuestionId // has value only if isCodingQuestion
+  });
+
+
   const [explanations, setExplanations] = useState<{ [key: string]: string }>({});
   const [flagged, setFlagged] = useState<Set<string>>(new Set());
   const [showExamples, setShowExamples] = useState(false);
@@ -211,7 +216,7 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
 
   // -------------------- SUBMIT ASSESSMENT --------------------
 
-  const handleSubmitAssessment = () => {
+  const handleSubmitAssessment = async () => {
     const answeredCount = questions.filter(q => {
       if (q.type === "descriptive") {
         return answers[q.id]?.trim();
@@ -222,11 +227,22 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
 
     const timeSpent = (assessment.duration * 60) - timeLeft;
 
-    onComplete({
-      answeredCount,
-      totalQuestions: questions.length,
-      timeSpent
-    });
+    // Submit to Backend
+    try {
+      const loadingToast = toast.loading("Submitting assessment...");
+      await submitSkillTest(assessment.id, submissionId, answers);
+      toast.dismiss(loadingToast);
+      toast.success("Assessment submitted successfully!");
+
+      onComplete({
+        answeredCount,
+        totalQuestions: questions.length,
+        timeSpent
+      });
+    } catch (err) {
+      toast.error("Failed to submit assessment. Please try again.");
+      console.error("Submit error", err);
+    }
   };
 
   // -------------------- NAVIGATION --------------------
@@ -433,7 +449,7 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
 
   // -------------------- CURRENT QUESTION --------------------
 
-  const currentQuestionData = questions[currentQuestion];
+
   const progress = questions.length ? ((currentQuestion + 1) / questions.length) * 100 : 0;
   const answeredCount = questions.filter(q => {
     if (q.type === 'descriptive') return answers[q.id]?.trim();

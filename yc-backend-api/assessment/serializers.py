@@ -3,7 +3,8 @@ from django.contrib.auth import get_user_model
 from .models import (
     Contest, MockInterview, JobTest, SkillTest, 
     ContestSubmission, MockInterviewSubmission, 
-    JobTestSubmission, SkillTestSubmission
+    JobTestSubmission, SkillTestSubmission,
+    SkillTestQuestionActivity
 )
 
 User = get_user_model()
@@ -95,16 +96,33 @@ class ContestSubmissionSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at']
 
 
+class SkillTestQuestionActivitySerializer(serializers.ModelSerializer):
+    question_title = serializers.CharField(source='question.title', read_only=True)
+    question_type = serializers.CharField(source='question.type', read_only=True)
+    
+    class Meta:
+        model = SkillTestQuestionActivity
+        fields = [
+            'id', 'question', 'question_title', 'question_type',
+            'question_activities', 'navigation_activities', 'proctoring_activities',
+            'camera_snapshots', 'alert_priority', 'answer_data', 'is_final_answer',
+            'marks_obtained', 'is_correct', 'total_question_time', 'violation_count',
+            'has_violations', 'created_at', 'updated_at'
+        ]
+
 class SkillTestSubmissionSerializer(serializers.ModelSerializer):
     skill_test_title = serializers.CharField(source='skill_test.title', read_only=True)
     user_name = serializers.CharField(source='user.get_full_name', read_only=True)
+    user_email = serializers.EmailField(source='user.email', read_only=True)
+    question_activities = SkillTestQuestionActivitySerializer(source='skill_test_question_activities', many=True, read_only=True)
     
     class Meta:
         model = SkillTestSubmission
         fields = [
-            'id', 'skill_test', 'skill_test_title', 'user', 'user_name', 'status',
+            'id', 'skill_test', 'skill_test_title', 'user', 'user_name', 'user_email', 'status',
             'started_at', 'submitted_at', 'completed_at', 'marks',
             'proctoring_events', 'browser_info', 'ip_address', 'user_agent',
+            'question_activities',
             'created_at', 'updated_at',
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']

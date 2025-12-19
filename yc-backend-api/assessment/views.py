@@ -7,12 +7,21 @@ from django.db import models
 from .models import (
     Contest, MockInterview, JobTest, SkillTest,
     ContestSubmission, MockInterviewSubmission, 
-    JobTestSubmission, SkillTestSubmission
+    JobTestSubmission, SkillTestSubmission,
+    SkillTestQuestionActivity
 )
 from .serializers import (
-    ContestSerializer, SkillTestSerializer, MockInterviewSerializer
+    ContestSerializer, SkillTestSerializer, MockInterviewSerializer,
+    SkillTestSubmissionSerializer
 )
+from course.models import Question
+from django.shortcuts import get_object_or_404
+import random
+from course.models import Question
+from django.shortcuts import get_object_or_404
+import random
 from authentication.permissions import IsOwnerOrInstructorOrAdmin
+from .mixins import ProctoringMixin
 
 
 class ContestViewSet(viewsets.ModelViewSet):
@@ -72,9 +81,15 @@ class ContestViewSet(viewsets.ModelViewSet):
         return Response({'status': new_status}, status=status.HTTP_200_OK)
 
 
-class SkillTestViewSet(viewsets.ModelViewSet):
+class SkillTestViewSet(ProctoringMixin, viewsets.ModelViewSet):
     queryset = SkillTest.objects.all()
     serializer_class = SkillTestSerializer
+    
+    # ProctoringMixin Config
+    submission_model = SkillTestSubmission
+    question_activity_model = SkillTestQuestionActivity
+    submission_lookup_field = 'skill_test'
+    submission_related_field = 'skill_test_submission'
     permission_classes = [IsOwnerOrInstructorOrAdmin]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     
@@ -106,6 +121,127 @@ class SkillTestViewSet(viewsets.ModelViewSet):
             
         return qs
 
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def start(self, request, pk=None):
+        skill_test = self.get_object()
+        user = request.user
+        
+        # Check for existing submission
+        submission, created = SkillTestSubmission.objects.get_or_create(
+            skill_test=skill_test,
+            user=user,
+            defaults={'status': SkillTestSubmission.STATUS_STARTED}
+        )
+        
+        # 1. Resolve Questions
+        questions_to_send = []
+        
+        # Option A: Fixed Configuration
+        if skill_test.questions_config:
+            # Expected format: {'mcq_single': [id1, id2], ...}
+            all_ids = []
+            for q_type, ids in skill_test.questions_config.items():
+                if isinstance(ids, list):
+                    all_ids.extend(ids)
+            
+            if all_ids:
+                questions_to_send = list(Question.objects.filter(id__in=all_ids).values(
+                    'id', 'title', 'content', 'type', 'mcq_options', 'marks', 'test_cases_basic'
+                ))
+        
+        # Option B: Random Configuration (Additive)
+        if skill_test.questions_random_config:
+            # Expected format: {'mcq_single': 10, 'coding': 2}
+            
+            # Get IDs already selected to avoid duplicates
+            existing_ids = [q['id'] for q in questions_to_send]
+            
+            for q_type, count in skill_test.questions_random_config.items():
+                if count > 0:
+                    q_filter = Q(type=q_type)
+                    
+                    if skill_test.topic:
+                        # Include questions linked to subtopics of this topic OR directly to the topic
+                        q_filter &= (Q(subtopic__topic=skill_test.topic) | Q(topic=skill_test.topic))
+                    elif skill_test.course:
+                        q_filter &= Q(course=skill_test.course)
+                        
+                    # Fetch candidate questions excluding already selected ones
+                    candidates = list(Question.objects.filter(
+                        q_filter
+                    ).exclude(id__in=existing_ids).values('id', 'title', 'content', 'type', 'mcq_options', 'marks', 'test_cases_basic'))
+                    
+                    if len(candidates) >= count:
+                        selected = random.sample(candidates, count)
+                    else:
+                        selected = candidates # Take all if not enough
+                    
+                    questions_to_send.extend(selected)
+                    
+        # Shuffle final list
+        random.shuffle(questions_to_send)
+        
+        # 2. Return Response
+        return Response({
+            'submission_id': submission.id,
+            'status': submission.status,
+            'duration': skill_test.duration,
+            'questions': questions_to_send
+        })
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def submit(self, request, pk=None):
+        skill_test = self.get_object()
+        submission_id = request.data.get('submission_id')
+        answers = request.data.get('answers', {}) # {'qid': 'answer', ...}
+        
+        submission = get_object_or_404(
+            SkillTestSubmission, 
+            id=submission_id, 
+            user=request.user, 
+            skill_test=skill_test
+        )
+        
+        if submission.status == SkillTestSubmission.STATUS_COMPLETED:
+             return Response({'error': 'Already submitted'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Update Submission
+        submission.status = SkillTestSubmission.STATUS_SUBMITTED
+        submission.submitted_at = timezone.now()
+        submission.answer_data = answers # Save raw answers
+        
+        # Basic Auto-Grading (MCQ only for now)
+        total_score = 0
+        
+        question_ids = answers.keys()
+        db_questions = Question.objects.filter(id__in=question_ids)
+        q_map = {str(q.id): q for q in db_questions}
+        
+        for q_id, user_ans in answers.items():
+            if q_id not in q_map:
+                continue
+            question = q_map[q_id]
+            
+            # MCQ Single Logic
+            if question.type == 'mcq_single':
+                correct_opt = next((opt for opt in question.mcq_options if opt.get('is_correct')), None)
+                if correct_opt and user_ans == correct_opt['text']:
+                    total_score += question.marks
+
+            # MCQ Multiple Logic
+            elif question.type == 'mcq_multiple':
+                 correct_opts = set(opt['text'] for opt in question.mcq_options if opt.get('is_correct'))
+                 user_opts = set(user_ans) if isinstance(user_ans, list) else set([user_ans])
+                 if correct_opts == user_opts:
+                     total_score += question.marks
+        
+        submission.marks = total_score
+        submission.save()
+        
+        return Response({
+            'status': 'submitted',
+            'score': total_score
+        })
 
 class MockInterviewViewSet(viewsets.ModelViewSet):
     queryset = MockInterview.objects.all()
@@ -137,4 +273,21 @@ class MockInterviewViewSet(viewsets.ModelViewSet):
         for obj in qs:
             obj.update_status()
 
+        return qs
+
+    
+
+
+class SkillTestSubmissionViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = SkillTestSubmission.objects.all()
+    serializer_class = SkillTestSubmissionSerializer
+    permission_classes = [IsOwnerOrInstructorOrAdmin]
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ['created_at', 'marks']
+    
+    def get_queryset(self):
+        qs = super().get_queryset()
+        skill_test_id = self.request.query_params.get('skill_test')
+        if skill_test_id:
+            qs = qs.filter(skill_test_id=skill_test_id)
         return qs

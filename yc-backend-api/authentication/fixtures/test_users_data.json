@@ -105,8 +105,8 @@
       }
     },
     {
-      "email": "student1@gmail.com",
-      "username": "student1",
+      "email": "shilpa@gmail.com",
+      "username": "shilpa",
       "first_name": "Shilpa",
       "last_name": "Dora",
       "role": "student",
@@ -118,8 +118,8 @@
       }
     },
     {
-        "email": "student2@gmail.com",
-        "username": "student2",
+        "email": "devendra@gmail.com",
+        "username": "devendra",
         "first_name": "Devendra",
         "last_name": "Dora",
         "role": "student",
@@ -131,10 +131,49 @@
         }
     },
     {
-      "email": "student3@gmail.com",
-      "username": "student3",
+      "email": "rohith@gmail.com",
+      "username": "rohith",
       "first_name": "Rohith",
       "last_name": "Krishna",
+      "role": "student",
+      "password": "student123",
+      "is_staff": false,
+      "is_superuser": false,
+      "profile": {
+        "bio": "Software Engineering student exploring data structures and algorithms."
+      }
+    },
+    {
+      "email": "manikanta@gmail.com",
+      "username": "manikanta",
+      "first_name": "Manikanta",
+      "last_name": "",
+      "role": "student",
+      "password": "student123",
+      "is_staff": false,
+      "is_superuser": false,
+      "profile": {
+        "bio": "Computer Science student interested in web development and programming."
+      }
+    },
+    {
+        "email": "harsha@gmail.com",
+        "username": "harsha",
+        "first_name": "Harsha",
+        "last_name": "",
+        "role": "student",
+        "password": "student123",
+        "is_staff": false,
+        "is_superuser": false,
+        "profile": {
+          "bio": "Computer Science student interested in web development and programming."
+        }
+    },
+    {
+      "email": "vinod@gmail.com",
+      "username": "vinod",
+      "first_name": "Vinod",
+      "last_name": "Kumar",
       "role": "student",
       "password": "student123",
       "is_staff": false,

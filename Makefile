@@ -1,6 +1,3 @@
-# YC Full-Stack Application Commands
-# Run `make help` to see available commands
-
 .PHONY: help dev dev-detached stop restart logs setup clean rebuild
 .PHONY: db-shell db-migrate db-makemigrations db-reset
 .PHONY: backend-shell backend-test backend-format backend-format-fix backend-lint backend-install
@@ -9,23 +6,26 @@
 .PHONY: prod-build prod-up prod-down
 .PHONY: observability-setup observability-start observability-stop observability-logs observability-dashboards
 
-# Default target - show available commands
 help:
 	@echo "YC Full-Stack Application Commands"
 	@echo ""
-	@echo "Development:"
+	@echo "Development (Standard):"
 	@echo "  dev                 Start all services"
 	@echo "  dev-detached        Start all services in background"
 	@echo "  stop                Stop all services"
 	@echo "  restart             Restart all services"
 	@echo "  logs [SERVICE]      View logs (optional service name)"
 	@echo ""
+	@echo "Development (Debug/Observability):"
+	@echo "  debug               Start all services with observability enabled"
+	@echo "  debug-detached      Start all services with observability in background"
+	@echo "  debug-stop          Stop all debug services"
+	@echo "  debug-build         Rebuild and start debug services"
+	@echo ""
 	@echo "Setup and cleanup:"
 	@echo "  setup               Initial project setup"
-	@echo "  setup-testing       Setup test data for local development"
-	@echo "  setup-testing-fresh Setup test data (clear existing data)"
+	@echo "  reload-data          Reset and reload test data"
 	@echo "  clean               Clean up containers and volumes"
-	@echo "  rebuild             Rebuild and restart all services"
 	@echo ""
 	@echo "Database operations:"
 	@echo "  db-shell            Access database shell"
@@ -61,10 +61,8 @@ help:
 	@echo "  lint-all            Lint all code"
 	@echo "  check-all           Run all checks"
 	@echo ""
-	@echo "Observability:"
+	@echo "Observability Utilities:"
 	@echo "  observability-setup Setup observability stack"
-	@echo "  observability-start Start observability services"
-	@echo "  observability-stop  Stop observability services"
 	@echo "  observability-logs  View observability logs"
 	@echo "  observability-dashboards Open dashboards in browser"
 	@echo ""
@@ -73,7 +71,6 @@ help:
 	@echo "  prod-up             Start production services"
 	@echo "  prod-down           Stop production services"
 
-# Development commands
 build:
 	docker compose up --build
 
@@ -89,6 +86,18 @@ stop:
 restart:
 	docker compose restart
 
+debug:
+	docker compose -f docker-compose.yml -f docker-compose.debug.yml up
+
+debug-detached:
+	docker compose -f docker-compose.yml -f docker-compose.debug.yml up --build -d
+
+debug-build:
+	docker compose -f docker-compose.yml -f docker-compose.debug.yml up --build
+
+debug-stop:
+	docker compose -f docker-compose.yml -f docker-compose.debug.yml down
+
 logs:
 	@if [ "$(SERVICE)" = "" ]; then \
 		docker compose logs -f; \
@@ -101,23 +110,41 @@ setup:
 	@echo "Checking dependencies..."
 	@command -v docker >/dev/null 2>&1 || { echo "Docker is required but not installed. Please install Docker first."; exit 1; }
 	@docker compose version >/dev/null 2>&1 || { echo "Docker Compose is required but not installed. Please install Docker Compose first."; exit 1; }
-	@echo "Creating environment files..."
-	@cp yc-backend-api/.env.example yc-backend-api/.env 2>/dev/null || echo "Backend .env already exists"
-	@cp yc-web/.env.example yc-web/.env 2>/dev/null || echo "Frontend .env already exists"
-	docker compose exec backend python manage.py setup_local_testing --clear
-	@echo "Setup complete! Run 'make dev' to start the application."
 
+	@echo "Creating environment files..."
+	@if [ ! -f yc-backend-api/.env ]; then cp yc-backend-api/.env.example yc-backend-api/.env; echo "Created backend .env"; fi
+	@if [ ! -f yc-web/.env ]; then cp yc-web/.env.example yc-web/.env; echo "Created frontend .env"; fi
+	@if [ ! -f yc-code-executor/.env ]; then cp yc-code-executor/.env.example yc-code-executor/.env; echo "Created code-executor .env"; fi
+
+
+	@echo "Building and starting services..."
+	docker compose down -v --remove-orphans
+	docker compose up -d --build --wait
+
+	@echo "Waiting for backend to be ready..."
+	@sleep 5
+
+	@echo "Running initial setup and migrations..."
+	docker compose exec backend python manage.py migrate
+	docker compose exec backend python manage.py setup_local_testing --clear
+	
+	@echo "Setup complete! The application is running."
+	@echo "Frontend: http://localhost:3000"
+	@echo "Backend API: http://localhost:8001"
+	@echo "Run 'make build' if requirements or libraries are updated."
+	@echo "Run 'make logs' to monitor the services."
+	@echo "Run 'make reload-data' to reload test data."
+	@echo "Run 'make run' to start the services."
+
+reload-data:
+	@echo "Resetting and reloading test data..."
+	docker compose exec backend python manage.py setup_local_testing --clear
 
 clean:
 	docker compose down -v --remove-orphans
 	docker system prune -f
 
-rebuild:
-	docker compose down
-	docker compose build --no-cache
-	docker compose up
 
-# Database operations
 db-shell:
 	docker compose exec db psql -U postgres -d yc_app
 
@@ -135,7 +162,6 @@ db-reset:
 	docker compose down -v
 	docker compose up -d db
 
-# Backend commands
 backend-shell:
 	docker compose exec backend python manage.py shell
 
@@ -159,7 +185,6 @@ backend-install:
 	docker compose exec backend pip install $(PKG)
 	docker compose exec backend pip freeze > requirements.txt
 
-# Frontend commands
 frontend-shell:
 	docker compose exec frontend sh
 
@@ -185,7 +210,6 @@ frontend-install:
 	fi
 	docker compose exec frontend npm install $(PKG)
 
-# Code Executor commands
 executor-shell:
 	docker compose exec code-executor sh
 
@@ -195,7 +219,6 @@ executor-test:
 executor-logs:
 	docker compose logs -f code-executor
 
-# Combined operations
 test-all:
 	@echo "Running backend tests..."
 	$(MAKE) backend-test
@@ -222,32 +245,13 @@ check-all:
 	$(MAKE) frontend-lint
 	$(MAKE) test-all
 
-# Production commands
-prod-build:
-	docker compose -f docker-compose.prod.yml build
-
-prod-up:
-	docker compose -f docker-compose.prod.yml up -d
-
-prod-down:
-	docker compose -f docker-compose.prod.yml down
-
-# Observability commands
 observability-setup:
 	@echo "🚀 Setting up observability stack..."
 	./yc-observability/setup.sh
 
-observability-start:
-	@echo "🐳 Starting observability services..."
-	docker compose up -d jaeger otel-collector prometheus grafana
-
-observability-stop:
-	@echo "🛑 Stopping observability services..."
-	docker compose stop jaeger otel-collector prometheus grafana
-
 observability-logs:
 	@echo "📋 Viewing observability logs..."
-	docker compose logs -f jaeger otel-collector prometheus grafana
+	docker compose -f docker-compose.yml -f docker-compose.debug.yml logs -f jaeger otel-collector prometheus grafana
 
 observability-dashboards:
 	@echo "🌐 Opening observability dashboards..."
@@ -265,3 +269,13 @@ observability-dashboards:
 	else \
 		echo "Please open the URLs manually in your browser"; \
 	fi
+
+
+prod-build:
+	docker compose -f docker-compose.prod.yml build
+
+prod-up:
+	docker compose -f docker-compose.prod.yml up -d
+
+prod-down:
+	docker compose -f docker-compose.prod.yml down

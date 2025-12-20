@@ -32,7 +32,7 @@ def setup_telemetry():
     """Initialize OpenTelemetry tracing and metrics"""
     
     # Check if OpenTelemetry is enabled
-    otel_enabled = os.getenv("OTEL_ENABLED", "true").lower() == "true"
+    otel_enabled = os.getenv("OTEL_ENABLED", "false").lower() == "true"
     
     if not otel_enabled:
         logging.info("OpenTelemetry is disabled")
@@ -156,7 +156,7 @@ class TracingMiddleware:
     
     def __init__(self, get_response):
         self.get_response = get_response
-        self.otel_enabled = os.getenv("OTEL_ENABLED", "true").lower() == "true"
+        self.otel_enabled = os.getenv("OTEL_ENABLED", "false").lower() == "true"
         self.tracer = get_tracer(__name__) if self.otel_enabled else None
         
     def __call__(self, request):

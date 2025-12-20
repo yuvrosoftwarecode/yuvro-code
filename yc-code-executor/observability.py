@@ -27,7 +27,7 @@ def setup_telemetry():
     """Initialize OpenTelemetry tracing and metrics"""
     
     # Check if OpenTelemetry is enabled
-    otel_enabled = os.getenv("OTEL_ENABLED", "true").lower() == "true"
+    otel_enabled = os.getenv("OTEL_ENABLED", "false").lower() == "true"
     
     if not otel_enabled:
         logging.info("OpenTelemetry is disabled")
@@ -80,14 +80,14 @@ def setup_telemetry():
 
 def instrument_fastapi_app(app):
     """Instrument FastAPI application"""
-    otel_enabled = os.getenv("OTEL_ENABLED", "true").lower() == "true"
+    otel_enabled = os.getenv("OTEL_ENABLED", "false").lower() == "true"
     if otel_enabled:
         FastAPIInstrumentor.instrument_app(app)
     return app
 
 def get_tracer(name: str):
     """Get a tracer instance"""
-    otel_enabled = os.getenv("OTEL_ENABLED", "true").lower() == "true"
+    otel_enabled = os.getenv("OTEL_ENABLED", "false").lower() == "true"
     if otel_enabled:
         return trace.get_tracer(name)
     else:

@@ -24,6 +24,7 @@ help:
 	@echo ""
 	@echo "Setup and cleanup:"
 	@echo "  setup               Initial project setup"
+	@echo "  reload-data          Reset and reload test data"
 	@echo "  clean               Clean up containers and volumes"
 	@echo ""
 	@echo "Database operations:"
@@ -133,6 +134,10 @@ setup:
 	@echo "Run 'make logs' to monitor the services."
 	@echo "Run 'make build' if requirements or libraries are updated."
 	@echo "Run 'make run' to start the services."
+
+reload-data:
+	@echo "Resetting and reloading test data..."
+	docker compose exec backend python manage.py setup_local_testing --clear
 
 clean:
 	docker compose down -v --remove-orphans

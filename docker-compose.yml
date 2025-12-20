@@ -24,8 +24,7 @@ services:
       - "9001:9001"  # Prometheus metrics
     env_file:
       - ./yc-backend-api/.env
-    environment:
-      - OTEL_ENABLED=false
+
     volumes:
       - ./yc-backend-api:/app
     depends_on:
@@ -46,8 +45,7 @@ services:
       - "9002:9002"  # Prometheus metrics
     env_file:
       - ./yc-code-executor/.env
-    environment:
-      - OTEL_ENABLED=false
+
     volumes:
       - ./yc-code-executor:/app
     healthcheck:
@@ -67,8 +65,7 @@ services:
       - "3000:3000"
     env_file:
       - ./yc-web/.env
-    environment:
-      - VITE_OTEL_ENABLED=false
+
     volumes:
       - ./yc-web:/app
       - /app/node_modules

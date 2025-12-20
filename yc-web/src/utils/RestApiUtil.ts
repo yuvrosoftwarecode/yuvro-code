@@ -1,6 +1,6 @@
 import { trackApiCall } from '../observability/telemetry';
 
-const API_BASE_URL = import.meta.env.BACKEND_API_BASE_URL;
+const API_BASE_URL = import.meta.env.VITE_BACKEND_API_BASE_URL;
 
 export class ApiError extends Error {
     status: number;

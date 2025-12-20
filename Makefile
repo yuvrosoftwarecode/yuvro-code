@@ -131,8 +131,9 @@ setup:
 	@echo "Setup complete! The application is running."
 	@echo "Frontend: http://localhost:3000"
 	@echo "Backend API: http://localhost:8001"
-	@echo "Run 'make logs' to monitor the services."
 	@echo "Run 'make build' if requirements or libraries are updated."
+	@echo "Run 'make logs' to monitor the services."
+	@echo "Run 'make reload-data' to reload test data."
 	@echo "Run 'make run' to start the services."
 
 reload-data:

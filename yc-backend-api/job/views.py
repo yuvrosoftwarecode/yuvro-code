@@ -114,7 +114,7 @@ class JobViewSet(viewsets.ModelViewSet):
         logger.info(f"User {user.username} applying to job: {job.title}")
         
         # Check if user already applied
-        if JobApplication.objects.filter(job=job, applicant=user).exists():
+        if JobApplication.objects.filter(job=job, applicant=user, is_applied=True).exists():
             return Response({
                 'error': 'You have already applied to this job'
             }, status=status.HTTP_400_BAD_REQUEST)
@@ -151,12 +151,12 @@ class JobViewSet(viewsets.ModelViewSet):
         job = self.get_object()
         
         # Check if user has permission to view applications
-        if not request.user.groups.filter(name__in=['recruiter', 'admin', 'instructor']).exists():
+        if not request.user.role in ['recruiter', 'admin', 'instructor']:
             return Response({
                 'error': 'Permission denied'
             }, status=status.HTTP_403_FORBIDDEN)
         
-        applications = JobApplication.objects.filter(job=job).exclude(status='bookmarked').order_by('-applied_at')
+        applications = JobApplication.objects.filter(job=job, is_applied=True).order_by('-applied_at')
         serializer = JobApplicationListSerializer(applications, many=True)
         
         return Response({
@@ -169,7 +169,7 @@ class JobViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def with_applications(self, request):
         """Get jobs with application counts (recruiter only)"""
-        if not request.user.groups.filter(name__in=['recruiter', 'admin', 'instructor']).exists():
+        if not request.user.role in ['recruiter', 'admin', 'instructor']:
             return Response({
                 'error': 'Permission denied'
             }, status=status.HTTP_403_FORBIDDEN)
@@ -185,7 +185,7 @@ class JobApplicationViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         user = self.request.user
-        if user.groups.filter(name__in=['recruiter', 'admin', 'instructor']).exists():
+        if user.role in ['recruiter', 'admin', 'instructor']:
             # Recruiters can see all applications
             return JobApplication.objects.all()
         else:
@@ -199,8 +199,9 @@ class JobApplicationViewSet(viewsets.ModelViewSet):
     def my_applications(self, request):
         """Get current user's job applications"""
         applications = JobApplication.objects.filter(
-            applicant=request.user
-        ).exclude(status='bookmarked').order_by('-applied_at')
+            applicant=request.user,
+            is_applied=True
+        ).order_by('-applied_at')
         serializer = JobApplicationListSerializer(applications, many=True)
         return Response(serializer.data)
     
@@ -209,7 +210,7 @@ class JobApplicationViewSet(viewsets.ModelViewSet):
         """Get current user's bookmarked jobs"""
         bookmarked_apps = JobApplication.objects.filter(
             applicant=request.user, 
-            status='bookmarked'
+            is_bookmarked=True
         ).order_by('-created_at')
         serializer = JobApplicationListSerializer(bookmarked_apps, many=True)
         return Response(serializer.data)
@@ -229,16 +230,22 @@ class JobApplicationViewSet(viewsets.ModelViewSet):
         # Check if record already exists
         existing_app = JobApplication.objects.filter(job=job, applicant=request.user).first()
         if existing_app:
-            if existing_app.status == 'bookmarked':
+            if existing_app.is_bookmarked:
                 return Response({'message': 'Job already bookmarked'}, status=status.HTTP_200_OK)
             else:
-                return Response({'error': 'You have already applied to this job'}, status=status.HTTP_400_BAD_REQUEST)
+                # If it exists but not bookmarked (e.g. applied), we can toggle bookmark on
+                existing_app.is_bookmarked = True
+                existing_app.save()
+                return Response({
+                    'message': 'Job bookmarked successfully',
+                    'application_id': existing_app.id
+                }, status=status.HTTP_200_OK)
         
         # Create new bookmark record
         application = JobApplication.objects.create(
             job=job,
             applicant=request.user,
-            status='bookmarked'
+            is_bookmarked=True
         )
         
         return Response({
@@ -257,9 +264,14 @@ class JobApplicationViewSet(viewsets.ModelViewSet):
             application = JobApplication.objects.get(
                 job_id=job_id,
                 applicant=request.user,
-                status='bookmarked'
+                is_bookmarked=True
             )
-            application.delete()
+            # Just set is_bookmarked to False, don't delete if applied
+            if application.is_applied:
+                application.is_bookmarked = False
+                application.save()
+            else:
+                application.delete()
             return Response({'message': 'Bookmark removed successfully'}, status=status.HTTP_200_OK)
         except JobApplication.DoesNotExist:
             return Response({'error': 'Bookmark not found'}, status=status.HTTP_404_NOT_FOUND)
@@ -283,7 +295,7 @@ class JobApplicationViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['patch'])
     def update_status(self, request, pk=None):
         """Update application status (recruiter only)"""
-        if not request.user.groups.filter(name__in=['recruiter', 'admin', 'instructor']).exists():
+        if not request.user.role in ['recruiter', 'admin', 'instructor']:
             return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
         
         application = self.get_object()

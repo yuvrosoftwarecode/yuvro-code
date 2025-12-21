@@ -82,8 +82,6 @@ class Job(BaseModel):
 
 class JobApplication(BaseTimestampedModel):
     APPLICATION_STATUS_CHOICES = [
-        ('bookmarked', 'Bookmarked'),
-        ('applied', 'Applied'),
         ('screening_test_completed', 'Screening Test Completed'),
         ('under_review', 'Under Review'),
         ('shortlisted', 'Shortlisted'),

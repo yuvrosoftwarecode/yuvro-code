@@ -28,6 +28,7 @@ urlpatterns = [
     path("api/health/", health_check, name="health_check"),
     path("accounts/", include("allauth.urls")),
     path("api/jobs/", include("job.urls")),
+    path("api/candidates/", include("candidate.urls")),
     path("api/", include("assessment.urls")),
 
     path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),

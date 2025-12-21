@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+from django.core.cache import cache
 from .models import Job, Company, JobApplication
 import logging
 
@@ -61,15 +62,18 @@ class JobApplicationSerializer(serializers.ModelSerializer):
     applicant = serializers.StringRelatedField(read_only=True)
     applicant_name = serializers.SerializerMethodField()
     applicant_email = serializers.SerializerMethodField()
+    portfolio_url = serializers.URLField(required=False, allow_blank=True, allow_null=True)
+    expected_salary = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, allow_null=True)
+    available_from = serializers.DateField(required=False, allow_null=True)
     
     class Meta:
         model = JobApplication
         fields = [
             'id', 'job', 'job_id', 'applicant', 'applicant_name', 'applicant_email',
-            'cover_letter', 'resume_file', 'portfolio_url', 'status', 'applied_at',
-            'screening_responses', 'recruiter_notes', 'feedback', 'interview_scheduled_at',
-            'interview_feedback', 'expected_salary', 'expected_currency', 'available_from',
-            'notice_period_days', 'created_at', 'updated_at'
+            'is_bookmarked', 'is_applied', 'cover_letter', 'resume_file', 'portfolio_url', 
+            'status', 'applied_at', 'screening_responses', 'recruiter_notes', 'feedback', 
+            'interview_scheduled_at', 'interview_feedback', 'expected_salary', 
+            'expected_currency', 'available_from', 'notice_period_days', 'created_at', 'updated_at'
         ]
         read_only_fields = ['created_at', 'updated_at', 'applied_at', 'applicant']
     
@@ -81,9 +85,26 @@ class JobApplicationSerializer(serializers.ModelSerializer):
     def get_applicant_email(self, obj):
         return obj.applicant.email
     
+    def validate(self, data):
+        """Validate and clean the application data"""
+        # Convert empty strings to None for optional URL and decimal fields
+        if 'portfolio_url' in data and data['portfolio_url'] == '':
+            data['portfolio_url'] = None
+        if 'expected_salary' in data and not data['expected_salary']:
+            data['expected_salary'] = None
+        if 'available_from' in data and data['available_from'] == '':
+            data['available_from'] = None
+        if 'notice_period_days' in data and data['notice_period_days'] == '':
+            data['notice_period_days'] = None
+            
+        logger.info(f"Validated application data: {data}")
+        return data
+    
     def create(self, validated_data):
         # Set the applicant to the current user
         validated_data['applicant'] = self.context['request'].user
+        
+        logger.info(f"Creating application for user {validated_data['applicant'].username} to job {validated_data['job_id']}")
         
         # Check if user has already interacted with this job
         existing_app = JobApplication.objects.filter(
@@ -92,27 +113,45 @@ class JobApplicationSerializer(serializers.ModelSerializer):
         ).first()
         
         if existing_app:
-            if existing_app.status == 'bookmarked':
-                # Update existing bookmark to applied status
+            logger.info(f"Found existing application: is_applied={existing_app.is_applied}, is_bookmarked={existing_app.is_bookmarked}")
+            if not existing_app.is_applied:
+                # Update existing (e.g. bookmarked) to applied status
                 for key, value in validated_data.items():
                     if key != 'applicant':  # Don't overwrite applicant
                         setattr(existing_app, key, value)
-                existing_app.status = 'applied'
+                existing_app.is_applied = True
                 existing_app.applied_at = timezone.now()
+                # Ensure status is not set to invalid 'bookmarked' value if it was
+                if existing_app.status == 'bookmarked' or existing_app.status is None: 
+                    existing_app.status = 'under_review'
                 existing_app.save()
-                logger.info(f"Updated existing bookmark to application with ID: {existing_app.id}")
+                
+                # Invalidate cache for job application count
+                cache_key = f"job_applications_count_{validated_data['job_id']}"
+                cache.delete(cache_key)
+                
+                logger.info(f"Updated existing record to application with ID: {existing_app.id}, status: {existing_app.status}")
                 return existing_app
             else:
                 raise serializers.ValidationError("You have already applied to this job")
         
-        # Set status to applied for new applications
-        validated_data['status'] = 'applied'
+        # Set is_applied for new applications
+        validated_data['is_applied'] = True
         validated_data['applied_at'] = timezone.now()
+        
+        # Set default status if not provided
+        if 'status' not in validated_data or validated_data['status'] is None:
+            validated_data['status'] = 'under_review'
         
         logger.info(f"Creating job application with data: {validated_data}")
         try:
             application = JobApplication.objects.create(**validated_data)
-            logger.info(f"Job application created successfully with ID: {application.id}")
+            
+            # Invalidate cache for job application count
+            cache_key = f"job_applications_count_{validated_data['job_id']}"
+            cache.delete(cache_key)
+            
+            logger.info(f"Job application created successfully with ID: {application.id}, status: {application.status}")
             return application
         except Exception as e:
             logger.error(f"Error creating job application: {str(e)}")
@@ -152,8 +191,16 @@ class JobWithApplicationsSerializer(JobSerializer):
         fields = JobSerializer.Meta.fields + ['applications_count', 'recent_applications']
     
     def get_applications_count(self, obj):
-        return obj.applications.exclude(status='bookmarked').count()
+        # Use caching for better performance
+        cache_key = f"job_applications_count_{obj.id}"
+        count = cache.get(cache_key)
+        
+        if count is None:
+            count = obj.applications.filter(is_applied=True).count()
+            cache.set(cache_key, count, timeout=300)  # Cache for 5 minutes
+            
+        return count
     
     def get_recent_applications(self, obj):
-        recent_apps = obj.applications.exclude(status='bookmarked').order_by('-applied_at')[:5]
+        recent_apps = obj.applications.filter(is_applied=True).order_by('-applied_at')[:5]
         return JobApplicationListSerializer(recent_apps, many=True).data

@@ -19,12 +19,4 @@ def save_user_profile(sender, instance, **kwargs):
         instance.profile.save()
 
 
-@receiver(post_save, sender=User)
-def assign_user_group(sender, instance, created, **kwargs):
-    from django.contrib.auth.models import Group
-    
-    if instance.role:
-        group, _ = Group.objects.get_or_create(name=instance.role)
-        if not instance.groups.filter(name=instance.role).exists():
-            instance.groups.add(group)
 

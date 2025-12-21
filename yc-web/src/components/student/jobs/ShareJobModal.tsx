@@ -22,7 +22,7 @@ const ShareJobModal: React.FC<ShareJobModalProps> = ({ isOpen, onClose, job }) =
       toast.success('Job link copied to clipboard!', {
         description: 'Share this link with others so they can apply to this job.',
       });
-      onClose(); // Close modal after copying
+      onClose(); 
     } catch (error) {
       toast.error('Failed to copy link to clipboard');
     }
@@ -89,7 +89,6 @@ const ShareJobModal: React.FC<ShareJobModalProps> = ({ isOpen, onClose, job }) =
         className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-900">Share Job</h2>
           <button
@@ -100,7 +99,6 @@ const ShareJobModal: React.FC<ShareJobModalProps> = ({ isOpen, onClose, job }) =
           </button>
         </div>
 
-        {/* Job Preview */}
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-start gap-3">
             <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-semibold text-sm">
@@ -117,11 +115,9 @@ const ShareJobModal: React.FC<ShareJobModalProps> = ({ isOpen, onClose, job }) =
           </div>
         </div>
 
-        {/* Share Options */}
         <div className="p-6">
           <h3 className="text-sm font-medium text-gray-900 mb-4">Share via</h3>
           
-          {/* Copy Link */}
           <button
             onClick={handleCopyLink}
             className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors mb-2"
@@ -135,7 +131,6 @@ const ShareJobModal: React.FC<ShareJobModalProps> = ({ isOpen, onClose, job }) =
             </div>
           </button>
 
-          {/* WhatsApp */}
           <button
             onClick={handleWhatsAppShare}
             className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors mb-2"
@@ -149,7 +144,6 @@ const ShareJobModal: React.FC<ShareJobModalProps> = ({ isOpen, onClose, job }) =
             </div>
           </button>
 
-          {/* LinkedIn */}
           <button
             onClick={handleLinkedInShare}
             className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors mb-2"
@@ -163,7 +157,6 @@ const ShareJobModal: React.FC<ShareJobModalProps> = ({ isOpen, onClose, job }) =
             </div>
           </button>
 
-          {/* Facebook */}
           <button
             onClick={handleFacebookShare}
             className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors mb-2"
@@ -177,7 +170,6 @@ const ShareJobModal: React.FC<ShareJobModalProps> = ({ isOpen, onClose, job }) =
             </div>
           </button>
 
-          {/* Telegram */}
           <button
             onClick={handleTelegramShare}
             className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors mb-2"
@@ -191,7 +183,6 @@ const ShareJobModal: React.FC<ShareJobModalProps> = ({ isOpen, onClose, job }) =
             </div>
           </button>
 
-          {/* Email */}
           <button
             onClick={handleEmailShare}
             className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors mb-2"
@@ -206,7 +197,6 @@ const ShareJobModal: React.FC<ShareJobModalProps> = ({ isOpen, onClose, job }) =
           </button>
         </div>
 
-        {/* URL Display */}
         <div className="px-6 pb-6">
           <div className="bg-gray-50 rounded-lg p-3 border">
             <div className="flex items-center gap-2 mb-2">

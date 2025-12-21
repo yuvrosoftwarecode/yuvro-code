@@ -87,7 +87,6 @@ class JobApplicationSerializer(serializers.ModelSerializer):
     
     def validate(self, data):
         """Validate and clean the application data"""
-        # Convert empty strings to None for optional URL and decimal fields
         if 'portfolio_url' in data and data['portfolio_url'] == '':
             data['portfolio_url'] = None
         if 'expected_salary' in data and not data['expected_salary']:
@@ -101,12 +100,10 @@ class JobApplicationSerializer(serializers.ModelSerializer):
         return data
     
     def create(self, validated_data):
-        # Set the applicant to the current user
         validated_data['applicant'] = self.context['request'].user
         
         logger.info(f"Creating application for user {validated_data['applicant'].username} to job {validated_data['job_id']}")
         
-        # Check if user has already interacted with this job
         existing_app = JobApplication.objects.filter(
             job_id=validated_data['job_id'],
             applicant=validated_data['applicant']
@@ -115,18 +112,15 @@ class JobApplicationSerializer(serializers.ModelSerializer):
         if existing_app:
             logger.info(f"Found existing application: is_applied={existing_app.is_applied}, is_bookmarked={existing_app.is_bookmarked}")
             if not existing_app.is_applied:
-                # Update existing (e.g. bookmarked) to applied status
                 for key, value in validated_data.items():
-                    if key != 'applicant':  # Don't overwrite applicant
+                    if key != 'applicant':  
                         setattr(existing_app, key, value)
                 existing_app.is_applied = True
                 existing_app.applied_at = timezone.now()
-                # Ensure status is not set to invalid 'bookmarked' value if it was
                 if existing_app.status == 'bookmarked' or existing_app.status is None: 
                     existing_app.status = 'under_review'
                 existing_app.save()
                 
-                # Invalidate cache for job application count
                 cache_key = f"job_applications_count_{validated_data['job_id']}"
                 cache.delete(cache_key)
                 
@@ -135,11 +129,9 @@ class JobApplicationSerializer(serializers.ModelSerializer):
             else:
                 raise serializers.ValidationError("You have already applied to this job")
         
-        # Set is_applied for new applications
         validated_data['is_applied'] = True
         validated_data['applied_at'] = timezone.now()
         
-        # Set default status if not provided
         if 'status' not in validated_data or validated_data['status'] is None:
             validated_data['status'] = 'under_review'
         
@@ -147,7 +139,6 @@ class JobApplicationSerializer(serializers.ModelSerializer):
         try:
             application = JobApplication.objects.create(**validated_data)
             
-            # Invalidate cache for job application count
             cache_key = f"job_applications_count_{validated_data['job_id']}"
             cache.delete(cache_key)
             
@@ -191,7 +182,6 @@ class JobWithApplicationsSerializer(JobSerializer):
         fields = JobSerializer.Meta.fields + ['applications_count', 'recent_applications']
     
     def get_applications_count(self, obj):
-        # Use caching for better performance
         cache_key = f"job_applications_count_{obj.id}"
         count = cache.get(cache_key)
         

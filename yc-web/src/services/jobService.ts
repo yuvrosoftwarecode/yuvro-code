@@ -65,7 +65,7 @@ export const fetchJobs = async (): Promise<Job[]> => {
 };
 
 export interface CreateJobData {
-    company_id: string; // Company ID for selection
+    company_id: string;
     title: string;
     description: string;
     employment_type: 'full-time' | 'part-time' | 'contract' | 'internship';
@@ -102,7 +102,7 @@ export interface JobFilterData {
     experience_min_years?: number;
     experience_max_years?: number;
     is_remote?: boolean;
-    company?: number; // Company ID for filtering
+    company?: number; 
     skills?: string[];
     min_salary?: number;
     max_salary?: number;
@@ -117,7 +117,6 @@ export const jobService = {
     },
 
     async getJob(jobId: string): Promise<Job> {
-        // Use public API for job details so it works for sharing
         return restApiUtil.get(`/jobs/${jobId}/`);
     },
 
@@ -141,7 +140,6 @@ export const jobService = {
         return restApiAuthUtil.post(`/jobs/${jobId}/apply/`, applicationData || {});
     },
 
-    // Company related methods
     async getAllCompanies(): Promise<Company[]> {
         return restApiAuthUtil.get('/jobs/companies/');
     },
@@ -162,7 +160,6 @@ export const jobService = {
         return restApiAuthUtil.delete(`/jobs/companies/${companyId}/`);
     },
 
-    // Question management methods (similar to contest service)
     async getQuestion(questionId: number): Promise<Question> {
         return restApiAuthUtil.get(`/course/questions/${questionId}/`);
     },
@@ -262,7 +259,6 @@ export interface JobWithApplications extends Job {
     recent_applications: JobApplication[];
 }
 
-// Add application-related methods to jobService
 export const applicationService = {
     async getMyApplications(): Promise<JobApplicationListItem[]> {
         return restApiAuthUtil.get('/jobs/applications/my-applications/');

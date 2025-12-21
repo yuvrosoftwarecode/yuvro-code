@@ -49,20 +49,13 @@ export const useRealtimeJobUpdates = ({
   }, [onJobApplicationCountUpdate, onJobUpdate]);
 
   useEffect(() => {
-    if (!enabled) return;
-
-    // For now, we'll use polling as a fallback until WebSocket is implemented
-    // In a real implementation, you would connect to a WebSocket here
+    if (!enabled) return; 
     
-    // Simulate real-time updates with polling every 30 seconds
     const pollInterval = setInterval(() => {
-      // This would be replaced with actual WebSocket connection
-      // For now, we'll trigger a refresh event
       const event = new CustomEvent('jobDataRefresh');
       window.dispatchEvent(event);
-    }, 30000); // Poll every 30 seconds
+    }, 30000); 
 
-    // Listen for custom events (for immediate updates)
     const handleCustomEvent = (event: CustomEvent<JobUpdateEvent>) => {
       handleJobUpdate(event.detail);
     };
@@ -75,7 +68,6 @@ export const useRealtimeJobUpdates = ({
     };
   }, [enabled, handleJobUpdate]);
 
-  // Function to manually trigger a job update event
   const triggerJobUpdate = useCallback((event: JobUpdateEvent) => {
     const customEvent = new CustomEvent('jobUpdate', { detail: event });
     window.dispatchEvent(customEvent);

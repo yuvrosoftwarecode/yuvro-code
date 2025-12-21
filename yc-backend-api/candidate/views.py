@@ -20,20 +20,15 @@ logger = logging.getLogger(__name__)
 
 
 class CandidateViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet for candidate management and search
-    """
+
     queryset = CandidateProfile.objects.all()
     serializer_class = CandidateProfileSerializer
     permission_classes = [permissions.IsAuthenticated]
     
     def get_queryset(self):
-        """
-        Filter candidates based on user role
-        """
+
         user = self.request.user
         if user.role in ['recruiter', 'admin', 'instructor']:
-            # Recruiters can see all active candidates
             return CandidateProfile.objects.filter(
                 is_actively_looking=True,
                 user__is_active=True
@@ -44,21 +39,16 @@ class CandidateViewSet(viewsets.ModelViewSet):
                 'profile__projects'
             )
         else:
-            # Students can only see their own profile
             return CandidateProfile.objects.filter(user=user)
     
     @action(detail=False, methods=['post'])
     def search(self, request):
-        """
-        Advanced candidate search with filters
-        """
-        # Check permissions
+ 
         if not request.user.role in ['recruiter', 'admin', 'instructor']:
             return Response({
                 'error': 'Permission denied. Only recruiters can search candidates.'
             }, status=status.HTTP_403_FORBIDDEN)
         
-        # Validate search parameters
         search_serializer = CandidateSearchSerializer(data=request.data)
         if not search_serializer.is_valid():
             return Response(search_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -66,26 +56,20 @@ class CandidateViewSet(viewsets.ModelViewSet):
         filters = search_serializer.validated_data
         logger.info(f"Candidate search by {request.user.email} with filters: {filters}")
         
-        # Start with base queryset
         queryset = self.get_queryset()
         
-        # Apply filters
         queryset = self._apply_search_filters(queryset, filters)
         
-        # Pagination
         page = filters.get('page', 1)
         page_size = filters.get('page_size', 20)
         
         paginator = Paginator(queryset, page_size)
         page_obj = paginator.get_page(page)
         
-        # Serialize results
         candidates_serializer = CandidateProfileSerializer(page_obj.object_list, many=True)
         
-        # Log search
         self._log_search(request.user, filters, paginator.count)
         
-        # Prepare response
         result_data = {
             'candidates': candidates_serializer.data,
             'total_count': paginator.count,
@@ -103,7 +87,6 @@ class CandidateViewSet(viewsets.ModelViewSet):
         """
         Apply search filters to queryset
         """
-        # Skills and keywords
         skills = filters.get('skills', '').strip()
         keywords = filters.get('keywords', '').strip()
         
@@ -127,7 +110,6 @@ class CandidateViewSet(viewsets.ModelViewSet):
                     )
                 queryset = queryset.filter(skill_q).distinct()
         
-        # Experience range
         experience_from = filters.get('experience_from')
         experience_to = filters.get('experience_to')
         
@@ -141,7 +123,6 @@ class CandidateViewSet(viewsets.ModelViewSet):
                 total_experience_years__lte=experience_to
             )
         
-        # Location
         location = filters.get('location', '').strip()
         if location:
             queryset = queryset.filter(
@@ -149,7 +130,6 @@ class CandidateViewSet(viewsets.ModelViewSet):
                 Q(preferred_locations__icontains=location)
             )
         
-        # CTC Range
         ctc_from = filters.get('ctc_from')
         ctc_to = filters.get('ctc_to')
         
@@ -159,22 +139,18 @@ class CandidateViewSet(viewsets.ModelViewSet):
         if ctc_to is not None:
             queryset = queryset.filter(expected_ctc__lte=ctc_to)
         
-        # Notice Period
         notice_periods = filters.get('notice_period', [])
         if notice_periods:
             queryset = queryset.filter(notice_period__in=notice_periods)
         
-        # Education
         education = filters.get('education')
         if education:
             queryset = queryset.filter(highest_education=education)
         
-        # Domain
         domain = filters.get('domain', '').strip()
         if domain:
             queryset = queryset.filter(domain__icontains=domain)
         
-        # Employment Type
         employment_types = filters.get('employment_type', [])
         if employment_types:
             emp_q = Q()
@@ -182,12 +158,10 @@ class CandidateViewSet(viewsets.ModelViewSet):
                 emp_q |= Q(preferred_employment_types__icontains=emp_type)
             queryset = queryset.filter(emp_q)
         
-        # Company Type
         company_type = filters.get('company_type')
         if company_type:
             queryset = queryset.filter(preferred_company_types__icontains=company_type)
         
-        # Activity (active in last N days)
         active_in_days = filters.get('active_in_days')
         if active_in_days:
             cutoff_date = timezone.now() - timedelta(days=active_in_days)
@@ -218,7 +192,6 @@ class CandidateViewSet(viewsets.ModelViewSet):
                 'error': 'Permission denied'
             }, status=status.HTTP_403_FORBIDDEN)
         
-        # Get stats for the last 30 days
         thirty_days_ago = timezone.now() - timedelta(days=30)
         
         stats = {
@@ -241,15 +214,12 @@ class CandidateViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def filter_options(self, request):
-        """
-        Get available filter options for the search form
-        """
+
         if not request.user.role in ['recruiter', 'admin', 'instructor']:
             return Response({
                 'error': 'Permission denied'
             }, status=status.HTTP_403_FORBIDDEN)
         
-        # Get unique values from database for dropdowns
         options = {
             'notice_periods': [
                 {'value': choice[0], 'label': choice[1]} 

@@ -20,7 +20,6 @@ export const useJobApplications = () => {
     try {
       const applications = await jobApplicationService.getMyApplications();
       setMyApplications(applications || []);
-      // Extract job IDs from applications that are applied (is_applied = true)
       const appliedJobIds = new Set(
         applications?.filter(app => app.is_applied)
           .map(app => app.job?.id)
@@ -36,15 +35,14 @@ export const useJobApplications = () => {
   const fetchBookmarks = async () => {
     try {
       const bookmarkedApps = await jobApplicationService.getBookmarkedJobs();
-      console.log('Fetched bookmarks:', bookmarkedApps); // Debug log
+      console.log('Fetched bookmarks:', bookmarkedApps); 
       setBookmarks(bookmarkedApps || []);
-      // Extract job IDs from bookmarked applications (is_bookmarked = true)
       const bookmarkedJobIds = new Set(
         bookmarkedApps?.filter(app => app.is_bookmarked)
           .map(app => app.job?.id)
           .filter(Boolean) || []
       );
-      console.log('Bookmarked job IDs:', Array.from(bookmarkedJobIds)); // Debug log
+      console.log('Bookmarked job IDs:', Array.from(bookmarkedJobIds)); 
       setBookmarkedJobs(bookmarkedJobIds);
     } catch (error) {
       console.error('Error fetching bookmarks:', error);
@@ -57,7 +55,6 @@ export const useJobApplications = () => {
       const status = await jobApplicationService.getUserJobStatus();
       setUserJobStatus(status || {});
       
-      // Update local state based on the fetched status
       const bookmarkedJobIds = new Set<string>();
       const appliedJobIds = new Set<string>();
       
@@ -81,16 +78,12 @@ export const useJobApplications = () => {
   };
 
   const handleBookmarkJob = async (jobId: string) => {
-    // Prevent concurrent ops on same job
     if (bookmarkLoading.has(jobId)) return;
 
-    // Mark loading
     setBookmarkLoading(prev => new Set(prev).add(jobId));
 
-    // Optimistic update: toggle locally immediately, call API, rollback on error
     const wasBookmarked = bookmarkedJobs.has(jobId);
 
-    // Apply optimistic local update
     setBookmarkedJobs(prev => {
       const newSet = new Set(prev);
       if (wasBookmarked) newSet.delete(jobId);
@@ -98,7 +91,6 @@ export const useJobApplications = () => {
       return newSet;
     });
 
-    // Update user job status optimistically
     setUserJobStatus(prev => ({
       ...prev,
       [jobId]: {
@@ -107,7 +99,6 @@ export const useJobApplications = () => {
       }
     }));
 
-    // Update bookmarks array optimistically for immediate UI feedback
     if (wasBookmarked) {
       setBookmarks(prev => prev.filter(bookmark => bookmark.job.id !== jobId));
     }
@@ -127,23 +118,18 @@ export const useJobApplications = () => {
         });
       }
 
-      // Refresh all data to keep everything in sync
       await Promise.all([fetchBookmarks(), fetchMyApplications(), fetchUserJobStatus()]);
     } catch (error) {
-      // Rollback optimistic changes
       setBookmarkedJobs(prev => {
         const newSet = new Set(prev);
         if (wasBookmarked) {
-          // we attempted to remove, so re-add on failure
           newSet.add(jobId);
         } else {
-          // we attempted to add, so remove on failure
           newSet.delete(jobId);
         }
         return newSet;
       });
 
-      // Rollback user job status
       setUserJobStatus(prev => ({
         ...prev,
         [jobId]: {
@@ -152,9 +138,8 @@ export const useJobApplications = () => {
         }
       }));
 
-      // Rollback bookmarks array
       if (!wasBookmarked) {
-        await fetchBookmarks(); // Refresh to get correct state
+        await fetchBookmarks(); 
       }
 
       console.error('Error bookmarking job:', error);
@@ -163,7 +148,6 @@ export const useJobApplications = () => {
         duration: 4000,
       });
     } finally {
-      // Clear loading
       setBookmarkLoading(prev => {
         const newSet = new Set(prev);
         newSet.delete(jobId);
@@ -177,7 +161,6 @@ export const useJobApplications = () => {
       setLoading(true);
       await jobApplicationService.applyToJob(applicationData);
       
-      // Update local state immediately for better UX
       setAppliedJobs(prev => new Set(prev).add(applicationData.job_id));
       setUserJobStatus(prev => ({
         ...prev,
@@ -187,7 +170,6 @@ export const useJobApplications = () => {
         }
       }));
       
-      // Trigger job update event for real-time sync
       const event = new CustomEvent('jobUpdate', {
         detail: {
           type: 'job_application_created',
@@ -199,16 +181,13 @@ export const useJobApplications = () => {
       });
       window.dispatchEvent(event);
       
-      // Also trigger a general refresh event
       window.dispatchEvent(new CustomEvent('jobDataRefresh'));
       
-      // Refresh all data to keep everything in sync
       await Promise.all([fetchMyApplications(), fetchBookmarks(), fetchUserJobStatus()]);
       toast.success('Application submitted successfully');
     } catch (error: any) {
       console.error('Error applying to job:', error);
       
-      // Rollback optimistic update
       setAppliedJobs(prev => {
         const newSet = new Set(prev);
         newSet.delete(applicationData.job_id);
@@ -222,11 +201,9 @@ export const useJobApplications = () => {
         }
       }));
       
-      // Extract detailed error message
       let errorMessage = 'Failed to submit application';
       if (error?.response?.data) {
         const data = error.response.data;
-        // Handle various error response formats
         if (typeof data === 'string') {
           errorMessage = data;
         } else if (data.error) {
@@ -236,7 +213,6 @@ export const useJobApplications = () => {
         } else if (data.message) {
           errorMessage = data.message;
         } else if (typeof data === 'object') {
-          // Try to extract first field error
           const firstError = Object.values(data)[0];
           if (Array.isArray(firstError)) {
             errorMessage = firstError[0] as string;

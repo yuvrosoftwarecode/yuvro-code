@@ -19,7 +19,6 @@ const ApplicationNotificationCenter: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Listen for new application events
     const handleJobUpdate = (event: CustomEvent) => {
       const { type, job_id, data } = event.detail;
       
@@ -33,10 +32,9 @@ const ApplicationNotificationCenter: React.FC = () => {
           read: false
         };
         
-        setNotifications(prev => [newNotification, ...prev.slice(0, 9)]); // Keep only 10 notifications
+        setNotifications(prev => [newNotification, ...prev.slice(0, 9)]); 
         setUnreadCount(prev => prev + 1);
         
-        // Show toast notification
         toast.success('New Application Received!', {
           description: `${newNotification.applicantName} applied for ${newNotification.jobTitle}`,
           action: {
@@ -85,7 +83,6 @@ const ApplicationNotificationCenter: React.FC = () => {
 
   return (
     <div className="relative">
-      {/* Notification Bell */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"

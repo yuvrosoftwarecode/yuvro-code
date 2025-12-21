@@ -40,14 +40,12 @@ const BookmarkButton: React.FC<BookmarkButtonProps> = ({
       `}
       title={isBookmarked ? 'Remove from bookmarks' : 'Save to bookmarks'}
     >
-      {/* Loading spinner */}
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
         </div>
       )}
       
-      {/* Bookmark icon */}
       <BookmarkIcon 
         className={`
           h-4 w-4 transition-all duration-200
@@ -56,7 +54,6 @@ const BookmarkButton: React.FC<BookmarkButtonProps> = ({
         `} 
       />
       
-      {/* Success animation */}
       {isAnimating && (
         <div className="absolute -top-1 -right-1">
           <Heart className="h-3 w-3 text-red-500 animate-ping" />

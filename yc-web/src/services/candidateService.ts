@@ -122,37 +122,22 @@ export interface FilterOptions {
 }
 
 export const candidateService = {
-  /**
-   * Search candidates with filters
-   */
   async searchCandidates(filters: CandidateSearchFilters): Promise<CandidateSearchResult> {
     return restApiAuthUtil.post('/candidates/search/', filters);
   },
 
-  /**
-   * Get candidate statistics
-   */
   async getStats(): Promise<CandidateStats> {
     return restApiAuthUtil.get('/candidates/stats/');
   },
 
-  /**
-   * Get filter options for search form
-   */
   async getFilterOptions(): Promise<FilterOptions> {
     return restApiAuthUtil.get('/candidates/filter-options/');
   },
 
-  /**
-   * Get candidate by ID
-   */
   async getCandidate(candidateId: string): Promise<Candidate> {
     return restApiAuthUtil.get(`/candidates/${candidateId}/`);
   },
 
-  /**
-   * Get all candidates (list view)
-   */
   async getAllCandidates(): Promise<Candidate[]> {
     return restApiAuthUtil.get('/candidates/');
   }

@@ -14,7 +14,6 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         self.stdout.write('Creating sample candidates...')
         
-        # Sample data
         sample_candidates = [
             {
                 'email': 'john.doe@example.com',
@@ -176,7 +175,6 @@ class Command(BaseCommand):
         created_count = 0
         for candidate_data in sample_candidates:
             try:
-                # Create or get user
                 user, user_created = User.objects.get_or_create(
                     email=candidate_data['email'],
                     defaults={
@@ -187,13 +185,11 @@ class Command(BaseCommand):
                     }
                 )
 
-                # Create or get profile
                 profile, profile_created = Profile.objects.get_or_create(
                     user=user,
                     defaults=candidate_data['profile_data']
                 )
 
-                # Create or get candidate profile
                 candidate_profile, candidate_created = CandidateProfile.objects.get_or_create(
                     user=user,
                     defaults={
@@ -202,7 +198,6 @@ class Command(BaseCommand):
                     }
                 )
 
-                # Add skills
                 for skill_data in candidate_data['skills']:
                     CandidateSkill.objects.get_or_create(
                         candidate=candidate_profile,

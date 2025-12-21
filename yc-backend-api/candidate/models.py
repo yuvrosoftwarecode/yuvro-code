@@ -7,9 +7,7 @@ User = get_user_model()
 
 
 class CandidateProfile(models.Model):
-    """
-    Extended candidate profile for job search functionality
-    """
+
     EMPLOYMENT_TYPE_CHOICES = [
         ('full_time', 'Full-Time'),
         ('part_time', 'Part-Time'),
@@ -46,38 +44,29 @@ class CandidateProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='candidate_profile')
     profile = models.OneToOneField(Profile, on_delete=models.CASCADE, related_name='candidate_profile')
     
-    # Job search preferences
     current_ctc = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     expected_ctc = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     currency = models.CharField(max_length=3, default='INR')
     
-    # Experience details
     total_experience_years = models.IntegerField(default=0)
     total_experience_months = models.IntegerField(default=0)
     
-    # Availability
     notice_period = models.CharField(max_length=20, choices=NOTICE_PERIOD_CHOICES, default='30_days')
     available_from = models.DateField(null=True, blank=True)
     
-    # Preferences
-    preferred_employment_types = models.JSONField(default=list)  # List of employment types
-    preferred_locations = models.JSONField(default=list)  # List of preferred locations
+    preferred_employment_types = models.JSONField(default=list)  
+    preferred_locations = models.JSONField(default=list)  
     open_to_remote = models.BooleanField(default=True)
     
-    # Education
     highest_education = models.CharField(max_length=20, choices=EDUCATION_LEVEL_CHOICES, null=True, blank=True)
     
-    # Domain/Industry
     domain = models.CharField(max_length=100, null=True, blank=True)
     
-    # Company preferences
     preferred_company_types = models.JSONField(default=list)
     
-    # Activity tracking
     last_active = models.DateTimeField(auto_now=True)
     is_actively_looking = models.BooleanField(default=True)
     
-    # Resume
     resume_file = models.URLField(null=True, blank=True)
     
     created_at = models.DateTimeField(auto_now_add=True)

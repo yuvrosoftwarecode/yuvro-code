@@ -6,12 +6,14 @@ export interface JobApplication {
     job: Job;
     job_id?: string;
     applicant: string;
-    applicant_name: string;
-    applicant_email: string;
+    applicant_name?: string;
+    applicant_email?: string;
+    is_bookmarked: boolean;
+    is_applied: boolean;
     cover_letter?: string;
     resume_file?: string;
     portfolio_url?: string;
-    status: 'bookmarked' | 'applied' | 'under_review' | 'screening_test_completed' | 'shortlisted' | 'interview_scheduled' | 'interviewed' | 'selected' | 'rejected' | 'withdrawn';
+    status?: 'under_review' | 'screening_test_completed' | 'shortlisted' | 'interview_scheduled' | 'interviewed' | 'selected' | 'rejected' | 'withdrawn';
     applied_at?: string;
     screening_responses?: any;
     recruiter_notes?: string;

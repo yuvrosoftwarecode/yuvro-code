@@ -1,4 +1,5 @@
 import restApiAuthUtil from '../utils/RestApiAuthUtil';
+import restApiUtil from '../utils/RestApiUtil';
 
 export interface Job {
     id: string;
@@ -116,7 +117,8 @@ export const jobService = {
     },
 
     async getJob(jobId: string): Promise<Job> {
-        return restApiAuthUtil.get(`/jobs/${jobId}/`);
+        // Use public API for job details so it works for sharing
+        return restApiUtil.get(`/jobs/${jobId}/`);
     },
 
     async createJob(data: CreateJobData): Promise<Job> {
@@ -213,10 +215,12 @@ export interface JobApplication {
     applicant: string;
     applicant_name: string;
     applicant_email: string;
+    is_bookmarked: boolean;
+    is_applied: boolean;
     cover_letter?: string;
     resume_file?: string;
     portfolio_url?: string;
-    status: 'bookmarked' | 'applied' | 'under_review' | 'screening_test_completed' | 'shortlisted' | 'interview_scheduled' | 'interviewed' | 'selected' | 'rejected' | 'withdrawn';
+    status: 'under_review' | 'screening_test_completed' | 'shortlisted' | 'interview_scheduled' | 'interviewed' | 'selected' | 'rejected' | 'withdrawn';
     applied_at?: string;
     screening_responses?: any;
     recruiter_notes?: string;
@@ -236,7 +240,7 @@ export interface JobApplicationListItem {
     applicant_name: string;
     applicant_email: string;
     job: Job;
-    status: 'bookmarked' | 'applied' | 'under_review' | 'screening_test_completed' | 'shortlisted' | 'interview_scheduled' | 'interviewed' | 'selected' | 'rejected' | 'withdrawn';
+    status: 'under_review' | 'screening_test_completed' | 'shortlisted' | 'interview_scheduled' | 'interviewed' | 'selected' | 'rejected' | 'withdrawn';
     applied_at?: string;
     expected_salary?: number;
     expected_currency?: string;

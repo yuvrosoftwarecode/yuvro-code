@@ -19,7 +19,7 @@ const ApplyJobDialog: React.FC<ApplyJobDialogProps> = ({ isOpen, onClose, job, o
     cover_letter: '',
     portfolio_url: '',
     expected_salary: undefined,
-    expected_currency: 'IND',
+    expected_currency: 'INR',
     available_from: '',
     notice_period_days: undefined
   });
@@ -47,7 +47,7 @@ const ApplyJobDialog: React.FC<ApplyJobDialogProps> = ({ isOpen, onClose, job, o
         cover_letter: '',
         portfolio_url: '',
         expected_salary: undefined,
-        expected_currency: 'IND',
+        expected_currency: 'INR',
         available_from: '',
         notice_period_days: undefined
       });

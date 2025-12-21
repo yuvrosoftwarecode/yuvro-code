@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Filter, BookmarkIcon } from 'lucide-react';
 import Navigation from '@/components/common/Navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -41,6 +41,8 @@ const Jobs = () => {
     bookmarks,
     bookmarkedJobs,
     appliedJobs,
+    userJobStatus,
+    bookmarkLoading,
     handleBookmarkJob,
     handleApplyToJob
   } = useJobApplications();
@@ -357,16 +359,33 @@ const Jobs = () => {
 
                 {/* All Jobs Tab */}
                 <TabsContent value="all" className="space-y-4">
-                  {filteredJobs.map((job) => (
-                    <JobCard 
-                      key={job.id} 
-                      job={job} 
-                      isBookmarked={bookmarkedJobs.has(job.id)}
-                      isApplied={appliedJobs.has(job.id)}
-                      onBookmark={handleBookmarkJob}
-                      onApply={handleApplyClick}
-                    />
-                  ))}
+                  {filteredJobs.map((job) => {
+                    const jobStatus = userJobStatus[job.id] || { is_bookmarked: false, is_applied: false };
+                    const isBookmarked = jobStatus.is_bookmarked || bookmarkedJobs.has(job.id);
+                    const isApplied = jobStatus.is_applied || appliedJobs.has(job.id);
+                    
+                    return (
+                      <div key={job.id} className="relative">
+                        {/* Bookmarked indicator for recently bookmarked jobs */}
+                        {isBookmarked && (
+                          <div className="absolute top-4 right-4 z-10">
+                            <div className="bg-blue-500 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 animate-pulse">
+                              <BookmarkIcon className="h-3 w-3 fill-current" />
+                              Saved
+                            </div>
+                          </div>
+                        )}
+                        <JobCard 
+                          job={job} 
+                          isBookmarked={isBookmarked}
+                          isApplied={isApplied}
+                          onBookmark={handleBookmarkJob}
+                          onApply={handleApplyClick}
+                          bookmarkLoading={bookmarkLoading.has(job.id)}
+                        />
+                      </div>
+                    );
+                  })}
                   {filteredJobs.length === 0 && !loading && (
                     <EmptyState 
                       title="No jobs found"
@@ -380,16 +399,25 @@ const Jobs = () => {
                 {/* Bookmarks Tab */}
                 <TabsContent value="bookmarks" className="space-y-4">
                   {bookmarks.map((application) => (
-                    <JobCard 
-                      key={application.id} 
-                      job={application.job} 
-                      isBookmarked={application.status === 'bookmarked'}
-                      isApplied={application.status !== 'bookmarked'}
-                      onBookmark={handleBookmarkJob}
-                      onApply={handleApplyClick}
-                      showBookmarkDate={true}
-                      bookmarkDate={application.created_at}
-                    />
+                    <div key={application.id} className="relative">
+                      {/* Bookmarked indicator */}
+                      <div className="absolute top-4 right-4 z-10">
+                        <div className="bg-blue-500 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
+                          <BookmarkIcon className="h-3 w-3 fill-current" />
+                          Saved
+                        </div>
+                      </div>
+                      <JobCard 
+                        job={application.job} 
+                        isBookmarked={application.is_bookmarked}
+                        isApplied={application.is_applied}
+                        onBookmark={handleBookmarkJob}
+                        onApply={handleApplyClick}
+                        showBookmarkDate={true}
+                        bookmarkDate={application.created_at}
+                        bookmarkLoading={bookmarkLoading.has(application.job.id)}
+                      />
+                    </div>
                   ))}
                   {bookmarks.length === 0 && (
                     <EmptyState 

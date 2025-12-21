@@ -21,6 +21,7 @@ import CourseDetail from './components/student/CourseDetail';
 import SkillTest from './pages/student/SkillTest';
 import MockInterview from './pages/student/MockInterview';
 import StudentJobs from './pages/student/Jobs';
+import JobDetails from './pages/student/JobDetails';
 import Contest from './pages/student/Contest';
 import CodePractice from './pages/student/CodePractice';
 import StudentQuiz from './components/student/StudentQuiz';
@@ -44,6 +45,7 @@ import RecruiterCompanies from "./pages/recruiter/Companies";
 import RecruiterCompanyDetail from "./pages/recruiter/CompanyDetail";
 import RecruiterDashboard from "./pages/recruiter/Dashboard";
 import RecruiterProfile from "./pages/recruiter/Profile";
+import RecruiterCandidates from "./pages/recruiter/Candidates";
 // @ts-ignore
 import AddJob from "./components/student/AddJob";
 import ApplicationTracker from "@/components/student/jobs/ApplicationTracker";
@@ -63,7 +65,7 @@ function App() {
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password/:uidb64/:token" element={<ResetPassword />} />
               <Route path="/dashboard" element={<DashboardRedirect />} />
-              <Route path="/student/jobs" element={<StudentJobs />} />
+              <Route path="/jobs/:jobId" element={<JobDetails />} />
               <Route path="/recruiter/jobs" element={<RecruiterJobs />} />
               {/* <Route path="/" element={<JobList />} /> */}
               <Route path="/add-job" element={<AddJob />} />
@@ -145,6 +147,15 @@ function App() {
               />
 
               <Route
+                path="/student/jobs/:jobId"
+                element={
+                  <ProtectedRoute allowedRoles={["student"]}>
+                    <JobDetails />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
                 path="/student/contests"
                 element={
                   <ProtectedRoute allowedRoles={["student"]}>
@@ -218,6 +229,15 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={["admin", "instructor", "recruiter"]}>
                     <RecruiterJobApplicants />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/recruiter/candidates"
+                element={
+                  <ProtectedRoute allowedRoles={["admin", "instructor", "recruiter"]}>
+                    <RecruiterCandidates />
                   </ProtectedRoute>
                 }
               />

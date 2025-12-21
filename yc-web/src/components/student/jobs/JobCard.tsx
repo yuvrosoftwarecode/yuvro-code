@@ -1,6 +1,9 @@
-import React from 'react';
-import { MapPin, Clock, Briefcase, DollarSign, BookmarkIcon, Share2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { MapPin, Clock, Briefcase, DollarSign, Share2, BookmarkIcon } from 'lucide-react';
 import { Job } from '@/services/jobService';
+import BookmarkButton from './BookmarkButton';
+import ShareJobModal from './ShareJobModal';
 
 interface JobCardProps {
   job: Job;
@@ -10,6 +13,7 @@ interface JobCardProps {
   onApply: (job: Job) => void;
   showBookmarkDate?: boolean;
   bookmarkDate?: string;
+  bookmarkLoading?: boolean;
 }
 
 const JobCard: React.FC<JobCardProps> = ({ 
@@ -19,8 +23,11 @@ const JobCard: React.FC<JobCardProps> = ({
   onBookmark, 
   onApply, 
   showBookmarkDate, 
-  bookmarkDate 
+  bookmarkDate,
+  bookmarkLoading = false
 }) => {
+  const navigate = useNavigate();
+  const [shareModalOpen, setShareModalOpen] = useState(false);
   if (!job || !job.company) {
     return null;
   }
@@ -81,6 +88,14 @@ const JobCard: React.FC<JobCardProps> = ({
     return Math.max(percentage, 60); 
   };
 
+  const handleShare = () => {
+    setShareModalOpen(true);
+  };
+
+  const handleTitleClick = () => {
+    navigate(`/student/jobs/${job.id}`);
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
       <div className="flex items-start justify-between">
@@ -90,7 +105,10 @@ const JobCard: React.FC<JobCardProps> = ({
               {job.company.name.charAt(0)}
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 hover:text-blue-600 cursor-pointer">
+              <h3 
+                className="text-lg font-semibold text-gray-900 hover:text-blue-600 cursor-pointer transition-colors"
+                onClick={handleTitleClick}
+              >
                 {job.title}
               </h3>
               <p className="text-gray-600">{job.company.name}</p>
@@ -149,17 +167,16 @@ const JobCard: React.FC<JobCardProps> = ({
             {getMatchPercentage(job)}% Match
           </div>
           <div className="flex items-center gap-2">
-            <button
+            <BookmarkButton
+              isBookmarked={isBookmarked}
+              isLoading={bookmarkLoading}
               onClick={() => onBookmark(job.id)}
-              className={`p-2 rounded-lg transition-colors ${
-                isBookmarked
-                  ? 'bg-blue-100 text-blue-600'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
+            />
+            <button 
+              className="p-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors"
+              onClick={handleShare}
+              title="Share this job"
             >
-              <BookmarkIcon className="h-4 w-4" />
-            </button>
-            <button className="p-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors">
               <Share2 className="h-4 w-4" />
             </button>
           </div>
@@ -170,22 +187,37 @@ const JobCard: React.FC<JobCardProps> = ({
         <p className="text-sm text-gray-600 line-clamp-2 flex-1 mr-4">
           {job.description.substring(0, 150)}...
         </p>
-        {isApplied ? (
+        <div className="flex items-center gap-2">
           <button
-            disabled
-            className="bg-green-100 text-green-700 px-6 py-2 rounded-lg font-medium cursor-not-allowed"
+            onClick={handleTitleClick}
+            className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors font-medium text-sm"
           >
-            Applied
+            View Details
           </button>
-        ) : (
-          <button
-            onClick={() => onApply(job)}
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-          >
-            Apply Now
-          </button>
-        )}
+          {isApplied ? (
+            <button
+              disabled
+              className="bg-green-100 text-green-700 px-6 py-2 rounded-lg font-medium cursor-not-allowed"
+            >
+              Applied
+            </button>
+          ) : (
+            <button
+              onClick={() => onApply(job)}
+              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            >
+              Apply Now
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* Share Modal */}
+      <ShareJobModal
+        isOpen={shareModalOpen}
+        onClose={() => setShareModalOpen(false)}
+        job={job}
+      />
     </div>
   );
 };

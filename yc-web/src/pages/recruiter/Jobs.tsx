@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Pencil, Trash, Filter, Settings, FileText, Building2, Users, X, Briefcase, MapPin, DollarSign, Copy, CheckCircle } from "lucide-react";
+import { Plus, Pencil, Trash, Filter, Settings, FileText, Building2, Users, X, Briefcase, MapPin, DollarSign, Copy, CheckCircle, RefreshCw } from "lucide-react";
 import { jobService, Job, Company } from "../../services/jobService";
 import { jobApplicationService } from "../../services/jobApplicationService";
 
@@ -45,7 +45,7 @@ const Jobs: React.FC = () => {
     is_remote: false,
     min_salary: undefined as number | undefined,
     max_salary: undefined as number | undefined,
-    currency: "IND" as const,
+    currency: "INR" as const,
     skills: [] as string[],
     notice_period: undefined as number | undefined,
     education_level: "any" as const,
@@ -63,6 +63,7 @@ const Jobs: React.FC = () => {
   const [selectedTab, setSelectedTab] = useState('all');
 
   const [jobsWithApplications, setJobsWithApplications] = useState<any[]>([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
 
 
@@ -70,6 +71,13 @@ const Jobs: React.FC = () => {
     loadJobs();
     loadCompanies();
     loadJobsWithApplications();
+
+    // Auto-refresh application counts every 30 seconds
+    const interval = setInterval(() => {
+      loadJobsWithApplications(false);
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const loadCompanies = async () => {
@@ -152,13 +160,23 @@ const Jobs: React.FC = () => {
     }
   };
 
-  const loadJobsWithApplications = async () => {
+  const loadJobsWithApplications = async (showLoading = false) => {
     try {
+      if (showLoading) setIsRefreshing(true);
       const data = await jobApplicationService.getJobsWithApplications();
       setJobsWithApplications(data);
+      console.log('Loaded jobs with applications:', data);
     } catch (error) {
       console.error("Error fetching jobs with applications:", error);
+      toast.error("Failed to load application counts");
+    } finally {
+      if (showLoading) setIsRefreshing(false);
     }
+  };
+
+  const handleRefreshApplications = () => {
+    loadJobsWithApplications(true);
+    toast.success("Application data refreshed");
   };
 
 
@@ -183,7 +201,7 @@ const Jobs: React.FC = () => {
       is_remote: false,
       min_salary: undefined,
       max_salary: undefined,
-      currency: "IND",
+      currency: "INR",
       skills: [],
       notice_period: undefined,
       education_level: "any",
@@ -220,7 +238,7 @@ const Jobs: React.FC = () => {
       is_remote: job.is_remote,
       min_salary: job.min_salary,
       max_salary: job.max_salary,
-      currency: job.currency as "IND",
+      currency: job.currency as "INR",
       skills: job.skills,
       notice_period: job.notice_period,
       education_level: job.education_level as "any",
@@ -269,7 +287,7 @@ const Jobs: React.FC = () => {
       is_remote: job.is_remote,
       min_salary: job.min_salary,
       max_salary: job.max_salary,
-      currency: job.currency as "IND",
+      currency: job.currency as "INR",
       skills: job.skills,
       notice_period: job.notice_period,
       education_level: job.education_level as "any",
@@ -406,7 +424,15 @@ const Jobs: React.FC = () => {
         <Plus className="h-4 w-4" />
         <span>Post New Job</span>
       </button>
+      <button
+        onClick={() => navigate('/recruiter/candidates')}
+        className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg hover:from-indigo-600 hover:to-purple-600 transition-all duration-200 shadow-md hover:shadow-lg"
+      >
+        <Users className="h-4 w-4" />
+        <span>Find Candidates</span>
+      </button>
     </>
+    
   );
 
   return (
@@ -615,13 +641,28 @@ const Jobs: React.FC = () => {
                               </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <button
-                                onClick={() => navigate(`/recruiter/jobs/${job.id}/applicants`)}
-                                className="flex items-center text-sm text-blue-600 hover:text-blue-800 transition-colors"
-                              >
-                                <Users className="h-4 w-4 mr-1" />
-                                {getApplicationsCount(job.id)} applicants
-                              </button>
+                              <div className="flex items-center justify-between">
+                                <button
+                                  onClick={() => navigate(`/recruiter/jobs/${job.id}/applicants`)}
+                                  className="flex items-center text-sm text-blue-600 hover:text-blue-800 transition-colors group"
+                                >
+                                  <Users className="h-4 w-4 mr-1" />
+                                  <span className="font-medium">{getApplicationsCount(job.id)}</span>
+                                  <span className="ml-1">applicant{getApplicationsCount(job.id) !== 1 ? 's' : ''}</span>
+                                  {getApplicationsCount(job.id) > 0 && (
+                                    <div className="ml-2 w-2 h-2 bg-green-500 rounded-full animate-pulse opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                  )}
+                                </button>
+                                {getApplicationsCount(job.id) === 0 && (
+                                  <button
+                                    onClick={handleRefreshApplications}
+                                    className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                                    title="Refresh application count"
+                                  >
+                                    <RefreshCw className={`h-3 w-3 ${isRefreshing ? 'animate-spin' : ''}`} />
+                                  </button>
+                                )}
+                              </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                               <div className="flex items-center gap-2">

@@ -12,7 +12,6 @@ import ResetPassword from './pages/common/ResetPassword';
 import ForgotPassword from './pages/common/ForgotPassword';
 import InstructorDashboard from './pages/instructor/Dashboard';
 import Courses from './pages/instructor/Courses';
-
 import CourseEdit from './components/instructor/courses/CourseEdit';
 import Jobs from './pages/instructor/Jobs';
 import Users from './pages/instructor/Users';
@@ -22,6 +21,7 @@ import SkillTest from './pages/student/SkillTest';
 import MockInterview from './pages/student/MockInterview';
 import StudentJobs from './pages/student/Jobs';
 import Contest from './pages/student/Contest';
+import ContestAttempt from './pages/student/ContestAttempt';
 import CodePractice from './pages/student/CodePractice';
 import StudentQuiz from './components/student/StudentQuiz';
 import StudentCoding from './components/student/StudentCoding';
@@ -148,6 +148,15 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={["student"]}>
                     <Contest />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/student/contests/:contestId/attempt"
+                element={
+                  <ProtectedRoute allowedRoles={["student"]}>
+                    <ContestAttempt />
                   </ProtectedRoute>
                 }
               />

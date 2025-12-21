@@ -32,12 +32,15 @@ import {
   MicOff,
   Eye,
   EyeOff,
-  Maximize
+  Maximize,
+  Minimize2,
+  Code
 } from 'lucide-react';
-import CodeEditor from '@/components/ui/code-editor';
+import CodeExecutionPanel from '@/components/code-editor/CodeExecutionPanel';
 import { submitSkillTest } from "@/services/skillTestService";
 import { toast } from "sonner";
 import { useProctoring } from '@/hooks/useProctoring';
+import ExampleCodeGallery from '../code-editor/ExampleCodeGallery';
 
 interface Assessment {
   id: string;
@@ -63,7 +66,7 @@ interface AssessmentInterfaceProps {
   assessment: Assessment;
   questions: Question[];
   submissionId: string;
-  onComplete: (stats?: { answeredCount: number; totalQuestions: number; timeSpent: number }) => void;
+  onComplete: (answers: any, stats: { answeredCount: number; totalQuestions: number; timeSpent: number }) => Promise<void> | void;
   onBack: () => void;
 }
 
@@ -74,7 +77,7 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
   onComplete,
   onBack
 }) => {
-    
+
   // --------------------- REAL QUESTIONS ---------------------
   const [questions, setQuestions] = useState<Question[]>(propQuestions);
 
@@ -227,21 +230,15 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
 
     const timeSpent = (assessment.duration * 60) - timeLeft;
 
-    // Submit to Backend
+    // Delegate to Parent (Contest or SkillTest)
     try {
-      const loadingToast = toast.loading("Submitting assessment...");
-      await submitSkillTest(assessment.id, submissionId, answers);
-      toast.dismiss(loadingToast);
-      toast.success("Assessment submitted successfully!");
-
-      onComplete({
+      await onComplete(answers, {
         answeredCount,
         totalQuestions: questions.length,
         timeSpent
       });
     } catch (err) {
-      toast.error("Failed to submit assessment. Please try again.");
-      console.error("Submit error", err);
+      console.error("Submit error passed to parent failed", err);
     }
   };
 
@@ -389,16 +386,32 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
 
       case 'coding':
         return (
-          <div className="space-y-4">
-
+          <div className="flex flex-col h-full space-y-6">
             <div className="flex items-center justify-between">
-              <Badge>{selectedLanguage}</Badge>
-              <Button variant="outline" size="sm" onClick={() => setIsCodeEditorFullscreen(!isCodeEditorFullscreen)}>
-                <Maximize className="h-4 w-4" />
+              <div className="flex items-center space-x-2 text-sm text-slate-500">
+                <Code className="w-4 h-4" />
+                <span>Write your solution below</span>
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsCodeEditorFullscreen(!isCodeEditorFullscreen)}
+                className="text-slate-500 hover:text-indigo-600 border-slate-200"
+              >
+                {isCodeEditorFullscreen ? <Minimize2 className="w-4 h-4 mr-1" /> : <Maximize className="w-4 h-4 mr-1" />}
+                {isCodeEditorFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
               </Button>
             </div>
 
-            <div className={isCodeEditorFullscreen ? 'h-[60vh]' : 'h-80'}>
+            <div className={`transition-all duration-300 ${isCodeEditorFullscreen ? 'fixed inset-0 z-[100] bg-white p-4' : 'w-full'}`}>
+              {isCodeEditorFullscreen && (
+                <div className="flex justify-between items-center mb-2 px-2">
+                  <h2 className="font-bold text-lg">{question.title}</h2>
+                  <Button size="sm" variant="ghost" onClick={() => setIsCodeEditorFullscreen(false)}>Close</Button>
+                </div>
+              )}
+
               <CodeExecutionPanel
                 problem={{
                   id: question.id,
@@ -407,26 +420,30 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
                   test_cases_basic: question.test_cases_basic || []
                 }}
                 initialCode={answers[question.id] || ''}
-                onSubmissionComplete={(result) => {
-                  // Handle submission result if needed
-                  console.log('Code execution result:', result);
-                }}
+                onCodeChange={(code) => handleAnswerChange(question.id, code)}
+                onLanguageChange={setSelectedLanguage}
+
+                // Allow "Run" (shows test results tab) but "Submit" is global
+                showRunButton={true}
+                showSubmitButton={false}
+
                 mode="exam"
                 showTestCases={true}
                 allowCustomTestCases={false}
-                showSubmitButton={false}
-                className="h-full"
+
+                className={`h-full border border-slate-200 shadow-sm overflow-hidden ${isCodeEditorFullscreen ? 'h-[90vh]' : ''} p-0`}
+                editorHeight={isCodeEditorFullscreen ? '80vh' : '500px'}
               />
             </div>
 
-            {/* Explanation */}
-            <div className="mt-2">
-              <Label className="text-sm font-medium">Explain your approach (required)</Label>
+            {/* Explanation - Optional for Coding but kept if strict requirement */}
+            <div className="mt-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
+              <Label className="text-sm font-semibold text-slate-700 mb-2 block">Explain your approach (Optional)</Label>
               <Textarea
-                placeholder="Explain your algorithm / logic..."
+                placeholder="Briefly explain your algorithm or logic..."
                 value={explanations[question.id] || ''}
                 onChange={(e) => handleExplanationChange(question.id, e.target.value)}
-                className="mt-2 min-h-24"
+                className="min-h-[100px] bg-white border-slate-200 focus:border-indigo-300 focus:ring-indigo-100"
               />
             </div>
           </div>
@@ -458,67 +475,35 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
 
   const flaggedCount = flagged.size;
 
-  // -------------------- RENDER UI (UNCHANGED) --------------------
+  // -------------------- RENDER UI (REVAMPED) --------------------
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col font-sans text-slate-800">
 
-      {/* ALERTS + HEADERS + SIDEBAR + UI */}
-      {/* ALL UI BELOW IS **UNCHANGED**, JUST USING real questions */}
+      {/* 1. Header Bar */}
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm backdrop-blur-md bg-opacity-90">
+        <div className="max-w-[1920px] mx-auto px-6 h-16 flex items-center justify-between">
 
-      {/* (UI CODE REMAINS EXACTLY THE SAME AS YOUR VERSION) */}
+          {/* Left: Title & Info */}
+          <div className="flex items-center space-x-6">
+            <div className="flex items-center space-x-3">
+              <div className="h-10 w-10 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold shadow-indigo-200 shadow-lg">
+                <span className="text-lg">{assessment.course?.[0] || 'A'}</span>
+              </div>
+              <div>
+                <h1 className="text-lg font-bold text-slate-900 leading-tight">{assessment.title}</h1>
+                <div className="flex items-center space-x-2 text-xs text-slate-500 font-medium">
+                  <span>{assessment.course}</span>
+                  <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+                  <span>{assessment.totalQuestions} Questions</span>
+                </div>
+              </div>
+            </div>
 
-      {/* ------------------------------------------------ */}
-      {/* YOU DO NOT WANT UI CHANGES, SO I KEEP AS IS      */}
-      {/* ------------------------------------------------ */}
+            <div className="hidden md:flex h-8 w-px bg-gray-200 mx-4"></div>
 
-      {/* I WILL PASTE THE FULL UI BELOW WITHOUT TOUCHING ANYTHING */}
-
-      {/* ---------------- UI START ---------------- */}
-
-      {/* Alerts */}
-      <div className="flex justify-center">
-        {cameraAlert && (
-          <Alert className="m-4 w-[60%] border-red-200 bg-red-50">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription className="flex items-center justify-between">
-              <span>
-                {!hasMediaAccess
-                  ? "Camera and microphone access are required for this assessment. Please enable permissions."
-                  : "Camera or microphone has been disabled. Please re-enable to continue."
-                }
-              </span>
-              <Button variant="ghost" size="sm" onClick={() => setCameraAlert(false)}>
-                <X className="h-4 w-4" />
-              </Button>
-            </AlertDescription>
-          </Alert>
-        )}
-      </div>
-
-      <div className="flex justify-center">
-        {tabSwitchAlert && (
-          <Alert className="m-4 w-[60%] border-orange-200 bg-orange-50">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription className="flex items-center justify-between">
-              <span>Tab switching detected! ({tabSwitchCount} violations)</span>
-              <Button variant="ghost" size="sm" onClick={() => setTabSwitchAlert(false)}>
-                <X className="h-4 w-4" />
-              </Button>
-            </AlertDescription>
-          </Alert>
-        )}
-      </div>
-
-      {/* Header */}
-      <div className="bg-card border-b px-6 py-4">
-        <div className="flex items-center justify-between">
-
-          {/* LEFT SIDE - VIDEO + TITLE */}
-          <div className="flex items-center space-x-4">
-
-            {/* Video */}
-            <div className="relative bg-black rounded-lg overflow-hidden h-16 w-32">
+            {/* Camera Feed Mini-View */}
+            <div className="relative group overflow-hidden rounded-lg shadow-md border border-gray-200 w-32 h-12 bg-black transition-all hover:scale-105">
               {hasMediaAccess && streamRef.current ? (
                 <video
                   ref={videoRef}
@@ -528,232 +513,263 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-white text-xs">
-                  <Camera className="h-4 w-4 mx-auto mb-1 opacity-50" />
-                  <p className="text-[10px]">Camera Off</p>
+                <div className="flex flex-col items-center justify-center h-full text-gray-500">
+                  <CameraOff className="w-4 h-4" />
                 </div>
               )}
-
-              <div className="absolute bottom-1 right-1 flex space-x-1">
-                {videoTrackEnabled ?
-                  <Camera className="h-2 w-2 text-green-400" /> :
-                  <CameraOff className="h-2 w-2 text-red-400" />}
-                {audioTrackEnabled ?
-                  <Mic className="h-2 w-2 text-green-400" /> :
-                  <MicOff className="h-2 w-2 text-red-400" />}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-1 space-x-2">
+                {videoTrackEnabled ? <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div> : <div className="w-1.5 h-1.5 rounded-full bg-red-500"></div>}
+                {audioTrackEnabled ? <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div> : <div className="w-1.5 h-1.5 rounded-full bg-red-500"></div>}
               </div>
-            </div>
-
-            <div>
-              <h1 className="text-xl font-bold">{assessment.title}</h1>
-              <Badge variant="outline">{assessment.course}</Badge>
             </div>
           </div>
 
-          {/* RIGHT SIDE TIMER + SUBMIT */}
-          <div className="flex items-center space-x-4 mr-4">
-            <div className="flex items-center space-x-2">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <span className={`font-mono text-lg ${timeLeft < 300 ? 'text-red-600' : 'text-foreground'}`}>
-                {formatTime(timeLeft)}
-              </span>
+          {/* Right: Timer & Actions */}
+          <div className="flex items-center space-x-4">
+            {/* Timer */}
+            <div className={`flex items-center space-x-3 px-4 py-2 rounded-full border ${timeLeft < 300 ? 'bg-red-50 border-red-200 text-red-700 animate-pulse' : 'bg-slate-50 border-slate-200 text-slate-700'}`}>
+              <Clock className="w-4 h-4" />
+              <span className="font-mono text-xl font-bold tracking-widest">{formatTime(timeLeft)}</span>
             </div>
 
-            {/* Submit */}
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="outline" size="sm" className="bg-black text-white hover:bg-black/90">
-                  Submit
+                <Button className="bg-slate-900 hover:bg-slate-800 text-white shadow-lg shadow-slate-900/20 px-6 rounded-full transition-all hover:scale-105 active:scale-95">
+                  Finish Test
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Submit Assessment?</AlertDialogTitle>
+                  <AlertDialogTitle>Are you ready to submit?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Are you sure you want to submit?
-                    <br /><br />
-                    Answered: {answeredCount}/{questions.length}
-                    <br />
-                    Flagged: {flaggedCount}
+                    You have answered <span className="font-bold text-slate-900">{answeredCount}</span> out of <span className="font-bold text-slate-900">{questions.length}</span> questions.
+                    {flaggedCount > 0 && <div className="mt-2 text-yellow-600">Note: You have flagged {flaggedCount} questions for review.</div>}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleSubmitAssessment}>Submit</AlertDialogAction>
+                  <AlertDialogCancel>Keep Working</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleSubmitAssessment} className="bg-indigo-600 hover:bg-indigo-700">Submit Assessment</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
           </div>
+        </div>
 
+        {/* Progress Bar Loader */}
+        <div className="h-1 w-full bg-gray-100">
+          <div
+            className="h-full bg-indigo-600 transition-all duration-500 ease-out"
+            style={{ width: `${progress}%` }}
+          ></div>
         </div>
       </div>
 
-      {/* Body */}
-      <div className="flex flex-1">
+      {/* 2. Main Workspace */}
+      <div className="flex flex-1 overflow-hidden">
 
-        {/* Sidebar */}
-        <div className={`bg-card border-r transition-all duration-300 ${isSidebarCollapsed ? 'w-16' : 'w-80'
-          }`}>
-          <div className="p-4">
+        {/* Sidebar: Navigation Grid */}
+        <div className={`bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out relative z-40 ${isSidebarCollapsed ? 'w-16' : 'w-72'}`}>
+          <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+            {!isSidebarCollapsed && <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wider">Navigation</h3>}
+            <Button variant="ghost" size="icon" onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)} className="ml-auto text-slate-400 hover:text-indigo-600">
+              {isSidebarCollapsed ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+            </Button>
+          </div>
 
-            {/* Top */}
-            <div className="flex items-center justify-between mb-4">
-              {!isSidebarCollapsed && <h3 className="font-semibold">Questions</h3>}
-              <Button variant="ghost" size="sm" onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}>
-                {isSidebarCollapsed ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-              </Button>
-            </div>
-
-            {/* Question Grid */}
-            {!isSidebarCollapsed && (
-              <>
-                <div className="mb-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium">
-                      Questions {startQuestion + 1}-{endQuestion}
-                    </span>
-
+          <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+            {!isSidebarCollapsed ? (
+              <div className="space-y-6">
+                <div>
+                  <div className="flex justify-between items-center mb-3">
+                    <h4 className="text-xs font-semibold text-slate-400 uppercase">Question Grid</h4>
                     <div className="flex space-x-1">
-                      <Button variant="ghost" size="sm"
-                        onClick={() => handlePageChange(questionPage - 1)}
-                        disabled={questionPage === 0}
-                      >
-                        <ChevronLeft className="h-3 w-3" />
-                      </Button>
-
-                      <Button variant="ghost" size="sm"
-                        onClick={() => handlePageChange(questionPage + 1)}
-                        disabled={questionPage === totalPages - 1}
-                      >
-                        <ChevronRight className="h-3 w-3" />
-                      </Button>
+                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => handlePageChange(questionPage - 1)} disabled={questionPage === 0}><ChevronLeft className="w-3 h-3" /></Button>
+                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => handlePageChange(questionPage + 1)} disabled={questionPage === totalPages - 1}><ChevronRight className="w-3 h-3" /></Button>
                     </div>
                   </div>
-
-                  <div className="grid grid-cols-5 gap-2 mb-6">
+                  <div className="grid grid-cols-5 gap-2">
                     {paginatedQuestions.map((q, index) => {
                       const actualIndex = startQuestion + index;
                       const status = getQuestionStatus(actualIndex, q.id);
+                      let baseClasses = "h-10 w-full rounded-lg text-sm font-semibold transition-all duration-200 border-2";
+                      if (status === 'current') baseClasses += " border-indigo-600 bg-indigo-50 text-indigo-700 shadow-sm scale-105";
+                      else if (status === 'answered') baseClasses += " border-transparent bg-green-500 text-white shadow-green-200";
+                      else if (status === 'flagged') baseClasses += " border-yellow-400 bg-yellow-50 text-yellow-700";
+                      else baseClasses += " border-slate-100 bg-white text-slate-400 hover:border-slate-300";
 
                       return (
-                        <Button
+                        <button
                           key={q.id}
-                          variant="outline"
-                          size="sm"
-                          className={`h-10 w-10 p-0 ${getStatusColor(status)}`}
                           onClick={() => handleQuestionClick(index)}
+                          className={baseClasses}
                         >
                           {actualIndex + 1}
-                        </Button>
+                        </button>
                       );
                     })}
                   </div>
                 </div>
 
-                {/* Stats */}
-                <div className="text-sm space-y-2">
-                  <div className="flex justify-between">
-                    <span>Progress</span>
-                    <span>{currentQuestion + 1}/{questions.length}</span>
-                  </div>
-                  <Progress value={progress} className="h-2" />
-
-                  <div className="flex justify-between mt-3">
+                <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                  <div className="flex justify-between text-xs font-medium text-slate-600">
                     <span>Answered</span>
-                    <span className="text-green-600">{answeredCount}</span>
+                    <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded-full">{answeredCount}</span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between text-xs font-medium text-slate-600">
                     <span>Flagged</span>
-                    <span className="text-yellow-600">{flaggedCount}</span>
+                    <span className="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">{flaggedCount}</span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between text-xs font-medium text-slate-600">
                     <span>Remaining</span>
-                    <span>{questions.length - answeredCount}</span>
+                    <span className="bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full">{questions.length - answeredCount}</span>
                   </div>
                 </div>
-              </>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center space-y-2">
+                {/* Mini Sidebar view logic if needed, or just keep icons */}
+                <div className="text-xs font-bold text-slate-400 text-center mb-2">{currentQuestion + 1}</div>
+                <Progress value={progress} className="w-1 h-24 rounded-full" orientation="vertical" />
+                <div className="text-xs font-bold text-indigo-600 mt-2">{Math.round(progress)}%</div>
+              </div>
             )}
-
           </div>
         </div>
 
-        {/* Main Question Area */}
-        <div className="flex-1 flex flex-col overflow-auto max-h-[480px] mr-4">
-          <div className="p-6 pb-0">
+        {/* Question Area */}
+        <div className="flex-1 flex flex-col h-full overflow-hidden bg-slate-50/50 relative">
 
-            {questions.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <div className="flex items-start justify-between">
+          {/* Question Content */}
+          <div className="flex-1 overflow-y-auto p-6 md:p-10 custom-scrollbar">
+            <div className="max-w-4xl mx-auto space-y-8 pb-20">
+
+              {questions.length > 0 && (
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+
+                  {/* Question Header */}
+                  <div className="bg-slate-50 px-8 py-5 border-b border-slate-100 flex justify-between items-start">
                     <div>
-                      <div className="flex items-center space-x-2 mb-2">
-                        <Badge variant="outline">
-                          Question {currentQuestion + 1} of {questions.length}
-                        </Badge>
-                        <Badge variant="secondary">
-                          {currentQuestionData.marks} marks
-                        </Badge>
-                        <Badge variant="outline">{currentQuestionData.type}</Badge>
+                      <div className="flex items-center space-x-3 mb-2">
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Question {currentQuestion + 1}</span>
+                        <div className="px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-bold uppercase rounded-sm border border-blue-200">{currentQuestionData.type.replace('_', ' ')}</div>
+                        <div className="px-2 py-0.5 bg-orange-100 text-orange-700 text-[10px] font-bold uppercase rounded-sm border border-orange-200">{currentQuestionData.marks} Marks</div>
                       </div>
-
-                      <CardTitle>{currentQuestionData.title}</CardTitle>
-
-                      {/* Question Content */}
-                      <div className="mt-4 prose prose-sm max-w-none">
-                        <div dangerouslySetInnerHTML={{ __html: currentQuestionData.content }} />
-                      </div>
+                      <h2 className="text-2xl font-bold text-slate-900 leading-snug">{currentQuestionData.title}</h2>
                     </div>
-
                     <Button
                       variant="ghost"
                       size="sm"
+                      className={`${flagged.has(currentQuestionData.id) ? 'text-yellow-600 bg-yellow-50 hover:bg-yellow-100' : 'text-slate-400 hover:text-slate-600'}`}
                       onClick={() => handleFlagQuestion(currentQuestionData.id)}
-                      className={flagged.has(currentQuestionData.id) ? 'text-yellow-600' : ''}
                     >
-                      <Flag className="h-4 w-4" />
+                      <Flag className={`w-5 h-5 ${flagged.has(currentQuestionData.id) ? 'fill-current' : ''}`} />
                     </Button>
                   </div>
-                </CardHeader>
 
-                <CardContent>{renderQuestion(currentQuestionData)}</CardContent>
-              </Card>
-            )}
+                  {/* Question Body */}
+                  <div className="px-8 py-8 md:px-10">
+                    <div className="prose prose-slate max-w-none text-slate-700 text-lg mb-8">
+                      <div dangerouslySetInnerHTML={{ __html: currentQuestionData.content }} />
+                    </div>
 
+                    <div className="mt-8">
+                      {renderQuestion(currentQuestionData)}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+            </div>
+          </div>
+
+          {/* Bottom Bar Controls for Mobile/Tablet or ease of access */}
+          <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-8 py-4 flex justify-between items-center z-30">
+            <Button
+              variant="outline"
+              onClick={handlePreviousQuestion}
+              disabled={currentQuestion === 0}
+              className="space-x-2 border-slate-300 text-slate-600 hover:text-indigo-600 hover:border-indigo-300"
+            >
+              <ChevronLeft className="w-4 h-4" /> <span>Previous</span>
+            </Button>
+
+            <div className="hidden md:block text-slate-400 text-sm font-medium">
+              Use <span className="kbd bg-slate-100 px-1 rounded border border-slate-300">Ctrl</span> + <span className="kbd bg-slate-100 px-1 rounded border border-slate-300">Enter</span> to run code if applicable.
+            </div>
+
+            <Button
+              onClick={handleNextQuestion}
+              disabled={currentQuestion === questions.length - 1}
+              className="space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/20"
+            >
+              <span>Next Question</span> <ChevronRight className="w-4 h-4" />
+            </Button>
           </div>
         </div>
 
+      </div>
+
+      {/* Alerts */}
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] flex flex-col space-y-2 w-full max-w-lg px-4 pointer-events-none">
+        {cameraAlert && (
+          <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl shadow-lg flex items-center justify-between pointer-events-auto animate-in slide-in-from-bottom-5">
+            <div className="flex items-center space-x-3">
+              <AlertTriangle className="w-5 h-5 flex-shrink-0 text-red-600" />
+              <p className="text-sm font-medium">Camera access lost! Please check your permissions.</p>
+            </div>
+            <button onClick={() => setCameraAlert(false)} className="text-red-500 hover:text-red-700"><X className="w-4 h-4" /></button>
+          </div>
+        )}
+        {tabSwitchAlert && (
+          <div className="bg-orange-50 border border-orange-200 text-orange-800 px-4 py-3 rounded-xl shadow-lg flex items-center justify-between pointer-events-auto animate-in slide-in-from-bottom-5">
+            <div className="flex items-center space-x-3">
+              <AlertTriangle className="w-5 h-5 flex-shrink-0 text-orange-600" />
+              <p className="text-sm font-medium">Tab switching detected! Warning {tabSwitchCount}/3.</p>
+            </div>
+            <button onClick={() => setTabSwitchAlert(false)} className="text-orange-500 hover:text-orange-700"><X className="w-4 h-4" /></button>
+          </div>
+        )}
       </div>
 
       {/* Tab Switch Dialog */}
       <AlertDialog open={showTabSwitchDialog} onOpenChange={() => { }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Assessment Terminated</AlertDialogTitle>
+            <AlertDialogTitle className="text-red-600">Assessment Terminated</AlertDialogTitle>
             <AlertDialogDescription>
-              Too many tab switches. Your responses are recorded.
+              We detected excessive tab switching during the assessment. As per the proctoring rules, your test has been automatically submitted.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogAction onClick={handleSubmitAssessment}>OK</AlertDialogAction>
+            <AlertDialogAction onClick={handleSubmitAssessment} className="bg-red-600 hover:bg-red-700">Acknowledge</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Navigation Dialog */}
+      {/* Navigation Confirm Dialog */}
       <AlertDialog open={showNavigationDialog} onOpenChange={setShowNavigationDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>End Assessment?</AlertDialogTitle>
+            <AlertDialogTitle>Leave Assessment?</AlertDialogTitle>
             <AlertDialogDescription>
-              You cannot return once you exit.
+              You are attempting to leave the assessment page. If you leave now, your progress will be lost and the test will be submitted as-is.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Continue</AlertDialogCancel>
-            <AlertDialogAction onClick={handleSubmitAssessment}>End</AlertDialogAction>
+            <AlertDialogCancel>Stay</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSubmitAssessment} className="bg-red-600 hover:bg-red-700">Leave & Submit</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Style helper for custom scrollbar */}
+      <style dangerouslySetInnerHTML={{
+        __html: `
+            .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+            .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+            .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
+            .custom-scrollbar::-webkit-scrollbar-thumb:hover { background-color: #94a3b8; }
+        `}} />
 
       {showExamples && (
         <ExampleCodeGallery

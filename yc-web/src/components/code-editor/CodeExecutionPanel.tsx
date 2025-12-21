@@ -20,12 +20,15 @@ export interface CodeExecutionPanelProps {
   problem?: CodingProblem;
   initialCode?: string;
   onSubmissionComplete?: (result: ExecutionResult) => void;
+  onCodeChange?: (code: string) => void;
+  onLanguageChange?: (language: string) => void;
   showSubmitButton?: boolean;
   showRunButton?: boolean;
   showTestCases?: boolean;
   allowCustomTestCases?: boolean;
   mode?: 'practice' | 'exam' | 'learn' | 'editor';
   className?: string;
+  editorHeight?: string;
 }
 
 const LANGUAGE_OPTIONS = [
@@ -93,12 +96,15 @@ const CodeExecutionPanel: React.FC<CodeExecutionPanelProps> = ({
   problem,
   initialCode,
   onSubmissionComplete,
+  onCodeChange,
+  onLanguageChange,
   showSubmitButton = true,
   showRunButton = true,
   showTestCases = true,
   allowCustomTestCases = false,
   mode = 'practice',
-  className = ''
+  className = '',
+  editorHeight = '500px'
 }) => {
   const [code, setCode] = useState(initialCode || '');
   const [language, setLanguage] = useState('python');
@@ -113,10 +119,29 @@ const CodeExecutionPanel: React.FC<CodeExecutionPanelProps> = ({
   const allTestCases = [...problemTestCases, ...customTestCases];
 
   useEffect(() => {
-    if (!initialCode) {
-      setCode(SAMPLE_CODE[language as keyof typeof SAMPLE_CODE] || '');
+    if (!initialCode && !code) {
+      const defaultCode = SAMPLE_CODE[language as keyof typeof SAMPLE_CODE] || '';
+      setCode(defaultCode);
+      onCodeChange?.(defaultCode);
     }
   }, [language, initialCode]);
+
+  // Sync internal state with external changes if needed (optional, but good practice)
+  useEffect(() => {
+    if (initialCode !== undefined && initialCode !== code) {
+      setCode(initialCode);
+    }
+  }, [initialCode]);
+
+  const handleCodeChange = (newCode: string) => {
+    setCode(newCode);
+    onCodeChange?.(newCode);
+  };
+
+  const handleLanguageChange = (newLanguage: string) => {
+    setLanguage(newLanguage);
+    onLanguageChange?.(newLanguage);
+  };
 
   const handleExecute = async () => {
     if (!code.trim()) {
@@ -263,22 +288,29 @@ const CodeExecutionPanel: React.FC<CodeExecutionPanelProps> = ({
   const modeInfo = getModeInfo();
 
   return (
-    <div className={`bg-white rounded-lg shadow-lg p-6 ${className}`}>
-      <div className="mb-4">
-        <h3 className="text-lg font-semibold mb-2">{problem?.title || modeInfo.title}</h3>
+    <div className={`bg-white rounded-lg shadow-lg ${className}`}>
+      {/* Only show header info if not in exam mode or if specifically desired. 
+            In standard exam mode contexts, the parent usually handles the title. 
+            Keeping it for now but checking sizing. */}
 
-        <div className="flex items-center gap-4 mb-4">
-          <select
-            value={language}
-            onChange={(e) => setLanguage(e.target.value)}
-            className="px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            {LANGUAGE_OPTIONS.map(option => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+      <div className="p-4 border-b">
+        <div className="flex items-center justify-between gap-4">
+
+          {/* Left: Language Selector - cleaner look */}
+          <div className="flex items-center space-x-3">
+            <span className="text-sm font-medium text-slate-600">Language:</span>
+            <select
+              value={language}
+              onChange={(e) => handleLanguageChange(e.target.value)}
+              className="px-3 py-1.5 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+            >
+              {LANGUAGE_OPTIONS.map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
 
           <div className="flex space-x-2">
             {showRunButton && (
@@ -286,15 +318,16 @@ const CodeExecutionPanel: React.FC<CodeExecutionPanelProps> = ({
                 onClick={handleExecute}
                 disabled={isExecuting}
                 className={`
-                  px-4 py-2 rounded-md font-medium transition-colors
+                  px-4 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center space-x-2
                   ${isExecuting
-                    ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                    ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                    : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200'
                   }
                 `}
                 title="Test your code with visible test cases for debugging"
               >
-                {isExecuting ? 'Running...' : 'Run Code'}
+                <span>{isExecuting ? 'Running...' : 'Run Code'}</span>
+                {!isExecuting && <span className="text-lg leading-none">▶</span>}
               </button>
             )}
 
@@ -303,10 +336,10 @@ const CodeExecutionPanel: React.FC<CodeExecutionPanelProps> = ({
                 onClick={handleSubmit}
                 disabled={isExecuting}
                 className={`
-                  px-4 py-2 rounded-md font-medium transition-colors
+                  px-4 py-1.5 rounded-md text-sm font-medium transition-colors
                   ${isExecuting
-                    ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-green-600 hover:bg-green-700 text-white'
+                    ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                    : 'bg-green-600 hover:bg-green-700 text-white shadow-sm'
                   }
                 `}
                 title="Submit your final solution for evaluation"
@@ -317,16 +350,16 @@ const CodeExecutionPanel: React.FC<CodeExecutionPanelProps> = ({
           </div>
         </div>
 
-        {/* Mode-specific info */}
+        {/* Mode-specific info - Optional, good for context */}
         {modeInfo.showHint && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm mt-3">
             <div className="flex items-start space-x-2">
               <div className="text-blue-600 mt-0.5">💡</div>
               <div className="text-blue-800">
                 <strong>Run Code:</strong> Test with visible test cases for debugging.
                 {showSubmitButton && (
                   <>
-                    <strong className="ml-2">Submit Solution:</strong> Final evaluation with hidden test cases - shows only execution stats and score.
+                    <strong className="ml-2">Submit Solution:</strong> Final evaluation with hidden test cases.
                   </>
                 )}
               </div>
@@ -335,30 +368,25 @@ const CodeExecutionPanel: React.FC<CodeExecutionPanelProps> = ({
         )}
       </div>
 
-      {/* Tab Navigation */}
-      <div className="border-b mb-4">
-        <nav className="flex space-x-8">
+      {/* Tab Navigation - cleaner */}
+      <div className="bg-slate-50 border-b px-4">
+        <nav className="flex space-x-6">
           {['editor', 'output', ...(showTestCases ? ['tests'] : []), ...(allowCustomTestCases ? ['custom-tests'] : [])].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab as any)}
               className={`
-                py-2 px-1 border-b-2 font-medium text-sm capitalize
+                py-2.5 px-1 border-b-2 font-medium text-sm capitalize transition-all
                 ${activeTab === tab
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'border-indigo-600 text-indigo-600'
+                  : 'border-transparent text-slate-500 hover:text-slate-700'
                 }
               `}
             >
               {tab === 'custom-tests' ? 'Custom Tests' : tab}
               {tab === 'tests' && problemTestCases && problemTestCases.length > 0 && (
-                <span className="ml-1 bg-gray-200 text-gray-600 px-2 py-1 rounded-full text-xs">
+                <span className={`ml-2 px-1.5 py-0.5 rounded-full text-[10px] ${activeTab === tab ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-200 text-slate-600'}`}>
                   {problemTestCases.length}
-                </span>
-              )}
-              {tab === 'custom-tests' && customTestCases.length > 0 && (
-                <span className="ml-1 bg-blue-200 text-blue-600 px-2 py-1 rounded-full text-xs">
-                  {customTestCases.length}
                 </span>
               )}
             </button>
@@ -367,37 +395,45 @@ const CodeExecutionPanel: React.FC<CodeExecutionPanelProps> = ({
       </div>
 
       {/* Tab Content */}
-      {activeTab === 'editor' && (
-        <MonacoCodeEditor
-          value={code}
-          onChange={setCode}
-          language={language}
-          height="500px"
-          onShowExamples={() => setShowExamples(true)}
-        />
-      )}
+      <div className="bg-white">
+        {activeTab === 'editor' && (
+          <MonacoCodeEditor
+            value={code}
+            onChange={handleCodeChange}
+            language={language}
+            height={editorHeight}
+            onShowExamples={() => setShowExamples(true)}
+          />
+        )}
 
-      {activeTab === 'output' && (
-        <ExecutionResults result={result} isExecuting={isExecuting} />
-      )}
+        {activeTab === 'output' && (
+          <div style={{ height: editorHeight, overflow: 'auto' }}>
+            <ExecutionResults result={result} isExecuting={isExecuting} />
+          </div>
+        )}
 
-      {activeTab === 'tests' && showTestCases && (
-        <TestCaseViewer testCases={problemTestCases} result={result} />
-      )}
+        {activeTab === 'tests' && showTestCases && (
+          <div style={{ height: editorHeight, overflow: 'auto' }}>
+            <TestCaseViewer testCases={problemTestCases} result={result} />
+          </div>
+        )}
 
-      {activeTab === 'custom-tests' && allowCustomTestCases && (
-        <CustomTestCaseManager
-          customTestCases={customTestCases}
-          onTestCasesChange={setCustomTestCases}
-        />
-      )}
+        {activeTab === 'custom-tests' && allowCustomTestCases && (
+          <div style={{ height: editorHeight, overflow: 'auto' }}>
+            <CustomTestCaseManager
+              customTestCases={customTestCases}
+              onTestCasesChange={setCustomTestCases}
+            />
+          </div>
+        )}
+      </div>
 
       {showExamples && (
         <ExampleCodeGallery
           currentLanguage={language}
           onClose={() => setShowExamples(false)}
           onApplyCode={(exampleCode) => {
-            setCode(exampleCode);
+            handleCodeChange(exampleCode);
             setShowExamples(false);
           }}
         />

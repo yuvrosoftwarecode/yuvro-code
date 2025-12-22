@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Job, Company, JobApplication
+from .models import Job, Company, JobApplication, SocialLinks, Skill, Experience, Project, Education, Certification
 
 
 @admin.register(Company)
@@ -66,3 +66,50 @@ class JobAdmin(admin.ModelAdmin):
 @admin.register(JobApplication)
 class JobApplication(admin.ModelAdmin):
     list_display = ['job', 'applicant', 'status', 'applied_at', 'created_at']
+
+
+@admin.register(SocialLinks)
+class SocialLinksAdmin(admin.ModelAdmin):
+    list_display = ("profile", "github", "linkedin", "portfolio", "website", "email")
+    search_fields = ("profile__user__email", "github", "linkedin", "portfolio")
+
+
+@admin.register(Skill)
+class SkillAdmin(admin.ModelAdmin):
+    list_display = ("profile", "name", "level", "percentage")
+    search_fields = ("name", "profile__user__email")
+    list_filter = ("level",)
+
+
+@admin.register(Experience)
+class ExperienceAdmin(admin.ModelAdmin):
+    list_display = ("profile", "company", "role", "duration", "created_at")
+    search_fields = ("company", "role", "profile__user__email")
+    list_filter = ("created_at",)
+
+
+@admin.register(Project)
+class ProjectAdmin(admin.ModelAdmin):
+    list_display = ("profile", "title", "role", "created_at")
+    search_fields = ("title", "role", "profile__user__email")
+    list_filter = ("created_at",)
+
+
+@admin.register(Education)
+class EducationAdmin(admin.ModelAdmin):
+    list_display = (
+        "profile",
+        "institution",
+        "degree",
+        "field",
+        "start_year",
+        "end_year",
+    )
+    search_fields = ("institution", "degree", "field", "profile__user__email")
+    list_filter = ("start_year", "end_year")
+
+
+@admin.register(Certification)
+class CertificationAdmin(admin.ModelAdmin):
+    list_display = ("profile", "name", "issuer", "completion_date")
+    search_fields = ("name", "issuer", "profile__user__email")

@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from django.core.cache import cache
-from .models import Job, Company, JobApplication
+from .models import Job, Company, JobApplication, JobProfile, JobSkill, CandidateSearchLog
 import logging
 
 User = get_user_model()
@@ -194,3 +194,133 @@ class JobWithApplicationsSerializer(JobSerializer):
     def get_recent_applications(self, obj):
         recent_apps = obj.applications.filter(is_applied=True).order_by('-applied_at')[:5]
         return JobApplicationListSerializer(recent_apps, many=True).data
+
+
+class JobSkillSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = JobSkill
+        fields = ['skill_name', 'proficiency', 'years_of_experience']
+
+
+class JobProfileSerializer(serializers.ModelSerializer):
+    # Profile information
+    full_name = serializers.CharField(source='profile.full_name', read_only=True)
+    title = serializers.CharField(source='profile.title', read_only=True)
+    location = serializers.CharField(source='profile.location', read_only=True)
+    about = serializers.CharField(source='profile.about', read_only=True)
+    
+    # User information
+    user = serializers.SerializerMethodField()
+    
+    # Skills and experience
+    skills_list = serializers.ReadOnlyField()
+    experience_companies = serializers.ReadOnlyField()
+    total_experience_in_years = serializers.ReadOnlyField()
+    
+    # Job skills
+    job_skills = JobSkillSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = JobProfile
+        fields = [
+            'id', 'full_name', 'title', 'location', 'about', 'user',
+            'current_ctc', 'expected_ctc', 'currency',
+            'total_experience_years', 'total_experience_months', 'total_experience_in_years',
+            'notice_period', 'available_from',
+            'preferred_employment_types', 'preferred_locations', 'open_to_remote',
+            'highest_education', 'domain', 'preferred_company_types',
+            'is_actively_looking', 'last_active', 'resume_file',
+            'skills_list', 'experience_companies', 'job_skills',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = ['created_at', 'updated_at', 'last_active']
+    
+    def get_user(self, obj):
+        return {
+            'id': str(obj.profile.user.id),
+            'email': obj.profile.user.email,
+            'first_name': obj.profile.user.first_name,
+            'last_name': obj.profile.user.last_name,
+            'username': obj.profile.user.username
+        }
+
+
+class CandidateSearchSerializer(serializers.Serializer):
+    """Serializer for candidate search filters"""
+    
+    skills = serializers.CharField(required=False, allow_blank=True)
+    keywords = serializers.CharField(required=False, allow_blank=True)
+    
+    experience_from = serializers.IntegerField(required=False, min_value=0)
+    experience_to = serializers.IntegerField(required=False, min_value=0)
+    
+    location = serializers.CharField(required=False, allow_blank=True)
+    
+    ctc_from = serializers.DecimalField(required=False, max_digits=10, decimal_places=2, min_value=0)
+    ctc_to = serializers.DecimalField(required=False, max_digits=10, decimal_places=2, min_value=0)
+    
+    notice_period = serializers.ListField(
+        child=serializers.CharField(),
+        required=False,
+        allow_empty=True
+    )
+    education = serializers.CharField(required=False, allow_blank=True)
+    domain = serializers.CharField(required=False, allow_blank=True)
+    employment_type = serializers.ListField(
+        child=serializers.CharField(),
+        required=False,
+        allow_empty=True
+    )
+    company_type = serializers.CharField(required=False, allow_blank=True)
+    
+    active_in_days = serializers.IntegerField(required=False, min_value=1)
+    
+    page = serializers.IntegerField(required=False, min_value=1, default=1)
+    page_size = serializers.IntegerField(required=False, min_value=1, max_value=100, default=20)
+
+
+class CandidateSearchResultSerializer(serializers.Serializer):
+    """Serializer for candidate search results"""
+    
+    candidates = JobProfileSerializer(many=True)
+    total_count = serializers.IntegerField()
+    page = serializers.IntegerField()
+    page_size = serializers.IntegerField()
+    total_pages = serializers.IntegerField()
+    has_next = serializers.BooleanField()
+    has_previous = serializers.BooleanField()
+
+
+class FilterOptionsSerializer(serializers.Serializer):
+    """Serializer for filter options"""
+    
+    notice_periods = serializers.ListField(
+        child=serializers.DictField()
+    )
+    education_levels = serializers.ListField(
+        child=serializers.DictField()
+    )
+    employment_types = serializers.ListField(
+        child=serializers.DictField()
+    )
+    company_types = serializers.ListField(
+        child=serializers.DictField()
+    )
+    popular_skills = serializers.ListField(
+        child=serializers.CharField()
+    )
+    popular_locations = serializers.ListField(
+        child=serializers.CharField()
+    )
+    popular_domains = serializers.ListField(
+        child=serializers.CharField()
+    )
+
+
+class CandidateStatsSerializer(serializers.Serializer):
+    """Serializer for candidate statistics"""
+    
+    total_candidates = serializers.IntegerField()
+    active_candidates_7_days = serializers.IntegerField()
+    active_candidates_30_days = serializers.IntegerField()
+    recent_searches = serializers.IntegerField()

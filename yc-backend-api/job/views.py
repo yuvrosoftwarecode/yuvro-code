@@ -1,13 +1,27 @@
-from rest_framework import viewsets, status, permissions
+from rest_framework import viewsets, status, permissions, generics
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
-from .models import Job, Company, JobApplication
+from django.utils import timezone
+from django.core.paginator import Paginator
+from datetime import timedelta
+from .models import (
+    Job, Company, JobApplication, SocialLinks, Skill, Experience, Project, Education, Certification,
+    JobProfile, JobSkill, CandidateSearchLog
+)
+from authentication.models import Profile
 from .serializers import (
     JobSerializer, CompanySerializer, JobApplicationSerializer,
-    JobApplicationListSerializer, JobWithApplicationsSerializer
+    JobApplicationListSerializer, JobWithApplicationsSerializer,
+    JobProfileSerializer, CandidateSearchSerializer, CandidateSearchResultSerializer,
+    FilterOptionsSerializer, CandidateStatsSerializer
 )
+from authentication.serializers import (
+    SocialLinksSerializer, SkillSerializer, ExperienceSerializer,
+    ProjectSerializer, EducationSerializer, CertificationSerializer
+)
+from authentication.permissions import IsAuthenticatedUser
 import logging
 
 
@@ -88,7 +102,6 @@ class JobViewSet(viewsets.ModelViewSet):
         queryset = self.get_queryset()
         filters = request.data
         
-        # Apply filters
         if filters.get('title'):
             queryset = queryset.filter(title__icontains=filters['title'])
         if filters.get('company'):
@@ -113,13 +126,11 @@ class JobViewSet(viewsets.ModelViewSet):
         
         logger.info(f"User {user.username} applying to job: {job.title}")
         
-        # Check if user already applied
         if JobApplication.objects.filter(job=job, applicant=user, is_applied=True).exists():
             return Response({
                 'error': 'You have already applied to this job'
             }, status=status.HTTP_400_BAD_REQUEST)
         
-        # Create application data
         application_data = {
             'job_id': job.id,
             'cover_letter': request.data.get('cover_letter', ''),
@@ -150,7 +161,6 @@ class JobViewSet(viewsets.ModelViewSet):
         """Get applications for a specific job (recruiter only)"""
         job = self.get_object()
         
-        # Check if user has permission to view applications
         if not request.user.role in ['recruiter', 'admin', 'instructor']:
             return Response({
                 'error': 'Permission denied'
@@ -186,10 +196,8 @@ class JobApplicationViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if user.role in ['recruiter', 'admin', 'instructor']:
-            # Recruiters can see all applications
             return JobApplication.objects.all()
         else:
-            # Students can only see their own applications
             return JobApplication.objects.filter(applicant=user)
     
     def perform_create(self, serializer):
@@ -227,13 +235,11 @@ class JobApplicationViewSet(viewsets.ModelViewSet):
         except Job.DoesNotExist:
             return Response({'error': 'Job not found'}, status=status.HTTP_404_NOT_FOUND)
         
-        # Check if record already exists
         existing_app = JobApplication.objects.filter(job=job, applicant=request.user).first()
         if existing_app:
             if existing_app.is_bookmarked:
                 return Response({'message': 'Job already bookmarked'}, status=status.HTTP_200_OK)
             else:
-                # If it exists but not bookmarked (e.g. applied), we can toggle bookmark on
                 existing_app.is_bookmarked = True
                 existing_app.save()
                 return Response({
@@ -241,7 +247,6 @@ class JobApplicationViewSet(viewsets.ModelViewSet):
                     'application_id': existing_app.id
                 }, status=status.HTTP_200_OK)
         
-        # Create new bookmark record
         application = JobApplication.objects.create(
             job=job,
             applicant=request.user,
@@ -266,7 +271,6 @@ class JobApplicationViewSet(viewsets.ModelViewSet):
                 applicant=request.user,
                 is_bookmarked=True
             )
-            # Just set is_bookmarked to False, don't delete if applied
             if application.is_applied:
                 application.is_bookmarked = False
                 application.save()
@@ -311,4 +315,304 @@ class JobApplicationViewSet(viewsets.ModelViewSet):
         application.save()
         
         serializer = JobApplicationSerializer(application)
+        return Response(serializer.data)
+
+
+class SocialLinksUpdateView(generics.UpdateAPIView):
+    serializer_class = SocialLinksSerializer
+    permission_classes = [IsAuthenticatedUser]
+
+    def get_object(self):
+        profile, _ = Profile.objects.get_or_create(user=self.request.user)
+        links, _ = SocialLinks.objects.get_or_create(profile=profile)
+        return links
+
+
+class SkillCreateView(generics.CreateAPIView):
+    serializer_class = SkillSerializer
+    permission_classes = [IsAuthenticatedUser]
+
+    def perform_create(self, serializer):
+        profile, _ = Profile.objects.get_or_create(user=self.request.user)
+        serializer.save(profile=profile)
+
+
+class SkillUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Skill.objects.all()
+    serializer_class = SkillSerializer
+    permission_classes = [IsAuthenticatedUser]
+
+
+class ExperienceCreateView(generics.CreateAPIView):
+    serializer_class = ExperienceSerializer
+    permission_classes = [IsAuthenticatedUser]
+
+    def perform_create(self, serializer):
+        profile, _ = Profile.objects.get_or_create(user=self.request.user)
+        serializer.save(profile=profile)
+
+
+class ExperienceUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Experience.objects.all()
+    serializer_class = ExperienceSerializer
+    permission_classes = [IsAuthenticatedUser]
+
+
+class ProjectCreateView(generics.CreateAPIView):
+    serializer_class = ProjectSerializer
+    permission_classes = [IsAuthenticatedUser]
+
+    def perform_create(self, serializer):
+        profile, _ = Profile.objects.get_or_create(user=self.request.user)
+        serializer.save(profile=profile)
+
+
+class ProjectUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Project.objects.all()
+    serializer_class = ProjectSerializer
+    permission_classes = [IsAuthenticatedUser]
+
+
+class EducationCreateView(generics.CreateAPIView):
+    serializer_class = EducationSerializer
+    permission_classes = [IsAuthenticatedUser]
+
+    def perform_create(self, serializer):
+        profile, _ = Profile.objects.get_or_create(user=self.request.user)
+        serializer.save(profile=profile)
+
+
+class EducationUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Education.objects.all()
+    serializer_class = EducationSerializer
+    permission_classes = [IsAuthenticatedUser]
+
+
+class CertificationCreateView(generics.CreateAPIView):
+    serializer_class = CertificationSerializer
+    permission_classes = [IsAuthenticatedUser]
+
+    def perform_create(self, serializer):
+        profile, _ = Profile.objects.get_or_create(user=self.request.user)
+        serializer.save(profile=profile)
+
+
+class CertificationUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Certification.objects.all()
+    serializer_class = CertificationSerializer
+    permission_classes = [IsAuthenticatedUser]
+
+
+class CandidateSearchViewSet(viewsets.ViewSet):
+    """ViewSet for candidate search functionality"""
+    
+    permission_classes = [permissions.IsAuthenticated]
+    
+    @action(detail=False, methods=['get'])
+    def health(self, request):
+        """Health check endpoint"""
+        return Response({
+            'status': 'healthy',
+            'service': 'candidate-search',
+            'timestamp': timezone.now().isoformat()
+        })
+    
+    @action(detail=False, methods=['post'])
+    def search(self, request):
+        """Search candidates with filters"""
+        
+        search_serializer = CandidateSearchSerializer(data=request.data)
+        if not search_serializer.is_valid():
+            return Response(search_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        filters = search_serializer.validated_data
+        
+        queryset = JobProfile.objects.select_related('profile__user').prefetch_related(
+            'job_skills', 'profile__skills', 'profile__experiences'
+        ).all()
+        
+        if filters.get('skills'):
+            skills_query = filters['skills']
+            queryset = queryset.filter(
+                Q(job_skills__skill_name__icontains=skills_query) |
+                Q(profile__skills__name__icontains=skills_query)
+            ).distinct()
+        
+        if filters.get('keywords'):
+            keywords = filters['keywords']
+            queryset = queryset.filter(
+                Q(profile__about__icontains=keywords) |
+                Q(profile__title__icontains=keywords)
+            ).distinct()
+        
+        if filters.get('experience_from') is not None:
+            queryset = queryset.filter(total_experience_years__gte=filters['experience_from'])
+        
+        if filters.get('experience_to') is not None:
+            queryset = queryset.filter(total_experience_years__lte=filters['experience_to'])
+        
+        if filters.get('location'):
+            location = filters['location']
+            queryset = queryset.filter(
+                Q(profile__location__icontains=location) |
+                Q(preferred_locations__icontains=location)
+            )
+        
+        if filters.get('ctc_from') is not None:
+            queryset = queryset.filter(expected_ctc__gte=filters['ctc_from'])
+        
+        if filters.get('ctc_to') is not None:
+            queryset = queryset.filter(expected_ctc__lte=filters['ctc_to'])
+        
+        if filters.get('notice_period'):
+            queryset = queryset.filter(notice_period__in=filters['notice_period'])
+        
+        if filters.get('education'):
+            queryset = queryset.filter(highest_education=filters['education'])
+        
+        if filters.get('domain'):
+            queryset = queryset.filter(domain__icontains=filters['domain'])
+        
+        if filters.get('employment_type'):
+            for emp_type in filters['employment_type']:
+                queryset = queryset.filter(preferred_employment_types__contains=emp_type)
+        
+        if filters.get('company_type'):
+            queryset = queryset.filter(preferred_company_types__contains=filters['company_type'])
+        
+        if filters.get('active_in_days'):
+            days = filters['active_in_days']
+            cutoff_date = timezone.now() - timedelta(days=days)
+            queryset = queryset.filter(last_active__gte=cutoff_date)
+        
+        total_count = queryset.count()
+        
+        page = filters.get('page', 1)
+        page_size = filters.get('page_size', 20)
+        
+        paginator = Paginator(queryset, page_size)
+        total_pages = paginator.num_pages
+        
+        try:
+            candidates_page = paginator.page(page)
+        except:
+            candidates_page = paginator.page(1)
+            page = 1
+        
+        candidates_serializer = JobProfileSerializer(candidates_page.object_list, many=True)
+        
+        if request.user.role in ['recruiter', 'admin', 'instructor']:
+            CandidateSearchLog.objects.create(
+                recruiter=request.user,
+                search_filters=filters,
+                results_count=total_count
+            )
+        
+        result = {
+            'candidates': candidates_serializer.data,
+            'total_count': total_count,
+            'page': page,
+            'page_size': page_size,
+            'total_pages': total_pages,
+            'has_next': candidates_page.has_next(),
+            'has_previous': candidates_page.has_previous()
+        }
+        
+        return Response(result)
+    
+    @action(detail=False, methods=['get'])
+    def stats(self, request):
+        """Get candidate statistics"""
+        
+        total_candidates = JobProfile.objects.count()
+        
+        seven_days_ago = timezone.now() - timedelta(days=7)
+        active_7_days = JobProfile.objects.filter(last_active__gte=seven_days_ago).count()
+        
+        thirty_days_ago = timezone.now() - timedelta(days=30)
+        active_30_days = JobProfile.objects.filter(last_active__gte=thirty_days_ago).count()
+        
+        recent_searches = 0
+        if request.user.role in ['recruiter', 'admin', 'instructor']:
+            recent_searches = CandidateSearchLog.objects.filter(
+                recruiter=request.user,
+                created_at__gte=thirty_days_ago
+            ).count()
+        
+        stats = {
+            'total_candidates': total_candidates,
+            'active_candidates_7_days': active_7_days,
+            'active_candidates_30_days': active_30_days,
+            'recent_searches': recent_searches
+        }
+        
+        return Response(stats)
+    
+    @action(detail=False, methods=['get'])
+    def filter_options(self, request):
+        """Get available filter options"""
+        
+        options = {
+            'notice_periods': [
+                {'value': choice[0], 'label': choice[1]}
+                for choice in JobProfile.NOTICE_PERIOD_CHOICES
+            ],
+            'education_levels': [
+                {'value': choice[0], 'label': choice[1]}
+                for choice in JobProfile.EDUCATION_LEVEL_CHOICES
+            ],
+            'employment_types': [
+                {'value': choice[0], 'label': choice[1]}
+                for choice in JobProfile.EMPLOYMENT_TYPE_CHOICES
+            ],
+            'company_types': [
+                {'value': choice[0], 'label': choice[1]}
+                for choice in JobProfile.COMPANY_TYPE_CHOICES
+            ],
+            'popular_skills': list(
+                JobSkill.objects.values_list('skill_name', flat=True).distinct()[:20]
+            ),
+            'popular_locations': list(
+                JobProfile.objects.exclude(
+                    profile__location__isnull=True
+                ).exclude(
+                    profile__location=''
+                ).values_list('profile__location', flat=True).distinct()[:20]
+            ),
+            'popular_domains': list(
+                JobProfile.objects.exclude(
+                    domain__isnull=True
+                ).exclude(
+                    domain=''
+                ).values_list('domain', flat=True).distinct()[:20]
+            )
+        }
+        
+        return Response(options)
+    
+    def retrieve(self, request, pk=None):
+        """Get specific candidate details"""
+        
+        try:
+            job_profile = JobProfile.objects.select_related('profile__user').prefetch_related(
+                'job_skills', 'profile__skills', 'profile__experiences',
+                'profile__projects', 'profile__education', 'profile__certifications'
+            ).get(pk=pk)
+            
+            serializer = JobProfileSerializer(job_profile)
+            return Response(serializer.data)
+        except JobProfile.DoesNotExist:
+            return Response(
+                {'error': 'Candidate not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+    
+    def list(self, request):
+        """List all candidates"""
+        
+        queryset = JobProfile.objects.select_related('profile__user').prefetch_related(
+            'job_skills', 'profile__skills', 'profile__experiences'
+        ).all()
+        
+        serializer = JobProfileSerializer(queryset, many=True)
         return Response(serializer.data)

@@ -28,12 +28,11 @@ urlpatterns = [
     path("api/health/", health_check, name="health_check"),
     path("accounts/", include("allauth.urls")),
     path("api/jobs/", include("job.urls")),
-    path("api/candidates/", include("candidate.urls")),
+    path("api/candidates/", include("job.urls")),
     path("api/", include("assessment.urls")),
 
     path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
-    # path("api/token/verify/", TokenVerifyView.as_view(), name="token_verify"),
 
     
 ]

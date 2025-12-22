@@ -44,7 +44,6 @@ INSTALLED_APPS = [
     "code_executor",
     "job",
     "assessment",
-    "candidate",
 ]
 
 MIDDLEWARE = [

@@ -4,6 +4,8 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import (
     User,
     Profile,
+)
+from job.models import (
     SocialLinks,
     Skill,
     Experience,
@@ -14,15 +16,12 @@ from .models import (
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
-    """
-    Custom JWT token serializer that includes user role and additional user info in the token.
-    """
+
 
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
 
-        # Add custom claims
         token["role"] = user.role
         token["username"] = user.username
         token["email"] = user.email
@@ -33,9 +32,6 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    """
-    Serializer for User model.
-    """
     
     class Meta:
         model = User
@@ -54,9 +50,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class UserLoginSerializer(serializers.Serializer):
-    """
-    Serializer for user login.
-    """
+
 
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
@@ -81,9 +75,7 @@ class UserLoginSerializer(serializers.Serializer):
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
-    """
-    Serializer for user registration.
-    """
+
 
     password = serializers.CharField(write_only=True, min_length=8)
     password_confirm = serializers.CharField(write_only=True)
@@ -106,8 +98,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return attrs
 
     def validate_role(self, value):
-        # Only allow certain roles during registration
-        allowed_roles = ["student"]  # By default, only students can self-register
+        allowed_roles = ["student"]  
         if value not in allowed_roles:
             raise serializers.ValidationError(
                 f"Invalid role. Allowed roles for registration: {', '.join(allowed_roles)}"
@@ -122,20 +113,15 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
 
 class UserUpdateSerializer(serializers.ModelSerializer):
-    """
-    Serializer for updating user information.
-    """
 
     class Meta:
         model = User
         fields = ["username", "email", "first_name", "last_name", "role"]
 
     def validate_role(self, value):
-        # Only admins can change roles
         request = self.context.get("request")
         if request and request.user:
             if not request.user.can_manage_users():
-                # If not admin, don't allow role changes
                 if self.instance and self.instance.role != value:
                     raise serializers.ValidationError(
                         "You don't have permission to change user roles."
@@ -157,7 +143,6 @@ class SocialLinksSerializer(serializers.ModelSerializer):
         read_only_fields = ["id"]
 
 
-# ----- Skills -----
 class SkillSerializer(serializers.ModelSerializer):
     class Meta:
         model = Skill
@@ -170,7 +155,6 @@ class SkillSerializer(serializers.ModelSerializer):
         read_only_fields = ["id"]
 
 
-# ----- Experience -----
 class ExperienceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Experience
@@ -187,7 +171,6 @@ class ExperienceSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_at", "updated_at"]
 
 
-# ----- Projects -----
 class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
@@ -204,7 +187,6 @@ class ProjectSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_at"]
 
 
-# ----- Education -----
 class EducationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Education
@@ -221,7 +203,6 @@ class EducationSerializer(serializers.ModelSerializer):
         read_only_fields = ["id"]
 
 
-# ----- Certifications -----
 class CertificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Certification
@@ -235,13 +216,10 @@ class CertificationSerializer(serializers.ModelSerializer):
         read_only_fields = ["id"]
 
 
-# ------------------------------------------------------------
-# PROFILE SERIALIZER (NESTED READ)
-# ------------------------------------------------------------
+
 class ProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
 
-    # Allow editing user’s first and last name
     first_name = serializers.CharField(write_only=True, required=False)
     last_name = serializers.CharField(write_only=True, required=False)
 
@@ -281,7 +259,6 @@ class ProfileSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         user = instance.user
 
-        # 1. Extract user fields
         first_name = validated_data.pop("first_name", None)
         last_name = validated_data.pop("last_name", None)
 
@@ -291,14 +268,11 @@ class ProfileSerializer(serializers.ModelSerializer):
             user.last_name = last_name
         user.save()
 
-        # 2. Update profile fields normally
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
 
-        # 3. Always regenerate full_name
         instance.full_name = f"{user.first_name} {user.last_name}".strip()
 
-        # 4. Save profile
         instance.save()
 
         return instance

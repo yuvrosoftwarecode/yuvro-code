@@ -158,10 +158,6 @@ const JobApplicantsContent: React.FC = () => {
         <ArrowLeft className="h-4 w-4" />
         <span>Back to Jobs</span>
       </button>
-      <button className="flex items-center space-x-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600">
-        <Download className="h-4 w-4" />
-        <span>Export CSV</span>
-      </button>
     </>
   );
 

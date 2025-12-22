@@ -94,71 +94,71 @@ export const updateSocialLinks = async (payload: Partial<SocialLinks>) => {
   const cleanedPayload = Object.fromEntries(
     Object.entries(payload).filter(([_, value]) => value && value.trim() !== "")
   );
-  return restApiAuthUtil.patch('/auth/profile/links/', cleanedPayload);
+  return restApiAuthUtil.patch('/jobs/profile/links/', cleanedPayload);
 };
 
 export const addSkill = async (payload: Partial<Skill>) => {
-  return restApiAuthUtil.post('/auth/skills/add/', payload);
+  return restApiAuthUtil.post('/jobs/skills/add/', payload);
 };
 
 export const updateSkill = async (id: string, payload: Partial<Skill>) => {
-  return restApiAuthUtil.patch(`/auth/skills/${id}/`, payload);
+  return restApiAuthUtil.patch(`/jobs/skills/${id}/`, payload);
 };
 
 export const deleteSkill = async (id: string) => {
-  await restApiAuthUtil.delete(`/auth/skills/${id}/`);
+  await restApiAuthUtil.delete(`/jobs/skills/${id}/`);
   return true;
 };
 
 export const addExperience = async (payload: Partial<Experience>) => {
-  return restApiAuthUtil.post('/auth/experience/add/', payload);
+  return restApiAuthUtil.post('/jobs/experience/add/', payload);
 };
 
 export const updateExperience = async (id: string, payload: Partial<Experience>) => {
-  return restApiAuthUtil.patch(`/auth/experience/${id}/`, payload);
+  return restApiAuthUtil.patch(`/jobs/experience/${id}/`, payload);
 };
 
 export const deleteExperience = async (id: string) => {
-  await restApiAuthUtil.delete(`/auth/experience/${id}/`);
+  await restApiAuthUtil.delete(`/jobs/experience/${id}/`);
   return true;
 };
 
 export const addProject = async (payload: Partial<Project>) => {
-  return restApiAuthUtil.post('/auth/projects/add/', payload);
+  return restApiAuthUtil.post('/jobs/projects/add/', payload);
 };
 
 export const updateProject = async (id: string, payload: Partial<Project>) => {
-  return restApiAuthUtil.patch(`/auth/projects/${id}/`, payload);
+  return restApiAuthUtil.patch(`/jobs/projects/${id}/`, payload);
 };
 
 export const deleteProject = async (id: string) => {
-  await restApiAuthUtil.delete(`/auth/projects/${id}/`);
+  await restApiAuthUtil.delete(`/jobs/projects/${id}/`);
   return true;
 };
 
 export const addEducation = async (payload: Partial<Education>) => {
-  return restApiAuthUtil.post('/auth/education/add/', payload);
+  return restApiAuthUtil.post('/jobs/education/add/', payload);
 };
 
 export const updateEducation = async (id: string, payload: Partial<Education>) => {
-  return restApiAuthUtil.patch(`/auth/education/${id}/`, payload);
+  return restApiAuthUtil.patch(`/jobs/education/${id}/`, payload);
 };
 
 export const deleteEducation = async (id: string) => {
-  await restApiAuthUtil.delete(`/auth/education/${id}/`);
+  await restApiAuthUtil.delete(`/jobs/education/${id}/`);
   return true;
 };
 
 export const addCertification = async (payload: Partial<Certification>) => {
-  return restApiAuthUtil.post('/auth/certification/add/', payload);
+  return restApiAuthUtil.post('/jobs/certification/add/', payload);
 };
 
 export const updateCertification = async (id: string, payload: Partial<Certification>) => {
-  return restApiAuthUtil.patch(`/auth/certification/${id}/`, payload);
+  return restApiAuthUtil.patch(`/jobs/certification/${id}/`, payload);
 };
 
 export const deleteCertification = async (id: string) => {
-  await restApiAuthUtil.delete(`/auth/certification/${id}/`);
+  await restApiAuthUtil.delete(`/jobs/certification/${id}/`);
   return true;
 };
 

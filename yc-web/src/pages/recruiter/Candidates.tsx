@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Filter, Users, MapPin, DollarSign, Clock, GraduationCap, Building, Briefcase, RotateCcw, Sparkles, Eye, Mail, Download } from 'lucide-react';
+import { Search, Filter, MapPin, DollarSign, Clock, GraduationCap, Building, Briefcase, RotateCcw, Sparkles, Eye, Mail, Download } from 'lucide-react';
 import RoleSidebar from '../../components/common/RoleSidebar';
 import RoleHeader from '../../components/common/RoleHeader';
 import { Button } from '@/components/ui/button';
@@ -32,6 +32,13 @@ interface CandidateFilters {
   activeInDays: string;
 }
 
+interface CandidateStats {
+  total_candidates: number;
+  active_candidates_7_days: number;
+  active_candidates_30_days: number;
+  recent_searches: number;
+}
+
 const Candidates = () => {
   const [filters, setFilters] = useState<CandidateFilters>({
     skills: '',
@@ -54,10 +61,12 @@ const Candidates = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [stats, setStats] = useState<CandidateStats | null>(null);
 
   // Load filter options on component mount
   useEffect(() => {
     loadFilterOptions();
+    loadStats();
     // Test basic connectivity on mount
     testBasicConnectivity();
   }, []);
@@ -73,6 +82,11 @@ const Candidates = () => {
       if (!apiBaseUrl) {
         throw new Error('VITE_BACKEND_API_BASE_URL is not configured');
       }
+      
+      // Test the health endpoint first
+      console.log('Testing health endpoint...');
+      const healthResult = await candidateService.healthCheck();
+      console.log('Health check successful:', healthResult);
       
       // Test the candidate search endpoint
       const testResult = await candidateService.searchCandidates({ page: 1, page_size: 1 });
@@ -108,7 +122,7 @@ const Candidates = () => {
       const options = await candidateService.getFilterOptions();
       console.log('Filter options loaded:', options);
       setFilterOptions(options);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to load filter options:', error);
       console.error('Error details:', {
         message: error?.message,
@@ -116,6 +130,25 @@ const Candidates = () => {
         data: error?.response?.data
       });
       toast.error('Failed to load filter options. Check console for details.');
+    }
+  };
+
+  const loadStats = async () => {
+    try {
+      console.log('Loading candidate stats...');
+      // TODO: Implement stats endpoint in candidateService
+      // For now, set some default stats to prevent the error
+      const defaultStats: CandidateStats = {
+        total_candidates: 0,
+        active_candidates_7_days: 0,
+        active_candidates_30_days: 0,
+        recent_searches: 0
+      };
+      setStats(defaultStats);
+      console.log('Stats loaded:', defaultStats);
+    } catch (error: any) {
+      console.error('Failed to load stats:', error);
+      toast.error('Failed to load candidate statistics.');
     }
   };
 
@@ -154,8 +187,8 @@ const Candidates = () => {
       }
     } catch (error: any) {
       console.error('Search failed:', error);
-      console.error('Error response:', error?.response);
-      console.error('Error data:', error?.response?.data);
+      console.error('Error response:', (error as any)?.response);
+      console.error('Error data:', (error as any)?.response?.data);
       
       let errorMessage = 'Search failed. Please try again.';
       
@@ -257,36 +290,6 @@ const Candidates = () => {
             </div>
           )}
           
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-              <div className="flex items-center">
-                <div className="text-red-600 mr-3">⚠️</div>
-                <div>
-                  <div className="font-medium text-red-800">System Error</div>
-                  <div className="text-red-700 text-sm">{error}</div>
-                  <button 
-                    onClick={() => {
-                      setError(null);
-                      setIsLoading(true);
-                      testBasicConnectivity();
-                    }}
-                    className="mt-2 text-red-600 hover:text-red-800 text-sm underline"
-                  >
-                    Retry Connection
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {!isLoading && !error && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-              <div className="flex items-center">
-                <div className="text-green-600 mr-3">✅</div>
-                <span className="text-green-800">Candidate search system is ready</span>
-              </div>
-            </div>
-          )}
           <form 
             onSubmit={(e) => {
               e.preventDefault();
@@ -295,7 +298,6 @@ const Candidates = () => {
             }}
             className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden"
           >
-            {/* Search Filters */}
             <div className="p-8">
               <div className="flex items-center gap-3 mb-8">
                 <div className="p-2 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg">
@@ -762,18 +764,25 @@ const CandidateCard = ({ candidate }: { candidate: Candidate }) => {
       <CardHeader className="pb-4">
         <div className="flex items-start gap-4">
           <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-xl">
-            {candidate.full_name ? candidate.full_name.charAt(0) : candidate.email.charAt(0)}
+            {candidate.full_name ? candidate.full_name.charAt(0) : 
+             candidate.profile?.full_name ? candidate.profile.full_name.charAt(0) :
+             candidate.user?.email ? candidate.user.email.charAt(0) : 'C'}
           </div>
           <div className="flex-1">
             <CardTitle className="text-lg text-gray-900">
-              {candidate.full_name || `${candidate.first_name} ${candidate.last_name}`.trim() || candidate.username}
+              {candidate.full_name || 
+               candidate.profile?.full_name || 
+               `${candidate.user?.first_name || ''} ${candidate.user?.last_name || ''}`.trim() || 
+               candidate.user?.username || 'Unknown'}
             </CardTitle>
-            <p className="text-gray-600 font-medium">{candidate.title || 'Software Developer'}</p>
+            <p className="text-gray-600 font-medium">
+              {candidate.profile?.title || 'Software Developer'}
+            </p>
             <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
-              {candidate.location && (
+              {candidate.profile?.location && (
                 <div className="flex items-center gap-1">
                   <MapPin className="h-3 w-3" />
-                  {candidate.location}
+                  {candidate.profile.location}
                 </div>
               )}
               <div className="flex items-center gap-1">
@@ -787,7 +796,7 @@ const CandidateCard = ({ candidate }: { candidate: Candidate }) => {
       
       <CardContent className="space-y-4">
         {/* Skills */}
-        {candidate.skills_list.length > 0 && (
+        {candidate.skills_list && candidate.skills_list.length > 0 && (
           <div>
             <p className="text-sm font-medium text-gray-700 mb-2">Skills</p>
             <div className="flex flex-wrap gap-1">
@@ -799,6 +808,25 @@ const CandidateCard = ({ candidate }: { candidate: Candidate }) => {
               {candidate.skills_list.length > 6 && (
                 <Badge variant="outline" className="text-xs">
                   +{candidate.skills_list.length - 6} more
+                </Badge>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Job Skills */}
+        {candidate.job_skills && candidate.job_skills.length > 0 && (
+          <div>
+            <p className="text-sm font-medium text-gray-700 mb-2">Job Skills</p>
+            <div className="flex flex-wrap gap-1">
+              {candidate.job_skills.slice(0, 4).map((skill, index) => (
+                <Badge key={index} variant="outline" className="text-xs">
+                  {skill.skill_name} ({skill.proficiency})
+                </Badge>
+              ))}
+              {candidate.job_skills.length > 4 && (
+                <Badge variant="outline" className="text-xs">
+                  +{candidate.job_skills.length - 4} more
                 </Badge>
               )}
             </div>
@@ -822,9 +850,9 @@ const CandidateCard = ({ candidate }: { candidate: Candidate }) => {
         </div>
 
         {/* About */}
-        {candidate.about && (
+        {candidate.profile?.about && (
           <div>
-            <p className="text-sm text-gray-600 line-clamp-2">{candidate.about}</p>
+            <p className="text-sm text-gray-600 line-clamp-2">{candidate.profile.about}</p>
           </div>
         )}
 

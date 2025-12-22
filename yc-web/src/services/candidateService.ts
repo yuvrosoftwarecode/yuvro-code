@@ -53,15 +53,43 @@ export interface CandidateProject {
 
 export interface Candidate {
   id: string;
-  email: string;
-  username: string;
-  first_name?: string;
-  last_name?: string;
-  full_name?: string;
-  title?: string;
-  location?: string;
-  about?: string;
-  profile_image?: string;
+  user: {
+    id: string;
+    email: string;
+    username: string;
+    first_name?: string;
+    last_name?: string;
+    role: string;
+  };
+  profile: {
+    id: string;
+    profile_image?: string;
+    cover_image?: string;
+    full_name?: string;
+    title?: string;
+    location?: string;
+    about?: string;
+    gender?: string;
+    skills: CandidateSkill[];
+    experiences: CandidateExperience[];
+    education: CandidateEducation[];
+    projects: CandidateProject[];
+    certifications: any[];
+    links?: {
+      github?: string;
+      linkedin?: string;
+      portfolio?: string;
+      email?: string;
+      website?: string;
+    };
+    created_at: string;
+    updated_at: string;
+  };
+  job_skills: {
+    skill_name: string;
+    proficiency: string;
+    years_of_experience: number;
+  }[];
   current_ctc?: number;
   expected_ctc?: number;
   currency: string;
@@ -79,12 +107,9 @@ export interface Candidate {
   last_active: string;
   is_actively_looking: boolean;
   resume_file?: string;
-  skills: CandidateSkill[];
-  experiences: CandidateExperience[];
-  education: CandidateEducation[];
-  projects: CandidateProject[];
   skills_list: string[];
   experience_companies: string[];
+  full_name: string;
   created_at: string;
   updated_at: string;
 }
@@ -122,24 +147,28 @@ export interface FilterOptions {
 }
 
 export const candidateService = {
+  async healthCheck(): Promise<any> {
+    return restApiAuthUtil.get('/jobs/candidates/job-profiles/health/');
+  },
+
   async searchCandidates(filters: CandidateSearchFilters): Promise<CandidateSearchResult> {
-    return restApiAuthUtil.post('/candidates/search/', filters);
+    return restApiAuthUtil.post('/jobs/candidates/job-profiles/search/', filters);
   },
 
   async getStats(): Promise<CandidateStats> {
-    return restApiAuthUtil.get('/candidates/stats/');
+    return restApiAuthUtil.get('/jobs/candidates/job-profiles/stats/');
   },
 
   async getFilterOptions(): Promise<FilterOptions> {
-    return restApiAuthUtil.get('/candidates/filter-options/');
+    return restApiAuthUtil.get('/jobs/candidates/job-profiles/filter-options/');
   },
 
   async getCandidate(candidateId: string): Promise<Candidate> {
-    return restApiAuthUtil.get(`/candidates/${candidateId}/`);
+    return restApiAuthUtil.get(`/jobs/candidates/job-profiles/${candidateId}/`);
   },
 
   async getAllCandidates(): Promise<Candidate[]> {
-    return restApiAuthUtil.get('/candidates/');
+    return restApiAuthUtil.get('/jobs/candidates/job-profiles/');
   }
 };
 

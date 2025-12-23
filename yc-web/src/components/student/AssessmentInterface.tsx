@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,7 +16,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger
 } from '@/components/ui/alert-dialog';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Clock,
   Flag,
@@ -137,8 +134,6 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
   const [questionPage, setQuestionPage] = useState(0);
   const [tabSwitchCount, setTabSwitchCount] = useState(0);
 
-  // -------------------- MEDIA + MONITORING (UNCHANGED UI) --------------------
-  // (YOUR ENTIRE CAMERA MICROPHONE LOGIC — LEFT EXACTLY AS IT IS)
 
   useEffect(() => {
     const initializeMedia = async () => {
@@ -309,19 +304,22 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
 
   // -------------------- RENDER QUESTION (UNCHANGED UI) --------------------
 
-  const renderQuestion = (question: Question) => {
+  // -------------------- RENDER INPUTS ONLY (Right Panel) --------------------
+
+  const renderQuestionInputsOnly = (question: Question) => {
     switch (question.type) {
       case 'mcq_single':
         return (
-          <div className="space-y-3">
+          <div className="p-6 md:p-8 space-y-6">
             <RadioGroup
               value={answers[question.id] || ''}
               onValueChange={(value) => handleAnswerChange(question.id, value)}
+              className="space-y-4"
             >
               {question.mcq_options?.map((option, index) => (
-                <div key={index} className="flex items-center space-x-3">
-                  <RadioGroupItem value={option.text} id={`option-${index}`} />
-                  <Label htmlFor={`option-${index}`} className="flex-1 cursor-pointer">
+                <div key={index} className="flex items-start space-x-3 p-4 rounded-lg border border-slate-200 hover:border-indigo-300 hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => handleAnswerChange(question.id, option.text)}>
+                  <RadioGroupItem value={option.text} id={`option-${index}`} className="mt-1" />
+                  <Label htmlFor={`option-${index}`} className="flex-1 cursor-pointer leading-relaxed text-slate-700">
                     {option.text}
                   </Label>
                 </div>
@@ -329,16 +327,16 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
             </RadioGroup>
 
             {/* Explanation */}
-            <div className="mt-4">
-              <Label htmlFor={`explanation-${question.id}`} className="text-sm font-medium">
-                Explain your answer (required)
+            <div className="pt-4 border-t border-slate-100">
+              <Label htmlFor={`explanation-${question.id}`} className="text-sm font-semibold text-slate-700 mb-2 block">
+                Explain your answer (Required)
               </Label>
               <Textarea
                 id={`explanation-${question.id}`}
-                placeholder="Explain why you chose this answer..."
+                placeholder="Briefly explain your reasoning..."
                 value={explanations[question.id] || ''}
                 onChange={(e) => handleExplanationChange(question.id, e.target.value)}
-                className="mt-2 min-h-20"
+                className="min-h-[100px] bg-white"
               />
             </div>
           </div>
@@ -346,10 +344,10 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
 
       case 'mcq_multiple':
         return (
-          <div className="space-y-3">
+          <div className="p-6 md:p-8 space-y-6">
             <div className="space-y-3">
               {question.mcq_options?.map((option, index) => (
-                <div key={index} className="flex items-center space-x-3">
+                <div key={index} className="flex items-start space-x-3 p-4 rounded-lg border border-slate-200 hover:border-indigo-300 hover:bg-slate-50 transition-colors">
                   <Checkbox
                     id={`option-${index}`}
                     checked={answers[question.id]?.includes(option.text) || false}
@@ -360,8 +358,9 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
                         : current.filter((a: string) => a !== option.text);
                       handleAnswerChange(question.id, newAns);
                     }}
+                    className="mt-1"
                   />
-                  <Label htmlFor={`option-${index}`} className="flex-1 cursor-pointer">
+                  <Label htmlFor={`option-${index}`} className="flex-1 cursor-pointer leading-relaxed text-slate-700">
                     {option.text}
                   </Label>
                 </div>
@@ -369,16 +368,16 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
             </div>
 
             {/* Explanation */}
-            <div className="mt-4">
-              <Label htmlFor={`explanation-${question.id}`} className="text-sm font-medium">
-                Explain your answer (required)
+            <div className="pt-4 border-t border-slate-100">
+              <Label htmlFor={`explanation-${question.id}`} className="text-sm font-semibold text-slate-700 mb-2 block">
+                Explain your answer (Required)
               </Label>
               <Textarea
                 id={`explanation-${question.id}`}
-                placeholder="Explain why you chose this answer..."
+                placeholder="Briefly explain your reasoning..."
                 value={explanations[question.id] || ''}
                 onChange={(e) => handleExplanationChange(question.id, e.target.value)}
-                className="mt-2 min-h-20"
+                className="min-h-[100px] bg-white"
               />
             </div>
           </div>
@@ -386,81 +385,48 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
 
       case 'coding':
         return (
-          <div className="flex flex-col h-full space-y-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2 text-sm text-slate-500">
-                <Code className="w-4 h-4" />
-                <span>Write your solution below</span>
-              </div>
+          <div className="flex flex-col h-full bg-slate-50">
+            {/* Full height container for Editor */}
+            <CodeExecutionPanel
+              problem={{
+                id: question.id,
+                title: question.title || 'Coding Question',
+                description: question.content || '',
+                test_cases_basic: question.test_cases_basic || []
+              }}
+              initialCode={answers[question.id] || ''}
+              onCodeChange={(code) => handleAnswerChange(question.id, code)}
+              onLanguageChange={setSelectedLanguage}
 
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsCodeEditorFullscreen(!isCodeEditorFullscreen)}
-                className="text-slate-500 hover:text-indigo-600 border-slate-200"
-              >
-                {isCodeEditorFullscreen ? <Minimize2 className="w-4 h-4 mr-1" /> : <Maximize className="w-4 h-4 mr-1" />}
-                {isCodeEditorFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
-              </Button>
-            </div>
+              showRunButton={true}
+              showSubmitButton={false}
 
-            <div className={`transition-all duration-300 ${isCodeEditorFullscreen ? 'fixed inset-0 z-[100] bg-white p-4' : 'w-full'}`}>
-              {isCodeEditorFullscreen && (
-                <div className="flex justify-between items-center mb-2 px-2">
-                  <h2 className="font-bold text-lg">{question.title}</h2>
-                  <Button size="sm" variant="ghost" onClick={() => setIsCodeEditorFullscreen(false)}>Close</Button>
-                </div>
-              )}
+              mode="exam"
+              showTestCases={true}
+              allowCustomTestCases={false}
 
-              <CodeExecutionPanel
-                problem={{
-                  id: question.id,
-                  title: question.title || 'Coding Question',
-                  description: question.content || '',
-                  test_cases_basic: question.test_cases_basic || []
-                }}
-                initialCode={answers[question.id] || ''}
-                onCodeChange={(code) => handleAnswerChange(question.id, code)}
-                onLanguageChange={setSelectedLanguage}
-
-                // Allow "Run" (shows test results tab) but "Submit" is global
-                showRunButton={true}
-                showSubmitButton={false}
-
-                mode="exam"
-                showTestCases={true}
-                allowCustomTestCases={false}
-
-                className={`h-full border border-slate-200 shadow-sm overflow-hidden ${isCodeEditorFullscreen ? 'h-[90vh]' : ''} p-0`}
-                editorHeight={isCodeEditorFullscreen ? '80vh' : '500px'}
-              />
-            </div>
-
-            {/* Explanation - Optional for Coding but kept if strict requirement */}
-            <div className="mt-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
-              <Label className="text-sm font-semibold text-slate-700 mb-2 block">Explain your approach (Optional)</Label>
-              <Textarea
-                placeholder="Briefly explain your algorithm or logic..."
-                value={explanations[question.id] || ''}
-                onChange={(e) => handleExplanationChange(question.id, e.target.value)}
-                className="min-h-[100px] bg-white border-slate-200 focus:border-indigo-300 focus:ring-indigo-100"
-              />
-            </div>
+              // Flexible height to fill the Right Panel
+              className="h-full border-0 shadow-none rounded-none w-full"
+              editorHeight="100%"
+            />
           </div>
         );
 
       case 'descriptive':
         return (
-          <Textarea
-            placeholder="Type your answer here..."
-            value={answers[question.id] || ''}
-            onChange={(e) => handleAnswerChange(question.id, e.target.value)}
-            className="min-h-32"
-          />
+          <div className="p-6 md:p-8 h-full flex flex-col">
+            <Label className="text-sm font-semibold text-slate-700 mb-3 block">Your Answer</Label>
+            <Textarea
+              placeholder="Type your detailed answer here..."
+              value={answers[question.id] || ''}
+              onChange={(e) => handleAnswerChange(question.id, e.target.value)}
+              className="flex-1 min-h-[300px] bg-white text-base leading-relaxed p-4 resize-none"
+            />
+          </div>
         );
 
       default:
-        return null;
+        return <div className="p-8 text-slate-400">Unsupported question type.</div>;
     }
   };
 
@@ -564,149 +530,106 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
         </div>
       </div>
 
-      {/* 2. Main Workspace */}
-      <div className="flex flex-1 overflow-hidden">
+      {/* 2. Main Workspace (Split Pane) */}
+      <div className="flex flex-1 overflow-hidden relative">
 
-        {/* Sidebar: Navigation Grid */}
-        <div className={`bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out relative z-40 ${isSidebarCollapsed ? 'w-16' : 'w-72'}`}>
-          <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-            {!isSidebarCollapsed && <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wider">Navigation</h3>}
-            <Button variant="ghost" size="icon" onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)} className="ml-auto text-slate-400 hover:text-indigo-600">
-              {isSidebarCollapsed ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-            </Button>
-          </div>
+        {/* LEFT PANEL: Question & Context */}
+        <div
+          className={`
+             transition-all duration-300 ease-in-out h-full overflow-y-auto custom-scrollbar bg-white border-r border-gray-200
+             ${isCodeEditorFullscreen ? 'w-0 opacity-0 overflow-hidden' : 'w-5/12 min-w-[400px]'}
+           `}
+        >
+          <div className="p-8 pb-20 space-y-8">
 
-          <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
-            {!isSidebarCollapsed ? (
-              <div className="space-y-6">
-                <div>
-                  <div className="flex justify-between items-center mb-3">
-                    <h4 className="text-xs font-semibold text-slate-400 uppercase">Question Grid</h4>
-                    <div className="flex space-x-1">
-                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => handlePageChange(questionPage - 1)} disabled={questionPage === 0}><ChevronLeft className="w-3 h-3" /></Button>
-                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => handlePageChange(questionPage + 1)} disabled={questionPage === totalPages - 1}><ChevronRight className="w-3 h-3" /></Button>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-5 gap-2">
-                    {paginatedQuestions.map((q, index) => {
-                      const actualIndex = startQuestion + index;
-                      const status = getQuestionStatus(actualIndex, q.id);
-                      let baseClasses = "h-10 w-full rounded-lg text-sm font-semibold transition-all duration-200 border-2";
-                      if (status === 'current') baseClasses += " border-indigo-600 bg-indigo-50 text-indigo-700 shadow-sm scale-105";
-                      else if (status === 'answered') baseClasses += " border-transparent bg-green-500 text-white shadow-green-200";
-                      else if (status === 'flagged') baseClasses += " border-yellow-400 bg-yellow-50 text-yellow-700";
-                      else baseClasses += " border-slate-100 bg-white text-slate-400 hover:border-slate-300";
-
-                      return (
-                        <button
-                          key={q.id}
-                          onClick={() => handleQuestionClick(index)}
-                          className={baseClasses}
-                        >
-                          {actualIndex + 1}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-100">
-                  <div className="flex justify-between text-xs font-medium text-slate-600">
-                    <span>Answered</span>
-                    <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded-full">{answeredCount}</span>
-                  </div>
-                  <div className="flex justify-between text-xs font-medium text-slate-600">
-                    <span>Flagged</span>
-                    <span className="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">{flaggedCount}</span>
-                  </div>
-                  <div className="flex justify-between text-xs font-medium text-slate-600">
-                    <span>Remaining</span>
-                    <span className="bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full">{questions.length - answeredCount}</span>
-                  </div>
-                </div>
+            {/* Question Header */}
+            <div className="space-y-4">
+              <div className="flex items-center space-x-3">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Question {currentQuestion + 1}</span>
+                <div className="px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-bold uppercase rounded-sm border border-blue-200">{currentQuestionData.type.replace('_', ' ')}</div>
+                <div className="px-2 py-0.5 bg-orange-100 text-orange-700 text-[10px] font-bold uppercase rounded-sm border border-orange-200">{currentQuestionData.marks} Marks</div>
               </div>
-            ) : (
-              <div className="flex flex-col items-center space-y-2">
-                {/* Mini Sidebar view logic if needed, or just keep icons */}
-                <div className="text-xs font-bold text-slate-400 text-center mb-2">{currentQuestion + 1}</div>
-                <Progress value={progress} className="w-1 h-24 rounded-full" orientation="vertical" />
-                <div className="text-xs font-bold text-indigo-600 mt-2">{Math.round(progress)}%</div>
-              </div>
-            )}
+              <h2 className="text-2xl font-bold text-slate-900 leading-snug">{currentQuestionData.title}</h2>
+            </div>
+
+            {/* Question Content */}
+            <div className="prose prose-slate max-w-none text-slate-700 leading-relaxed">
+              <div dangerouslySetInnerHTML={{ __html: currentQuestionData.content }} />
+            </div>
+
+            {/* Hints / Examples could go here */}
           </div>
         </div>
 
-        {/* Question Area */}
-        <div className="flex-1 flex flex-col h-full overflow-hidden bg-slate-50/50 relative">
+        {/* EXPAND/COLLAPSE TOGGLE (Floating) */}
+        <div className="absolute left-[41.666%] top-1/2 -translate-y-1/2 z-20">
+          <Button
+            variant="secondary"
+            size="icon"
+            className="h-8 w-6 rounded-l-none rounded-r-md shadow-md border border-l-0 border-gray-200 bg-white text-slate-400 hover:text-indigo-600"
+            onClick={() => setIsCodeEditorFullscreen(!isCodeEditorFullscreen)}
+            title={isCodeEditorFullscreen ? "Show Question" : "Hide Question (Zen Mode)"}
+          >
+            {isCodeEditorFullscreen ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          </Button>
+        </div>
 
-          {/* Question Content */}
-          <div className="flex-1 overflow-y-auto p-6 md:p-10 custom-scrollbar">
-            <div className="max-w-4xl mx-auto space-y-8 pb-20">
+        {/* RIGHT PANEL: Editor / Answer Area */}
+        <div className="flex-1 h-full overflow-hidden bg-slate-50 flex flex-col">
 
-              {questions.length > 0 && (
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+          {/* Toolbar / Header for Right Panel */}
+          <div className="h-12 bg-white border-b border-gray-200 flex items-center justify-between px-4">
+            <div className="flex items-center space-x-2 text-sm font-medium text-slate-600">
+              <Code className="w-4 h-4 text-indigo-500" />
+              <span>Solution</span>
+            </div>
 
-                  {/* Question Header */}
-                  <div className="bg-slate-50 px-8 py-5 border-b border-slate-100 flex justify-between items-start">
-                    <div>
-                      <div className="flex items-center space-x-3 mb-2">
-                        <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Question {currentQuestion + 1}</span>
-                        <div className="px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-bold uppercase rounded-sm border border-blue-200">{currentQuestionData.type.replace('_', ' ')}</div>
-                        <div className="px-2 py-0.5 bg-orange-100 text-orange-700 text-[10px] font-bold uppercase rounded-sm border border-orange-200">{currentQuestionData.marks} Marks</div>
-                      </div>
-                      <h2 className="text-2xl font-bold text-slate-900 leading-snug">{currentQuestionData.title}</h2>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={`${flagged.has(currentQuestionData.id) ? 'text-yellow-600 bg-yellow-50 hover:bg-yellow-100' : 'text-slate-400 hover:text-slate-600'}`}
-                      onClick={() => handleFlagQuestion(currentQuestionData.id)}
-                    >
-                      <Flag className={`w-5 h-5 ${flagged.has(currentQuestionData.id) ? 'fill-current' : ''}`} />
-                    </Button>
-                  </div>
-
-                  {/* Question Body */}
-                  <div className="px-8 py-8 md:px-10">
-                    <div className="prose prose-slate max-w-none text-slate-700 text-lg mb-8">
-                      <div dangerouslySetInnerHTML={{ __html: currentQuestionData.content }} />
-                    </div>
-
-                    <div className="mt-8">
-                      {renderQuestion(currentQuestionData)}
-                    </div>
-                  </div>
-                </div>
-              )}
-
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`${flagged.has(currentQuestionData.id) ? 'text-yellow-600 bg-yellow-50 hover:bg-yellow-100' : 'text-slate-400 hover:text-slate-600'}`}
+                onClick={() => handleFlagQuestion(currentQuestionData.id)}
+              >
+                <Flag className={`w-4 h-4 mr-2 ${flagged.has(currentQuestionData.id) ? 'fill-current' : ''}`} />
+                {flagged.has(currentQuestionData.id) ? 'Flagged' : 'Flag'}
+              </Button>
             </div>
           </div>
 
-          {/* Bottom Bar Controls for Mobile/Tablet or ease of access */}
-          <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-8 py-4 flex justify-between items-center z-30">
+          {/* Content Area (Scrollable or Fixed based on type) */}
+          <div className="flex-1 overflow-y-auto bg-slate-50 relative custom-scrollbar">
+            {/* renderQuestion now only needs to render the INPUTS, unrelated to Question Text */}
+            <div className="h-full">
+              {renderQuestionInputsOnly(currentQuestionData)}
+            </div>
+          </div>
+
+          {/* Bottom Navigation Bar (Sticky inside Right Panel) */}
+          <div className="bg-white border-t border-slate-200 px-6 py-3 flex justify-between items-center z-10">
             <Button
               variant="outline"
               onClick={handlePreviousQuestion}
               disabled={currentQuestion === 0}
-              className="space-x-2 border-slate-300 text-slate-600 hover:text-indigo-600 hover:border-indigo-300"
+              className="space-x-2 border-slate-200 text-slate-600 hover:text-indigo-600 hover:border-indigo-300"
             >
-              <ChevronLeft className="w-4 h-4" /> <span>Previous</span>
+              <ChevronLeft className="w-4 h-4" /> <span>Prev</span>
             </Button>
 
-            <div className="hidden md:block text-slate-400 text-sm font-medium">
-              Use <span className="kbd bg-slate-100 px-1 rounded border border-slate-300">Ctrl</span> + <span className="kbd bg-slate-100 px-1 rounded border border-slate-300">Enter</span> to run code if applicable.
+            {/* Pagination Dots or Info */}
+            <div className="text-xs font-medium text-slate-400">
+              Question {currentQuestion + 1} of {questions.length}
             </div>
 
             <Button
               onClick={handleNextQuestion}
               disabled={currentQuestion === questions.length - 1}
-              className="space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/20"
+              className="space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/10"
             >
-              <span>Next Question</span> <ChevronRight className="w-4 h-4" />
+              <span>Next</span> <ChevronRight className="w-4 h-4" />
             </Button>
           </div>
         </div>
-
       </div>
 
       {/* Alerts */}

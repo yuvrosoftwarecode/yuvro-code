@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from django.core.paginator import Paginator
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from datetime import timedelta
 from .models import (
     Job, Company, JobApplication, SocialLinks, Skill, Experience, Project, Education, Certification,
@@ -419,103 +419,174 @@ class CandidateSearchViewSet(viewsets.ViewSet):
     
     @action(detail=False, methods=['post'])
     def search(self, request):
-        """Search candidates with filters"""
+        """Search candidates with filters - Enhanced with safe filtering and combined filter support"""
         
+        # Validate search filters
         search_serializer = CandidateSearchSerializer(data=request.data)
         if not search_serializer.is_valid():
             return Response(search_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
         filters = search_serializer.validated_data
         
+        # Start with all job profiles
         queryset = JobProfile.objects.select_related('profile__user').prefetch_related(
             'job_skills', 'profile__skills', 'profile__experiences'
         ).all()
         
+        # Apply filters with safe null/undefined handling
+        
+        # Skills filter - supports multiple skills (comma-separated) with OR logic
         if filters.get('skills'):
-            skills_query = filters['skills']
-            queryset = queryset.filter(
-                Q(job_skills__skill_name__icontains=skills_query) |
-                Q(profile__skills__name__icontains=skills_query)
-            ).distinct()
+            skills_query = filters['skills'].strip()
+            if skills_query:
+                # Handle multiple skills separated by comma
+                skills_list = [skill.strip() for skill in skills_query.split(',') if skill.strip()]
+                if skills_list:
+                    skills_q = Q()
+                    for skill in skills_list:
+                        skills_q |= (
+                            Q(job_skills__skill_name__icontains=skill) |
+                            Q(profile__skills__name__icontains=skill)
+                        )
+                    queryset = queryset.filter(skills_q).distinct()
         
+        # Keywords filter - searches in profile about and title
         if filters.get('keywords'):
-            keywords = filters['keywords']
-            queryset = queryset.filter(
-                Q(profile__about__icontains=keywords) |
-                Q(profile__title__icontains=keywords)
-            ).distinct()
+            keywords = filters['keywords'].strip()
+            if keywords:
+                queryset = queryset.filter(
+                    Q(profile__about__icontains=keywords) |
+                    Q(profile__title__icontains=keywords)
+                ).distinct()
         
-        if filters.get('experience_from') is not None:
+        # Experience filters - handle both from and to with proper null checking
+        if filters.get('experience_from') is not None and filters['experience_from'] >= 0:
             queryset = queryset.filter(total_experience_years__gte=filters['experience_from'])
         
-        if filters.get('experience_to') is not None:
+        if filters.get('experience_to') is not None and filters['experience_to'] >= 0:
             queryset = queryset.filter(total_experience_years__lte=filters['experience_to'])
         
+        # Location filter - searches in both profile location and preferred locations
         if filters.get('location'):
-            location = filters['location']
+            location = filters['location'].strip()
+            if location:
+                queryset = queryset.filter(
+                    Q(profile__location__icontains=location) |
+                    Q(preferred_locations__icontains=location)
+                ).distinct()
+        
+        # CTC filters - handle null CTC values safely
+        if filters.get('ctc_from') is not None and filters['ctc_from'] >= 0:
             queryset = queryset.filter(
-                Q(profile__location__icontains=location) |
-                Q(preferred_locations__icontains=location)
+                Q(expected_ctc__gte=filters['ctc_from']) & 
+                Q(expected_ctc__isnull=False)
             )
         
-        if filters.get('ctc_from') is not None:
-            queryset = queryset.filter(expected_ctc__gte=filters['ctc_from'])
+        if filters.get('ctc_to') is not None and filters['ctc_to'] >= 0:
+            queryset = queryset.filter(
+                Q(expected_ctc__lte=filters['ctc_to']) & 
+                Q(expected_ctc__isnull=False)
+            )
         
-        if filters.get('ctc_to') is not None:
-            queryset = queryset.filter(expected_ctc__lte=filters['ctc_to'])
+        # Notice period filter - supports multiple periods with IN logic
+        if filters.get('notice_period') and isinstance(filters['notice_period'], list):
+            valid_periods = [period.strip() for period in filters['notice_period'] if period and period.strip()]
+            if valid_periods:
+                queryset = queryset.filter(notice_period__in=valid_periods)
         
-        if filters.get('notice_period'):
-            queryset = queryset.filter(notice_period__in=filters['notice_period'])
-        
+        # Education filter - exact match
         if filters.get('education'):
-            queryset = queryset.filter(highest_education=filters['education'])
+            education = filters['education'].strip()
+            if education:
+                queryset = queryset.filter(highest_education=education)
         
+        # Domain filter - case-insensitive contains
         if filters.get('domain'):
-            queryset = queryset.filter(domain__icontains=filters['domain'])
+            domain = filters['domain'].strip()
+            if domain:
+                queryset = queryset.filter(domain__icontains=domain)
         
-        if filters.get('employment_type'):
-            for emp_type in filters['employment_type']:
-                queryset = queryset.filter(preferred_employment_types__contains=emp_type)
+        # Employment type filter - OR logic for multiple types
+        if filters.get('employment_type') and isinstance(filters['employment_type'], list):
+            valid_emp_types = [emp_type.strip() for emp_type in filters['employment_type'] if emp_type and emp_type.strip()]
+            if valid_emp_types:
+                # Use OR logic: candidate matches if ANY of their preferred types match ANY of the filter types
+                emp_q = Q()
+                for emp_type in valid_emp_types:
+                    emp_q |= Q(preferred_employment_types__contains=emp_type)
+                queryset = queryset.filter(emp_q)
         
+        # Company type filter - handle 'any' value and null safety
         if filters.get('company_type'):
-            queryset = queryset.filter(preferred_company_types__contains=filters['company_type'])
+            company_type = filters['company_type'].strip()
+            if company_type and company_type.lower() != 'any':
+                queryset = queryset.filter(preferred_company_types__contains=company_type)
         
-        if filters.get('active_in_days'):
+        # Active in last N days filter
+        if filters.get('active_in_days') and filters['active_in_days'] > 0:
             days = filters['active_in_days']
             cutoff_date = timezone.now() - timedelta(days=days)
             queryset = queryset.filter(last_active__gte=cutoff_date)
         
+        # Get total count before pagination
         total_count = queryset.count()
         
-        page = filters.get('page', 1)
-        page_size = filters.get('page_size', 20)
+        # Pagination with safe defaults
+        page = max(1, filters.get('page', 1))
+        page_size = max(1, min(100, filters.get('page_size', 20)))
         
         paginator = Paginator(queryset, page_size)
         total_pages = paginator.num_pages
         
+        # Handle invalid page numbers gracefully
         try:
             candidates_page = paginator.page(page)
-        except:
-            candidates_page = paginator.page(1)
+        except (EmptyPage, PageNotAnInteger):
+            # If page is out of range, deliver last page or first page
+            if page > total_pages and total_pages > 0:
+                candidates_page = paginator.page(total_pages)
+                page = total_pages
+            else:
+                candidates_page = paginator.page(1) if total_pages > 0 else None
+                page = 1
+        except Exception:
+            # Fallback for any other pagination errors
+            candidates_page = paginator.page(1) if total_pages > 0 else None
             page = 1
         
-        candidates_serializer = JobProfileSerializer(candidates_page.object_list, many=True)
+        # Serialize results
+        candidates_data = []
+        if candidates_page:
+            candidates_serializer = JobProfileSerializer(candidates_page.object_list, many=True)
+            candidates_data = candidates_serializer.data
         
-        if request.user.role in ['recruiter', 'admin', 'instructor']:
-            CandidateSearchLog.objects.create(
-                recruiter=request.user,
-                search_filters=filters,
-                results_count=total_count
-            )
+        # Log search for analytics (only for authorized roles)
+        if hasattr(request.user, 'role') and request.user.role in ['recruiter', 'admin', 'instructor']:
+            try:
+                CandidateSearchLog.objects.create(
+                    recruiter=request.user,
+                    search_filters=filters,
+                    results_count=total_count
+                )
+            except Exception as e:
+                # Log the error but don't fail the search
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"Failed to log candidate search: {str(e)}")
         
+        # Prepare response with applied filters for debugging
         result = {
-            'candidates': candidates_serializer.data,
+            'candidates': candidates_data,
             'total_count': total_count,
             'page': page,
             'page_size': page_size,
             'total_pages': total_pages,
-            'has_next': candidates_page.has_next(),
-            'has_previous': candidates_page.has_previous()
+            'has_next': candidates_page.has_next() if candidates_page else False,
+            'has_previous': candidates_page.has_previous() if candidates_page else False,
+            'applied_filters': {
+                key: value for key, value in filters.items() 
+                if value is not None and value != '' and value != []
+            }
         }
         
         return Response(result)

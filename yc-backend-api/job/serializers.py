@@ -246,18 +246,18 @@ class JobProfileSerializer(serializers.ModelSerializer):
 
 
 class CandidateSearchSerializer(serializers.Serializer):
-    """Serializer for candidate search filters"""
+    """Serializer for candidate search filters with proper empty value handling"""
     
     skills = serializers.CharField(required=False, allow_blank=True)
     keywords = serializers.CharField(required=False, allow_blank=True)
     
-    experience_from = serializers.IntegerField(required=False, min_value=0)
-    experience_to = serializers.IntegerField(required=False, min_value=0)
+    experience_from = serializers.IntegerField(required=False, min_value=0, allow_null=True)
+    experience_to = serializers.IntegerField(required=False, min_value=0, allow_null=True)
     
     location = serializers.CharField(required=False, allow_blank=True)
     
-    ctc_from = serializers.DecimalField(required=False, max_digits=10, decimal_places=2, min_value=0)
-    ctc_to = serializers.DecimalField(required=False, max_digits=10, decimal_places=2, min_value=0)
+    ctc_from = serializers.DecimalField(required=False, max_digits=10, decimal_places=2, min_value=0, allow_null=True)
+    ctc_to = serializers.DecimalField(required=False, max_digits=10, decimal_places=2, min_value=0, allow_null=True)
     
     notice_period = serializers.ListField(
         child=serializers.CharField(),
@@ -273,10 +273,21 @@ class CandidateSearchSerializer(serializers.Serializer):
     )
     company_type = serializers.CharField(required=False, allow_blank=True)
     
-    active_in_days = serializers.IntegerField(required=False, min_value=1)
+    active_in_days = serializers.IntegerField(required=False, min_value=1, allow_null=True)
     
     page = serializers.IntegerField(required=False, min_value=1, default=1)
     page_size = serializers.IntegerField(required=False, min_value=1, max_value=100, default=20)
+    
+    def to_internal_value(self, data):
+        """Custom validation to handle empty strings for numeric fields"""
+        # Convert empty strings to None for numeric fields
+        numeric_fields = ['experience_from', 'experience_to', 'ctc_from', 'ctc_to', 'active_in_days']
+        
+        for field in numeric_fields:
+            if field in data and data[field] == '':
+                data[field] = None
+        
+        return super().to_internal_value(data)
 
 
 class CandidateSearchResultSerializer(serializers.Serializer):

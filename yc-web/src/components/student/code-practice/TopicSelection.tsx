@@ -176,7 +176,7 @@ const TopicSelection = ({
   }
 
   return (
-    <div className="container mx-auto px-[1px] py-3 max-w-9xl">
+    <div className="container mx-auto px-6 py-6 max-w-9xl">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 mb-3 text-sm text-gray-500">
         <Button variant="ghost" size="sm" onClick={onBack} className="h-auto p-0 hover:bg-transparent hover:text-gray-900 transition-colors">

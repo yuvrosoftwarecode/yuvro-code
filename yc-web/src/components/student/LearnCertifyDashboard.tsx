@@ -55,7 +55,7 @@ const LearnCertifyDashboard: React.FC = () => {
 
     const fetchStats = async () => {
       try {
-        const s = await restApiAuthUtil.get("/course/std/stats/");
+        const s = await restApiAuthUtil.get("/course/student-course-progress/stats/");
         setStats(s as Stats);
         return s;
       } catch (err) {
@@ -66,7 +66,7 @@ const LearnCertifyDashboard: React.FC = () => {
 
     const fetchContinue = async () => {
       try {
-        const c = await restApiAuthUtil.get("/course/std/continue_learning/");
+        const c = await restApiAuthUtil.get("/course/student-course-progress/continue_learning/");
         const cp = c as ContinueProgress;
         setContinueProgress((prev) => ({
           ...prev, // Keep existing if needed, though usually we overwrite
@@ -85,7 +85,7 @@ const LearnCertifyDashboard: React.FC = () => {
 
     const fetchProgressMap = async () => {
       try {
-        const list = await restApiAuthUtil.get<{ course_id: string; percent: number }[]>("/course/std/progress/");
+        const list = await restApiAuthUtil.get<{ course_id: string; percent: number }[]>("/course/student-course-progress/progress/");
         const map: CourseProgressMap = {};
         if (Array.isArray(list)) {
           list.forEach((p) => { map[String(p.course_id)] = p.percent ?? 0; });

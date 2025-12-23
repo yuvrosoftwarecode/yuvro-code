@@ -64,6 +64,114 @@ class ContestViewSet(viewsets.ModelViewSet):
             obj.update_status()
         return qs
     
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def register(self, request, pk=None):
+        contest = self.get_object()
+        user = request.user
+
+        if ContestSubmission.objects.filter(contest=contest, user=user).exists():
+            return Response({'message': 'Already Registered'}, status=status.HTTP_200_OK)
+
+        ContestSubmission.objects.create(contest=contest, user=user, status=ContestSubmission.STATUS_STARTED)
+
+        return Response({'status': 'Registered'}, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def start(self, request, pk=None):
+        contest = self.get_object()
+        user = request.user
+
+        submission, created = ContestSubmission.objects.get_or_create(
+            contest=contest, 
+            user=user,
+            defaults={'status': ContestSubmission.STATUS_STARTED}
+        )
+
+        contest.update_status()
+        if contest.status != Contest.STATUS_ONGOING:
+            return Response({'error': 'Contest is not live'}, status=status.HTTP_400_BAD_REQUEST)
+
+        questions_to_send = []
+
+        # Option A: Fixed Configuration
+        if contest.questions_config:
+            all_ids = []
+            for q_type, ids in contest.questions_config.items():
+                if isinstance(ids, list):
+                    all_ids.extend(ids)
+
+            if all_ids:
+                questions_to_send = list(Question.objects.filter(id__in=all_ids).values('id', 'title', 'content', 'type', 'mcq_options', 'marks', 'test_cases_basic'))
+
+        # Option B: Random Configuration
+        if contest.questions_random_config:
+            existing_ids = [q['id'] for q in questions_to_send]
+            
+            for q_type, count in contest.questions_random_config.items():
+                if count > 0:
+                    # Filter questions by type and ensure they are contest-appropriate
+                    # You might want to filter by difficulty or category if needed
+                    # For now, we assume any question of that type (maybe filtered by category='contest' if strictly enforced)
+                    candidates = list(Question.objects.filter(
+                        type=q_type
+                        # category='contest' # Uncomment if you want to restrict to contest questions only
+                    ).exclude(id__in=existing_ids).values('id', 'title', 'content', 'type', 'mcq_options', 'marks', 'test_cases_basic'))
+                    
+                    if len(candidates) >= count:
+                        selected = random.sample(candidates, count)
+                    else:
+                        selected = candidates
+                    
+                    questions_to_send.extend(selected)
+
+        random.shuffle(questions_to_send)
+
+        return Response({ 'submission_id': submission.id, 'duration': contest.duration, 'questions': questions_to_send})
+
+    @action(detail=True, methods=['post'], permission_classes= [permissions.IsAuthenticated])
+    def submit(self, request, pk=None):
+        contest = self.get_object()
+        submission_id = request.data.get('submission_id')
+        answers = request.data.get('answers', {})
+
+        submission = get_object_or_404(ContestSubmission, id=submission_id, user=request.user)
+
+        if submission.status == ContestSubmission.STATUS_COMPLETED:
+            return Response({'error': 'Submission already completed'}, status=status.HTTP_400_BAD_REQUEST)
+
+        submission.answer_data = answers
+        submission.status = ContestSubmission.STATUS_SUBMITTED
+        submission.submitted_at = timezone.now()
+        
+        # Auto-Grading Logic
+        total_score = 0
+        question_ids = answers.keys()
+        db_questions = Question.objects.filter(id__in=question_ids)
+        q_map = {str(q.id): q for q in db_questions}
+        
+        for q_id, user_ans in answers.items():
+            if q_id not in q_map:
+                continue
+            question = q_map[q_id]
+            
+            # MCQ Single
+            if question.type == 'mcq_single':
+                correct_opt = next((opt for opt in question.mcq_options if opt.get('is_correct')), None)
+                if correct_opt and user_ans == correct_opt['text']:
+                    total_score += question.marks
+            
+            # MCQ Multiple
+            elif question.type == 'mcq_multiple':
+                correct_opts = set(opt['text'] for opt in question.mcq_options if opt.get('is_correct'))
+                user_opts = set(user_ans) if isinstance(user_ans, list) else set([user_ans])
+                if correct_opts == user_opts:
+                    total_score += question.marks
+                    
+        submission.marks = total_score
+        submission.save()
+        
+        return Response({'status': 'Submitted', 'score': total_score}, status=status.HTTP_200_OK)
+
     @action(detail=True, methods=['post'], url_path="increment-participant")
     def increment_participant(self, request, pk=None):
         contest = self.get_object() 

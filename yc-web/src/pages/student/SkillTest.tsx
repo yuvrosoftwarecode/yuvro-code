@@ -261,9 +261,6 @@ const SkillTest: React.FC = () => {
         toast.success("Test started successfully");
       } else if (res.status === 'completed' || res.status === 'submitted') {
         toast.info("You have already completed this test.");
-        // Maybe fetch results? For now just go to results
-        // setTestCompleted(prev => new Set(prev).add(selectedTest.id));
-        // setCurrentView("results");
       }
     } catch (err: any) {
       console.error("Failed to start test", err);
@@ -271,22 +268,36 @@ const SkillTest: React.FC = () => {
     }
   };
 
-  const handleTestComplete = (
-    stats?: { answeredCount: number; totalQuestions: number; timeSpent: number }
+  const handleTestComplete = async (
+    answers: any,
+    stats: { answeredCount: number; totalQuestions: number; timeSpent: number }
   ) => {
-    if (selectedTest) {
-      setTestCompleted((prev) => {
-        const updated = new Set(prev);
-        updated.add(selectedTest.id);
-        return updated;
-      });
-    }
+    try {
+      if (selectedTest) {
+        setTestCompleted((prev) => {
+          const updated = new Set(prev);
+          updated.add(selectedTest.id);
+          return updated;
+        });
 
-    if (stats) {
-      setTestStats(stats);
-    }
+        // Submit to Backend
+        if (currentSubmissionId) {
+          const loadingToast = toast.loading("Submitting assessment...");
+          await submitSkillTest(selectedTest.id, currentSubmissionId, answers);
+          toast.dismiss(loadingToast);
+          toast.success("Assessment submitted successfully!");
+        }
+      }
 
-    setCurrentView("thankyou");
+      if (stats) {
+        setTestStats(stats);
+      }
+
+      setCurrentView("thankyou");
+    } catch (err) {
+      toast.error("Failed to submit assessment. Please try again.");
+      console.error("Submit error", err);
+    }
   };
 
   const handleViewResults = () => {

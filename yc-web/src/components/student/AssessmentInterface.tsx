@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,7 +16,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger
 } from '@/components/ui/alert-dialog';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Clock,
   Flag,
@@ -32,12 +29,15 @@ import {
   MicOff,
   Eye,
   EyeOff,
-  Maximize
+  Maximize,
+  Minimize2,
+  Code
 } from 'lucide-react';
-import CodeEditor from '@/components/ui/code-editor';
+import CodeExecutionPanel from '@/components/code-editor/CodeExecutionPanel';
 import { submitSkillTest } from "@/services/skillTestService";
 import { toast } from "sonner";
 import { useProctoring } from '@/hooks/useProctoring';
+import ExampleCodeGallery from '../code-editor/ExampleCodeGallery';
 
 interface Assessment {
   id: string;
@@ -63,7 +63,7 @@ interface AssessmentInterfaceProps {
   assessment: Assessment;
   questions: Question[];
   submissionId: string;
-  onComplete: (stats?: { answeredCount: number; totalQuestions: number; timeSpent: number }) => void;
+  onComplete: (answers: any, stats: { answeredCount: number; totalQuestions: number; timeSpent: number }) => Promise<void> | void;
   onBack: () => void;
 }
 
@@ -74,7 +74,7 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
   onComplete,
   onBack
 }) => {
-    
+
   // --------------------- REAL QUESTIONS ---------------------
   const [questions, setQuestions] = useState<Question[]>(propQuestions);
 
@@ -134,8 +134,6 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
   const [questionPage, setQuestionPage] = useState(0);
   const [tabSwitchCount, setTabSwitchCount] = useState(0);
 
-  // -------------------- MEDIA + MONITORING (UNCHANGED UI) --------------------
-  // (YOUR ENTIRE CAMERA MICROPHONE LOGIC — LEFT EXACTLY AS IT IS)
 
   useEffect(() => {
     const initializeMedia = async () => {
@@ -227,21 +225,15 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
 
     const timeSpent = (assessment.duration * 60) - timeLeft;
 
-    // Submit to Backend
+    // Delegate to Parent (Contest or SkillTest)
     try {
-      const loadingToast = toast.loading("Submitting assessment...");
-      await submitSkillTest(assessment.id, submissionId, answers);
-      toast.dismiss(loadingToast);
-      toast.success("Assessment submitted successfully!");
-
-      onComplete({
+      await onComplete(answers, {
         answeredCount,
         totalQuestions: questions.length,
         timeSpent
       });
     } catch (err) {
-      toast.error("Failed to submit assessment. Please try again.");
-      console.error("Submit error", err);
+      console.error("Submit error passed to parent failed", err);
     }
   };
 
@@ -312,19 +304,22 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
 
   // -------------------- RENDER QUESTION (UNCHANGED UI) --------------------
 
-  const renderQuestion = (question: Question) => {
+  // -------------------- RENDER INPUTS ONLY (Right Panel) --------------------
+
+  const renderQuestionInputsOnly = (question: Question) => {
     switch (question.type) {
       case 'mcq_single':
         return (
-          <div className="space-y-3">
+          <div className="p-6 md:p-8 space-y-6">
             <RadioGroup
               value={answers[question.id] || ''}
               onValueChange={(value) => handleAnswerChange(question.id, value)}
+              className="space-y-4"
             >
               {question.mcq_options?.map((option, index) => (
-                <div key={index} className="flex items-center space-x-3">
-                  <RadioGroupItem value={option.text} id={`option-${index}`} />
-                  <Label htmlFor={`option-${index}`} className="flex-1 cursor-pointer">
+                <div key={index} className="flex items-start space-x-3 p-4 rounded-lg border border-slate-200 hover:border-indigo-300 hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => handleAnswerChange(question.id, option.text)}>
+                  <RadioGroupItem value={option.text} id={`option-${index}`} className="mt-1" />
+                  <Label htmlFor={`option-${index}`} className="flex-1 cursor-pointer leading-relaxed text-slate-700">
                     {option.text}
                   </Label>
                 </div>
@@ -332,16 +327,16 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
             </RadioGroup>
 
             {/* Explanation */}
-            <div className="mt-4">
-              <Label htmlFor={`explanation-${question.id}`} className="text-sm font-medium">
-                Explain your answer (required)
+            <div className="pt-4 border-t border-slate-100">
+              <Label htmlFor={`explanation-${question.id}`} className="text-sm font-semibold text-slate-700 mb-2 block">
+                Explain your answer (Required)
               </Label>
               <Textarea
                 id={`explanation-${question.id}`}
-                placeholder="Explain why you chose this answer..."
+                placeholder="Briefly explain your reasoning..."
                 value={explanations[question.id] || ''}
                 onChange={(e) => handleExplanationChange(question.id, e.target.value)}
-                className="mt-2 min-h-20"
+                className="min-h-[100px] bg-white"
               />
             </div>
           </div>
@@ -349,10 +344,10 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
 
       case 'mcq_multiple':
         return (
-          <div className="space-y-3">
+          <div className="p-6 md:p-8 space-y-6">
             <div className="space-y-3">
               {question.mcq_options?.map((option, index) => (
-                <div key={index} className="flex items-center space-x-3">
+                <div key={index} className="flex items-start space-x-3 p-4 rounded-lg border border-slate-200 hover:border-indigo-300 hover:bg-slate-50 transition-colors">
                   <Checkbox
                     id={`option-${index}`}
                     checked={answers[question.id]?.includes(option.text) || false}
@@ -363,8 +358,9 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
                         : current.filter((a: string) => a !== option.text);
                       handleAnswerChange(question.id, newAns);
                     }}
+                    className="mt-1"
                   />
-                  <Label htmlFor={`option-${index}`} className="flex-1 cursor-pointer">
+                  <Label htmlFor={`option-${index}`} className="flex-1 cursor-pointer leading-relaxed text-slate-700">
                     {option.text}
                   </Label>
                 </div>
@@ -372,16 +368,16 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
             </div>
 
             {/* Explanation */}
-            <div className="mt-4">
-              <Label htmlFor={`explanation-${question.id}`} className="text-sm font-medium">
-                Explain your answer (required)
+            <div className="pt-4 border-t border-slate-100">
+              <Label htmlFor={`explanation-${question.id}`} className="text-sm font-semibold text-slate-700 mb-2 block">
+                Explain your answer (Required)
               </Label>
               <Textarea
                 id={`explanation-${question.id}`}
-                placeholder="Explain why you chose this answer..."
+                placeholder="Briefly explain your reasoning..."
                 value={explanations[question.id] || ''}
                 onChange={(e) => handleExplanationChange(question.id, e.target.value)}
-                className="mt-2 min-h-20"
+                className="min-h-[100px] bg-white"
               />
             </div>
           </div>
@@ -389,61 +385,48 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
 
       case 'coding':
         return (
-          <div className="space-y-4">
+          <div className="flex flex-col h-full bg-slate-50">
+            {/* Full height container for Editor */}
+            <CodeExecutionPanel
+              problem={{
+                id: question.id,
+                title: question.title || 'Coding Question',
+                description: question.content || '',
+                test_cases_basic: question.test_cases_basic || []
+              }}
+              initialCode={answers[question.id] || ''}
+              onCodeChange={(code) => handleAnswerChange(question.id, code)}
+              onLanguageChange={setSelectedLanguage}
 
-            <div className="flex items-center justify-between">
-              <Badge>{selectedLanguage}</Badge>
-              <Button variant="outline" size="sm" onClick={() => setIsCodeEditorFullscreen(!isCodeEditorFullscreen)}>
-                <Maximize className="h-4 w-4" />
-              </Button>
-            </div>
+              showRunButton={true}
+              showSubmitButton={false}
 
-            <div className={isCodeEditorFullscreen ? 'h-[60vh]' : 'h-80'}>
-              <CodeExecutionPanel
-                problem={{
-                  id: question.id,
-                  title: question.title || 'Coding Question',
-                  description: question.content || '',
-                  test_cases_basic: question.test_cases_basic || []
-                }}
-                initialCode={answers[question.id] || ''}
-                onSubmissionComplete={(result) => {
-                  // Handle submission result if needed
-                  console.log('Code execution result:', result);
-                }}
-                mode="exam"
-                showTestCases={true}
-                allowCustomTestCases={false}
-                showSubmitButton={false}
-                className="h-full"
-              />
-            </div>
+              mode="exam"
+              showTestCases={true}
+              allowCustomTestCases={false}
 
-            {/* Explanation */}
-            <div className="mt-2">
-              <Label className="text-sm font-medium">Explain your approach (required)</Label>
-              <Textarea
-                placeholder="Explain your algorithm / logic..."
-                value={explanations[question.id] || ''}
-                onChange={(e) => handleExplanationChange(question.id, e.target.value)}
-                className="mt-2 min-h-24"
-              />
-            </div>
+              // Flexible height to fill the Right Panel
+              className="h-full border-0 shadow-none rounded-none w-full"
+              editorHeight="100%"
+            />
           </div>
         );
 
       case 'descriptive':
         return (
-          <Textarea
-            placeholder="Type your answer here..."
-            value={answers[question.id] || ''}
-            onChange={(e) => handleAnswerChange(question.id, e.target.value)}
-            className="min-h-32"
-          />
+          <div className="p-6 md:p-8 h-full flex flex-col">
+            <Label className="text-sm font-semibold text-slate-700 mb-3 block">Your Answer</Label>
+            <Textarea
+              placeholder="Type your detailed answer here..."
+              value={answers[question.id] || ''}
+              onChange={(e) => handleAnswerChange(question.id, e.target.value)}
+              className="flex-1 min-h-[300px] bg-white text-base leading-relaxed p-4 resize-none"
+            />
+          </div>
         );
 
       default:
-        return null;
+        return <div className="p-8 text-slate-400">Unsupported question type.</div>;
     }
   };
 
@@ -458,67 +441,35 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
 
   const flaggedCount = flagged.size;
 
-  // -------------------- RENDER UI (UNCHANGED) --------------------
+  // -------------------- RENDER UI (REVAMPED) --------------------
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col font-sans text-slate-800">
 
-      {/* ALERTS + HEADERS + SIDEBAR + UI */}
-      {/* ALL UI BELOW IS **UNCHANGED**, JUST USING real questions */}
+      {/* 1. Header Bar */}
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm backdrop-blur-md bg-opacity-90">
+        <div className="max-w-[1920px] mx-auto px-6 h-16 flex items-center justify-between">
 
-      {/* (UI CODE REMAINS EXACTLY THE SAME AS YOUR VERSION) */}
+          {/* Left: Title & Info */}
+          <div className="flex items-center space-x-6">
+            <div className="flex items-center space-x-3">
+              <div className="h-10 w-10 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold shadow-indigo-200 shadow-lg">
+                <span className="text-lg">{assessment.course?.[0] || 'A'}</span>
+              </div>
+              <div>
+                <h1 className="text-lg font-bold text-slate-900 leading-tight">{assessment.title}</h1>
+                <div className="flex items-center space-x-2 text-xs text-slate-500 font-medium">
+                  <span>{assessment.course}</span>
+                  <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+                  <span>{assessment.totalQuestions} Questions</span>
+                </div>
+              </div>
+            </div>
 
-      {/* ------------------------------------------------ */}
-      {/* YOU DO NOT WANT UI CHANGES, SO I KEEP AS IS      */}
-      {/* ------------------------------------------------ */}
+            <div className="hidden md:flex h-8 w-px bg-gray-200 mx-4"></div>
 
-      {/* I WILL PASTE THE FULL UI BELOW WITHOUT TOUCHING ANYTHING */}
-
-      {/* ---------------- UI START ---------------- */}
-
-      {/* Alerts */}
-      <div className="flex justify-center">
-        {cameraAlert && (
-          <Alert className="m-4 w-[60%] border-red-200 bg-red-50">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription className="flex items-center justify-between">
-              <span>
-                {!hasMediaAccess
-                  ? "Camera and microphone access are required for this assessment. Please enable permissions."
-                  : "Camera or microphone has been disabled. Please re-enable to continue."
-                }
-              </span>
-              <Button variant="ghost" size="sm" onClick={() => setCameraAlert(false)}>
-                <X className="h-4 w-4" />
-              </Button>
-            </AlertDescription>
-          </Alert>
-        )}
-      </div>
-
-      <div className="flex justify-center">
-        {tabSwitchAlert && (
-          <Alert className="m-4 w-[60%] border-orange-200 bg-orange-50">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription className="flex items-center justify-between">
-              <span>Tab switching detected! ({tabSwitchCount} violations)</span>
-              <Button variant="ghost" size="sm" onClick={() => setTabSwitchAlert(false)}>
-                <X className="h-4 w-4" />
-              </Button>
-            </AlertDescription>
-          </Alert>
-        )}
-      </div>
-
-      {/* Header */}
-      <div className="bg-card border-b px-6 py-4">
-        <div className="flex items-center justify-between">
-
-          {/* LEFT SIDE - VIDEO + TITLE */}
-          <div className="flex items-center space-x-4">
-
-            {/* Video */}
-            <div className="relative bg-black rounded-lg overflow-hidden h-16 w-32">
+            {/* Camera Feed Mini-View */}
+            <div className="relative group overflow-hidden rounded-lg shadow-md border border-gray-200 w-32 h-12 bg-black transition-all hover:scale-105">
               {hasMediaAccess && streamRef.current ? (
                 <video
                   ref={videoRef}
@@ -528,232 +479,220 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-white text-xs">
-                  <Camera className="h-4 w-4 mx-auto mb-1 opacity-50" />
-                  <p className="text-[10px]">Camera Off</p>
+                <div className="flex flex-col items-center justify-center h-full text-gray-500">
+                  <CameraOff className="w-4 h-4" />
                 </div>
               )}
-
-              <div className="absolute bottom-1 right-1 flex space-x-1">
-                {videoTrackEnabled ?
-                  <Camera className="h-2 w-2 text-green-400" /> :
-                  <CameraOff className="h-2 w-2 text-red-400" />}
-                {audioTrackEnabled ?
-                  <Mic className="h-2 w-2 text-green-400" /> :
-                  <MicOff className="h-2 w-2 text-red-400" />}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-1 space-x-2">
+                {videoTrackEnabled ? <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div> : <div className="w-1.5 h-1.5 rounded-full bg-red-500"></div>}
+                {audioTrackEnabled ? <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div> : <div className="w-1.5 h-1.5 rounded-full bg-red-500"></div>}
               </div>
-            </div>
-
-            <div>
-              <h1 className="text-xl font-bold">{assessment.title}</h1>
-              <Badge variant="outline">{assessment.course}</Badge>
             </div>
           </div>
 
-          {/* RIGHT SIDE TIMER + SUBMIT */}
-          <div className="flex items-center space-x-4 mr-4">
-            <div className="flex items-center space-x-2">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <span className={`font-mono text-lg ${timeLeft < 300 ? 'text-red-600' : 'text-foreground'}`}>
-                {formatTime(timeLeft)}
-              </span>
+          {/* Right: Timer & Actions */}
+          <div className="flex items-center space-x-4">
+            {/* Timer */}
+            <div className={`flex items-center space-x-3 px-4 py-2 rounded-full border ${timeLeft < 300 ? 'bg-red-50 border-red-200 text-red-700 animate-pulse' : 'bg-slate-50 border-slate-200 text-slate-700'}`}>
+              <Clock className="w-4 h-4" />
+              <span className="font-mono text-xl font-bold tracking-widest">{formatTime(timeLeft)}</span>
             </div>
 
-            {/* Submit */}
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="outline" size="sm" className="bg-black text-white hover:bg-black/90">
-                  Submit
+                <Button className="bg-slate-900 hover:bg-slate-800 text-white shadow-lg shadow-slate-900/20 px-6 rounded-full transition-all hover:scale-105 active:scale-95">
+                  Finish Test
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Submit Assessment?</AlertDialogTitle>
+                  <AlertDialogTitle>Are you ready to submit?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Are you sure you want to submit?
-                    <br /><br />
-                    Answered: {answeredCount}/{questions.length}
-                    <br />
-                    Flagged: {flaggedCount}
+                    You have answered <span className="font-bold text-slate-900">{answeredCount}</span> out of <span className="font-bold text-slate-900">{questions.length}</span> questions.
+                    {flaggedCount > 0 && <div className="mt-2 text-yellow-600">Note: You have flagged {flaggedCount} questions for review.</div>}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleSubmitAssessment}>Submit</AlertDialogAction>
+                  <AlertDialogCancel>Keep Working</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleSubmitAssessment} className="bg-indigo-600 hover:bg-indigo-700">Submit Assessment</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
           </div>
+        </div>
 
+        {/* Progress Bar Loader */}
+        <div className="h-1 w-full bg-gray-100">
+          <div
+            className="h-full bg-indigo-600 transition-all duration-500 ease-out"
+            style={{ width: `${progress}%` }}
+          ></div>
         </div>
       </div>
 
-      {/* Body */}
-      <div className="flex flex-1">
+      {/* 2. Main Workspace (Split Pane) */}
+      <div className="flex flex-1 overflow-hidden relative">
 
-        {/* Sidebar */}
-        <div className={`bg-card border-r transition-all duration-300 ${isSidebarCollapsed ? 'w-16' : 'w-80'
-          }`}>
-          <div className="p-4">
+        {/* LEFT PANEL: Question & Context */}
+        <div
+          className={`
+             transition-all duration-300 ease-in-out h-full overflow-y-auto custom-scrollbar bg-white border-r border-gray-200
+             ${isCodeEditorFullscreen ? 'w-0 opacity-0 overflow-hidden' : 'w-5/12 min-w-[400px]'}
+           `}
+        >
+          <div className="p-8 pb-20 space-y-8">
 
-            {/* Top */}
-            <div className="flex items-center justify-between mb-4">
-              {!isSidebarCollapsed && <h3 className="font-semibold">Questions</h3>}
-              <Button variant="ghost" size="sm" onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}>
-                {isSidebarCollapsed ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-              </Button>
+            {/* Question Header */}
+            <div className="space-y-4">
+              <div className="flex items-center space-x-3">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Question {currentQuestion + 1}</span>
+                <div className="px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-bold uppercase rounded-sm border border-blue-200">{currentQuestionData.type.replace('_', ' ')}</div>
+                <div className="px-2 py-0.5 bg-orange-100 text-orange-700 text-[10px] font-bold uppercase rounded-sm border border-orange-200">{currentQuestionData.marks} Marks</div>
+              </div>
+              <h2 className="text-2xl font-bold text-slate-900 leading-snug">{currentQuestionData.title}</h2>
             </div>
 
-            {/* Question Grid */}
-            {!isSidebarCollapsed && (
-              <>
-                <div className="mb-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium">
-                      Questions {startQuestion + 1}-{endQuestion}
-                    </span>
+            {/* Question Content */}
+            <div className="prose prose-slate max-w-none text-slate-700 leading-relaxed">
+              <div dangerouslySetInnerHTML={{ __html: currentQuestionData.content }} />
+            </div>
 
-                    <div className="flex space-x-1">
-                      <Button variant="ghost" size="sm"
-                        onClick={() => handlePageChange(questionPage - 1)}
-                        disabled={questionPage === 0}
-                      >
-                        <ChevronLeft className="h-3 w-3" />
-                      </Button>
-
-                      <Button variant="ghost" size="sm"
-                        onClick={() => handlePageChange(questionPage + 1)}
-                        disabled={questionPage === totalPages - 1}
-                      >
-                        <ChevronRight className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-5 gap-2 mb-6">
-                    {paginatedQuestions.map((q, index) => {
-                      const actualIndex = startQuestion + index;
-                      const status = getQuestionStatus(actualIndex, q.id);
-
-                      return (
-                        <Button
-                          key={q.id}
-                          variant="outline"
-                          size="sm"
-                          className={`h-10 w-10 p-0 ${getStatusColor(status)}`}
-                          onClick={() => handleQuestionClick(index)}
-                        >
-                          {actualIndex + 1}
-                        </Button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Stats */}
-                <div className="text-sm space-y-2">
-                  <div className="flex justify-between">
-                    <span>Progress</span>
-                    <span>{currentQuestion + 1}/{questions.length}</span>
-                  </div>
-                  <Progress value={progress} className="h-2" />
-
-                  <div className="flex justify-between mt-3">
-                    <span>Answered</span>
-                    <span className="text-green-600">{answeredCount}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Flagged</span>
-                    <span className="text-yellow-600">{flaggedCount}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Remaining</span>
-                    <span>{questions.length - answeredCount}</span>
-                  </div>
-                </div>
-              </>
-            )}
-
+            {/* Hints / Examples could go here */}
           </div>
         </div>
 
-        {/* Main Question Area */}
-        <div className="flex-1 flex flex-col overflow-auto max-h-[480px] mr-4">
-          <div className="p-6 pb-0">
-
-            {questions.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <div className="flex items-center space-x-2 mb-2">
-                        <Badge variant="outline">
-                          Question {currentQuestion + 1} of {questions.length}
-                        </Badge>
-                        <Badge variant="secondary">
-                          {currentQuestionData.marks} marks
-                        </Badge>
-                        <Badge variant="outline">{currentQuestionData.type}</Badge>
-                      </div>
-
-                      <CardTitle>{currentQuestionData.title}</CardTitle>
-
-                      {/* Question Content */}
-                      <div className="mt-4 prose prose-sm max-w-none">
-                        <div dangerouslySetInnerHTML={{ __html: currentQuestionData.content }} />
-                      </div>
-                    </div>
-
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleFlagQuestion(currentQuestionData.id)}
-                      className={flagged.has(currentQuestionData.id) ? 'text-yellow-600' : ''}
-                    >
-                      <Flag className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardHeader>
-
-                <CardContent>{renderQuestion(currentQuestionData)}</CardContent>
-              </Card>
-            )}
-
-          </div>
+        {/* EXPAND/COLLAPSE TOGGLE (Floating) */}
+        <div className="absolute left-[41.666%] top-1/2 -translate-y-1/2 z-20">
+          <Button
+            variant="secondary"
+            size="icon"
+            className="h-8 w-6 rounded-l-none rounded-r-md shadow-md border border-l-0 border-gray-200 bg-white text-slate-400 hover:text-indigo-600"
+            onClick={() => setIsCodeEditorFullscreen(!isCodeEditorFullscreen)}
+            title={isCodeEditorFullscreen ? "Show Question" : "Hide Question (Zen Mode)"}
+          >
+            {isCodeEditorFullscreen ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          </Button>
         </div>
 
+        {/* RIGHT PANEL: Editor / Answer Area */}
+        <div className="flex-1 h-full overflow-hidden bg-slate-50 flex flex-col">
+
+          {/* Toolbar / Header for Right Panel */}
+          <div className="h-12 bg-white border-b border-gray-200 flex items-center justify-between px-4">
+            <div className="flex items-center space-x-2 text-sm font-medium text-slate-600">
+              <Code className="w-4 h-4 text-indigo-500" />
+              <span>Solution</span>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`${flagged.has(currentQuestionData.id) ? 'text-yellow-600 bg-yellow-50 hover:bg-yellow-100' : 'text-slate-400 hover:text-slate-600'}`}
+                onClick={() => handleFlagQuestion(currentQuestionData.id)}
+              >
+                <Flag className={`w-4 h-4 mr-2 ${flagged.has(currentQuestionData.id) ? 'fill-current' : ''}`} />
+                {flagged.has(currentQuestionData.id) ? 'Flagged' : 'Flag'}
+              </Button>
+            </div>
+          </div>
+
+          {/* Content Area (Scrollable or Fixed based on type) */}
+          <div className="flex-1 overflow-y-auto bg-slate-50 relative custom-scrollbar">
+            {/* renderQuestion now only needs to render the INPUTS, unrelated to Question Text */}
+            <div className="h-full">
+              {renderQuestionInputsOnly(currentQuestionData)}
+            </div>
+          </div>
+
+          {/* Bottom Navigation Bar (Sticky inside Right Panel) */}
+          <div className="bg-white border-t border-slate-200 px-6 py-3 flex justify-between items-center z-10">
+            <Button
+              variant="outline"
+              onClick={handlePreviousQuestion}
+              disabled={currentQuestion === 0}
+              className="space-x-2 border-slate-200 text-slate-600 hover:text-indigo-600 hover:border-indigo-300"
+            >
+              <ChevronLeft className="w-4 h-4" /> <span>Prev</span>
+            </Button>
+
+            {/* Pagination Dots or Info */}
+            <div className="text-xs font-medium text-slate-400">
+              Question {currentQuestion + 1} of {questions.length}
+            </div>
+
+            <Button
+              onClick={handleNextQuestion}
+              disabled={currentQuestion === questions.length - 1}
+              className="space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/10"
+            >
+              <span>Next</span> <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Alerts */}
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] flex flex-col space-y-2 w-full max-w-lg px-4 pointer-events-none">
+        {cameraAlert && (
+          <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl shadow-lg flex items-center justify-between pointer-events-auto animate-in slide-in-from-bottom-5">
+            <div className="flex items-center space-x-3">
+              <AlertTriangle className="w-5 h-5 flex-shrink-0 text-red-600" />
+              <p className="text-sm font-medium">Camera access lost! Please check your permissions.</p>
+            </div>
+            <button onClick={() => setCameraAlert(false)} className="text-red-500 hover:text-red-700"><X className="w-4 h-4" /></button>
+          </div>
+        )}
+        {tabSwitchAlert && (
+          <div className="bg-orange-50 border border-orange-200 text-orange-800 px-4 py-3 rounded-xl shadow-lg flex items-center justify-between pointer-events-auto animate-in slide-in-from-bottom-5">
+            <div className="flex items-center space-x-3">
+              <AlertTriangle className="w-5 h-5 flex-shrink-0 text-orange-600" />
+              <p className="text-sm font-medium">Tab switching detected! Warning {tabSwitchCount}/3.</p>
+            </div>
+            <button onClick={() => setTabSwitchAlert(false)} className="text-orange-500 hover:text-orange-700"><X className="w-4 h-4" /></button>
+          </div>
+        )}
       </div>
 
       {/* Tab Switch Dialog */}
       <AlertDialog open={showTabSwitchDialog} onOpenChange={() => { }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Assessment Terminated</AlertDialogTitle>
+            <AlertDialogTitle className="text-red-600">Assessment Terminated</AlertDialogTitle>
             <AlertDialogDescription>
-              Too many tab switches. Your responses are recorded.
+              We detected excessive tab switching during the assessment. As per the proctoring rules, your test has been automatically submitted.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogAction onClick={handleSubmitAssessment}>OK</AlertDialogAction>
+            <AlertDialogAction onClick={handleSubmitAssessment} className="bg-red-600 hover:bg-red-700">Acknowledge</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Navigation Dialog */}
+      {/* Navigation Confirm Dialog */}
       <AlertDialog open={showNavigationDialog} onOpenChange={setShowNavigationDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>End Assessment?</AlertDialogTitle>
+            <AlertDialogTitle>Leave Assessment?</AlertDialogTitle>
             <AlertDialogDescription>
-              You cannot return once you exit.
+              You are attempting to leave the assessment page. If you leave now, your progress will be lost and the test will be submitted as-is.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Continue</AlertDialogCancel>
-            <AlertDialogAction onClick={handleSubmitAssessment}>End</AlertDialogAction>
+            <AlertDialogCancel>Stay</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSubmitAssessment} className="bg-red-600 hover:bg-red-700">Leave & Submit</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Style helper for custom scrollbar */}
+      <style dangerouslySetInnerHTML={{
+        __html: `
+            .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+            .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+            .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
+            .custom-scrollbar::-webkit-scrollbar-thumb:hover { background-color: #94a3b8; }
+        `}} />
 
       {showExamples && (
         <ExampleCodeGallery

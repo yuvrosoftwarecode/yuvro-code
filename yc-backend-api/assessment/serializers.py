@@ -12,7 +12,7 @@ User = get_user_model()
 
 class ContestSerializer(serializers.ModelSerializer):
     participants_count = serializers.SerializerMethodField()
-    
+    is_registered = serializers.SerializerMethodField()
     class Meta:
         model = Contest
         fields = [
@@ -20,14 +20,19 @@ class ContestSerializer(serializers.ModelSerializer):
             'duration', 'prize', 'difficulty', 'description', 'participants_count',
             'questions_config', 'questions_random_config', 'instructions', 'total_marks', 'passing_marks', 
             'enable_proctoring', 'publish_status',
-            'created_by', 'created_at', 'updated_at',
+            'created_by', 'created_at', 'updated_at', 'is_registered',
         ]
         
-        read_only_fields = ['id', 'created_by', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_by', 'created_at', 'updated_at', 'is_registered']
     
     def get_participants_count(self, obj):
         return obj.contest_submissions.count()
 
+    def get_is_registered(self, obj):
+        user = self.context.get('request').user
+        if user.is_authenticated:
+            return obj.contest_submissions.filter(user=user).exists()
+        return False
 
 class SkillTestSerializer(serializers.ModelSerializer):
     participants_count = serializers.SerializerMethodField()

@@ -32,21 +32,15 @@ interface CandidateFilters {
   activeInDays: string;
 }
 
-interface CandidateStats {
-  total_candidates: number;
-  active_candidates_7_days: number;
-  active_candidates_30_days: number;
-  recent_searches: number;
-}
-
 const Candidates = () => {
+  const DEFAULT_PAGE_SIZE = 1;
   const [filters, setFilters] = useState<CandidateFilters>({
     skills: '',
     experienceFrom: 0,
     experienceTo: 20,
     location: '',
     ctcFrom: 0,
-    ctcTo: 100,
+    ctcTo: 200,  
     noticePeriod: [],
     education: '',
     domain: '',
@@ -60,14 +54,9 @@ const Candidates = () => {
   const [filterOptions, setFilterOptions] = useState<FilterOptions | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [stats, setStats] = useState<CandidateStats | null>(null);
 
-  // Load filter options on component mount
   useEffect(() => {
     loadFilterOptions();
-    loadStats();
-    // Test basic connectivity on mount
     testBasicConnectivity();
   }, []);
 
@@ -75,7 +64,6 @@ const Candidates = () => {
     try {
       console.log('Testing basic API connectivity...');
       
-      // First test if we can reach the API at all
       const apiBaseUrl = import.meta.env.VITE_BACKEND_API_BASE_URL;
       console.log('API Base URL:', apiBaseUrl);
       
@@ -83,15 +71,12 @@ const Candidates = () => {
         throw new Error('VITE_BACKEND_API_BASE_URL is not configured');
       }
       
-      // Test the health endpoint first
       console.log('Testing health endpoint...');
       const healthResult = await candidateService.healthCheck();
       console.log('Health check successful:', healthResult);
       
-      // Test the candidate search endpoint
-      const testResult = await candidateService.searchCandidates({ page: 1, page_size: 1 });
+      const testResult = await candidateService.searchCandidates({ page: 1, page_size: DEFAULT_PAGE_SIZE });
       console.log('Basic connectivity test successful:', testResult);
-      setError(null);
     } catch (error: any) {
       console.error('Basic connectivity test failed:', error);
       
@@ -110,7 +95,7 @@ const Candidates = () => {
         errorMsg = error?.message || error?.response?.data?.error || 'Connection failed';
       }
       
-      setError(errorMsg);
+      console.error('Connection error:', errorMsg);
     } finally {
       setIsLoading(false);
     }
@@ -133,25 +118,6 @@ const Candidates = () => {
     }
   };
 
-  const loadStats = async () => {
-    try {
-      console.log('Loading candidate stats...');
-      // TODO: Implement stats endpoint in candidateService
-      // For now, set some default stats to prevent the error
-      const defaultStats: CandidateStats = {
-        total_candidates: 0,
-        active_candidates_7_days: 0,
-        active_candidates_30_days: 0,
-        recent_searches: 0
-      };
-      setStats(defaultStats);
-      console.log('Stats loaded:', defaultStats);
-    } catch (error: any) {
-      console.error('Failed to load stats:', error);
-      toast.error('Failed to load candidate statistics.');
-    }
-  };
-
   const handleSearch = async (page = 1) => {
     setIsSearching(true);
     try {
@@ -169,7 +135,7 @@ const Candidates = () => {
         company_type: filters.companyType && filters.companyType !== 'any' ? filters.companyType : undefined,
         active_in_days: filters.activeInDays ? parseInt(filters.activeInDays) : undefined,
         page,
-        page_size: 20
+        page_size: DEFAULT_PAGE_SIZE
       };
 
       console.log('Sending search request with filters:', searchFilters);
@@ -215,7 +181,7 @@ const Candidates = () => {
       experienceTo: 20,
       location: '',
       ctcFrom: 0,
-      ctcTo: 100,
+      ctcTo: 200,  
       noticePeriod: [],
       education: '',
       domain: '',
@@ -328,7 +294,6 @@ const Candidates = () => {
                   />
                 </div>
 
-                {/* Experience Range */}
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <Briefcase className="h-4 w-4 text-purple-500" />
@@ -360,7 +325,6 @@ const Candidates = () => {
                   </div>
                 </div>
 
-                {/* Location */}
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <MapPin className="h-4 w-4 text-pink-500" />
@@ -380,7 +344,6 @@ const Candidates = () => {
                   />
                 </div>
 
-                {/* CTC Range */}
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <DollarSign className="h-4 w-4 text-green-500" />
@@ -410,7 +373,6 @@ const Candidates = () => {
                   </div>
                 </div>
 
-                {/* Notice Period */}
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4 text-orange-500" />
@@ -430,7 +392,6 @@ const Candidates = () => {
                         </Label>
                       </div>
                     )) || (
-                      // Fallback with correct backend values
                       [
                         { value: 'immediate', label: 'Immediate' },
                         { value: '15_days', label: '15 Days' },
@@ -454,7 +415,6 @@ const Candidates = () => {
                   </div>
                 </div>
 
-                {/* Education */}
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <GraduationCap className="h-4 w-4 text-blue-500" />
@@ -480,7 +440,6 @@ const Candidates = () => {
                   </Select>
                 </div>
 
-                {/* Domain */}
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <Building className="h-4 w-4 text-teal-500" />
@@ -501,7 +460,6 @@ const Candidates = () => {
                   </Select>
                 </div>
 
-                {/* Employment Type */}
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <Briefcase className="h-4 w-4 text-violet-500" />
@@ -530,7 +488,6 @@ const Candidates = () => {
                   </div>
                 </div>
 
-                {/* Company Type */}
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <Building className="h-4 w-4 text-rose-500" />
@@ -551,7 +508,6 @@ const Candidates = () => {
                   </Select>
                 </div>
 
-                {/* Active in Last */}
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4 text-amber-500" />
@@ -571,35 +527,8 @@ const Candidates = () => {
                   </Select>
                 </div>
               </div>
-
-              {/* Debug Buttons (for development) */}
               <div className="mt-6 pt-6 border-t border-gray-100">
-                <div className="flex items-center justify-center gap-4">
-                  {/* Test Button for debugging */}
-                  <Button
-                    type="button"
-                    onClick={async (e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      try {
-                        console.log('Testing basic search...');
-                        const testFilters = { page: 1, page_size: 10 };
-                        const results = await candidateService.searchCandidates(testFilters);
-                        console.log('Test results:', results);
-                        toast.success(`Test successful: ${results.total_count} candidates found`);
-                        setSearchResults(results);
-                      } catch (error) {
-                        console.error('Test failed:', error);
-                        toast.error('Test failed - check console for details');
-                      }
-                    }}
-                    variant="outline"
-                    size="sm"
-                  >
-                    Test Basic Search
-                  </Button>
-                  
-                  {/* Search All Button */}
+                <div className="flex items-center justify-center gap-4">                  
                   <Button
                     type="button"
                     onClick={(e) => {
@@ -615,36 +544,13 @@ const Candidates = () => {
                     Search All
                   </Button>
                   
-                  {/* Debug Panel */}
-                  <Button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      console.log('=== DEBUG INFO ===');
-                      console.log('Current filters:', filters);
-                      console.log('Filter options:', filterOptions);
-                      console.log('Search results:', searchResults);
-                      console.log('Is searching:', isSearching);
-                      console.log('Is loading:', isLoading);
-                      console.log('Error:', error);
-                      console.log('API Base URL:', import.meta.env.VITE_BACKEND_API_BASE_URL);
-                      toast.info('Debug info logged to console');
-                    }}
-                    variant="outline"
-                    size="sm"
-                  >
-                    Debug Info
-                  </Button>
                 </div>
               </div>
             </div>
           </form>
 
-          {/* Results Section */}
           {searchResults && (
             <div className="mt-8 space-y-6">
-              {/* Results Header */}
               <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -684,14 +590,12 @@ const Candidates = () => {
                 </div>
               </div>
 
-              {/* Candidate Cards */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {searchResults.candidates.map((candidate) => (
                   <CandidateCard key={candidate.id} candidate={candidate} />
                 ))}
               </div>
 
-              {/* Pagination */}
               {searchResults.total_pages > 1 && (
                 <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
                   <div className="flex items-center justify-center gap-2">
@@ -720,7 +624,6 @@ const Candidates = () => {
             </div>
           )}
 
-          {/* Loading State */}
           {isSearching && !searchResults && (
             <div className="mt-8 bg-white rounded-2xl shadow-xl border border-gray-100 p-12">
               <div className="text-center">
@@ -739,7 +642,6 @@ const Candidates = () => {
   );
 };
 
-// Candidate Card Component
 const CandidateCard = ({ candidate }: { candidate: Candidate }) => {
   const getExperienceText = (years: number, months: number) => {
     if (years === 0 && months === 0) return 'Fresher';
@@ -795,7 +697,6 @@ const CandidateCard = ({ candidate }: { candidate: Candidate }) => {
       </CardHeader>
       
       <CardContent className="space-y-4">
-        {/* Skills */}
         {candidate.skills_list && candidate.skills_list.length > 0 && (
           <div>
             <p className="text-sm font-medium text-gray-700 mb-2">Skills</p>
@@ -814,7 +715,6 @@ const CandidateCard = ({ candidate }: { candidate: Candidate }) => {
           </div>
         )}
 
-        {/* Job Skills */}
         {candidate.job_skills && candidate.job_skills.length > 0 && (
           <div>
             <p className="text-sm font-medium text-gray-700 mb-2">Job Skills</p>
@@ -833,7 +733,6 @@ const CandidateCard = ({ candidate }: { candidate: Candidate }) => {
           </div>
         )}
 
-        {/* Experience & Salary */}
         <div className="grid grid-cols-2 gap-4 text-sm">
           {candidate.expected_ctc && (
             <div>
@@ -849,14 +748,12 @@ const CandidateCard = ({ candidate }: { candidate: Candidate }) => {
           </div>
         </div>
 
-        {/* About */}
         {candidate.profile?.about && (
           <div>
             <p className="text-sm text-gray-600 line-clamp-2">{candidate.profile.about}</p>
           </div>
         )}
 
-        {/* Action Buttons */}
         <div className="flex items-center gap-2 pt-2">
           <Button 
             type="button"
@@ -865,7 +762,6 @@ const CandidateCard = ({ candidate }: { candidate: Candidate }) => {
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              // TODO: Implement view profile functionality
               console.log('View profile for candidate:', candidate.id);
             }}
           >
@@ -879,7 +775,6 @@ const CandidateCard = ({ candidate }: { candidate: Candidate }) => {
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              // TODO: Implement contact functionality
               console.log('Contact candidate:', candidate.id);
             }}
           >

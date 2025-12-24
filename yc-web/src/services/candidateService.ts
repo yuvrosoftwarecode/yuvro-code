@@ -53,16 +53,20 @@ export interface CandidateProject {
 
 export interface Candidate {
   id: string;
+  full_name: string;
+  title?: string;
+  location?: string;
+  about?: string;
   user: {
     id: string;
     email: string;
     username: string;
     first_name?: string;
     last_name?: string;
-    role: string;
+    role?: string;
   };
-  profile: {
-    id: string;
+  profile?: {
+    id?: string;
     profile_image?: string;
     cover_image?: string;
     full_name?: string;
@@ -70,11 +74,11 @@ export interface Candidate {
     location?: string;
     about?: string;
     gender?: string;
-    skills: CandidateSkill[];
-    experiences: CandidateExperience[];
-    education: CandidateEducation[];
-    projects: CandidateProject[];
-    certifications: any[];
+    skills?: CandidateSkill[];
+    experiences?: CandidateExperience[];
+    education?: CandidateEducation[];
+    projects?: CandidateProject[];
+    certifications?: any[];
     links?: {
       github?: string;
       linkedin?: string;
@@ -82,8 +86,8 @@ export interface Candidate {
       email?: string;
       website?: string;
     };
-    created_at: string;
-    updated_at: string;
+    created_at?: string;
+    updated_at?: string;
   };
   job_skills: {
     skill_name: string;
@@ -109,7 +113,6 @@ export interface Candidate {
   resume_file?: string;
   skills_list: string[];
   experience_companies: string[];
-  full_name: string;
   created_at: string;
   updated_at: string;
 }

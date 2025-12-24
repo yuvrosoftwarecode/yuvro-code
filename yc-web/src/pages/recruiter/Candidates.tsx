@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Filter, MapPin, DollarSign, Clock, GraduationCap, Building, Briefcase, RotateCcw, Sparkles, Eye, Mail, Download } from 'lucide-react';
+import { Search, Filter, MapPin, DollarSign, Clock, GraduationCap, Building, Briefcase, RotateCcw, Sparkles, Eye, Mail, Download, Github, ExternalLink, User, Award, Calendar, ChevronDown, Code } from 'lucide-react';
 import RoleSidebar from '../../components/common/RoleSidebar';
 import RoleHeader from '../../components/common/RoleHeader';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import candidateService, { 
   CandidateSearchFilters, 
@@ -54,6 +55,9 @@ const Candidates = () => {
   const [filterOptions, setFilterOptions] = useState<FilterOptions | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
+  
+  const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
   useEffect(() => {
     loadFilterOptions();
@@ -189,6 +193,9 @@ const Candidates = () => {
       companyType: 'any',
       activeInDays: ''
     });
+    // Clear search results to provide immediate visual feedback
+    setSearchResults(null);
+    setCurrentPage(1);
   };
 
   const toggleArrayFilter = (key: keyof Pick<CandidateFilters, 'noticePeriod' | 'employmentType'>, value: string) => {
@@ -200,16 +207,31 @@ const Candidates = () => {
     }));
   };
 
+  const handleViewDetails = (candidate: Candidate) => {
+    setSelectedCandidate(candidate);
+    setIsDetailsModalOpen(true);
+  };
+
+  const handleCloseDetailsModal = () => {
+    setIsDetailsModalOpen(false);
+    setSelectedCandidate(null);
+  };
+
+  const handleDownloadResumeFromCard = (candidate: Candidate) => {
+    if (candidate.resume_file) {
+      try {
+        window.open(candidate.resume_file, '_blank');
+        toast.success('Opening resume in new tab...');
+      } catch (error) {
+        toast.error('Failed to open resume. Please try again.');
+      }
+    } else {
+      toast.info('Resume not available for this candidate');
+    }
+  };
+
   const headerActions = (
     <>
-      <Button
-        onClick={() => handleReset()}
-        variant="outline"
-        className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-      >
-        <RotateCcw className="h-4 w-4" />
-        <span>Reset Filters</span>
-      </Button>
       <Button
         onClick={() => handleSearch()}
         disabled={isSearching}
@@ -233,12 +255,9 @@ const Candidates = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="flex">
-        {/* Sidebar */}
-        <RoleSidebar />
+       <RoleSidebar />
 
-        {/* Main Content */}
         <div className="flex-1">
-          {/* Header */}
           <RoleHeader
             title="Candidate Search Dashboard"
             subtitle="Find and connect with the best candidates for your positions"
@@ -246,7 +265,6 @@ const Candidates = () => {
           />
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Status Display */}
           {isLoading && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
               <div className="flex items-center">
@@ -274,7 +292,6 @@ const Candidates = () => {
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
-                {/* Skills & Keywords */}
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <Sparkles className="h-4 w-4 text-indigo-500" />
@@ -536,13 +553,28 @@ const Candidates = () => {
                       e.stopPropagation();
                       console.log('Searching all candidates...');
                       handleReset(); // Reset filters first
-                      setTimeout(() => handleSearch(), 100); // Then search
+                      setTimeout(() => handleSearch(), 100); 
                     }}
                     variant="outline"
                     size="sm"
                   >
                     Search All
                   </Button>
+
+                  <Button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Resetting filters...');
+                    handleReset(); // Reset filters first
+                    setTimeout(() => handleSearch(), 100); // Then search with reset filters
+                  }}
+                  variant="outline"
+                  className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                  <span>Reset Filters</span>
+                </Button>
                   
                 </div>
               </div>
@@ -592,7 +624,12 @@ const Candidates = () => {
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {searchResults.candidates.map((candidate) => (
-                  <CandidateCard key={candidate.id} candidate={candidate} />
+                  <CandidateCard 
+                    key={candidate.id} 
+                    candidate={candidate} 
+                    onViewDetails={handleViewDetails}
+                    onDownloadResume={handleDownloadResumeFromCard}
+                  />
                 ))}
               </div>
 
@@ -638,11 +675,31 @@ const Candidates = () => {
           </div>
         </div>
       </div>
+
+      <Dialog open={isDetailsModalOpen} onOpenChange={handleCloseDetailsModal}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-gray-900">
+              {selectedCandidate?.full_name || selectedCandidate?.profile?.full_name || 'Candidate Profile'}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedCandidate && (
+            <CandidateDetailsModal candidate={selectedCandidate} />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
 
-const CandidateCard = ({ candidate }: { candidate: Candidate }) => {
+const CandidateCard = ({ candidate, onViewDetails, onDownloadResume }: { 
+  candidate: Candidate; 
+  onViewDetails: (candidate: Candidate) => void;
+  onDownloadResume: (candidate: Candidate) => void;
+}) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  
   const getExperienceText = (years: number, months: number) => {
     if (years === 0 && months === 0) return 'Fresher';
     if (years === 0) return `${months} months`;
@@ -661,145 +718,583 @@ const CandidateCard = ({ candidate }: { candidate: Candidate }) => {
     return periodMap[period] || period;
   };
 
+  const candidateName = candidate.full_name || 
+                       candidate.profile?.full_name || 
+                       `${candidate.user?.first_name || ''} ${candidate.user?.last_name || ''}`.trim() || 
+                       candidate.user?.username || 'Unknown';
+
   return (
-    <Card className="hover:shadow-lg transition-shadow duration-200">
+    <Card className="hover:shadow-xl transition-all duration-300 border-l-4 border-l-blue-500 bg-gradient-to-br from-white to-gray-50">
+      {/* Header Section */}
       <CardHeader className="pb-4">
         <div className="flex items-start gap-4">
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-xl">
-            {candidate.full_name ? candidate.full_name.charAt(0) : 
-             candidate.profile?.full_name ? candidate.profile.full_name.charAt(0) :
-             candidate.user?.email ? candidate.user.email.charAt(0) : 'C'}
+          <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-2xl shadow-lg">
+            {candidateName.charAt(0)}
           </div>
           <div className="flex-1">
-            <CardTitle className="text-lg text-gray-900">
-              {candidate.full_name || 
-               candidate.profile?.full_name || 
-               `${candidate.user?.first_name || ''} ${candidate.user?.last_name || ''}`.trim() || 
-               candidate.user?.username || 'Unknown'}
-            </CardTitle>
-            <p className="text-gray-600 font-medium">
-              {candidate.profile?.title || 'Software Developer'}
-            </p>
-            <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
-              {candidate.profile?.location && (
-                <div className="flex items-center gap-1">
-                  <MapPin className="h-3 w-3" />
-                  {candidate.profile.location}
+            <div className="flex justify-between items-start mb-2">
+              <div>
+                <CardTitle className="text-xl text-gray-900 mb-1">{candidateName}</CardTitle>
+                <p className="text-gray-600 font-medium text-base mb-2">
+                  {candidate.title || candidate.profile?.title || 'Software Developer'}
+                </p>
+              </div>
+              <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-1">
+                  {candidate.is_actively_looking && (
+                    <Badge variant="default" className="text-xs bg-green-500 text-white">
+                    Active
+                    </Badge>
+                  )}
+                  {candidate.open_to_remote && (
+                    <Badge variant="secondary" className="text-xs">
+                      Remote OK
+                    </Badge>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => onViewDetails(candidate)}
+                    size="sm"
+                    className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1"
+                  >
+                    <Eye className="h-3 w-3 mr-1" />
+                    View Details
+                  </Button>
+                  <Button
+                    onClick={() => onDownloadResume(candidate)}
+                    size="sm"
+                    variant="outline"
+                    className={candidate.resume_file 
+                      ? "border-blue-200 text-blue-600 hover:bg-blue-50 text-xs px-2 py-1" 
+                      : "border-gray-200 text-gray-400 cursor-not-allowed text-xs px-2 py-1"
+                    }
+                    disabled={!candidate.resume_file}
+                    title={candidate.resume_file ? "Download Resume" : "Resume not available"}
+                  >
+                    <Download className="h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
+              {(candidate.location || candidate.profile?.location) && (
+                <div className="flex items-center gap-1 bg-blue-50 p-2 rounded">
+                  <MapPin className="h-3 w-3 text-blue-600" />
+                  <span className="truncate text-blue-800">{candidate.location || candidate.profile?.location}</span>
                 </div>
               )}
-              <div className="flex items-center gap-1">
-                <Briefcase className="h-3 w-3" />
-                {getExperienceText(candidate.total_experience_years, candidate.total_experience_months)}
+              <div className="flex items-center gap-1 bg-purple-50 p-2 rounded">
+                <Briefcase className="h-3 w-3 text-purple-600" />
+                <span className="text-purple-800">{getExperienceText(candidate.total_experience_years, candidate.total_experience_months)}</span>
+              </div>
+              {candidate.expected_ctc && (
+                <div className="flex items-center gap-1 bg-green-50 p-2 rounded">
+                  <DollarSign className="h-3 w-3 text-green-600" />
+                  <span className="text-green-700 font-medium">{candidate.currency} {candidate.expected_ctc} LPA</span>
+                </div>
+              )}
+              <div className="flex items-center gap-1 bg-orange-50 p-2 rounded">
+                <Clock className="h-3 w-3 text-orange-600" />
+                <span className="text-orange-800">{getNoticePeriodText(candidate.notice_period)}</span>
               </div>
             </div>
           </div>
         </div>
       </CardHeader>
       
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-6">
         {candidate.skills_list && candidate.skills_list.length > 0 && (
           <div>
-            <p className="text-sm font-medium text-gray-700 mb-2">Skills</p>
+            <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-1">
+              <Award className="h-4 w-4 text-indigo-500" />
+              Core Skills
+            </h4>
             <div className="flex flex-wrap gap-1">
-              {candidate.skills_list.slice(0, 6).map((skill, index) => (
-                <Badge key={index} variant="secondary" className="text-xs">
+              {candidate.skills_list.slice(0, isExpanded ? candidate.skills_list.length : 8).map((skill, index) => (
+                <Badge key={index} variant="secondary" className="text-xs bg-indigo-100 text-indigo-800 hover:bg-indigo-200 transition-colors">
                   {skill}
                 </Badge>
               ))}
-              {candidate.skills_list.length > 6 && (
-                <Badge variant="outline" className="text-xs">
-                  +{candidate.skills_list.length - 6} more
+              {candidate.skills_list.length > 8 && !isExpanded && (
+                <Badge 
+                  variant="outline" 
+                  className="text-xs cursor-pointer hover:bg-indigo-50" 
+                  onClick={() => setIsExpanded(true)}
+                >
+                  +{candidate.skills_list.length - 8} more
                 </Badge>
               )}
             </div>
           </div>
         )}
 
-        {candidate.job_skills && candidate.job_skills.length > 0 && (
-          <div>
-            <p className="text-sm font-medium text-gray-700 mb-2">Job Skills</p>
-            <div className="flex flex-wrap gap-1">
-              {candidate.job_skills.slice(0, 4).map((skill, index) => (
-                <Badge key={index} variant="outline" className="text-xs">
-                  {skill.skill_name} ({skill.proficiency})
-                </Badge>
-              ))}
-              {candidate.job_skills.length > 4 && (
-                <Badge variant="outline" className="text-xs">
-                  +{candidate.job_skills.length - 4} more
-                </Badge>
-              )}
-            </div>
-          </div>
-        )}
-
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          {candidate.expected_ctc && (
-            <div>
-              <p className="text-gray-500">Expected CTC</p>
-              <p className="font-medium text-green-600">
-                {candidate.currency} {candidate.expected_ctc} LPA
-              </p>
-            </div>
-          )}
-          <div>
-            <p className="text-gray-500">Notice Period</p>
-            <p className="font-medium">{getNoticePeriodText(candidate.notice_period)}</p>
-          </div>
-        </div>
-
-        {candidate.profile?.about && (
-          <div>
-            <p className="text-sm text-gray-600 line-clamp-2">{candidate.profile.about}</p>
-          </div>
-        )}
-
-        <div className="flex items-center gap-2 pt-2">
-          <Button 
-            type="button"
-            size="sm" 
-            className="flex-1"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              console.log('View profile for candidate:', candidate.id);
-            }}
-          >
-            <Eye className="h-3 w-3 mr-1" />
-            View Profile
-          </Button>
-          <Button 
-            type="button"
-            size="sm" 
-            variant="outline"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              console.log('Contact candidate:', candidate.id);
-            }}
-          >
-            <Mail className="h-3 w-3 mr-1" />
-            Contact
-          </Button>
-          {candidate.resume_file && (
-            <Button 
-              type="button"
-              size="sm" 
-              variant="outline"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                if (candidate.resume_file) {
-                  window.open(candidate.resume_file, '_blank');
-                }
-              }}
-            >
-              <Download className="h-3 w-3" />
-            </Button>
-          )}
-        </div>
+       
       </CardContent>
     </Card>
+  );
+};
+
+const CandidateDetailsModal = ({ candidate }: { candidate: Candidate }) => {
+  const candidateName = candidate.full_name || 
+                       `${candidate.user?.first_name || ''} ${candidate.user?.last_name || ''}`.trim() || 
+                       candidate.user?.username || 'Unknown';
+
+  const getExperienceText = (years: number, months: number) => {
+    if (years === 0 && months === 0) return 'Fresher';
+    if (years === 0) return `${months} months`;
+    if (months === 0) return `${years} year${years > 1 ? 's' : ''}`;
+    return `${years}.${Math.round(months / 12 * 10)} years`;
+  };
+
+  const getNoticePeriodText = (period: string) => {
+    const periodMap: Record<string, string> = {
+      'immediate': 'Immediate',
+      '15_days': '15 Days',
+      '30_days': '30 Days',
+      '60_days': '60 Days',
+      '90_days': '90 Days'
+    };
+    return periodMap[period] || period;
+  };
+
+  const handleDownloadResume = () => {
+    if (candidate.resume_file) {
+      try {
+        window.open(candidate.resume_file, '_blank');
+        toast.success('Opening resume in new tab...');
+      } catch (error) {
+        toast.error('Failed to open resume. Please try again.');
+      }
+    } else {
+      toast.info('Resume not available for this candidate');
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-lg border border-blue-200">
+        <div className="flex items-start gap-6">
+          <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-3xl shadow-lg">
+            {candidateName.charAt(0)}
+          </div>
+          <div className="flex-1">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">{candidateName}</h2>
+            <p className="text-lg text-gray-600 font-medium mb-3">
+              {candidate.title || candidate.profile?.title || 'Software Developer'}
+            </p>
+            
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
+              {(candidate.location || candidate.profile?.location) && (
+                <div className="flex items-center gap-2 bg-white p-3 rounded-lg shadow-sm">
+                  <MapPin className="h-4 w-4 text-blue-600" />
+                  <span className="text-gray-700">{candidate.location || candidate.profile?.location}</span>
+                </div>
+              )}
+              <div className="flex items-center gap-2 bg-white p-3 rounded-lg shadow-sm">
+                <Briefcase className="h-4 w-4 text-purple-600" />
+                <span className="text-gray-700">{getExperienceText(candidate.total_experience_years, candidate.total_experience_months)}</span>
+              </div>
+              {candidate.expected_ctc && (
+                <div className="flex items-center gap-2 bg-white p-3 rounded-lg shadow-sm">
+                  <DollarSign className="h-4 w-4 text-green-600" />
+                  <span className="text-gray-700 font-medium">{candidate.currency} {candidate.expected_ctc} LPA</span>
+                </div>
+              )}
+              <div className="flex items-center gap-2 bg-white p-3 rounded-lg shadow-sm">
+                <Clock className="h-4 w-4 text-orange-600" />
+                <span className="text-gray-700">{getNoticePeriodText(candidate.notice_period)}</span>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 mt-4">
+              <div className="flex gap-2">
+                {candidate.is_actively_looking && (
+                  <Badge className="bg-green-500 text-white">
+                     Actively Looking
+                  </Badge>
+                )}
+                {candidate.open_to_remote && (
+                  <Badge variant="secondary">
+                     Open to Remote
+                  </Badge>
+                )}
+              </div>
+              
+              <Button
+                onClick={handleDownloadResume}
+                className={candidate.resume_file 
+                  ? "bg-blue-600 hover:bg-blue-700 text-white" 
+                  : "bg-gray-400 hover:bg-gray-500 text-white cursor-not-allowed"
+                }
+                size="sm"
+                disabled={!candidate.resume_file}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                {candidate.resume_file ? 'Download Resume' : 'Resume Not Available'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {candidate.user && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Mail className="h-5 w-5 text-blue-500" />
+                Contact Information
+              </CardTitle>
+              
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center gap-3">
+              <Mail className="h-4 w-4 text-gray-500" />
+              <span className="text-gray-700">{candidate.user.email}</span>
+            </div>
+            {(candidate.location || candidate.profile?.location) && (
+              <div className="flex items-center gap-3">
+                <MapPin className="h-4 w-4 text-gray-500" />
+                <span className="text-gray-700">{candidate.location || candidate.profile?.location}</span>
+              </div>
+            )}
+            
+            {candidate.profile?.links && (
+              <div className="pt-2 border-t border-gray-100">
+                <p className="text-sm font-medium text-gray-600 mb-2">Social Links</p>
+                <div className="flex flex-wrap gap-3">
+                  {candidate.profile.links.github && (
+                    <a 
+                      href={candidate.profile.links.github} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-gray-600 hover:text-gray-800 text-sm"
+                    >
+                      <Github className="h-4 w-4" />
+                      GitHub
+                    </a>
+                  )}
+                  {candidate.profile.links.linkedin && (
+                    <a 
+                      href={candidate.profile.links.linkedin} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-blue-600 hover:text-blue-800 text-sm"
+                    >
+                      <User className="h-4 w-4" />
+                      LinkedIn
+                    </a>
+                  )}
+                  {candidate.profile.links.portfolio && (
+                    <a 
+                      href={candidate.profile.links.portfolio} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-purple-600 hover:text-purple-800 text-sm"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      Portfolio
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {(candidate.about || candidate.profile?.about) && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-5 w-5 text-blue-500" />
+              About
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-700 leading-relaxed">{candidate.about || candidate.profile?.about}</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {candidate.skills_list && candidate.skills_list.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Award className="h-5 w-5 text-indigo-500" />
+              Core Skills
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              {candidate.skills_list.map((skill, index) => (
+                <Badge key={index} variant="secondary" className="bg-indigo-100 text-indigo-800">
+                  {skill}
+                </Badge>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {candidate.job_skills && candidate.job_skills.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Building className="h-5 w-5 text-purple-500" />
+              Technical Expertise
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {candidate.job_skills.map((skill, index) => (
+                <div key={index} className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-medium text-purple-900">{skill.skill_name}</span>
+                    <Badge variant="outline" className="text-purple-700 border-purple-300">
+                      {skill.proficiency}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-purple-600">
+                    {skill.years_of_experience} year{skill.years_of_experience !== 1 ? 's' : ''} experience
+                  </p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {candidate.profile?.experiences && candidate.profile.experiences.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Briefcase className="h-5 w-5 text-green-500" />
+              Work Experience
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {candidate.profile.experiences.map((exp, index) => (
+              <div key={index} className="bg-green-50 p-6 rounded-lg border-l-4 border-green-500">
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <h3 className="font-semibold text-green-900 text-lg">{exp.role}</h3>
+                    <p className="text-green-700 font-medium">{exp.company}</p>
+                  </div>
+                  <Badge variant="secondary" className="bg-green-100 text-green-800">
+                    {exp.duration}
+                  </Badge>
+                </div>
+                {exp.description_list && exp.description_list.length > 0 && (
+                  <ul className="text-green-800 mb-4 list-disc list-inside space-y-1">
+                    {exp.description_list.map((desc, i) => (
+                      <li key={i}>{desc}</li>
+                    ))}
+                  </ul>
+                )}
+                {exp.technologies && exp.technologies.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {exp.technologies.map((tech, i) => (
+                      <Badge key={i} variant="outline" className="text-green-700 border-green-300">
+                        {tech}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {candidate.profile?.projects && candidate.profile.projects.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Code className="h-5 w-5 text-blue-500" />
+              Projects
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {candidate.profile.projects.map((project, index) => (
+              <div key={index} className="bg-blue-50 p-6 rounded-lg border-l-4 border-blue-500">
+                <div className="mb-3">
+                  <h3 className="font-semibold text-blue-900 text-lg">{project.title}</h3>
+                  <p className="text-blue-700 font-medium">{project.role}</p>
+                </div>
+                <p className="text-blue-800 mb-4 leading-relaxed">{project.description}</p>
+                {project.tech_stack && project.tech_stack.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {project.tech_stack.map((tech, i) => (
+                      <Badge key={i} variant="outline" className="text-blue-700 border-blue-300">
+                        {tech}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+                {(project.github_link || project.live_link) && (
+                  <div className="flex gap-3">
+                    {project.github_link && (
+                      <a 
+                        href={project.github_link} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-blue-600 hover:text-blue-800 text-sm"
+                      >
+                        <Github className="h-4 w-4" />
+                        GitHub
+                      </a>
+                    )}
+                    {project.live_link && (
+                      <a 
+                        href={project.live_link} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-blue-600 hover:text-blue-800 text-sm"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                        Live Demo
+                      </a>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {candidate.profile?.education && candidate.profile.education.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <GraduationCap className="h-5 w-5 text-blue-500" />
+              Education
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {candidate.profile.education.map((edu, index) => (
+              <div key={index} className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <h3 className="font-semibold text-blue-900">{edu.degree}</h3>
+                <p className="text-blue-700">{edu.field}</p>
+                <p className="text-blue-600 text-sm">{edu.institution}</p>
+                <div className="flex justify-between items-center mt-2">
+                  <span className="text-blue-600 text-sm">{edu.duration}</span>
+                  {edu.cgpa && (
+                    <Badge variant="outline" className="text-blue-700 border-blue-300">
+                      CGPA: {edu.cgpa}
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {candidate.profile?.certifications && candidate.profile.certifications.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Award className="h-5 w-5 text-yellow-500" />
+              Certifications
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {candidate.profile.certifications.map((cert, index) => (
+              <div key={index} className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                <h3 className="font-semibold text-yellow-900">{cert.name}</h3>
+                <p className="text-yellow-700">{cert.issuer}</p>
+                <div className="flex justify-between items-center mt-2">
+                  <span className="text-yellow-600 text-sm">{cert.completion_date}</span>
+                  {cert.certificate_file && (
+                    <a 
+                      href={cert.certificate_file} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-yellow-600 hover:text-yellow-800 text-sm"
+                    >
+                      <Download className="h-4 w-4" />
+                      Certificate
+                    </a>
+                  )}
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Building className="h-5 w-5 text-gray-500" />
+            Additional Information
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {candidate.current_ctc && (
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <span className="text-sm text-gray-600">Current CTC</span>
+                <p className="font-medium text-gray-900">{candidate.currency} {candidate.current_ctc} LPA</p>
+              </div>
+            )}
+            {candidate.domain && (
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <span className="text-sm text-gray-600">Domain</span>
+                <p className="font-medium text-gray-900">{candidate.domain}</p>
+              </div>
+            )}
+            {candidate.highest_education && (
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <span className="text-sm text-gray-600">Highest Education</span>
+                <p className="font-medium text-gray-900">{candidate.highest_education}</p>
+              </div>
+            )}
+            {candidate.preferred_locations && candidate.preferred_locations.length > 0 && (
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <span className="text-sm text-gray-600">Preferred Locations</span>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {candidate.preferred_locations.map((location, i) => (
+                    <Badge key={i} variant="outline" className="text-xs">
+                      {location}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+            {candidate.preferred_employment_types && candidate.preferred_employment_types.length > 0 && (
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <span className="text-sm text-gray-600">Preferred Employment Types</span>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {candidate.preferred_employment_types.map((type, i) => (
+                    <Badge key={i} variant="outline" className="text-xs">
+                      {type.replace('_', ' ')}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+            {candidate.preferred_company_types && candidate.preferred_company_types.length > 0 && (
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <span className="text-sm text-gray-600">Preferred Company Types</span>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {candidate.preferred_company_types.map((type, i) => (
+                    <Badge key={i} variant="outline" className="text-xs">
+                      {type.replace('_', ' ')}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

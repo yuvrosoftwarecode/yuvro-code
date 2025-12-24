@@ -10,6 +10,7 @@ export interface SkillTest {
   total_marks: number;
   passing_marks: number;
   enable_proctoring: boolean;
+  max_attempts: number;
   questions_config: {
     mcq_single: string[];
     mcq_multiple: string[];
@@ -23,6 +24,7 @@ export interface SkillTest {
     descriptive: number;
   };
   publish_status: 'draft' | 'active' | 'inactive' | 'archived';
+  total_questions?: number;
   course: string;
   topic?: string;
   participants_count: number;
@@ -40,6 +42,7 @@ export interface CreateSkillTestData {
   total_marks?: number;
   passing_marks?: number;
   enable_proctoring?: boolean;
+  max_attempts?: number;
   questions_config?: {
     mcq_single: string[];
     mcq_multiple: string[];
@@ -155,11 +158,13 @@ export const startSkillTest = async (testId: string): Promise<StartTestResponse>
   }
 };
 
-export const submitSkillTest = async (testId: string, submissionId: string, answers: any): Promise<SubmitTestResponse> => {
+export const submitSkillTest = async (testId: string, submissionId: string, answers: any, explanations?: any, all_question_ids?: string[]): Promise<SubmitTestResponse> => {
   try {
     const response = await restApiAuthUtil.post(`/skill-tests/${testId}/submit/`, {
       submission_id: submissionId,
-      answers
+      answers,
+      explanations,
+      all_question_ids
     });
     return response as SubmitTestResponse;
   } catch (error) {

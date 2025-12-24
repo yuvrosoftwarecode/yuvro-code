@@ -17,7 +17,7 @@ class ContestSerializer(serializers.ModelSerializer):
         model = Contest
         fields = [
             'id', 'title', 'organizer', 'type', 'status', 'start_datetime', 'end_datetime',
-            'duration', 'prize', 'difficulty', 'description', 'participants_count',
+            'duration', 'prize', 'difficulty', 'description', 'participants_count', 'max_attempts',
             'questions_config', 'questions_random_config', 'instructions', 'total_marks', 'passing_marks', 
             'enable_proctoring', 'publish_status',
             'created_by', 'created_at', 'updated_at',
@@ -31,19 +31,51 @@ class ContestSerializer(serializers.ModelSerializer):
 
 class SkillTestSerializer(serializers.ModelSerializer):
     participants_count = serializers.SerializerMethodField()
+    total_questions = serializers.SerializerMethodField()
+    
+    my_submissions = serializers.SerializerMethodField()
     
     class Meta:
         model = SkillTest
         fields = [
             'id', 'title', 'description', 'instructions', 'difficulty', 'duration',
             'total_marks', 'passing_marks', 'enable_proctoring', 'questions_config', 'questions_random_config',
-            'publish_status', 'course', 'topic', 'participants_count',
-            'created_by', 'created_at', 'updated_at',
+            'publish_status', 'course', 'topic', 'participants_count', 'total_questions',
+            'my_submissions', 'created_by', 'created_at', 'updated_at',
         ]
         read_only_fields = ['id', 'created_by', 'created_at', 'updated_at']
     
     def get_participants_count(self, obj):
         return obj.skill_test_submissions.count()
+
+    def get_total_questions(self, obj):
+        # Sum of fixed questions and random questions
+        fixed_count = 0
+        if obj.questions_config:
+            for q_type, ids in obj.questions_config.items():
+                if isinstance(ids, list):
+                    fixed_count += len(ids)
+        
+        random_count = 0
+        if obj.questions_random_config:
+            for q_type, count in obj.questions_random_config.items():
+                if isinstance(count, int):
+                    random_count += count
+        
+        return fixed_count + random_count
+
+    def get_my_submissions(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return []
+        
+        submissions = obj.skill_test_submissions.filter(user=request.user).order_by('-created_at')
+        return SimpleSubmissionSerializer(submissions, many=True).data
+
+class SimpleSubmissionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SkillTestSubmission
+        fields = ['id', 'status', 'marks', 'started_at', 'completed_at', 'created_at']
 
 
 class MockInterviewSerializer(serializers.ModelSerializer):
@@ -99,11 +131,16 @@ class ContestSubmissionSerializer(serializers.ModelSerializer):
 class SkillTestQuestionActivitySerializer(serializers.ModelSerializer):
     question_title = serializers.CharField(source='question.title', read_only=True)
     question_type = serializers.CharField(source='question.type', read_only=True)
+    question_content = serializers.CharField(source='question.content', read_only=True)
+    mcq_options = serializers.JSONField(source='question.mcq_options', read_only=True)
+    marks = serializers.FloatField(source='question.marks', read_only=True)
+    test_cases_basic = serializers.JSONField(source='question.test_cases_basic', read_only=True)
     
     class Meta:
         model = SkillTestQuestionActivity
         fields = [
-            'id', 'question', 'question_title', 'question_type',
+            'id', 'question', 'question_title', 'question_type', 'question_content',
+            'mcq_options', 'marks', 'test_cases_basic',
             'question_activities', 'navigation_activities', 'proctoring_activities',
             'camera_snapshots', 'alert_priority', 'answer_data', 'is_final_answer',
             'marks_obtained', 'is_correct', 'total_question_time', 'violation_count',

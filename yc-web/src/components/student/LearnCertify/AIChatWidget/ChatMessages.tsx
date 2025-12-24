@@ -23,12 +23,18 @@ const ChatMessages: React.FC<{ messages: ChatMessage[]; isLoading?: boolean; wel
   return (
     <div ref={scrollRef} className="ai-chat-messages flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/50">
       {messages.length === 0 && !isLoading && (
-        <div className="flex flex-col items-center justify-center h-full text-center p-8 text-gray-500 space-y-3">
-          <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-2">
-            <Bot size={32} className="text-blue-500" />
+        <div className="flex flex-col items-center justify-center min-h-full text-center p-8 text-slate-500 space-y-6">
+          <div className="w-24 h-24 bg-blue-50/50 rounded-full flex items-center justify-center mb-2 ring-8 ring-blue-50/30">
+            <div className="bg-white p-4 rounded-3xl shadow-sm border border-blue-50">
+              <Bot size={48} className="text-blue-600" />
+            </div>
           </div>
-          <p className="font-semibold text-gray-800 text-lg">Hi, I'm your AI Buddy!</p>
-          <p className="text-sm text-gray-400 max-w-[200px]">{welcomeMessage || "What can I help you with today?"}</p>
+          <div className="space-y-2">
+            <p className="font-black text-slate-800 text-2xl tracking-tight">Hi, I'm your AI Buddy!</p>
+            <p className="text-sm font-bold text-slate-400 max-w-[280px] leading-relaxed">
+              {welcomeMessage || "I'm here to help you with your assessment review. Ask me anything!"}
+            </p>
+          </div>
         </div>
       )}
 

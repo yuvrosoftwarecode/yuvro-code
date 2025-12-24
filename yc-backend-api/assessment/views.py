@@ -4,24 +4,164 @@ from rest_framework.response import Response
 from django.utils import timezone
 from django.db.models import Q, F
 from django.db import models
+from django.shortcuts import get_object_or_404
+import random
+import os
+import requests
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import (
     Contest, MockInterview, JobTest, SkillTest,
     ContestSubmission, MockInterviewSubmission, 
     JobTestSubmission, SkillTestSubmission,
-    SkillTestQuestionActivity
+    SkillTestQuestionActivity, ContestQuestionActivity, MockInterviewQuestionActivity
 )
 from .serializers import (
     ContestSerializer, SkillTestSerializer, MockInterviewSerializer,
     SkillTestSubmissionSerializer
 )
 from course.models import Question
-from django.shortcuts import get_object_or_404
-import random
-from course.models import Question
-from django.shortcuts import get_object_or_404
-import random
 from authentication.permissions import IsOwnerOrInstructorOrAdmin
 from .mixins import ProctoringMixin
+
+
+class CodeSubmissionViewSet(viewsets.ViewSet):
+    """
+    ViewSet to handle code execution requests Proxy.
+    Mimics the old code_executor API but logic is now effectively stateless or handled here.
+    """
+    permission_classes = [AllowAny] # Or IsAuthenticated depending on requirements
+
+    @action(detail=False, methods=['post'], url_path='execute')
+    def execute_code(self, request):
+        """
+        Execute code with test cases.
+        Proxies to the yc-code-executor microservice.
+        """
+        try:
+            # 1. Get Data
+            code = request.data.get('code')
+            language = request.data.get('language')
+            test_cases = request.data.get('test_cases', [])
+            test_cases_custom = request.data.get('test_cases_custom', [])
+            coding_problem_id = request.data.get('coding_problem_id')
+            
+            # 2. Call Code Executor Service
+            service_url = os.environ.get('CODE_EXECUTOR_URL', 'http://code-executor:8002')
+            
+            payload = {
+                'code': code,
+                'language': language,
+                'test_cases': test_cases,
+                'test_cases_custom': test_cases_custom,
+                'timeout': 10
+            }
+            
+            executor_response = requests.post(
+                f"{service_url}/execute-with-tests",
+                json=payload,
+                timeout=15
+            )
+            response_data = executor_response.json()
+
+            # 3. Plagiarism Check (if coding question and execution successful)
+            if coding_problem_id:
+                try:
+                    reference_submissions = []
+                    
+                    # Fetch from various activity models
+                    exclude_user_kwargs = {'user': request.user} if request.user.is_authenticated else {}
+                    
+                    models_to_check = [
+                        SkillTestQuestionActivity,
+                        ContestQuestionActivity,
+                        MockInterviewQuestionActivity
+                    ]
+                    
+                    for model_class in models_to_check:
+                         qs = model_class.objects.filter(
+                             question_id=coding_problem_id, 
+                             is_final_answer=True
+                         ).exclude(**exclude_user_kwargs).select_related('user').order_by('-updated_at')[:20]
+                         
+                         for activity in qs:
+                             reference_submissions.append({
+                                 'submission_id': str(activity.id),
+                                 'user_id': str(activity.user.id),
+                                 'answer_data': activity.answer_data
+                             })
+                             
+                    if reference_submissions:
+                        plagiarism_payload = {
+                            'target_code': code,
+                            'language': language,
+                            'reference_submissions': reference_submissions
+                        }
+                        
+                        plag_response = requests.post(
+                            f"{service_url}/plagiarism-check",
+                            json=plagiarism_payload,
+                            timeout=5
+                        )
+                        
+                        if plag_response.status_code == 200:
+                            plag_data = plag_response.json()
+                            response_data['plagiarism_score'] = plag_data.get('max_similarity', 0.0)
+                            response_data['plagiarism_details'] = plag_data
+                        
+                except Exception as e:
+                    print(f"Plagiarism check failed: {e}")
+                    pass
+
+            # 4. Format Response to match frontend expectation
+            exec_res = response_data.get('execution_result', {})
+            t_results = response_data.get('test_results', [])
+            
+            formatted_response = {
+                'id': 0, # Placeholder
+                'coding_problem': coding_problem_id or '',
+                'problem_title': 'Assessment Problem',
+                'problem_description': '',
+                'code': code,
+                'language': language,
+                'status': exec_res.get('status', 'error'),
+                'output': exec_res.get('output', ''),
+                'error_message': exec_res.get('error', ''),
+                'execution_time': exec_res.get('execution_time', 0),
+                'memory_usage': exec_res.get('memory_usage', 0),
+                'test_cases_passed': response_data.get('total_passed', 0),
+                'total_test_cases': response_data.get('total_tests', 0),
+                'plagiarism_score': response_data.get('plagiarism_score', 0),
+                'plagiarism_details': response_data.get('plagiarism_details', None),
+                'created_at': timezone.now().isoformat(),
+                'updated_at': timezone.now().isoformat(),
+                'test_results': {
+                    'passed': response_data.get('total_passed', 0),
+                    'total': response_data.get('total_tests', 0),
+                    'success': exec_res.get('success', False),
+                    'results': t_results
+                },
+                'plagiarism_flagged': response_data.get('plagiarism_score', 0) > 0.8
+            }
+
+            return Response(formatted_response, status=executor_response.status_code)
+
+        except requests.exceptions.RequestException as e:
+             return Response({
+                'status': 'error',
+                'error_message': f"Executor Service Unavailable: {str(e)}",
+                'execution_result': {'success': False},
+                'test_results': []
+            }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        except Exception as e:
+             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def list(self, request):
+        # Stub for getSubmissions
+        return Response([])
+
+    def retrieve(self, request, pk=None):
+        # Stub for getSubmission
+        return Response({})
 
 
 class ContestViewSet(viewsets.ModelViewSet):
@@ -234,12 +374,33 @@ class SkillTestViewSet(ProctoringMixin, viewsets.ModelViewSet):
         skill_test = self.get_object()
         user = request.user
         
-        # Check for existing submission
-        submission, created = SkillTestSubmission.objects.get_or_create(
+        # 1. Check for existing UNFINISHED submission to resume
+        submission = SkillTestSubmission.objects.filter(
             skill_test=skill_test,
             user=user,
-            defaults={'status': SkillTestSubmission.STATUS_STARTED}
-        )
+            status=SkillTestSubmission.STATUS_STARTED
+        ).first()
+
+        if not submission:
+            # 2. Check total completed attempts
+            completed_count = SkillTestSubmission.objects.filter(
+                skill_test=skill_test,
+                user=user,
+                status=SkillTestSubmission.STATUS_COMPLETED
+            ).count()
+
+            if completed_count >= skill_test.max_attempts:
+                return Response(
+                    {'error': f'Maximum attempt limit ({skill_test.max_attempts}) reached for this test.'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # 3. Create NEW submission
+            submission = SkillTestSubmission.objects.create(
+                skill_test=skill_test,
+                user=user,
+                status=SkillTestSubmission.STATUS_STARTED
+            )
         
         # 1. Resolve Questions
         questions_to_send = []
@@ -301,47 +462,80 @@ class SkillTestViewSet(ProctoringMixin, viewsets.ModelViewSet):
     def submit(self, request, pk=None):
         skill_test = self.get_object()
         submission_id = request.data.get('submission_id')
-        answers = request.data.get('answers', {}) # {'qid': 'answer', ...}
-        
+        answers = request.data.get('answers', {})
+        explanations = request.data.get('explanations', {})
+        all_question_ids = request.data.get('all_question_ids', [])
+
         submission = get_object_or_404(
-            SkillTestSubmission, 
-            id=submission_id, 
-            user=request.user, 
+            SkillTestSubmission,
+            id=submission_id,
+            user=request.user,
             skill_test=skill_test
         )
         
+        # Merge all_question_ids with answers.keys() to ensure we process everything
+        question_ids = list(set(list(answers.keys()) + all_question_ids))
+
         if submission.status == SkillTestSubmission.STATUS_COMPLETED:
              return Response({'error': 'Already submitted'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Update Submission
-        submission.status = SkillTestSubmission.STATUS_SUBMITTED
+        submission.status = SkillTestSubmission.STATUS_COMPLETED
         submission.submitted_at = timezone.now()
-        submission.answer_data = answers # Save raw answers
+        submission.completed_at = timezone.now()
+        submission.answer_data = answers
         
-        # Basic Auto-Grading (MCQ only for now)
         total_score = 0
         
-        question_ids = answers.keys()
-        db_questions = Question.objects.filter(id__in=question_ids)
-        q_map = {str(q.id): q for q in db_questions}
-        
-        for q_id, user_ans in answers.items():
-            if q_id not in q_map:
+        # Process each answer and create activities
+        for q_id in question_ids:
+            user_ans = answers.get(q_id)
+            try:
+                question = Question.objects.get(id=q_id)
+            except Question.DoesNotExist:
                 continue
-            question = q_map[q_id]
+
+            marks_obtained = 0
+            is_correct = False
             
-            # MCQ Single Logic
+            # Grading Logic
             if question.type == 'mcq_single':
                 correct_opt = next((opt for opt in question.mcq_options if opt.get('is_correct')), None)
                 if correct_opt and user_ans == correct_opt['text']:
-                    total_score += question.marks
-
-            # MCQ Multiple Logic
+                    marks_obtained = question.marks
+                    is_correct = True
             elif question.type == 'mcq_multiple':
                  correct_opts = set(opt['text'] for opt in question.mcq_options if opt.get('is_correct'))
-                 user_opts = set(user_ans) if isinstance(user_ans, list) else set([user_ans])
-                 if correct_opts == user_opts:
-                     total_score += question.marks
+                 user_opts = set(user_ans) if isinstance(user_ans, list) else set([user_ans]) if user_ans else set()
+                 if correct_opts == user_opts and correct_opts:
+                     marks_obtained = question.marks
+                     is_correct = True
+            elif question.type == 'coding':
+                # For coding, we'll mark as incorrect by default unless manually or auto-graded elsewhere
+                # But for now, if there's code, we give 0 or partial? 
+                # Let's keep it 0 as it's not auto-graded yet
+                marks_obtained = 0
+                is_correct = False
+            elif question.type == 'descriptive':
+                marks_obtained = 0
+                is_correct = False
+
+            # Create or update activity
+            SkillTestQuestionActivity.objects.update_or_create(
+                skill_test_submission=submission,
+                question=question,
+                user=request.user,
+                defaults={
+                    'answer_data': {
+                        'answer': user_ans,
+                        'explanation': explanations.get(q_id, '')
+                    },
+                    'is_final_answer': True,
+                    'is_correct': is_correct,
+                    'marks_obtained': marks_obtained,
+                    'auto_graded': True if question.type in ['mcq_single', 'mcq_multiple'] else False
+                }
+            )
+            total_score += marks_obtained
         
         submission.marks = total_score
         submission.save()

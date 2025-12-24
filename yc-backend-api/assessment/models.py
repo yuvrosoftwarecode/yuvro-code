@@ -40,6 +40,7 @@ class BaseAssessmentModel(BaseModel):
     passing_marks = models.IntegerField(default=60)
     enable_proctoring = models.BooleanField(default=False)
     total_attempts = models.PositiveIntegerField(default=0, help_text="Total number of attempts made")
+    max_attempts = models.PositiveIntegerField(default=3, help_text="Maximum number of attempts allowed per user")
     
     questions_config = models.JSONField(
         default=dict, 
@@ -257,7 +258,7 @@ class SkillTestSubmission(BaseUserSubmission):
     
     class Meta:
         ordering = ['-created_at']
-        unique_together = ['user', 'skill_test']
+        # Removed unique_together to allow multiple attempts (up to 3) per user per test
         
     def __str__(self):
         return f"{self.user.username} - {self.skill_test.title}"
@@ -405,6 +406,12 @@ class BaseQuestionActivity(BaseTimestampedModel):
     
     is_final_answer = models.BooleanField(default=False, help_text="Whether the current answer is final/submitted")
     answer_attempt_count = models.IntegerField(default=0, help_text="Number of times answer was modified")
+    
+    plagiarism_data = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Plagiarism check results: {'is_plagiarized': true, 'similarity_score': 0.95, 'matched_with': 'submission_id'}"
+    )
     
     marks_obtained = models.FloatField(null=True, blank=True)
     is_correct = models.BooleanField(null=True, blank=True)

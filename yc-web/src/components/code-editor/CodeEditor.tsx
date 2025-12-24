@@ -98,6 +98,13 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(({
   // Custom test cases state
   const [customTestCases, setCustomTestCases] = useState<CustomTestCase[]>([]);
 
+  // Ref to store onCodeChange callback to avoid infinite loops
+  const onCodeChangeRef = useRef(onCodeChange);
+  onCodeChangeRef.current = onCodeChange;
+
+  // Track if code change was from user input vs internal updates
+  const isUserInputRef = useRef(false);
+
   // Expose methods to parent
   useImperativeHandle(ref, () => ({
     openExampleGallery: () => setShowExamples(true),
@@ -159,15 +166,26 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(({
     fetchTemplates();
   }, [templates]);
 
-  // Handle code changes
+  // Handle code changes - use ref to avoid dependency on callback
+  const prevCodeRef = useRef(code);
   useEffect(() => {
-    onCodeChange?.(code);
-  }, [code, onCodeChange]);
+    // Only call onCodeChange if code actually changed (not on initial mount or callback change)
+    if (prevCodeRef.current !== code) {
+      prevCodeRef.current = code;
+      onCodeChangeRef.current?.(code);
+    }
+  }, [code]);
 
-  // Handle language changes
+  // Handle language changes - use ref to avoid dependency on callback
+  const onLanguageChangeRef = useRef(onLanguageChange);
+  onLanguageChangeRef.current = onLanguageChange;
+  const prevLanguageForCallbackRef = useRef(language);
   useEffect(() => {
-    onLanguageChange?.(language);
-  }, [language, onLanguageChange]);
+    if (prevLanguageForCallbackRef.current !== language) {
+      prevLanguageForCallbackRef.current = language;
+      onLanguageChangeRef.current?.(language);
+    }
+  }, [language]);
 
   // Language switching logic
   useEffect(() => {

@@ -24,11 +24,11 @@ urlpatterns = [
     path("api/auth/", include("authentication.urls")),
     path("api/course/", include("course.urls")),
     path("api/", include("ai_assistant.urls")),
-    path("api/code/", include("code_executor.urls")),
     path("api/health/", health_check, name="health_check"),
     path("accounts/", include("allauth.urls")),
     path("api/jobs/", include("job.urls")),
     path("api/", include("assessment.urls")),
+    path("api/code/", include("assessment.urls")), # Point api/code/ back to assessment URLs to pick up code/submissions/*
 
     path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),

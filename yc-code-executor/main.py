@@ -79,14 +79,68 @@ class CodeExecutionResponse(BaseModel):
     total_tests: int
     plagiarism_score: float = 0.0
 
+class ReferenceSubmission(BaseModel):
+    submission_id: str
+    user_id: str
+    answer_data: Dict[str, Any]
+
 class PlagiarismCheckRequest(BaseModel):
-    code1: str
-    code2: str
+    target_code: str
     language: str
+    reference_submissions: List[ReferenceSubmission]
+
+class PlagiarismMatch(BaseModel):
+    submission_id: str
+    user_id: str
+    similarity_score: float
 
 class PlagiarismResult(BaseModel):
-    similarity_score: float
-    flagged: bool
+    is_plagiarized: bool
+    max_similarity: float
+    matches: List[PlagiarismMatch]
+
+@app.post("/plagiarism-check", response_model=PlagiarismResult)
+async def check_plagiarism(request: PlagiarismCheckRequest):
+    """Check plagiarism between target code and multiple reference submissions"""
+    try:
+        matches = []
+        max_similarity = 0.0
+        
+        target_code = request.target_code
+        if not target_code:
+            return PlagiarismResult(is_plagiarized=False, max_similarity=0.0, matches=[])
+
+        for ref in request.reference_submissions:
+            # Extract code from answer_data
+            # Assuming answer_data has a 'code' field or similar structure for coding questions
+            ref_code = ref.answer_data.get('code') or ref.answer_data.get('source_code') or ""
+            
+            if not isinstance(ref_code, str) or not ref_code:
+                continue
+                
+            similarity = CodeExecutorService.calculate_similarity(target_code, ref_code)
+            
+            if similarity > 0.0:  # You might want a threshold here, e.g., > 0.5 to reduce noise
+                matches.append(PlagiarismMatch(
+                    submission_id=ref.submission_id,
+                    user_id=ref.user_id,
+                    similarity_score=similarity
+                ))
+                max_similarity = max(max_similarity, similarity)
+        
+        # Sort matches by similarity descending
+        matches.sort(key=lambda x: x.similarity_score, reverse=True)
+        
+        return PlagiarismResult(
+            is_plagiarized=max_similarity > 0.8,  # Threshold for flagging
+            max_similarity=max_similarity,
+            matches=matches[:10]  # Return top 10 matches
+        )
+        
+    except Exception as e:
+        # Log error or return empty result so we don't block submission
+        print(f"Plagiarism check error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 # Language configurations
 LANGUAGE_CONFIGS = {
@@ -750,22 +804,7 @@ async def execute_code_with_tests(request: CodeExecutionWithTestsRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/plagiarism-check", response_model=PlagiarismResult)
-async def check_plagiarism(request: PlagiarismCheckRequest):
-    """Check plagiarism between two code snippets"""
-    try:
-        similarity_score = CodeExecutorService.calculate_similarity(
-            request.code1,
-            request.code2
-        )
-        
-        return PlagiarismResult(
-            similarity_score=similarity_score,
-            flagged=similarity_score > 0.7
-        )
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.get("/supported-languages-and-templates")
 async def get_supported_languages():

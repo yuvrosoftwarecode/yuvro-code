@@ -126,6 +126,33 @@ function App() {
               />
 
               <Route
+                path="/student/courses/:courseId/skill-tests"
+                element={
+                  <ProtectedRoute allowedRoles={["student"]}>
+                    <SkillTest />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/student/courses/:courseId/skill-tests/:testId"
+                element={
+                  <ProtectedRoute allowedRoles={["student"]}>
+                    <SkillTest />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/student/courses/:courseId/skill-tests/:testId/results"
+                element={
+                  <ProtectedRoute allowedRoles={["student"]}>
+                    <SkillTest />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
                 path="/student/mock-interview"
                 element={
                   <ProtectedRoute allowedRoles={["student"]}>

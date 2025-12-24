@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, Camera, Mic, AlertCircle, Loader2 } from 'lucide-react';
 
@@ -30,16 +30,16 @@ const PermissionDialog: React.FC<PermissionDialogProps> = ({
     setMicrophoneGranted(false);
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: true, 
-        audio: true 
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true
       });
-      
+
       // If we get here, both permissions were granted
       setCameraGranted(true);
       setMicrophoneGranted(true);
       setPermissionState('granted');
-      
+
       // Stop the stream since we only needed it for permission check
       stream.getTracks().forEach(track => track.stop());
     } catch (error) {
@@ -82,8 +82,11 @@ const PermissionDialog: React.FC<PermissionDialogProps> = ({
               </>
             )}
           </DialogTitle>
+          <DialogDescription className="text-muted-foreground">
+            We need access to your camera and microphone to proctor the test.
+          </DialogDescription>
         </DialogHeader>
-        
+
         <div className="space-y-4">
           {permissionState === 'requesting' && (
             <p className="text-muted-foreground">
@@ -96,7 +99,7 @@ const PermissionDialog: React.FC<PermissionDialogProps> = ({
               <p className="text-muted-foreground">
                 Great! We have successfully accessed your camera and microphone.
               </p>
-              
+
               <div className="space-y-2">
                 <div className="flex items-center gap-2 p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
                   <Camera className="h-4 w-4 text-green-600" />
@@ -107,7 +110,7 @@ const PermissionDialog: React.FC<PermissionDialogProps> = ({
                   <span className="text-sm">Microphone access granted</span>
                 </div>
               </div>
-              
+
               <p className="text-sm text-muted-foreground">
                 You're all set to begin your test. Click "Next" to continue.
               </p>
@@ -119,7 +122,7 @@ const PermissionDialog: React.FC<PermissionDialogProps> = ({
               <p className="text-muted-foreground">
                 Camera and microphone access are required for this test. Please enable permissions and try again.
               </p>
-              
+
               <div className="space-y-2">
                 <div className="flex items-center gap-2 p-2 bg-red-50 dark:bg-red-900/20 rounded-lg">
                   <Camera className="h-4 w-4 text-red-600" />
@@ -133,7 +136,7 @@ const PermissionDialog: React.FC<PermissionDialogProps> = ({
             </>
           )}
         </div>
-        
+
         <div className="flex gap-3 pt-4">
           <Button variant="outline" onClick={onCancel} className="flex-1">
             Cancel

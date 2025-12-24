@@ -120,7 +120,9 @@ const Navigation: React.FC = () => {
                         <div className="hidden md:flex space-x-3 ml-3">
                             {mainTabs.map((tab) => {
                                 const isActive =
-                                    currentPath === tab.path || currentPath.startsWith(tab.path + "/");
+                                    currentPath === tab.path ||
+                                    currentPath.startsWith(tab.path + "/") ||
+                                    (tab.label === 'Skill Test' && currentPath.includes('/skill-tests'));
 
                                 return (
                                     <Link

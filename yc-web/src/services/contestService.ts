@@ -93,6 +93,21 @@ export const contestService = {
     return restApiAuthUtil.delete(`/contests/${contestId}/`);
   },
 
+  async registerContest(contestId: string): Promise<any> {
+    return restApiAuthUtil.post(`/contests/${contestId}/register/`);
+  },
+
+  async startContest(contestId: string): Promise<any> {
+    return restApiAuthUtil.post(`/contests/${contestId}/start/`);
+  },
+
+  async submitContest(contestId: string, submissionId: string, answers: any): Promise<any> {
+    return restApiAuthUtil.post(`/contests/${contestId}/submit/`, {
+      submission_id: submissionId,
+      answers,
+    });
+  },
+
   async getQuestion(questionId: number): Promise<Question> {
     return restApiAuthUtil.get(`/course/questions/${questionId}/`);
   },
@@ -103,7 +118,7 @@ export const contestService = {
     search?: string;
   }): Promise<Question[]> {
     const params: any = { course: courseId };
-    
+
     if (filters?.difficulty) {
       params.difficulty = filters.difficulty;
     }
@@ -113,7 +128,7 @@ export const contestService = {
     if (filters?.search) {
       params.search = filters.search;
     }
-    
+
     return restApiAuthUtil.get('/course/questions/', { params });
   },
 
@@ -129,7 +144,7 @@ export const contestService = {
   async removeQuestionFromContest(contestId: string, questionId: string, questionType: string, currentQuestionsConfig: Contest['questions_config']): Promise<Contest> {
     const updatedQuestionsConfig = { ...currentQuestionsConfig };
     if (updatedQuestionsConfig[questionType as keyof typeof updatedQuestionsConfig]) {
-      updatedQuestionsConfig[questionType as keyof typeof updatedQuestionsConfig] = 
+      updatedQuestionsConfig[questionType as keyof typeof updatedQuestionsConfig] =
         updatedQuestionsConfig[questionType as keyof typeof updatedQuestionsConfig].filter(id => id !== questionId);
     }
     return this.updateContest(contestId, { questions_config: updatedQuestionsConfig });

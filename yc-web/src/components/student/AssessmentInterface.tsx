@@ -155,6 +155,24 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
   const [questionPage, setQuestionPage] = useState(0);
   const [tabSwitchCount, setTabSwitchCount] = useState(0);
 
+  // Centralized camera cleanup function
+  const cleanupCamera = () => {
+    console.log('cleanupCamera called');
+    if (streamRef.current) {
+      console.log('Stopping media tracks...');
+      streamRef.current.getTracks().forEach(track => {
+        track.stop();
+        console.log('Camera/microphone track stopped:', track.kind);
+      });
+      streamRef.current = null;
+      setVideoTrackEnabled(false);
+      setAudioTrackEnabled(false);
+      console.log('Camera cleanup completed');
+    } else {
+      console.log('No stream to cleanup');
+    }
+  };
+
   useEffect(() => {
     const initializeMedia = async () => {
       try {
@@ -186,9 +204,8 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
     initializeMedia();
 
     return () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(t => t.stop());
-      }
+      console.log('AssessmentInterface component unmounting - cleaning up camera');
+      cleanupCamera();
     };
   }, []);
 
@@ -196,6 +213,8 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
     const timer = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
+          console.log('Timer expired - cleaning up camera');
+          cleanupCamera(); // Ensure camera is stopped when time runs out
           handleSubmitAssessment();
           return 0;
         }
@@ -204,6 +223,32 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
     }, 1000);
 
     return () => clearInterval(timer);
+  }, []);
+
+  // Handle browser navigation/close events
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      console.log('beforeunload event - cleaning up camera');
+      cleanupCamera();
+      
+      // Show confirmation dialog
+      event.preventDefault();
+      event.returnValue = '';
+      return '';
+    };
+
+    const handlePopState = () => {
+      console.log('popstate event - cleaning up camera');
+      cleanupCamera();
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('popstate', handlePopState);
+    };
   }, []);
 
   const formatTime = (seconds: number) => {
@@ -228,6 +273,12 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
     });
   };
 
+  const handleBack = () => {
+    console.log('handleBack called - cleaning up camera');
+    cleanupCamera();
+    onBack();
+  };
+
   const handleSubmitAssessment = async () => {
     const answeredCount = questions.filter(q => {
       const ans = answers[q.id];
@@ -245,15 +296,16 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
     const timeSpent = (assessment.duration * 60) - timeLeft;
     const q_ids = questions.map(q => q.id);
 
+    // Stop camera and microphone FIRST before any async operations
+    console.log('handleSubmitAssessment called - cleaning up camera');
+    cleanupCamera();
+
     try {
       const loadingToast = toast.loading("Submitting assessment...");
+
       await submitSkillTest(assessment.id, submissionId, answers, explanations, q_ids);
       toast.dismiss(loadingToast);
       toast.success("Assessment submitted successfully!");
-
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(t => t.stop());
-      }
 
       onComplete({
         answeredCount,
@@ -1048,4 +1100,3 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
 };
 
 export default AssessmentInterface;
-

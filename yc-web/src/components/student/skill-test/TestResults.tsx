@@ -35,13 +35,14 @@ interface Test {
   totalQuestions: number;
   marks: number;
   score?: number;
+  maxAttempts?: number;
+  currentAttempts?: number;
 }
 
 interface TestResultsProps {
   test: Test;
   submissionId: string;
   onBackToList: () => void;
-  onTryAgain: () => void;
 }
 
 interface QuestionResult {
@@ -67,9 +68,13 @@ interface ChatMessage {
 const TestResults: React.FC<TestResultsProps> = ({
   test,
   submissionId: initialSubmissionId,
-  onBackToList,
-  onTryAgain
+  onBackToList
 }) => {
+  console.log('TestResults component rendered with:', {
+    test: test?.id,
+    testTitle: test?.title,
+    submissionId: initialSubmissionId
+  });
   const [currentSubId, setCurrentSubId] = useState(initialSubmissionId);
   const [allSubmissions, setAllSubmissions] = useState<any[]>([]);
   const [submissionData, setSubmissionData] = useState<any>(null);
@@ -243,15 +248,6 @@ const TestResults: React.FC<TestResultsProps> = ({
             <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">{test.course}</p>
           </div>
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onTryAgain}
-              className="flex items-center gap-2 border-slate-200 rounded-xl font-bold bg-white hover:bg-slate-50 text-slate-600 transition-all active:scale-95 px-5 h-11"
-            >
-              <RotateCcw className="h-4 w-4" />
-              Retake Test
-            </Button>
             <Button
               onClick={onBackToList}
               className="flex items-center gap-2 bg-slate-800 text-white rounded-xl font-bold hover:bg-slate-900 shadow-lg px-6 h-11 transition-all active:scale-95"

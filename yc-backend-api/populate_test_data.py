@@ -1,23 +1,13 @@
-#!/usr/bin/env python
-"""
-Simple script to populate test data for candidate search.
-Run this after setting up the database and running migrations.
-
-Usage:
-    python populate_test_data.py
-"""
-
 import os
 import sys
 import django
 
-# Setup Django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'yc-backend-api.settings')
 django.setup()
 
 from django.contrib.auth import get_user_model
-from authentication.models import Profile, JobProfile, JobSkill
-from job.models import Skill, Experience, Education
+from authentication.models import Profile
+from job.models import Skill, Experience, Education, JobProfile, JobSkill
 from django.utils import timezone
 from datetime import timedelta
 import random
@@ -25,11 +15,9 @@ import random
 User = get_user_model()
 
 def create_sample_data():
-    """Create sample job profiles for testing"""
     
     print("Creating sample job profiles...")
     
-    # Sample data
     skills_data = [
         'Python', 'JavaScript', 'React', 'Node.js', 'Django', 'Flask',
         'Java', 'Spring Boot', 'Angular', 'Vue.js', 'TypeScript',
@@ -55,7 +43,6 @@ def create_sample_data():
         'Frontend Developer', 'Backend Developer', 'DevOps Engineer'
     ]
     
-    # Create 20 sample candidates
     for i in range(1, 21):
         try:
             # Create user
@@ -67,7 +54,6 @@ def create_sample_data():
                 role='student'
             )
             
-            # Create profile
             profile = Profile.objects.create(
                 user=user,
                 full_name=f'Candidate {i}',
@@ -76,11 +62,10 @@ def create_sample_data():
                 about=f'Experienced software developer with {random.randint(1, 8)} years of experience.'
             )
             
-            # Create job profile
             job_profile = JobProfile.objects.create(
                 profile=profile,
-                current_ctc=random.randint(300, 1500) / 10,  # 3-150 LPA
-                expected_ctc=random.randint(400, 2000) / 10,  # 4-200 LPA
+                current_ctc=random.randint(300, 1500) / 10,  
+                expected_ctc=random.randint(400, 2000) / 10, 
                 currency='INR',
                 total_experience_years=random.randint(0, 10),
                 total_experience_months=random.randint(0, 11),
@@ -95,7 +80,6 @@ def create_sample_data():
                 last_active=timezone.now() - timedelta(days=random.randint(0, 30))
             )
             
-            # Add skills
             user_skills = random.sample(skills_data, random.randint(3, 6))
             for skill_name in user_skills:
                 Skill.objects.create(
@@ -112,7 +96,6 @@ def create_sample_data():
                     years_of_experience=random.randint(1, job_profile.total_experience_years + 1)
                 )
             
-            # Add experience
             Experience.objects.create(
                 profile=profile,
                 company=random.choice(companies),
@@ -126,7 +109,6 @@ def create_sample_data():
                 technologies=random.sample(skills_data, random.randint(3, 5))
             )
             
-            # Add education
             Education.objects.create(
                 profile=profile,
                 institution=f'University {i}',

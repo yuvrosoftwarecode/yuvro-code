@@ -22,9 +22,10 @@ from job.models import (
 from .serializers import (
     CustomTokenObtainPairSerializer,
     UserRegistrationSerializer,
-    UserLoginSerializer,
     UserSerializer,
     UserUpdateSerializer,
+)
+from job.serializers import (
     ProfileSerializer,
     SocialLinksSerializer,
     SkillSerializer,
@@ -105,36 +106,8 @@ class UserRegistrationView(generics.CreateAPIView):
         )
 
 
-@extend_schema(
-    summary="User Login",
-    description="Login with email and password to get JWT tokens.",
-    request=UserLoginSerializer,
-    examples=[
-        OpenApiExample(
-            "Login Example",
-            value={"email": "user@example.com", "password": "your_password"},
-        )
-    ],
-)
-@api_view(["POST"])
-@permission_classes([permissions.AllowAny])
-def login_view(request):
-    serializer = UserLoginSerializer(data=request.data)
-    serializer.is_valid(raise_exception=True)
-
-    user = serializer.validated_data["user"]
-    login(request, user)
-
-    token_serializer = CustomTokenObtainPairSerializer()
-    refresh = token_serializer.get_token(user)
-
-    return Response(
-        {
-            "user": UserSerializer(user).data,
-            "refresh": str(refresh),
-            "access": str(refresh.access_token),
-        }
-    )
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
 
 
 @extend_schema(

@@ -15,9 +15,7 @@ from .serializers import (
     JobSerializer, CompanySerializer, JobApplicationSerializer,
     JobApplicationListSerializer, JobWithApplicationsSerializer,
     JobProfileSerializer, CandidateSearchSerializer, CandidateSearchResultSerializer,
-    FilterOptionsSerializer, CandidateStatsSerializer
-)
-from authentication.serializers import (
+    FilterOptionsSerializer, CandidateStatsSerializer,
     SocialLinksSerializer, SkillSerializer, ExperienceSerializer,
     ProjectSerializer, EducationSerializer, CertificationSerializer
 )
@@ -460,7 +458,8 @@ class CandidateSearchViewSet(viewsets.ViewSet):
                 ).distinct()
         
         # Experience filters - handle both from and to with proper null checking
-        if filters.get('experience_from') is not None and filters['experience_from'] >= 0:
+        # Ignore experience_from when it's 0 (default/no filter)
+        if filters.get('experience_from') is not None and filters['experience_from'] > 0:
             queryset = queryset.filter(total_experience_years__gte=filters['experience_from'])
         
         if filters.get('experience_to') is not None and filters['experience_to'] >= 0:
@@ -476,15 +475,20 @@ class CandidateSearchViewSet(viewsets.ViewSet):
                 ).distinct()
         
         # CTC filters - handle null CTC values safely
-        if filters.get('ctc_from') is not None and filters['ctc_from'] >= 0:
+        # Frontend sends CTC in lakhs (LPA), backend stores in rupees
+        # Convert lakhs to rupees by multiplying by 100,000
+        # Ignore ctc_from when it's 0 (default/no filter)
+        if filters.get('ctc_from') is not None and filters['ctc_from'] > 0:
+            ctc_from_rupees = filters['ctc_from'] * 100000  # Convert lakhs to rupees
             queryset = queryset.filter(
-                Q(expected_ctc__gte=filters['ctc_from']) & 
+                Q(expected_ctc__gte=ctc_from_rupees) & 
                 Q(expected_ctc__isnull=False)
             )
         
         if filters.get('ctc_to') is not None and filters['ctc_to'] >= 0:
+            ctc_to_rupees = filters['ctc_to'] * 100000  # Convert lakhs to rupees
             queryset = queryset.filter(
-                Q(expected_ctc__lte=filters['ctc_to']) & 
+                Q(expected_ctc__lte=ctc_to_rupees) & 
                 Q(expected_ctc__isnull=False)
             )
         
@@ -585,7 +589,11 @@ class CandidateSearchViewSet(viewsets.ViewSet):
             'has_previous': candidates_page.has_previous() if candidates_page else False,
             'applied_filters': {
                 key: value for key, value in filters.items() 
-                if value is not None and value != '' and value != []
+                if value is not None and value != '' and value != [] and not (
+                    key == 'company_type' and isinstance(value, str) and value.lower() == 'any'
+                ) and not (
+                    key in ['experience_from', 'ctc_from'] and value == 0
+                )
             }
         }
         

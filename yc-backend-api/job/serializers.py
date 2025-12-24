@@ -2,7 +2,11 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from django.core.cache import cache
-from .models import Job, Company, JobApplication, JobProfile, JobSkill, CandidateSearchLog
+from .models import (
+    Job, Company, JobApplication, JobProfile, JobSkill, CandidateSearchLog,
+    SocialLinks, Skill, Experience, Project, Education, Certification
+)
+from authentication.models import Profile
 import logging
 
 User = get_user_model()
@@ -86,7 +90,6 @@ class JobApplicationSerializer(serializers.ModelSerializer):
         return obj.applicant.email
     
     def validate(self, data):
-        """Validate and clean the application data"""
         if 'portfolio_url' in data and data['portfolio_url'] == '':
             data['portfolio_url'] = None
         if 'expected_salary' in data and not data['expected_salary']:
@@ -174,7 +177,6 @@ class JobApplicationListSerializer(serializers.ModelSerializer):
 
 
 class JobWithApplicationsSerializer(JobSerializer):
-    """Job serializer that includes application count and recent applications"""
     applications_count = serializers.SerializerMethodField()
     recent_applications = serializers.SerializerMethodField()
     
@@ -203,27 +205,25 @@ class JobSkillSerializer(serializers.ModelSerializer):
 
 
 class JobProfileSerializer(serializers.ModelSerializer):
-    # Profile information
     full_name = serializers.CharField(source='profile.full_name', read_only=True)
     title = serializers.CharField(source='profile.title', read_only=True)
     location = serializers.CharField(source='profile.location', read_only=True)
     about = serializers.CharField(source='profile.about', read_only=True)
     
-    # User information
     user = serializers.SerializerMethodField()
     
-    # Skills and experience
     skills_list = serializers.ReadOnlyField()
     experience_companies = serializers.ReadOnlyField()
     total_experience_in_years = serializers.ReadOnlyField()
     
-    # Job skills
     job_skills = JobSkillSerializer(many=True, read_only=True)
+    
+    profile = serializers.SerializerMethodField()
     
     class Meta:
         model = JobProfile
         fields = [
-            'id', 'full_name', 'title', 'location', 'about', 'user',
+            'id', 'full_name', 'title', 'location', 'about', 'user', 'profile',
             'current_ctc', 'expected_ctc', 'currency',
             'total_experience_years', 'total_experience_months', 'total_experience_in_years',
             'notice_period', 'available_from',
@@ -243,6 +243,27 @@ class JobProfileSerializer(serializers.ModelSerializer):
             'last_name': obj.profile.user.last_name,
             'username': obj.profile.user.username
         }
+    
+    def get_profile(self, obj):
+        profile = obj.profile
+        profile_data = {
+            'full_name': profile.full_name,
+            'title': profile.title,
+            'location': profile.location,
+            'about': profile.about,
+            'experiences': ExperienceSerializer(profile.experiences.all(), many=True).data,
+            'projects': ProjectSerializer(profile.projects.all(), many=True).data,
+            'education': EducationSerializer(profile.education.all(), many=True).data,
+            'certifications': CertificationSerializer(profile.certifications.all(), many=True).data,
+        }
+        
+        try:
+            social_links = profile.links
+            profile_data['links'] = SocialLinksSerializer(social_links).data
+        except:
+            profile_data['links'] = None
+            
+        return profile_data
 
 
 class CandidateSearchSerializer(serializers.Serializer):
@@ -262,16 +283,18 @@ class CandidateSearchSerializer(serializers.Serializer):
     notice_period = serializers.ListField(
         child=serializers.CharField(),
         required=False,
-        allow_empty=True
+        allow_empty=True,
+        allow_null=True
     )
-    education = serializers.CharField(required=False, allow_blank=True)
-    domain = serializers.CharField(required=False, allow_blank=True)
+    education = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    domain = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     employment_type = serializers.ListField(
         child=serializers.CharField(),
         required=False,
-        allow_empty=True
+        allow_empty=True,
+        allow_null=True
     )
-    company_type = serializers.CharField(required=False, allow_blank=True)
+    company_type = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     
     active_in_days = serializers.IntegerField(required=False, min_value=1, allow_null=True)
     
@@ -279,8 +302,6 @@ class CandidateSearchSerializer(serializers.Serializer):
     page_size = serializers.IntegerField(required=False, min_value=1, max_value=100, default=20)
     
     def to_internal_value(self, data):
-        """Custom validation to handle empty strings for numeric fields"""
-        # Convert empty strings to None for numeric fields
         numeric_fields = ['experience_from', 'experience_to', 'ctc_from', 'ctc_to', 'active_in_days']
         
         for field in numeric_fields:
@@ -291,7 +312,6 @@ class CandidateSearchSerializer(serializers.Serializer):
 
 
 class CandidateSearchResultSerializer(serializers.Serializer):
-    """Serializer for candidate search results"""
     
     candidates = JobProfileSerializer(many=True)
     total_count = serializers.IntegerField()
@@ -303,7 +323,6 @@ class CandidateSearchResultSerializer(serializers.Serializer):
 
 
 class FilterOptionsSerializer(serializers.Serializer):
-    """Serializer for filter options"""
     
     notice_periods = serializers.ListField(
         child=serializers.DictField()
@@ -329,9 +348,163 @@ class FilterOptionsSerializer(serializers.Serializer):
 
 
 class CandidateStatsSerializer(serializers.Serializer):
-    """Serializer for candidate statistics"""
     
     total_candidates = serializers.IntegerField()
     active_candidates_7_days = serializers.IntegerField()
     active_candidates_30_days = serializers.IntegerField()
     recent_searches = serializers.IntegerField()
+
+
+class SocialLinksSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SocialLinks
+        fields = [
+            "id",
+            "github",
+            "linkedin",
+            "portfolio",
+            "email",
+            "website",
+        ]
+        read_only_fields = ["id"]
+
+
+class SkillSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Skill
+        fields = [
+            "id",
+            "name",
+            "level",
+            "percentage",
+        ]
+        read_only_fields = ["id"]
+
+
+class ExperienceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Experience
+        fields = [
+            "id",
+            "company",
+            "role",
+            "duration",
+            "description_list",
+            "technologies",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
+
+
+class ProjectSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Project
+        fields = [
+            "id",
+            "title",
+            "description",
+            "role",
+            "tech_stack",
+            "github_link",
+            "live_link",
+            "created_at",
+        ]
+        read_only_fields = ["id", "created_at"]
+
+
+class EducationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Education
+        fields = [
+            "id",
+            "institution",
+            "degree",
+            "field",
+            "duration",
+            "cgpa",
+            "start_year",
+            "end_year",
+        ]
+        read_only_fields = ["id"]
+
+
+class CertificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Certification
+        fields = [
+            "id",
+            "name",
+            "issuer",
+            "completion_date",
+            "certificate_file",
+        ]
+        read_only_fields = ["id"]
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'email', 'username', 'first_name', 'last_name', 'role']
+        read_only_fields = ['id']
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+
+    first_name = serializers.CharField(write_only=True, required=False)
+    last_name = serializers.CharField(write_only=True, required=False)
+
+    links = SocialLinksSerializer(read_only=True)
+    skills = SkillSerializer(many=True, read_only=True)
+    experiences = ExperienceSerializer(many=True, read_only=True)
+    projects = ProjectSerializer(many=True, read_only=True)
+    education = EducationSerializer(many=True, read_only=True)
+    certifications = CertificationSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Profile
+        fields = [
+            "id",
+            "user",
+            "first_name",
+            "last_name",
+            "full_name",
+            "title",
+            "location",
+            "about",
+            "gender",
+            "profile_image",
+            "cover_image",
+            "google_id",
+            "created_at",
+            "updated_at",
+            "links",
+            "skills",
+            "experiences",
+            "projects",
+            "education",
+            "certifications",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at", "full_name"]
+
+    def update(self, instance, validated_data):
+        user = instance.user
+
+        first_name = validated_data.pop("first_name", None)
+        last_name = validated_data.pop("last_name", None)
+
+        if first_name is not None:
+            user.first_name = first_name
+        if last_name is not None:
+            user.last_name = last_name
+        user.save()
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        instance.full_name = f"{user.first_name} {user.last_name}".strip()
+
+        instance.save()
+
+        return instance

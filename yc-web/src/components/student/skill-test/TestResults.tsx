@@ -43,6 +43,7 @@ interface TestResultsProps {
   test: Test;
   submissionId: string;
   onBackToList: () => void;
+  onTryAgain?: () => void;
 }
 
 interface QuestionResult {
@@ -68,7 +69,8 @@ interface ChatMessage {
 const TestResults: React.FC<TestResultsProps> = ({
   test,
   submissionId: initialSubmissionId,
-  onBackToList
+  onBackToList,
+  onTryAgain
 }) => {
   console.log('TestResults component rendered with:', {
     test: test?.id,
@@ -248,6 +250,16 @@ const TestResults: React.FC<TestResultsProps> = ({
             <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">{test.course}</p>
           </div>
           <div className="flex gap-2">
+            {onTryAgain && (
+              <Button
+                variant="outline"
+                onClick={onTryAgain}
+                className="flex items-center gap-2 bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:text-slate-900 rounded-xl font-bold h-11 transition-all active:scale-95"
+              >
+                <RotateCcw className="h-4 w-4" />
+                Try Again
+              </Button>
+            )}
             <Button
               onClick={onBackToList}
               className="flex items-center gap-2 bg-slate-800 text-white rounded-xl font-bold hover:bg-slate-900 shadow-lg px-6 h-11 transition-all active:scale-95"

@@ -48,9 +48,10 @@ class ProctoringMixin:
             self.submission_lookup_field: assessment_object
         }
         
-        try:
-            submission = self.submission_model.objects.get(**lookup_kwargs)
-        except self.submission_model.DoesNotExist:
+        # Order by created_at desc to get the latest (current) attempt
+        submission = self.submission_model.objects.filter(**lookup_kwargs).order_by('-created_at').first()
+
+        if not submission:
              return Response({'error': 'Submission not found'}, status=status.HTTP_404_NOT_FOUND)
 
         # 3. Handle Question-Specific Activity

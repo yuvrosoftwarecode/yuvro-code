@@ -25,6 +25,7 @@ interface TopicSidebarProps {
   isOpen: boolean;
   onToggle: () => void;
   showProgress?: boolean;
+  overallProgress?: number;
 }
 
 const TopicSidebar = ({
@@ -34,6 +35,7 @@ const TopicSidebar = ({
   isOpen,
   onToggle,
   showProgress = true,
+  overallProgress,
 }: TopicSidebarProps) => {
   return (
     <div
@@ -89,9 +91,23 @@ const TopicSidebar = ({
               <h2 className="text-xl font-bold text-gray-900 leading-tight line-clamp-2">{course.name}</h2>
             </div>
 
-            <p className="text-sm text-gray-500 mb-5 ml-1">
+            <p className="text-sm text-gray-500 mb-3 ml-1">
               {showProgress ? "Track your progress" : "Browse topics"}
             </p>
+
+            {showProgress && overallProgress !== undefined && (
+              <div className="mb-5 px-1">
+                <div className="flex justify-between text-xs font-semibold text-gray-700 mb-1">
+                  <span>{overallProgress}% Completed</span>
+                </div>
+                <ProgressBar
+                  value={overallProgress}
+                  height={8}
+                  trackClassName="bg-gray-100 rounded-full"
+                  barClassName="bg-blue-600 rounded-full"
+                />
+              </div>
+            )}
 
             <div className="h-px bg-gray-100 w-full mb-5" />
 

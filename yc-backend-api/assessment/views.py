@@ -164,9 +164,16 @@ class CodeSubmissionViewSet(viewsets.ViewSet):
         return Response({})
 
 
-class ContestViewSet(viewsets.ModelViewSet):
+class ContestViewSet(ProctoringMixin, viewsets.ModelViewSet):
     queryset = Contest.objects.all()
     serializer_class = ContestSerializer
+    
+    # ProctoringMixin Config
+    submission_model = ContestSubmission
+    question_activity_model = ContestQuestionActivity
+    submission_lookup_field = 'contest'
+    submission_related_field = 'contest_submission'
+    
     permission_classes = [IsOwnerOrInstructorOrAdmin]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     
@@ -327,6 +334,33 @@ class ContestViewSet(viewsets.ModelViewSet):
         new_status = contest.update_status()
         contest.save(update_fields=['status'])
         return Response({'status': new_status}, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['get'], permission_classes=[permissions.IsAuthenticated])
+    def leaderboard(self, request, pk=None):
+        contest = self.get_object()
+        
+        # 1. Fetch Submissions (Only submitted/completed ones)
+        submissions = ContestSubmission.objects.filter(
+            contest=contest,
+            status__in=[ContestSubmission.STATUS_SUBMITTED, ContestSubmission.STATUS_COMPLETED]
+        ).select_related('user').order_by('-marks', 'submitted_at')
+        
+        # 2. Build Leaderboard Data
+        leaderboard_data = []
+        rank = 1
+        
+        for sub in submissions:
+            leaderboard_data.append({
+                'rank': rank,
+                'user': f"{sub.user.first_name} {sub.user.last_name}".strip() or sub.user.username,
+                'avatar': sub.user.avatar.url if hasattr(sub.user, 'avatar') and sub.user.avatar else None,
+                'score': sub.marks,
+                'time_taken': str(sub.submitted_at - sub.started_at) if sub.submitted_at and sub.started_at else None,
+                'submitted_at': sub.submitted_at
+            })
+            rank += 1
+            
+        return Response(leaderboard_data, status=status.HTTP_200_OK)
 
 
 class SkillTestViewSet(ProctoringMixin, viewsets.ModelViewSet):

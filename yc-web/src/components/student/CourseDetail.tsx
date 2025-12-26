@@ -143,6 +143,13 @@ const CourseDetail: React.FC = () => {
     loadPage();
   }, [courseId]);
 
+  const overallProgress = React.useMemo(() => {
+    const allSubs = Object.values(subtopicsMap).flat();
+    if (allSubs.length === 0) return 0;
+    const total = allSubs.reduce((acc, s) => acc + (progressMap[s.id] || 0), 0);
+    return Math.round(total / allSubs.length);
+  }, [subtopicsMap, progressMap]);
+
   const loadPage = async () => {
     if (!courseId) return;
 
@@ -336,6 +343,17 @@ const CourseDetail: React.FC = () => {
                 </div>
 
                 <p className="text-sm text-gray-500 mb-5 ml-1">Track your learning progress</p>
+                <div className="mb-5 px-1">
+                  <div className="flex justify-between text-xs font-semibold text-gray-700 mb-1">
+                    <span>{overallProgress}% Completed</span>
+                  </div>
+                  <ProgressBar
+                    value={overallProgress}
+                    height={8}
+                    trackClassName="bg-gray-100 rounded-full"
+                    barClassName="bg-blue-600 rounded-full"
+                  />
+                </div>
 
                 <div className="h-px bg-gray-100 w-full mb-5" />
 

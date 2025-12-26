@@ -574,6 +574,57 @@ class MockInterviewViewSet(viewsets.ModelViewSet):
 
         return qs
 
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def start_interview(self, request, pk=None):
+        mock_interview = self.get_object()
+        user = request.user
+        
+        # Get user settings
+        experience_level = request.data.get('experience_level', MockInterviewSubmission.EXP_LEVEL_BEGINNER)
+        selected_duration = request.data.get('selected_duration', 0)
+        
+        # 1. Check for existing active submission
+        submission = MockInterviewSubmission.objects.filter(
+            mock_interview=mock_interview,
+            user=user,
+            status=MockInterviewSubmission.STATUS_STARTED
+        ).first()
+
+        if not submission:
+            # 2. Check limits (optional, if we want to limit attempts)
+            # 3. Create NEW submission
+            submission = MockInterviewSubmission.objects.create(
+                mock_interview=mock_interview,
+                user=user,
+                status=MockInterviewSubmission.STATUS_STARTED,
+                experience_level=experience_level,
+                selected_duration=selected_duration
+            )
+        else:
+             # Update settings if restarted
+             submission.experience_level = experience_level
+             submission.selected_duration = selected_duration
+             submission.save()
+
+        # 4. Resolve Questions (Simplified for now - just returning config)
+        questions_to_send = []
+
+        return Response({
+            'submission_id': submission.id,
+            'status': submission.status,
+            'max_duration': mock_interview.max_duration,
+            'selected_duration': submission.selected_duration,
+            'experience_level': submission.experience_level,
+            'questions': questions_to_send, # Or initial question
+            'ai_config': {
+                'mode': mock_interview.ai_generation_mode,
+                'verbal_count': mock_interview.ai_verbal_question_count,
+                'coding_count': mock_interview.ai_coding_question_count,
+                'voice_type': mock_interview.voice_type,
+                'voice_speed': mock_interview.voice_speed
+            }
+        })
+
     
 
 

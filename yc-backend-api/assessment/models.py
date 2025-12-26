@@ -315,6 +315,10 @@ class MockInterviewSubmission(BaseUserSubmission):
         default=EXP_LEVEL_BEGINNER,
         help_text="Candidate's self-declared experience level for this interview"
     )
+    selected_duration = models.IntegerField(
+        default=0,
+        help_text="Duration selected by the user in minutes"
+    )
     
     class Meta:
         ordering = ['-created_at']

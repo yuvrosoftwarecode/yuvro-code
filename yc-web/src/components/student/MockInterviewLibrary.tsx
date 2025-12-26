@@ -13,11 +13,12 @@ import ReportsScreen from './ReportsScreen';
 import { mockInterviewService, MockInterview as ApiMockInterview } from '@/services/mockInterviewService';
 
 interface Role {
-  id: number;
+  id: string; // Updated to match API
   title: string;
   description: string;
   category: string;
   level: 'Beginner' | 'Intermediate' | 'Advanced';
+  max_duration: number; // New field
   icon?: string;
   iconBg?: string;
   iconColor?: string;
@@ -40,7 +41,6 @@ const MockInterviewLibrary: React.FC<MockInterviewLibraryProps> = ({ onStartInte
   const [showModal, setShowModal] = useState(false);
   const [selectedDifficulty, setSelectedDifficulty] = useState('');
   const [selectedDuration, setSelectedDuration] = useState('');
-  const [selectedInterviewer, setSelectedInterviewer] = useState('');
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
   const [showInterviewScreen, setShowInterviewScreen] = useState(false);
@@ -93,14 +93,12 @@ const MockInterviewLibrary: React.FC<MockInterviewLibraryProps> = ({ onStartInte
           }
 
           return {
-            id: item.id, // item.id is string, Role.id is number? Interface says number.
-            // We should fix the interface to string if possible, or cast. API returns string UUIDs usually.
-            // Existing code implied it worked, but let's check interface.
-            // Interface Role says id: number. API says id: string. This is another bug.
+            id: item.id,
             title: item.title,
             description: item.description,
-            category: item.ai_generation_mode.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()), // Map type to mode
+            category: item.ai_generation_mode.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()),
             level: level,
+            max_duration: item.max_duration, // Map max_duration
             icon: icon,
             iconBg: iconBg,
             iconColor: iconColor
@@ -135,7 +133,6 @@ const MockInterviewLibrary: React.FC<MockInterviewLibraryProps> = ({ onStartInte
     setSelectedRole(null);
     setSelectedDifficulty('');
     setSelectedDuration('');
-    setSelectedInterviewer('');
     setAgreeToTerms(false);
   };
 
@@ -193,7 +190,7 @@ const MockInterviewLibrary: React.FC<MockInterviewLibraryProps> = ({ onStartInte
 
   const handleStartInterview = async () => {
     console.log('handleStartInterview called');
-    if (!selectedDifficulty || !selectedDuration || !selectedInterviewer || !agreeToTerms) {
+    if (!selectedDifficulty || !selectedDuration || !agreeToTerms) {
       alert('Please fill in all required fields and agree to terms.');
       return;
     }
@@ -211,7 +208,6 @@ const MockInterviewLibrary: React.FC<MockInterviewLibraryProps> = ({ onStartInte
       const settings: InterviewSettings = {
         difficulty: selectedDifficulty,
         duration: selectedDuration,
-        interviewer: selectedInterviewer,
         mediaStream: stream
       };
 
@@ -222,7 +218,6 @@ const MockInterviewLibrary: React.FC<MockInterviewLibraryProps> = ({ onStartInte
       setShowModal(false);
       setSelectedDifficulty('');
       setSelectedDuration('');
-      setSelectedInterviewer('');
       setAgreeToTerms(false);
 
       // Use setTimeout to ensure modal is closed before showing permission dialog
@@ -373,73 +368,59 @@ const MockInterviewLibrary: React.FC<MockInterviewLibraryProps> = ({ onStartInte
               </div>
 
               {/* Difficulty Level */}
-              <div className="space-y-3">
-                <h4 className="font-medium">Difficulty Level *</h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  {['Fresher', 'Beginner (1-3yrs)', 'Professional (3+ years)'].map((difficulty) => (
-                    <Button
-                      key={difficulty}
-                      variant={selectedDifficulty === difficulty ? "default" : "outline"}
-                      onClick={() => setSelectedDifficulty(difficulty)}
-                      className="justify-start"
-                    >
-                      {difficulty}
-                    </Button>
-                  ))}
-                </div>
+              <h4 className="font-medium">Experience Level *</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {[
+                  { label: 'Intern', value: 'intern' },
+                  { label: 'Beginner (0-1 yrs)', value: 'beginner' },
+                  { label: 'Intermediate (1-3 yrs)', value: '1_3_years' },
+                  { label: 'Experienced (3+ yrs)', value: '3_plus_years' }
+                ].map((level) => (
+                  <Button
+                    key={level.value}
+                    variant={selectedDifficulty === level.value ? "default" : "outline"}
+                    onClick={() => setSelectedDifficulty(level.value)}
+                    className="justify-start"
+                  >
+                    {level.label}
+                  </Button>
+                ))}
               </div>
 
               {/* Interview Duration */}
               <div className="space-y-3">
                 <h4 className="font-medium">Interview Duration *</h4>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  {[
-                    { value: '5 mins', label: '5 mins' },
-                    { value: '15 mins', label: '15 mins', premium: true },
-                    { value: '30 mins', label: '30 mins', premium: true }
-                  ].map((duration) => (
-                    <Button
-                      key={duration.value}
-                      variant={selectedDuration === duration.value ? "default" : "outline"}
-                      onClick={() => setSelectedDuration(duration.value)}
-                      className="justify-between"
-                    >
-                      <span>{duration.label}</span>
-                      {duration.premium && <Star className="h-4 w-4 text-yellow-500" />}
-                    </Button>
-                  ))}
+                  {(() => {
+                    const max = selectedRole?.max_duration || 60;
+                    const options = [];
+                    // Generate options like 15, 30, 45, 60 based on max
+                    if (max >= 15) options.push({ value: '15 mins', label: '15 mins', minutes: 15 });
+                    if (max >= 30) options.push({ value: '30 mins', label: '30 mins', minutes: 30 });
+                    if (max >= 45) options.push({ value: '45 mins', label: '45 mins', minutes: 45 });
+                    // Always include max duration if not already covered (or if it's small)
+                    if (!options.find(o => o.minutes === max) && max > 0) {
+                      options.push({ value: `${max} mins`, label: `${max} mins`, minutes: max });
+                    }
+                    // Sort by minutes
+                    options.sort((a, b) => a.minutes - b.minutes);
+
+                    return options.map((duration) => (
+                      <Button
+                        key={duration.value}
+                        variant={selectedDuration === duration.value ? "default" : "outline"}
+                        onClick={() => setSelectedDuration(duration.value)}
+                        className="justify-between"
+                      >
+                        <span>{duration.label}</span>
+                        {/* Highlight max duration as 'Full' or similar? */}
+                      </Button>
+                    ));
+                  })()}
                 </div>
               </div>
 
-              {/* Select Interviewer */}
-              <div className="space-y-3">
-                <h4 className="font-medium">Select Your Interviewer *</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {[
-                    { id: 'Junnu', name: 'Junnu', accent: 'IN English' },
-                    { id: 'Munnu', name: 'Munnu', accent: 'US English' }
-                  ].map((interviewer) => (
-                    <Card
-                      key={interviewer.id}
-                      className={`cursor-pointer transition-colors ${selectedInterviewer === interviewer.id
-                        ? 'ring-2 ring-primary bg-primary/5'
-                        : 'hover:bg-muted/50'
-                        }`}
-                      onClick={() => setSelectedInterviewer(interviewer.id)}
-                    >
-                      <CardContent className="flex items-center space-x-3 p-4">
-                        <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold">
-                          {interviewer.name[0]}
-                        </div>
-                        <div>
-                          <p className="font-medium">{interviewer.name}</p>
-                          <p className="text-sm text-muted-foreground">{interviewer.accent}</p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </div>
+
 
               {/* Terms and Conditions */}
               <div className="flex items-center space-x-2">
@@ -462,7 +443,7 @@ const MockInterviewLibrary: React.FC<MockInterviewLibraryProps> = ({ onStartInte
                 </Button>
                 <Button
                   onClick={handleStartInterview}
-                  disabled={!selectedDifficulty || !selectedDuration || !selectedInterviewer || !agreeToTerms}
+                  disabled={!selectedDifficulty || !selectedDuration || !agreeToTerms}
                   className="flex-1"
                 >
                   <Play className="h-4 w-4 mr-2" />

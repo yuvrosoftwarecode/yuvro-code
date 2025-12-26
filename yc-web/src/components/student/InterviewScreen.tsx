@@ -391,11 +391,23 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({
       {/* Header */}
       <div className="border-b bg-card">
         <div className="flex items-center justify-between p-4">
-          <div>
-            <h1 className="text-xl font-semibold">Mock Interview - {role.title}</h1>
-            <div className="flex items-center gap-2 mt-1">
-              <Badge variant="secondary">{difficulty}</Badge>
-              <Badge variant="outline">{interviewer}</Badge>
+          <div className="flex items-center gap-4">
+            <div className="relative h-14 w-20 bg-slate-100 rounded-xl overflow-hidden border border-slate-200">
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className="w-full h-full object-cover scale-x-[-1]"
+              />
+              <div className="absolute bottom-0 right-0 p-0.5 bg-black/50 text-[8px] text-white">You</div>
+            </div>
+            <div>
+              <h1 className="text-xl font-semibold">Mock Interview - {role.title}</h1>
+              <div className="flex items-center gap-2 mt-1">
+                <Badge variant="secondary">{difficulty}</Badge>
+                <Badge variant="outline">{interviewer}</Badge>
+              </div>
             </div>
           </div>
 
@@ -414,7 +426,7 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({
       {/* Main Content */}
       <div className="flex h-[calc(100vh-80px)]">
         {/* Left Panel - Conversation */}
-        <div className="flex-1 flex flex-col bg-card m-4 rounded-lg border">
+        <div className={`flex flex-col bg-card m-4 rounded-lg border transition-all duration-300 ${showCodeEditor && currentQuestion?.type === 'coding' ? 'w-1/2' : 'flex-1 w-full'}`}>
           <div className="p-4 border-b">
             <div className="flex items-center justify-between">
               <h2 className="font-semibold">Interview Conversation</h2>
@@ -443,7 +455,7 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({
                       </Badge>
                     )}
                   </div>
-                  <p className="text-sm">{message.content}</p>
+                  <p className="text-sm user-select-text">{message.content}</p>
 
                   {/* Show code submission for user messages */}
                   {message.type === 'user' && message.codeSubmission && (
@@ -510,26 +522,6 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({
             <div ref={conversationEndRef} />
           </div>
 
-          {/* Code Editor for coding questions */}
-          {showCodeEditor && currentQuestion?.type === 'coding' && (
-            <div className="p-4 border-t">
-              <div className="mb-2 flex items-center justify-between">
-                <h4 className="text-sm font-medium">Code Editor</h4>
-                <Badge variant="secondary" className="text-xs">
-                  {currentQuestion.language || 'javascript'}
-                </Badge>
-              </div>
-              <CodeEditor
-                initialCode={currentCode}
-                initialLanguage={currentQuestion.language || 'javascript'}
-                onCodeChange={setCurrentCode}
-                className="mb-3 h-[300px]"
-                showFullscreenButton={false}
-                key={currentQuestion.content} // Force re-render on question change
-              />
-            </div>
-          )}
-
           {/* Recording Controls */}
           <div className="p-4 border-t">
             <Button
@@ -545,11 +537,11 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({
               ) : (
                 <>
                   <Mic className="h-4 w-4 mr-2" />
-                  {showCodeEditor ? 'Start Answer (Voice + Code)' : 'Start Answer'}
+                  {showCodeEditor && currentQuestion?.type === 'coding' ? 'Start Answer (Voice + Code)' : 'Start Answer'}
                 </>
               )}
             </Button>
-            {showCodeEditor && (
+            {(showCodeEditor && currentQuestion?.type === 'coding') && (
               <p className="text-xs text-muted-foreground mt-2 text-center">
                 Provide verbal explanation while coding your solution
               </p>
@@ -557,34 +549,28 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({
           </div>
         </div>
 
-        {/* Right Panel - Video Feeds */}
-        <div className="w-80 p-4 space-y-4">
-          {/* AI Interviewer */}
-          <Card>
-            <CardContent className="p-4">
-              <h3 className="font-semibold mb-2">AI Interviewer ({interviewer})</h3>
-              <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
-                <div className="text-4xl">🤖</div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Student Video */}
-          <Card>
-            <CardContent className="p-4">
-              <h3 className="font-semibold mb-2">You</h3>
-              <div className="aspect-video bg-black rounded-lg overflow-hidden">
-                <video
-                  ref={videoRef}
-                  autoPlay
-                  playsInline
-                  muted
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Right Panel - Code Editor (Visible only for coding questions) */}
+        {showCodeEditor && currentQuestion?.type === 'coding' && (
+          <div className="w-1/2 m-4 ml-0 flex flex-col bg-card rounded-lg border overflow-hidden">
+            <div className="p-4 border-b bg-muted/30 flex items-center justify-between">
+              <h4 className="font-semibold flex items-center">
+                <Code className="h-4 w-4 mr-2" />
+                Code Editor
+              </h4>
+              <Badge variant="outline">{currentQuestion.language || 'javascript'}</Badge>
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <CodeEditor
+                initialCode={currentCode}
+                initialLanguage={currentQuestion.language || 'javascript'}
+                onCodeChange={setCurrentCode}
+                className="h-full"
+                showFullscreenButton={true}
+                key={currentQuestion.content}
+              />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

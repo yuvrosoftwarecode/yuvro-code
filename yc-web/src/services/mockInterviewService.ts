@@ -114,9 +114,12 @@ class MockInterviewService {
     }
   }
 
-  async startInterview(id: string): Promise<MockInterview> {
+  async startInterview(id: string, experience_level: string, selected_duration: number): Promise<any> {
     try {
-      const response = await restApiAuthUtil.post<any>(`/mock-interviews/${id}/start_interview/`, {});
+      const response = await restApiAuthUtil.post<any>(`/mock-interviews/${id}/start_interview/`, {
+        experience_level,
+        selected_duration
+      });
       return response;
     } catch (error) {
       console.error('Error starting interview:', error);

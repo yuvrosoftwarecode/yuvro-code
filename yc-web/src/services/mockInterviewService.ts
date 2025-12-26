@@ -71,6 +71,11 @@ class MockInterviewService {
     }
   }
 
+  // Compatibility method for existing code
+  async getMockInterviews(): Promise<MockInterview[]> {
+    return this.getAllMockInterviews();
+  }
+
   async getMockInterview(id: string): Promise<MockInterview> {
     try {
       const response = await restApiAuthUtil.get<any>(`/mock-interviews/${id}/`);

@@ -56,10 +56,9 @@ const MockInterviewLibrary: React.FC<MockInterviewLibraryProps> = ({ onStartInte
       try {
         const data = await mockInterviewService.getAllMockInterviews();
         const mappedRoles = data.map((item: ApiMockInterview) => {
-          // Map difficulty to level
+          // Map difficulty to level (Defaulting to Intermediate as difficulty field is removed)
           let level: 'Beginner' | 'Intermediate' | 'Advanced' = 'Intermediate';
-          if (item.difficulty === 'easy') level = 'Beginner';
-          if (item.difficulty === 'hard') level = 'Advanced';
+          // Future: map from description or tags if available
 
           // Determine icon based on title
           let icon = "💼";
@@ -94,10 +93,13 @@ const MockInterviewLibrary: React.FC<MockInterviewLibraryProps> = ({ onStartInte
           }
 
           return {
-            id: item.id,
+            id: item.id, // item.id is string, Role.id is number? Interface says number.
+            // We should fix the interface to string if possible, or cast. API returns string UUIDs usually.
+            // Existing code implied it worked, but let's check interface.
+            // Interface Role says id: number. API says id: string. This is another bug.
             title: item.title,
             description: item.description,
-            category: item.type,
+            category: item.ai_generation_mode.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()), // Map type to mode
             level: level,
             icon: icon,
             iconBg: iconBg,

@@ -89,9 +89,11 @@ class MockInterviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = MockInterview
         fields = [
-            'id', 'title', 'description', 'instructions', 'difficulty', 'duration',
-            'total_marks', 'passing_marks', 'enable_proctoring', 'questions_config', 'questions_random_config',
-            'publish_status', 'type', 'status', 'scheduled_datetime',
+            'id', 'title', 'description', 'instructions', 'max_duration',
+            'ai_generation_mode', 'ai_verbal_question_count', 'ai_coding_question_count',
+            'voice_type', 'voice_speed', 'audio_settings',
+            'required_skills', 'optional_skills',
+            'questions_config', 'questions_random_config', 'publish_status',
             'participants_count', 'created_by', 'created_at', 'updated_at',
         ]
         read_only_fields = ['id', 'created_by', 'created_at', 'updated_at']
@@ -178,6 +180,7 @@ class MockInterviewSubmissionSerializer(serializers.ModelSerializer):
         model = MockInterviewSubmission
         fields = [
             'id', 'mock_interview', 'mock_interview_title', 'user', 'user_name', 'status',
+            'experience_level',
             'started_at', 'submitted_at', 'completed_at', 'marks',
             'proctoring_events', 'browser_info', 'ip_address', 'user_agent',
             'created_at', 'updated_at',

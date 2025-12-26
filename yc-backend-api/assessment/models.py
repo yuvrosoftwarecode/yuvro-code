@@ -129,58 +129,78 @@ class Contest(BaseAssessmentModel):
         return self.status
 
 
-class MockInterview(BaseAssessmentModel):
-    TYPE_CODING = 'coding'
-    TYPE_SYSTEM_DESIGN = 'system_design'
-    TYPE_APTITUDE = 'aptitude'
-    TYPE_BEHAVIORAL = 'behavioral'
-    TYPE_DOMAIN_SPECIFIC = 'domain_specific'
-    TYPE_CHOICES = [
-        (TYPE_CODING, 'Coding'),
-        (TYPE_SYSTEM_DESIGN, 'System Design'),
-        (TYPE_APTITUDE, 'Aptitude'),
-        (TYPE_BEHAVIORAL, 'Behavioral'),
-        (TYPE_DOMAIN_SPECIFIC, 'Domain Specific'),
+class MockInterview(BaseModel):
+    PUBLISH_STATUS_DRAFT = 'draft'
+    PUBLISH_STATUS_ACTIVE = 'active'
+    PUBLISH_STATUS_INACTIVE = 'inactive'
+    PUBLISH_STATUS_ARCHIVED = 'archived'
+    PUBLISH_STATUS_CHOICES = [
+        (PUBLISH_STATUS_DRAFT, 'Draft'),
+        (PUBLISH_STATUS_ACTIVE, 'Active'),
+        (PUBLISH_STATUS_INACTIVE, 'Inactive'),
+        (PUBLISH_STATUS_ARCHIVED, 'Archived'),
     ]
-    
-    STATUS_SCHEDULED = 'scheduled'
-    STATUS_ONGOING = 'ongoing'
-    STATUS_COMPLETED = 'completed'
-    STATUS_CANCELLED = 'cancelled'
-    STATUS_CHOICES = [
-        (STATUS_SCHEDULED, 'Scheduled'),
-        (STATUS_ONGOING, 'Ongoing'),
-        (STATUS_COMPLETED, 'Completed'),
-        (STATUS_CANCELLED, 'Cancelled'),
+
+    AI_GEN_FULL = 'full_ai'
+    AI_GEN_MIXED = 'mixed'
+    AI_GEN_PREDEFINED = 'predefined'
+    AI_GEN_CHOICES = [
+        (AI_GEN_FULL, 'Full AI Generated'),
+        (AI_GEN_MIXED, 'Mixed (AI + Predefined)'),
+        (AI_GEN_PREDEFINED, 'Predefined Questions Only'),
     ]
+
+    VOICE_JUNNU = 'junnu'
+    VOICE_MUNNU = 'munnu'
+    VOICE_CHOICES = [
+        (VOICE_JUNNU, 'Junnu (Male IN)'),
+        (VOICE_MUNNU, 'Munnu (Female US)'),
+    ]
+
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    instructions = models.TextField(blank=True)
     
+    max_duration = models.IntegerField(default=30, help_text="Maximum duration in minutes")
     
-    type = models.CharField(max_length=20, choices=TYPE_CHOICES, default=TYPE_CODING)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_SCHEDULED)
-    scheduled_datetime = models.DateTimeField()
+    # Skills Configuration
+    required_skills = models.JSONField(default=list, blank=True, help_text="List of required skills")
+    optional_skills = models.JSONField(default=list, blank=True, help_text="List of optional skills")
+    
+    # AI Configuration
+    ai_generation_mode = models.CharField(max_length=20, choices=AI_GEN_CHOICES, default=AI_GEN_FULL)
+    ai_verbal_question_count = models.IntegerField(default=5, help_text="Number of verbal questions AI should ask")
+    ai_coding_question_count = models.IntegerField(default=1, help_text="Number of coding questions AI should ask")
+    
+    # Voice Configuration
+    voice_type = models.CharField(max_length=20, choices=VOICE_CHOICES, default=VOICE_JUNNU)
+    voice_speed = models.FloatField(default=1.0, help_text="Voice playback speed (0.5 to 2.0)")
+    audio_settings = models.JSONField(default=dict, blank=True, help_text="Additional audio settings")
+
+    # Standard Configuration (retained from BaseAssessmentModel)
+    questions_config = models.JSONField(
+        default=dict, 
+        blank=True, 
+        help_text="Questions configuration by category: {'mcq_single': ['uuid1'], ...}"
+    )
+    
+    questions_random_config = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Random question configuration: {'mcq_single': 5, ...}"
+    )
+    
+    publish_status = models.CharField(
+        max_length=20, 
+        choices=PUBLISH_STATUS_CHOICES, 
+        default=PUBLISH_STATUS_DRAFT
+    )
     
     class Meta:
-        ordering = ['-scheduled_datetime']
+        ordering = ['-created_at']
 
-    
     def __str__(self):
-        return f"{self.title} - {self.get_type_display()} ({self.scheduled_datetime.strftime('%Y-%m-%d %H:%M')})"
-    
-    def update_status(self):
-        now = timezone.now()
-        if self.status == self.STATUS_CANCELLED:
-            return self.status
-            
-        if now < self.scheduled_datetime:
-            self.status = self.STATUS_SCHEDULED
-        elif now >= self.scheduled_datetime and now <= (self.scheduled_datetime + timezone.timedelta(minutes=self.duration)):
-            if self.status != self.STATUS_COMPLETED:
-                self.status = self.STATUS_ONGOING
-        elif now > (self.scheduled_datetime + timezone.timedelta(minutes=self.duration)):
-            if self.status != self.STATUS_COMPLETED:
-                self.status = self.STATUS_COMPLETED
-        
-        return self.status
+        return f"{self.title} ({self.get_ai_generation_mode_display()})"
 
 
 class JobTest(BaseAssessmentModel):
@@ -276,14 +296,32 @@ class ContestSubmission(BaseUserSubmission):
 
 
 class MockInterviewSubmission(BaseUserSubmission):
+    EXP_LEVEL_INTERN = 'intern'
+    EXP_LEVEL_BEGINNER = 'beginner'
+    EXP_LEVEL_INTERMEDIATE = '1_3_years'
+    EXP_LEVEL_EXPERIENCED = '3_plus_years'
+    
+    EXP_LEVEL_CHOICES = [
+        (EXP_LEVEL_INTERN, 'Intern'),
+        (EXP_LEVEL_BEGINNER, 'Beginner (0-1 years)'),
+        (EXP_LEVEL_INTERMEDIATE, 'Intermediate (1-3 years)'),
+        (EXP_LEVEL_EXPERIENCED, 'Experienced (3+ years)'),
+    ]
+
     mock_interview = models.ForeignKey(MockInterview, on_delete=models.CASCADE, related_name='mock_interview_submissions')
+    experience_level = models.CharField(
+        max_length=20, 
+        choices=EXP_LEVEL_CHOICES, 
+        default=EXP_LEVEL_BEGINNER,
+        help_text="Candidate's self-declared experience level for this interview"
+    )
     
     class Meta:
         ordering = ['-created_at']
         unique_together = ['user', 'mock_interview']
         
     def __str__(self):
-        return f"{self.user.username} - {self.mock_interview.title}"
+        return f"{self.user.username} - {self.mock_interview.title} ({self.get_experience_level_display()})"
 
 
 class JobTestSubmission(BaseUserSubmission):

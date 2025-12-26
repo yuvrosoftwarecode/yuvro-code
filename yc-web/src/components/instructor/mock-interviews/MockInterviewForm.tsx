@@ -12,20 +12,7 @@ import RoleSidebar from '@/components/common/RoleSidebar';
 import RoleHeader from '@/components/common/RoleHeader';
 import { mockInterviewService } from '@/services/mockInterviewService';
 
-interface Contest {
-  id: string;
-  title: string;
-  organizer: string;
-  type: 'company' | 'college' | 'weekly' | 'monthly';
-  status: 'scheduled' | 'ongoing' | 'completed' | 'cancelled';
-  startDate: string;
-  endDate: string;
-  duration: string;
-  participants: number;
-  prize?: string;
-  difficulty: 'Easy' | 'Medium' | 'Hard';
-  description: string;
-}
+
 
 
 
@@ -34,46 +21,42 @@ export default function InterviewsForm() {
   const { mockInterviewId } = useParams<{ mockInterviewId: string }>();
   const isEditMode = !!mockInterviewId;
 
-  const [contest, setContest] = useState<Contest | null>(null);
   const [currentFormTab, setCurrentFormTab] = useState('details');
   const [loading, setLoading] = useState(false);
 
+  // Form State matching the new model
   const [formData, setFormData] = useState({
     title: '',
-    organizer: '',
     description: '',
-    type: 'coding' as 'coding' | 'system_design' | 'aptitude' | 'behavioral' | 'domain_specific',
-    startDate: '',
-    endDate: '',
-    duration: '',
-    difficulty: 'Medium' as 'Easy' | 'Medium' | 'Hard',
     instructions: '',
-    totalMarks: '100',
-    passingMarks: '60',
-    enableProctoring: true,
+    max_duration: 30, // Default 30 mins
+
+    // AI Config
+    ai_generation_mode: 'full_ai' as 'full_ai' | 'mixed' | 'predefined',
+    ai_verbal_question_count: 5,
+    ai_coding_question_count: 1,
+
+    // Voice Config
+    voice_type: 'junnu' as 'junnu' | 'munnu',
+    voice_speed: 1.0,
+
+    // Skills (comma separated for input)
+    required_skills: '',
+    optional_skills: '',
+
+    // Publish
     publish_status: 'draft' as 'draft' | 'active' | 'inactive' | 'archived',
-    status: 'scheduled' as 'scheduled' | 'ongoing' | 'completed' | 'cancelled',
-    prize: '',
+
+    questions_config: {} as any,
+    questions_random_config: {} as any
   });
 
   const getHeaderTitle = () => {
-    return isEditMode ? `Edit Mock Interview: ${contest?.title || 'Loading...'}` : 'Add New Mock Interview';
+    return isEditMode ? `Edit Mock Interview` : 'Add New Mock Interview';
   };
 
   const getHeaderSubtitle = () => {
-    return isEditMode ? 'Modify mock interview details and settings' : 'Create a new mock interview for students';
-  };
-
-
-  const formatDateTimeForInput = (dateString: string) => {
-    if (!dateString) return '';
-    try {
-      const date = new Date(dateString);
-      return date.toISOString().slice(0, 16);
-    } catch (error) {
-      console.error('Error formatting date:', error);
-      return '';
-    }
+    return isEditMode ? 'Modify mock interview settings' : 'Configure a new AI-driven mock interview';
   };
 
   useEffect(() => {
@@ -85,37 +68,25 @@ export default function InterviewsForm() {
       setLoading(true);
       try {
         const data = await mockInterviewService.getMockInterview(mockInterviewId);
-        setContest({
-          id: String(data.id),
-          title: data.title,
-          organizer: data.interviewer || '',
-          type: (data.type as any) || 'company',
-          status: (data.status as any) || 'upcoming',
-          startDate: formatDateTimeForInput(data.scheduled_datetime || ''),
-          endDate: '',
-          duration: String(data.duration || ''),
-          participants: 0,
-          prize: '',
-          difficulty: data.difficulty ? data.difficulty.charAt(0).toUpperCase() + data.difficulty.slice(1) : 'Medium',
-          description: data.description || ''
-        });
-
         setFormData({
           title: data.title,
-          organizer: data.interviewer || '',
-          type: (data.type as any) || 'coding',
-          startDate: formatDateTimeForInput(data.scheduled_datetime || ''),
-          endDate: '',
-          duration: String(data.duration || ''),
-          prize: '',
-          difficulty: data.difficulty ? data.difficulty.charAt(0).toUpperCase() + data.difficulty.slice(1) : 'Medium',
-          description: data.description || '',
+          description: data.description,
           instructions: data.instructions || '',
-          totalMarks: '100',
-          passingMarks: '60',
-          enableProctoring: false,
-          publish_status: 'draft',
-          status: data.status || 'scheduled',
+          max_duration: data.max_duration || 30,
+
+          ai_generation_mode: data.ai_generation_mode || 'full_ai',
+          ai_verbal_question_count: data.ai_verbal_question_count || 5,
+          ai_coding_question_count: data.ai_coding_question_count || 1,
+
+          voice_type: data.voice_type || 'junnu',
+          voice_speed: data.voice_speed || 1.0,
+
+          required_skills: (data.required_skills || []).join(', '),
+          optional_skills: (data.optional_skills || []).join(', '),
+
+          publish_status: data.publish_status || 'draft',
+          questions_config: data.questions_config || {},
+          questions_random_config: data.questions_random_config || {}
         });
       } catch (error) {
         console.error('Failed to fetch mock interview:', error);
@@ -138,38 +109,25 @@ export default function InterviewsForm() {
         return;
       }
 
-      if (!formData.startDate) {
-        toast.error('Start date/time is required');
-        setLoading(false);
-        return;
-      }
-
-      if (!formData.duration || Number(formData.duration) <= 0) {
-        toast.error('Duration (in minutes) must be a positive number');
-        setLoading(false);
-        return;
-      }
-
-      const allowedTypes = ['coding', 'system_design', 'aptitude', 'behavioral', 'domain_specific'];
-      if (!allowedTypes.includes(formData.type)) {
-        toast.error(`Invalid interview type: ${formData.type}. Allowed: ${allowedTypes.join(', ')}`);
-        setLoading(false);
-        return;
-      }
-
-      const questions: any[] = [];
-
       const payload: any = {
         title: formData.title,
         description: formData.description,
-        type: (formData.type || 'coding'),
-        difficulty: (formData.difficulty || 'medium').toLowerCase(),
-        scheduled_datetime: formData.startDate ? new Date(formData.startDate).toISOString() : null,
-        duration: Number(formData.duration) || 0,
-        interviewee: formData.organizer || undefined,
-        questions,
-        meeting_link: '',
-        meeting_id: ''
+        instructions: formData.instructions,
+        max_duration: Number(formData.max_duration),
+
+        ai_generation_mode: formData.ai_generation_mode,
+        ai_verbal_question_count: Number(formData.ai_verbal_question_count),
+        ai_coding_question_count: Number(formData.ai_coding_question_count),
+
+        voice_type: formData.voice_type,
+        voice_speed: Number(formData.voice_speed),
+
+        required_skills: formData.required_skills.split(',').map(s => s.trim()).filter(Boolean),
+        optional_skills: formData.optional_skills.split(',').map(s => s.trim()).filter(Boolean),
+
+        publish_status: formData.publish_status,
+        questions_config: formData.questions_config,
+        questions_random_config: formData.questions_random_config
       };
 
       console.debug('Submitting mock interview payload:', payload);
@@ -184,72 +142,20 @@ export default function InterviewsForm() {
 
       navigate('/instructor/mock-interview', { state: { refreshedAt: Date.now() } });
     } catch (error) {
-        console.error('Failed to save mock interview:', error);
-
-        const err: any = error as any;
-        let serverMessage: string | null = null;
-
-        if (err?.details) {
-          if (typeof err.details === 'object' && !Array.isArray(err.details)) {
-            try {
-              const firstKey = Object.keys(err.details)[0];
-              const val = (err.details as any)[firstKey];
-              if (Array.isArray(val) && val.length > 0) {
-                serverMessage = `${firstKey}: ${val[0]}`;
-              } else if (typeof val === 'string') {
-                serverMessage = `${firstKey}: ${val}`;
-              } else {
-                serverMessage = JSON.stringify(err.details);
-              }
-            } catch (e) {
-              serverMessage = JSON.stringify(err.details);
-            }
-          } else {
-            try {
-              serverMessage = typeof err.details === 'string' ? err.details : JSON.stringify(err.details);
-            } catch (e) {
-              serverMessage = String(err.details);
-            }
-          }
-        } else if (err?.message) {
-          serverMessage = err.message;
-        }
-
-        if (err?.status === 0) {
-          serverMessage = serverMessage ? `${serverMessage}. Is the backend running?` : 'Network error. Is the backend running?';
-        }
-
-        toast.error(
-          isEditMode
-            ? `Failed to update mock interview${serverMessage ? `: ${serverMessage}` : ''}`
-            : `Failed to create mock interview${serverMessage ? `: ${serverMessage}` : ''}`
-        );
+      console.error('Failed to save :', error);
+      toast.error('Failed to save mock interview');
     } finally {
       setLoading(false);
     }
   };
-    
-    if (loading) {
-      return (
-        <div className="min-h-screen bg-gray-50">
-          <div className="flex">
-            <RoleSidebar />
-            <div className="flex-1">
-              <RoleHeader
-                title="Loading..."
-                subtitle="Please wait while we load the interviews details"
-                actions={null}
-              />
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <div className="flex justify-center items-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      );
-    }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex justify-center items-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -257,21 +163,12 @@ export default function InterviewsForm() {
         <RoleSidebar />
         <div className="flex-1">
           <RoleHeader
-            title={
-              typeof getHeaderTitle === 'function'
-                ? getHeaderTitle()
-                : (isEditMode ? `Edit Mock Interview: ${contest?.title || 'Loading...'}` : 'Add New Mock Interview')
-            }
-            subtitle={
-              typeof getHeaderSubtitle === 'function'
-                ? getHeaderSubtitle()
-                : (isEditMode ? 'Modify mock interview details and settings' : 'Create a new mock interview for students')
-            }
+            title={getHeaderTitle()}
+            subtitle={getHeaderSubtitle()}
             actions={
               <button
                 type="button"
-                onClick={(e) => { console.debug('Back to list (header) clicked', e); navigate('/instructor/mock-interview'); }}
-                aria-label="Back to Mock Interviews list"
+                onClick={() => navigate('/instructor/mock-interview')}
                 className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 transition-colors"
               >
                 ← Back to List
@@ -281,279 +178,151 @@ export default function InterviewsForm() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="bg-white shadow rounded-lg mb-6 p-6">
               <Tabs value={currentFormTab} onValueChange={setCurrentFormTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-6 bg-gray-100 p-1 rounded-lg">
-                  <TabsTrigger
-                    value="details"
-                    className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md py-2 px-4 transition-all"
-                  >
-                    <Settings className="h-4 w-4" />
-                    Interviews Details
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="questions"
-                    className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md py-2 px-4 transition-all"
-                  >
-                    <FileText className="h-4 w-4" />
-                    Questions
-                  </TabsTrigger>
+                <TabsList className="grid w-full grid-cols-4 mb-6 bg-gray-100 p-1 rounded-lg">
+                  <TabsTrigger value="details">Basic Info</TabsTrigger>
+                  <TabsTrigger value="ai_config">AI Config</TabsTrigger>
+                  <TabsTrigger value="voice_config">Voice & Audio</TabsTrigger>
+                  <TabsTrigger value="questions">Questions</TabsTrigger>
                 </TabsList>
 
+                {/* Details Tab */}
                 <TabsContent value="details" className="space-y-6">
-                  <Card className="border border-gray-200 shadow-sm">
-                    <CardHeader className="pb-4">
-                      <CardTitle className="text-lg font-semibold text-gray-900 flex items-center">
-                        <Trophy className="h-5 w-5 mr-2 text-blue-500" />
-                        Basic Information
-                      </CardTitle>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2"><Trophy className="w-5 h-5 text-blue-500" /> Basic Information</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Title *</label>
-                          <input
-                            type="text"
-                            value={formData.title}
-                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                            placeholder="e.g., Frontend Mock Interview"
-                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none"
-                          />
+                          <label className="block text-sm font-medium mb-1">Title *</label>
+                          <Input value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} placeholder="e.g. Frontend Developer Interview" />
                         </div>
-                        <div>  
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Instructions *</label>
-                          <textarea
-                          value={formData.instructions}
-                          onChange={(e) => setFormData({ ...formData, instructions: e.target.value })}
-                          placeholder="Enter guidelines and format"
-                          rows={3}
-                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none"
-                        />
+                        <div>
+                          <label className="block text-sm font-medium mb-1">Max Duration (minutes) *</label>
+                          <Input type="number" value={formData.max_duration} onChange={e => setFormData({ ...formData, max_duration: parseInt(e.target.value) })} min={5} />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Description</label>
+                        <Textarea value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} placeholder="Description of the interview..." />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Instructions *</label>
+                        <Textarea value={formData.instructions} onChange={e => setFormData({ ...formData, instructions: e.target.value })} placeholder="Instructions for the candidate..." />
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium mb-1">Required Skills (Comma separated)</label>
+                          <Input value={formData.required_skills} onChange={e => setFormData({ ...formData, required_skills: e.target.value })} placeholder="React, TypeScript, CSS" />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium mb-1">Optional Skills (Comma separated)</label>
+                          <Input value={formData.optional_skills} onChange={e => setFormData({ ...formData, optional_skills: e.target.value })} placeholder="Redux, Node.js" />
                         </div>
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                        <textarea
-                          value={formData.description}
-                          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                          placeholder="Briefly describe interview purpose and skills assessed"
-                          rows={3}
-                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none"
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <label className="block text-sm font-medium mb-1">Publish Status</label>
+                        <select value={formData.publish_status} onChange={e => setFormData({ ...formData, publish_status: e.target.value as any })} className="w-full border rounded px-3 py-2">
+                          <option value="draft">Draft</option>
+                          <option value="active">Active</option>
+                          <option value="inactive">Inactive</option>
+                          <option value="archived">Archived</option>
+                        </select>
                       </div>
                     </CardContent>
                   </Card>
-
-            <Card className="border border-gray-200 shadow-sm">
-            <CardHeader className="pb-4">
-                <CardTitle className="text-lg font-semibold text-gray-900 flex items-center">
-                <Settings className="h-5 w-5 mr-2 text-indigo-500" />
-                Interview Configuration
-                </CardTitle>
-            </CardHeader>
-
-            <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Type *
-                    </label>
-                    <select
-                    value={formData.type}
-                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-                    >
-                    <option value="coding">Coding</option>
-                    <option value="system_design">System Design</option>
-                    <option value="aptitude">Aptitude</option>
-                    <option value="behavioral">Behavioral</option>
-                    <option value="domain_specific">Domain Specific</option>
-                    </select>
-                </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Status *
-                    </label>
-                    <select
-                      value={formData.status}
-                      onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-                    >
-                      <option value="scheduled">Scheduled</option>
-                      <option value="ongoing">Ongoing</option>
-                      <option value="completed">Completed</option>
-                      <option value="cancelled">Cancelled</option>
-
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Difficulty *
-                    </label>
-                    <select
-                      value={formData.difficulty}
-                      onChange={(e) => setFormData({ ...formData, difficulty: e.target.value })}
-                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-                    >
-                      <option value="easy">Easy</option>
-                      <option value="medium">Medium</option>
-                      <option value="hard">Hard</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Duration (minutes) *
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.duration}
-                      onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                      min="1"
-                      placeholder="e.g., 60"
-                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Total Marks *
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.totalMarks}
-                      onChange={(e) => setFormData({ ...formData, totalMarks: e.target.value })}
-                      min="1"
-                      placeholder="100"
-                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Passing Marks *
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.passingMarks}
-                      onChange={(e) => setFormData({ ...formData, passingMarks: e.target.value })}
-                      min="0"
-                      placeholder="45"
-                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-                    />
-                  </div>
-
-                </div>
-              </CardContent>
-            </Card>
-                  <Card className="border border-gray-200 shadow-sm">
-                    <CardHeader className="pb-4">
-                      <CardTitle className="text-lg font-semibold text-gray-900 flex items-center">
-                        <Calendar className="h-5 w-5 mr-2 text-green-500" />
-                        Schedule & Duration
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Start Date *</label>
-                          <input
-                            type="datetime-local"
-                            value={formData.startDate}
-                            onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">End Date *</label>
-                          <input
-                            type="datetime-local"
-                            value={formData.endDate}
-                            onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Duration (minutes) *</label>
-                          <input
-                            type="number"
-                            value={formData.duration}
-                            onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                            placeholder="e.g., 120"
-                            min="1"
-                            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                          />
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  
-                    <Card className="border border-gray-200 shadow-sm">
-                  <CardHeader className="pb-4">
-                    <CardTitle className="text-lg font-semibold text-gray-900 flex items-center">
-                    Publishing
-                    </CardTitle>
-                  </CardHeader>
-
-                  <CardContent className="space-y-6">
-                  <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Publish Status
-            </label>
-            <select
-              value={formData.publish_status}
-              onChange={(e) =>
-                setFormData({ ...formData, publish_status: e.target.value })
-              }
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-            >
-              <option value="inactive">Inactive</option>
-              <option value="active">Active</option>
-              <option value="active">Archived</option>
-
-            </select>
-          </div>
-
-        </CardContent>
-      </Card>
-
                 </TabsContent>
 
+                {/* AI Config Tab */}
+                <TabsContent value="ai_config" className="space-y-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2"><Settings className="w-5 h-5 text-indigo-500" /> AI Generation Settings</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Generation Mode</label>
+                        <select value={formData.ai_generation_mode} onChange={e => setFormData({ ...formData, ai_generation_mode: e.target.value as any })} className="w-full border rounded px-3 py-2">
+                          <option value="full_ai">Full AI (AI decides everything based on skills)</option>
+                          <option value="mixed">Mixed (AI + Predefined Questions)</option>
+                          <option value="predefined">Predefined Questions Only</option>
+                        </select>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium mb-1">Verbal Questions Count</label>
+                          <Input type="number" value={formData.ai_verbal_question_count} onChange={e => setFormData({ ...formData, ai_verbal_question_count: parseInt(e.target.value) })} min={0} />
+                          <p className="text-xs text-gray-500 mt-1">Number of verbal/theory questions AI should generate.</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium mb-1">Coding Questions Count</label>
+                          <Input type="number" value={formData.ai_coding_question_count} onChange={e => setFormData({ ...formData, ai_coding_question_count: parseInt(e.target.value) })} min={0} />
+                          <p className="text-xs text-gray-500 mt-1">Number of coding challenges AI should generate.</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                {/* Voice Config Tab */}
+                <TabsContent value="voice_config" className="space-y-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2"><Settings className="w-5 h-5 text-green-500" /> Voice & Audio Settings</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium mb-1">Interviewer Voice</label>
+                          <select value={formData.voice_type} onChange={e => setFormData({ ...formData, voice_type: e.target.value as any })} className="w-full border rounded px-3 py-2">
+                            <option value="junnu">Junnu (Male - Indian Accent)</option>
+                            <option value="munnu">Munnu (Female - US Accent)</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium mb-1">Voice Speed (0.5x - 2.0x)</label>
+                          <Input type="number" value={formData.voice_speed} onChange={e => setFormData({ ...formData, voice_speed: parseFloat(e.target.value) })} min={0.5} max={2.0} step={0.1} />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                {/* Questions Tab */}
                 <TabsContent value="questions" className="space-y-6">
-                  <Card className="border border-gray-200 shadow-sm">
-                    <CardHeader className="pb-4">
-                      <CardTitle className="text-lg font-semibold text-gray-900 flex items-center">
-                        <FileText className="h-5 w-5 mr-2 text-purple-500" />
-                        Questions
-                      </CardTitle>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2"><FileText className="w-5 h-5 text-purple-500" /> Question Bank</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="mb-4 text-sm text-gray-600">Questions for mock interviews are managed from the Question Bank. You can select or add questions there.</p>
+                      {formData.ai_generation_mode === 'full_ai' && (
+                        <div className="bg-yellow-50 border border-yellow-200 p-4 rounded mb-4 text-sm text-yellow-800">
+                          Note: In "Full AI" mode, specific questions selected here might be ignored or used only as context. Use "Mixed" mode to enforce specific questions.
+                        </div>
+                      )}
+                      <p className="mb-4 text-sm text-gray-600">Select questions from the bank if you want to include specific challenges.</p>
                       <QuestionBank mode="selection" allowMultipleSelection={true} />
                     </CardContent>
                   </Card>
                 </TabsContent>
 
-                <div className="flex justify-end gap-3 pt-6 border-t border-gray-200">
+                <div className="flex justify-end gap-3 pt-6 border-t border-gray-200 mt-6">
                   <button
                     type="button"
-                    onClick={(e) => { console.debug('Back to list (cancel) clicked', e); navigate('/instructor/mock-interview'); }}
-                    aria-label="Back to Mock Interviews list"
+                    onClick={() => navigate('/instructor/mock-interview')}
                     className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
                   >
                     Cancel
                   </button>
-                  <button
+                  <Button
                     onClick={handleSubmit}
-                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+                    disabled={loading}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
                   >
                     {isEditMode ? 'Update Mock Interview' : 'Create Mock Interview'}
-                  </button>
+                  </Button>
                 </div>
               </Tabs>
             </div>

@@ -82,43 +82,36 @@ class ContestAdmin(admin.ModelAdmin):
 
 @admin.register(MockInterview)
 class MockInterviewAdmin(admin.ModelAdmin):
-    list_display = ['title', 'type', 'status', 'scheduled_datetime', 'difficulty']
-    list_filter = ['type', 'status', 'difficulty', 'scheduled_datetime']
+    list_display = ['title', 'ai_generation_mode', 'voice_type', 'publish_status', 'max_duration', 'created_at']
+    list_filter = ['ai_generation_mode', 'voice_type', 'publish_status', 'created_at']
     search_fields = ['title', 'description']
-    readonly_fields = ['id', 'created_at', 'updated_at', 'total_attempts']
-    date_hierarchy = 'scheduled_datetime'
+    readonly_fields = ['id', 'created_at', 'updated_at']
     fieldsets = (
         ('Basic Information', {
             'fields': ('title', 'description', 'instructions')
         }),
-        ('Interview Configuration', {
-            'fields': ('type', 'status', 'difficulty', 'duration', 'total_marks', 'passing_marks')
+        ('Configuration', {
+            'fields': ('publish_status', 'max_duration', 'required_skills', 'optional_skills')
         }),
-        ('Schedule', {
-            'fields': ('scheduled_datetime',)
+        ('AI Configuration', {
+            'fields': ('ai_generation_mode', 'ai_verbal_question_count', 'ai_coding_question_count'),
+            'description': 'Configure how the AI interviewer behaves and generates questions.'
+        }),
+        ('Voice Settings', {
+            'fields': ('voice_type', 'voice_speed', 'audio_settings'),
+            'description': 'Configure the voice and audio properties of the interviewer.'
         }),
         ('Questions & Publishing', {
-            'fields': ('questions_config', 'questions_random_config', 'publish_status', 'enable_proctoring')
+            'fields': ('questions_config', 'questions_random_config')
         }),
         ('Metadata', {
-            'fields': ('id', 'created_by', 'created_at', 'updated_at', 'total_attempts'),
+            'fields': ('id', 'created_by', 'created_at', 'updated_at'),
             'classes': ('collapse',)
         })
     )
     
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('created_by')
-    
-    actions = ['update_interview_status']
-    
-    def update_interview_status(self, request, queryset):
-        updated = 0
-        for interview in queryset:
-            interview.update_status()
-            interview.save()
-            updated += 1
-        self.message_user(request, f'Updated status for {updated} interviews.')
-    update_interview_status.short_description = "Update interview status"
 
 
 @admin.register(JobTest)
@@ -212,13 +205,13 @@ class ContestSubmissionAdmin(admin.ModelAdmin):
 
 @admin.register(MockInterviewSubmission)
 class MockInterviewSubmissionAdmin(admin.ModelAdmin):
-    list_display = ['user', 'mock_interview', 'status', 'marks', 'started_at', 'submitted_at']
-    list_filter = ['status', 'mock_interview__type', 'started_at']
+    list_display = ['user', 'mock_interview', 'status', 'experience_level', 'marks', 'started_at', 'submitted_at']
+    list_filter = ['status', 'experience_level', 'mock_interview__ai_generation_mode', 'started_at']
     search_fields = ['user__username', 'user__email', 'mock_interview__title']
     readonly_fields = ['id', 'created_at', 'updated_at', 'started_at']
     fieldsets = (
         ('Submission Info', {
-            'fields': ('user', 'mock_interview', 'status')
+            'fields': ('user', 'mock_interview', 'experience_level', 'status')
         }),
         ('Timing', {
             'fields': ('started_at', 'submitted_at', 'completed_at')

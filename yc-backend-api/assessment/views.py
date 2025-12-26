@@ -552,28 +552,25 @@ class MockInterviewViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
 
     search_fields = ['title', 'description']
-    ordering_fields = ['scheduled_datetime']
+    ordering_fields = ['created_at', 'updated_at']
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
 
     def get_queryset(self):
         qs = super().get_queryset()
-        status_param = self.request.query_params.get('status')
-        type_param = self.request.query_params.get('type')
+        publish_status_param = self.request.query_params.get('publish_status')
+        ai_mode_param = self.request.query_params.get('ai_generation_mode')
 
         q = Q()
-        if status_param:
-            q &= Q(status=status_param)
+        if publish_status_param:
+            q &= Q(publish_status=publish_status_param)
 
-        if type_param:
-            q &= Q(type=type_param)
+        if ai_mode_param:
+            q &= Q(ai_generation_mode=ai_mode_param)
 
         if q:
             qs = qs.filter(q)
-
-        for obj in qs:
-            obj.update_status()
 
         return qs
 

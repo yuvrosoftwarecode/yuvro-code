@@ -324,6 +324,15 @@ class MockInterviewSubmission(BaseUserSubmission):
         help_text="Duration selected by the user in minutes"
     )
     
+    resume = models.FileField(upload_to='resumes/', null=True, blank=True)
+    chat_session = models.OneToOneField(
+        'ai_assistant.ChatSession', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='mock_interview_submission'
+    )
+    
     class Meta:
         ordering = ['-created_at']
         unique_together = ['user', 'mock_interview']

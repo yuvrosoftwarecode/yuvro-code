@@ -11,12 +11,9 @@ import { toast } from 'sonner';
 import RoleSidebar from '@/components/common/RoleSidebar';
 import RoleHeader from '@/components/common/RoleHeader';
 import { mockInterviewService } from '@/services/mockInterviewService';
+import { fetchQuestionById } from '@/services/questionService';
 
-
-
-
-
-export default function InterviewsForm() {
+export default function MockInterviewForm() {
   const navigate = useNavigate();
   const { mockInterviewId } = useParams<{ mockInterviewId: string }>();
   const isEditMode = !!mockInterviewId;
@@ -27,6 +24,15 @@ export default function InterviewsForm() {
   // Voice State
   const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [previewText, setPreviewText] = useState('Hello! I am your interviewer for today. How are you doing?');
+
+  // Questions State
+  const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
+  const [randomQuestionsConfig, setRandomQuestionsConfig] = useState({
+    mcq_single: 0,
+    mcq_multiple: 0,
+    coding: 0,
+    descriptive: 0
+  });
 
   useEffect(() => {
     const loadVoices = () => {
@@ -48,6 +54,63 @@ export default function InterviewsForm() {
       window.speechSynthesis.onvoiceschanged = null;
     }
   }, []);
+
+  const categorizeQuestionsByType = async (questionIds: string[]) => {
+    if (questionIds.length === 0) {
+      return {
+        mcq_single: [],
+        mcq_multiple: [],
+        coding: [],
+        descriptive: []
+      };
+    }
+
+    try {
+      const questionPromises = questionIds.map(id => fetchQuestionById(id));
+      const questions = await Promise.all(questionPromises);
+
+      const categorized: any = {
+        mcq_single: [],
+        mcq_multiple: [],
+        coding: [],
+        descriptive: []
+      };
+
+      questions.forEach(question => {
+        if (question.type === 'mcq_single') {
+          categorized.mcq_single.push(question.id);
+        } else if (question.type === 'mcq_multiple') {
+          categorized.mcq_multiple.push(question.id);
+        } else if (question.type === 'coding') {
+          categorized.coding.push(question.id);
+        } else if (question.type === 'descriptive') {
+          categorized.descriptive.push(question.id);
+        }
+      });
+
+      return categorized;
+    } catch (error) {
+      console.error('Failed to categorize questions:', error);
+      return {
+        mcq_single: questionIds, // Fallback
+        mcq_multiple: [],
+        coding: [],
+        descriptive: []
+      };
+    }
+  };
+
+  const handleQuestionsChange = async (questions: string[]) => {
+    setSelectedQuestions(questions);
+    // We don't update formData.questions_config immediately here because it's async
+    // We will categorize on submit or we can keep a separate state for questions_config if needed
+    // But for simplicity in this form structure, let's categorize and update formData here if we want immediate sync
+    // However, handleSubmit uses formData. So let's update a ref or similar, or just categorize on submit?
+    // Better: Update formData.questions_config here.
+
+    const categorized = await categorizeQuestionsByType(questions);
+    setFormData((prev: any) => ({ ...prev, questions_config: categorized }));
+  };
 
   const playVoicePreview = (voiceName: string, text: string) => {
     window.speechSynthesis.cancel();
@@ -138,6 +201,21 @@ export default function InterviewsForm() {
           questions_config: data.questions_config || {},
           questions_random_config: data.questions_random_config || {}
         });
+
+        // Initialize question states
+        const allQuestions = [
+          ...(data.questions_config?.mcq_single || []),
+          ...(data.questions_config?.mcq_multiple || []),
+          ...(data.questions_config?.coding || []),
+          ...(data.questions_config?.descriptive || [])
+        ];
+        setSelectedQuestions(allQuestions);
+        setRandomQuestionsConfig(data.questions_random_config || {
+          mcq_single: 0,
+          mcq_multiple: 0,
+          coding: 0,
+          descriptive: 0
+        });
       } catch (error) {
         console.error('Failed to fetch mock interview:', error);
         toast.error('Failed to load mock interview');
@@ -159,6 +237,9 @@ export default function InterviewsForm() {
         return;
       }
 
+      // Process questions before submitting
+      const questionsConfig = await categorizeQuestionsByType(selectedQuestions);
+
       const payload: any = {
         title: formData.title,
         description: formData.description,
@@ -179,8 +260,8 @@ export default function InterviewsForm() {
         optional_skills: formData.optional_skills.split(',').map(s => s.trim()).filter(Boolean),
 
         publish_status: formData.publish_status,
-        questions_config: formData.questions_config,
-        questions_random_config: formData.questions_random_config
+        questions_config: questionsConfig,
+        questions_random_config: randomQuestionsConfig
       };
 
       console.debug('Submitting mock interview payload:', payload);
@@ -421,9 +502,78 @@ export default function InterviewsForm() {
 
                 {/* Questions Tab */}
                 <TabsContent value="questions" className="space-y-6">
+                  {/* Random Questions Configuration */}
+                  <Card className="border border-gray-200 shadow-sm">
+                    <CardHeader className="pb-4">
+                      <CardTitle className="text-lg font-semibold text-gray-900 flex items-center">
+                        <Settings className="h-5 w-5 mr-2 text-orange-500" />
+                        Random Questions Configuration
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">MCQ Single Choice</label>
+                          <Input
+                            type="number"
+                            min="0"
+                            value={randomQuestionsConfig.mcq_single}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRandomQuestionsConfig(prev => ({
+                              ...prev,
+                              mcq_single: parseInt(e.target.value) || 0
+                            }))}
+                            placeholder="0"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">MCQ Multiple Choice</label>
+                          <Input
+                            type="number"
+                            min="0"
+                            value={randomQuestionsConfig.mcq_multiple}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRandomQuestionsConfig(prev => ({
+                              ...prev,
+                              mcq_multiple: parseInt(e.target.value) || 0
+                            }))}
+                            placeholder="0"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Coding Questions</label>
+                          <Input
+                            type="number"
+                            min="0"
+                            value={randomQuestionsConfig.coding}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRandomQuestionsConfig(prev => ({
+                              ...prev,
+                              coding: parseInt(e.target.value) || 0
+                            }))}
+                            placeholder="0"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Descriptive Questions</label>
+                          <Input
+                            type="number"
+                            min="0"
+                            value={randomQuestionsConfig.descriptive}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRandomQuestionsConfig(prev => ({
+                              ...prev,
+                              descriptive: parseInt(e.target.value) || 0
+                            }))}
+                            placeholder="0"
+                          />
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-500 mt-3">
+                        Specify how many questions of each type should be randomly selected from the question bank.
+                      </p>
+                    </CardContent>
+                  </Card>
+
                   <Card>
                     <CardHeader>
-                      <CardTitle className="flex items-center gap-2"><FileText className="w-5 h-5 text-purple-500" /> Question Bank</CardTitle>
+                      <CardTitle className="flex items-center gap-2"><FileText className="w-5 h-5 text-purple-500" /> Specific Question Selection</CardTitle>
                     </CardHeader>
                     <CardContent>
                       {formData.ai_generation_mode === 'full_ai' && (
@@ -431,8 +581,14 @@ export default function InterviewsForm() {
                           Note: In "Full AI" mode, specific questions selected here might be ignored or used only as context. Use "Mixed" mode to enforce specific questions.
                         </div>
                       )}
-                      <p className="mb-4 text-sm text-gray-600">Select questions from the bank if you want to include specific challenges.</p>
-                      <QuestionBank mode="selection" allowMultipleSelection={true} />
+
+                      <QuestionBank
+                        mode="selection"
+                        selectedQuestions={selectedQuestions}
+                        onQuestionsChange={handleQuestionsChange}
+                        allowMultipleSelection={true}
+                        showSplitView={true}
+                      />
                     </CardContent>
                   </Card>
                 </TabsContent>

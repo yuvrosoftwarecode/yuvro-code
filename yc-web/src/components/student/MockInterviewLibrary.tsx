@@ -36,6 +36,7 @@ interface InterviewSettings {
   duration: string;
   interviewer: string;
   mediaStream: MediaStream;
+  resume?: File;
 }
 
 const MockInterviewLibrary: React.FC<MockInterviewLibraryProps> = ({ onStartInterview }) => {
@@ -44,6 +45,7 @@ const MockInterviewLibrary: React.FC<MockInterviewLibraryProps> = ({ onStartInte
   const [showModal, setShowModal] = useState(false);
   const [selectedDifficulty, setSelectedDifficulty] = useState('');
   const [selectedDuration, setSelectedDuration] = useState('');
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
   const [showInterviewScreen, setShowInterviewScreen] = useState(false);
@@ -139,6 +141,7 @@ const MockInterviewLibrary: React.FC<MockInterviewLibraryProps> = ({ onStartInte
     setSelectedRole(null);
     setSelectedDifficulty('');
     setSelectedDuration('');
+    setResumeFile(null);
     setAgreeToTerms(false);
   };
 
@@ -215,7 +218,8 @@ const MockInterviewLibrary: React.FC<MockInterviewLibraryProps> = ({ onStartInte
         difficulty: selectedDifficulty,
         duration: selectedDuration,
         interviewer: selectedRole?.interviewer_name || 'Junnu',
-        mediaStream: stream
+        mediaStream: stream,
+        resume: resumeFile || undefined
       };
 
       console.log('Setting interview settings and showing permission dialog');
@@ -225,6 +229,7 @@ const MockInterviewLibrary: React.FC<MockInterviewLibraryProps> = ({ onStartInte
       setShowModal(false);
       setSelectedDifficulty('');
       setSelectedDuration('');
+      setResumeFile(null);
       setAgreeToTerms(false);
 
       // Use setTimeout to ensure modal is closed before showing permission dialog
@@ -283,7 +288,9 @@ const MockInterviewLibrary: React.FC<MockInterviewLibraryProps> = ({ onStartInte
         difficulty={interviewSettings.difficulty}
         duration={interviewSettings.duration}
         interviewer={interviewSettings.interviewer}
+        interviewer={interviewSettings.interviewer}
         mediaStream={interviewSettings.mediaStream}
+        resume={interviewSettings.resume}
         onExit={handleExitInterview}
         onInterviewComplete={handleInterviewComplete}
       />
@@ -428,6 +435,20 @@ const MockInterviewLibrary: React.FC<MockInterviewLibraryProps> = ({ onStartInte
               </div>
 
 
+
+              {/* Resume Upload */}
+              <div className="space-y-3">
+                <h4 className="font-medium">Resume (Optional)</h4>
+                <div className="flex items-center gap-2">
+                    <Input 
+                        type="file" 
+                        accept=".pdf"
+                        onChange={(e) => setResumeFile(e.target.files ? e.target.files[0] : null)}
+                        className="cursor-pointer"
+                    />
+                </div>
+                <p className="text-xs text-muted-foreground">Upload your resume (PDF) for a personalized interview experience.</p>
+              </div>
 
               {/* Terms and Conditions */}
               <div className="flex items-center space-x-2">

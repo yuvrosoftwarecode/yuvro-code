@@ -8,6 +8,11 @@ from django.shortcuts import get_object_or_404
 import random
 import os
 import requests
+import json
+from pypdf import PdfReader
+from io import BytesIO
+from ai_assistant.models import AIAgent, ChatSession, ChatMessage
+from authentication.models import Profile
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import (
     Contest, MockInterview, JobTest, SkillTest,
@@ -576,54 +581,161 @@ class MockInterviewViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def start_interview(self, request, pk=None):
-        mock_interview = self.get_object()
-        user = request.user
-        
-        # Get user settings
-        experience_level = request.data.get('experience_level', MockInterviewSubmission.EXP_LEVEL_BEGINNER)
-        selected_duration = request.data.get('selected_duration', 0)
-        
-        # 1. Check for existing active submission
-        submission = MockInterviewSubmission.objects.filter(
-            mock_interview=mock_interview,
-            user=user,
-            status=MockInterviewSubmission.STATUS_STARTED
-        ).first()
-
-        if not submission:
-            # 2. Check limits (optional, if we want to limit attempts)
-            # 3. Create NEW submission
-            submission = MockInterviewSubmission.objects.create(
+        try:
+            mock_interview = self.get_object()
+            user = request.user
+            
+            # Get user settings
+            experience_level = request.data.get('experience_level', MockInterviewSubmission.EXP_LEVEL_BEGINNER)
+            selected_duration = request.data.get('selected_duration', 0)
+            resume_file = request.FILES.get('resume')
+            
+            # 1. Check for existing active submission
+            submission = MockInterviewSubmission.objects.filter(
                 mock_interview=mock_interview,
                 user=user,
-                status=MockInterviewSubmission.STATUS_STARTED,
-                experience_level=experience_level,
-                selected_duration=selected_duration
-            )
-        else:
-             # Update settings if restarted
-             submission.experience_level = experience_level
-             submission.selected_duration = selected_duration
-             submission.save()
+                status=MockInterviewSubmission.STATUS_STARTED
+            ).first()
 
-        # 4. Resolve Questions (Simplified for now - just returning config)
-        questions_to_send = []
+            chat_session = None
 
-        return Response({
-            'submission_id': submission.id,
-            'status': submission.status,
-            'max_duration': mock_interview.max_duration,
-            'selected_duration': submission.selected_duration,
-            'experience_level': submission.experience_level,
-            'questions': questions_to_send, # Or initial question
-            'ai_config': {
-                'mode': mock_interview.ai_generation_mode,
-                'verbal_count': mock_interview.ai_verbal_question_count,
-                'coding_count': mock_interview.ai_coding_question_count,
-                'voice_type': mock_interview.voice_type,
-                'voice_speed': mock_interview.voice_speed
-            }
-        })
+            if not submission:
+                # 2. Handle Resume / Context Extraction
+                context_text = ""
+                
+                if resume_file:
+                    try:
+                        # Parse PDF
+                        reader = PdfReader(resume_file)
+                        for page in reader.pages:
+                            text = page.extract_text()
+                            if text:
+                                context_text += text + "\n"
+                    except Exception as e:
+                        print(f"Error parsing resume: {e}")
+                
+                # If no resume text, fetch profile data
+                if not context_text.strip():
+                    try:
+                        # Handle potential Profile.DoesNotExist
+                        if hasattr(user, 'profile'):
+                            profile = user.profile
+                            context_text += f"Name: {profile.full_name}\n"
+                            context_text += f"Title: {profile.title}\n"
+                            context_text += f"About: {profile.about}\n"
+                            
+                            # Skills
+                            skills = profile.skills.all()
+                            if skills.exists():
+                                context_text += "Skills:\n"
+                                for skill in skills:
+                                    context_text += f"- {skill.name} ({skill.level})\n"
+                                    
+                            # Experience
+                            experiences = profile.experiences.all()
+                            if experiences.exists():
+                                context_text += "Experience:\n"
+                                for exp in experiences:
+                                    context_text += f"- {exp.role} at {exp.company} ({exp.duration})\n"
+                                    
+                            # Education
+                            educations = profile.education.all()
+                            if educations.exists():
+                                context_text += "Education:\n"
+                                for edu in educations:
+                                    context_text += f"- {edu.degree} in {edu.field} from {edu.institution}\n"
+                    except Exception as e:
+                        print(f"Error fetching profile: {e}")
+                
+                # If still empty, use fallback
+                if not context_text.strip():
+                    context_text = "No resume or profile information provided. Please ask general questions relevant to the position."
+
+                # 3. Initialize AI Chat Session
+                if mock_interview.ai_generation_mode in [MockInterview.AI_GEN_FULL, MockInterview.AI_GEN_MIXED]:
+                    # Find an active AI agent (prefer Gemini)
+                    ai_agent = AIAgent.objects.filter(is_active=True, provider='gemini').first()
+                    if not ai_agent:
+                        ai_agent = AIAgent.objects.filter(is_active=True).first()
+                    
+                    if ai_agent:
+                        # Safe user name
+                        user_first_name = user.first_name if user.first_name else "Candidate"
+                        
+                        chat_session = ChatSession.objects.create(
+                            user=user,
+                            ai_agent=ai_agent,
+                            title=f"Mock Interview: {mock_interview.title}",
+                            page="mock_interview"
+                        )
+                        
+                        # Create System Prompt
+                        system_prompt = f"""You are an expert technical interviewer named {mock_interview.interviewer_name}.
+You are conducting a mock interview for the "{mock_interview.title}".
+Description: {mock_interview.description}
+Instructions: {mock_interview.instructions}
+
+Candidate Context (Resume/Profile):
+{context_text}
+
+Your Goal:
+1. Conduct a professional and adaptive interview.
+2. Ask questions based on the candidate's experience and the interview requirements.
+3. Determine the next question based on the candidate's previous answer.
+4. If the candidate answers poorly, ask easier follow-up questions or clarify.
+5. If the candidate answers well, increase the difficulty.
+6. Keep your responses concise and conversational (as if speaking).
+7. Do not just list questions. Engage in a dialogue.
+
+Begin by greeting the candidate politely (e.g., "Hello {user_first_name}, welcome to the interview..."), introducing yourself, and then asking the first question.
+"""
+                        ChatMessage.objects.create(
+                            chat_session=chat_session,
+                            message_type="system",
+                            content=system_prompt
+                        )
+
+                # 4. Create NEW submission
+                submission = MockInterviewSubmission.objects.create(
+                    mock_interview=mock_interview,
+                    user=user,
+                    status=MockInterviewSubmission.STATUS_STARTED,
+                    experience_level=experience_level,
+                    selected_duration=selected_duration,
+                    resume=resume_file,
+                    chat_session=chat_session
+                )
+            else:
+                 # Update settings if restarted
+                 submission.experience_level = experience_level
+                 submission.selected_duration = selected_duration
+                 if resume_file: 
+                     submission.resume = resume_file
+                 submission.save()
+                 chat_session = submission.chat_session
+
+            # 5. Return Response
+            return Response({
+                'submission_id': submission.id,
+                'status': submission.status,
+                'max_duration': mock_interview.max_duration,
+                'selected_duration': submission.selected_duration,
+                'experience_level': submission.experience_level,
+                'chat_session_id': chat_session.id if chat_session else None,
+                'ai_config': {
+                    'mode': mock_interview.ai_generation_mode,
+                    'verbal_count': mock_interview.ai_verbal_question_count,
+                    'coding_count': mock_interview.ai_coding_question_count,
+                    'voice_type': mock_interview.voice_type,
+                    'voice_speed': mock_interview.voice_speed,
+                    'interviewer_name': mock_interview.interviewer_name,
+                    'interviewer_voice_id': mock_interview.interviewer_voice_id
+                }
+            })
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     
 

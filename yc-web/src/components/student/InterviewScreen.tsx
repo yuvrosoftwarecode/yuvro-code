@@ -4,9 +4,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Mic, MicOff, RotateCcw, LogOut, User, Bot, Code } from 'lucide-react';
 import CodeEditor from '@/components/code-editor/CodeEditor';
+import { mockInterviewService } from '@/services/mockInterviewService';
+import { aiAssistantService } from '@/services/aiAssistantService';
 
 interface Role {
-  id: number;
+  id: string;
   title: string;
   description: string;
   category: string;
@@ -22,14 +24,9 @@ interface InterviewScreenProps {
   duration: string;
   interviewer: string;
   mediaStream: MediaStream;
+  resume?: File;
   onExit: () => void;
   onInterviewComplete: (role: Role, difficulty: string, duration: string) => void;
-}
-
-interface Question {
-  content: string;
-  type: 'behavioral' | 'coding';
-  language?: string;
 }
 
 interface Message {
@@ -46,6 +43,7 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({
   duration,
   interviewer,
   mediaStream,
+  resume,
   onExit,
   onInterviewComplete
 }) => {
@@ -55,10 +53,11 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({
   const [currentUserAnswer, setCurrentUserAnswer] = useState('');
   const [isAITyping, setIsAITyping] = useState(false);
   const [isUserTyping, setIsUserTyping] = useState(false);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+
+  // Real API State
+  const [chatSessionId, setChatSessionId] = useState<string | null>(null);
   const [showCodeEditor, setShowCodeEditor] = useState(false);
   const [currentCode, setCurrentCode] = useState('');
-  const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const conversationEndRef = useRef<HTMLDivElement>(null);
@@ -74,40 +73,34 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({
     speechRef.current = utterance;
 
     const voices = window.speechSynthesis.getVoices();
-    // console.log("Available voices:", voices.map(v => `${v.name} (${v.lang})`)); 
-
     let selectedVoice = null;
     const targetVoiceName = role.interviewer_voice_id;
 
     if (targetVoiceName) {
-        selectedVoice = voices.find(voice => voice.name === targetVoiceName);
-        if (!selectedVoice) {
-             // Try fuzzy match
-             selectedVoice = voices.find(voice => voice.name.includes(targetVoiceName));
-        }
+      selectedVoice = voices.find(voice => voice.name === targetVoiceName);
+      if (!selectedVoice) {
+        selectedVoice = voices.find(voice => voice.name.includes(targetVoiceName));
+      }
     }
 
-    // Fallback logic if no specific voice or specific voice not found
+    // Fallback logic
     if (!selectedVoice) {
-        if (interviewer === 'Junnu') {
-          // IN Male preference
-          selectedVoice = voices.find(voice => voice.name.includes("Microsoft Ravi")) ||
-            voices.find(voice => voice.lang === "en-IN" && voice.name.toLowerCase().includes("male")) ||
-            voices.find(voice => voice.name.includes("Male") && (voice.lang.includes("en-IN") || voice.name.includes("India"))) ||
-            voices.find(voice => voice.name.includes("Google UK English Male"));
-        } else {
-          // Munnu (Default) - US Female preference
-          selectedVoice = voices.find(voice => voice.name.includes("Google US English")) ||
-            voices.find(voice => voice.name.includes("Microsoft Zira")) ||
-            voices.find(voice => voice.lang === "en-US" && !voice.name.toLowerCase().includes("male"));
-        }
+      if (interviewer === 'Junnu') {
+        // IN Male preference
+        selectedVoice = voices.find(voice => voice.name.includes("Microsoft Ravi")) ||
+          voices.find(voice => voice.lang === "en-IN" && voice.name.toLowerCase().includes("male")) ||
+          voices.find(voice => voice.name.includes("Male") && (voice.lang.includes("en-IN") || voice.name.includes("India"))) ||
+          voices.find(voice => voice.name.includes("Google UK English Male"));
+      } else {
+        // Munnu (Default) - US Female preference
+        selectedVoice = voices.find(voice => voice.name.includes("Google US English")) ||
+          voices.find(voice => voice.name.includes("Microsoft Zira")) ||
+          voices.find(voice => voice.lang === "en-US" && !voice.name.toLowerCase().includes("male"));
+      }
     }
 
     if (selectedVoice) {
-    //   console.log(`Selected voice for ${interviewer}: ${selectedVoice.name}`);
       utterance.voice = selectedVoice;
-    } else {
-      console.warn(`No specific voice found for ${interviewer}, using default.`);
     }
 
     utterance.rate = role.voice_speed || 1;
@@ -117,89 +110,85 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({
     window.speechSynthesis.speak(utterance);
   };
 
-  // Effect to load voices (sometimes they load asynchronously)
+  // Load voices
   useEffect(() => {
     const loadVoices = () => {
       window.speechSynthesis.getVoices();
     };
-
     loadVoices();
     window.speechSynthesis.onvoiceschanged = loadVoices;
-
     return () => {
       window.speechSynthesis.onvoiceschanged = null;
       window.speechSynthesis.cancel();
     }
   }, []);
 
-  // Effect to speak question when it changes
-  useEffect(() => {
-    if (currentQuestion) {
-      // Small delay to ensure smoother transition
-      const timer = setTimeout(() => {
-        speakText(currentQuestion.content);
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [currentQuestion]);
-
-
-  // Mock questions based on role (mix of behavioral and coding questions)
-  const questions: Question[] = [
-    {
-      content: `Tell me about your experience with ${role.title} and what interests you about this field.`,
-      type: 'behavioral' as const
-    },
-    {
-      content: "Can you write a function that reverses a string? Please code this solution.",
-      type: 'coding' as const,
-      language: 'javascript'
-    },
-    {
-      content: "How do you approach problem-solving in challenging situations?",
-      type: 'behavioral' as const
-    },
-    {
-      content: "Write a function to find the maximum element in an array. Show your implementation.",
-      type: 'coding' as const,
-      language: 'python'
-    },
-    {
-      content: "Describe a project you're proud of and your role in its success.",
-      type: 'behavioral' as const
-    }
-  ];
-
   // Convert duration to seconds
   const getDurationInSeconds = (durationStr: string): number => {
     const match = durationStr.match(/(\d+)\s*mins?/i);
-    return match ? parseInt(match[1]) * 60 : 300; // Default 5 minutes
+    return match ? parseInt(match[1]) * 60 : 300;
   };
 
-  // Initialize timer
+  // Initialize Interview & Timer
   useEffect(() => {
     const seconds = getDurationInSeconds(duration);
     setTimeLeft(seconds);
-  }, [duration]);
+
+    const initInterview = async () => {
+      try {
+        setIsAITyping(true);
+        // Start Interview API
+        const response = await mockInterviewService.startInterview(
+          role.id,
+          difficulty,
+          getDurationInSeconds(duration) / 60,
+          resume
+        );
+
+        if (response.chat_session_id) {
+          setChatSessionId(response.chat_session_id);
+
+          // Send initial Trigger to AI to start the conversation
+          // Using a hidden system instruction disguised as user prompt or just a prompt
+          const initialPrompt = "The interview is starting now. Please introduce yourself and ask the first question.";
+          const aiResponse = await aiAssistantService.sendMessage(response.chat_session_id, initialPrompt);
+
+          const aiText = aiResponse.response;
+          setConversation([{
+            type: 'ai',
+            content: aiText,
+            timestamp: new Date().toLocaleTimeString(),
+            questionType: 'behavioral' // Default
+          }]);
+
+          speakText(aiText);
+
+          // Check if coding question (heuristic: contains "code" or "function")
+          if (aiText.toLowerCase().includes("code") || aiText.toLowerCase().includes("function")) {
+            setShowCodeEditor(true);
+          } else {
+            setShowCodeEditor(false);
+          }
+        }
+        setIsAITyping(false);
+      } catch (error) {
+        console.error("Failed to start interview", error);
+        setIsAITyping(false);
+        // Handle error (alert or exit)
+      }
+    };
+
+    initInterview();
+  }, [role.id, difficulty, duration]); // dependency on role vars
 
   const handleEndInterview = () => {
-    // Stop media stream
     if (mediaStream) {
       mediaStream.getTracks().forEach(track => track.stop());
     }
-
-    // Stop speech recognition
     if (recognitionRef.current) {
-      try {
-        recognitionRef.current.stop();
-      } catch (error) {
-        console.error('Error stopping speech recognition:', error);
-      }
+      try { recognitionRef.current.stop(); } catch (e) { }
     }
-
-    // Stop speech synthesis
     window.speechSynthesis.cancel();
-
     onExit();
   };
 
@@ -219,39 +208,26 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({
     }
   }, [timeLeft]);
 
-  // Set up video feed
+  // Video feed
   useEffect(() => {
     if (mediaStream && videoRef.current) {
       videoRef.current.srcObject = mediaStream;
-      videoRef.current.play().catch(console.error);
+      const playPromise = videoRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(error => {
+          // Auto-play was prevented
+          // Show a UI element to let the user manually start playback
+          console.log("Video playback failed", error);
+        });
+      }
     }
-
-    return () => {
-      // Cleanup will be handled by parent component
-    };
   }, [mediaStream]);
 
-  // Initialize conversation
-  useEffect(() => {
-    if (questions.length > 0) {
-      const firstQuestion = questions[0];
-      setCurrentQuestion(firstQuestion);
-      setShowCodeEditor(firstQuestion.type === 'coding');
-      setConversation([{
-        type: 'ai',
-        content: firstQuestion.content,
-        timestamp: new Date().toLocaleTimeString(),
-        questionType: firstQuestion.type
-      }]);
-    }
-  }, []);
-
-  // Initialize speech recognition
+  // Speech Recognition
   useEffect(() => {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       recognitionRef.current = new SpeechRecognition();
-
       recognitionRef.current.continuous = true;
       recognitionRef.current.interimResults = true;
       recognitionRef.current.lang = 'en-US';
@@ -268,42 +244,24 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({
             interimTranscript += transcript;
           }
         }
-
         setCurrentUserAnswer(prev => {
-          const baseText = prev.replace(/\[interim\].*$/, '');
-          return baseText + finalTranscript + (interimTranscript ? ` [interim]${interimTranscript}` : '');
+          const base = prev.split(" [interim]")[0]; // remove previous interim
+          return base + finalTranscript + (interimTranscript ? ` [interim]${interimTranscript}` : '');
         });
-      };
-
-      recognitionRef.current.onerror = (event: any) => {
-        console.error('Speech recognition error:', event.error);
       };
 
       recognitionRef.current.onend = () => {
         if (isRecording) {
-          setTimeout(() => {
-            try {
-              recognitionRef.current?.start();
-            } catch (error) {
-              console.error('Error restarting speech recognition:', error);
-            }
-          }, 100);
+          try { recognitionRef.current?.start(); } catch (e) { }
         }
       };
     }
-
     return () => {
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.stop();
-        } catch (error) {
-          console.error('Error stopping speech recognition:', error);
-        }
-      }
-    };
+      if (recognitionRef.current) try { recognitionRef.current.stop(); } catch (e) { }
+    }
   }, [isRecording]);
 
-  // Auto scroll conversation
+  // Auto scroll
   useEffect(() => {
     conversationEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [conversation, isUserTyping, isAITyping]);
@@ -314,90 +272,67 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleToggleRecording = () => {
-    if (!isRecording) {
-      // Stop any AI speech
-      window.speechSynthesis.cancel();
+  const handleToggleRecording = async () => {
+    if (!chatSessionId) {
+      alert("Interview not initialized yet.");
+      return;
+    }
 
-      // Start recording
+    if (!isRecording) {
+      window.speechSynthesis.cancel();
       setIsRecording(true);
       setIsUserTyping(true);
       setCurrentUserAnswer('');
-
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.start();
-        } catch (error) {
-          console.error('Error starting speech recognition:', error);
-          // Fallback for demo purposes
-          setTimeout(() => {
-            setCurrentUserAnswer('Thank you for the question. I believe...');
-            setIsUserTyping(false);
-          }, 2000);
-        }
-      }
+      if (recognitionRef.current) try { recognitionRef.current.start(); } catch (e) { }
     } else {
-      // Stop recording and submit answer
       setIsRecording(false);
       setIsUserTyping(false);
+      if (recognitionRef.current) try { recognitionRef.current.stop(); } catch (e) { }
 
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.stop();
-        } catch (error) {
-          console.error('Error stopping speech recognition:', error);
-        }
+      // Clean Answer
+      let cleanAnswer = currentUserAnswer.replace(/ \[interim\].*$/, '').trim();
+      if (!cleanAnswer && showCodeEditor && currentCode) {
+        cleanAnswer = "I have written the code in the editor.";
       }
 
-      // Clean up answer and add to conversation
-      const cleanAnswer = currentUserAnswer.replace(/\[interim\].*$/, '').trim();
+      const combinedAnswer = cleanAnswer + (showCodeEditor && currentCode ? `\n\n[Code Submission]:\n${currentCode}` : "");
+
       const userMessage: Message = {
         type: 'user',
-        content: cleanAnswer || 'Thank you for the question. I appreciate the opportunity to share my thoughts.',
+        content: cleanAnswer || "(No verbal answer)",
         timestamp: new Date().toLocaleTimeString(),
-        questionType: currentQuestion?.type,
         codeSubmission: showCodeEditor ? currentCode : undefined
       };
-
       setConversation(prev => [...prev, userMessage]);
       setCurrentUserAnswer('');
       setCurrentCode('');
 
-      // Show AI typing and generate next question
+      // Send to AI
       setIsAITyping(true);
-      setTimeout(() => {
-        setIsAITyping(false);
-        const nextQuestionIndex = currentQuestionIndex + 1;
+      try {
+        const aiResp = await aiAssistantService.sendMessage(chatSessionId, combinedAnswer);
+        const aiText = aiResp.response;
 
-        if (nextQuestionIndex < questions.length) {
-          const nextQuestion = questions[nextQuestionIndex];
-          setCurrentQuestion(nextQuestion);
-          setShowCodeEditor(nextQuestion.type === 'coding');
+        const aiMessage: Message = {
+          type: 'ai',
+          content: aiText,
+          timestamp: new Date().toLocaleTimeString(),
+          questionType: 'behavioral' // In full AI, we deduce type or assume behavioral/mixed
+        };
+        setConversation(prev => [...prev, aiMessage]);
+        speakText(aiText);
 
-          const aiMessage: Message = {
-            type: 'ai',
-            content: nextQuestion.content,
-            timestamp: new Date().toLocaleTimeString(),
-            questionType: nextQuestion.type
-          };
-
-          setConversation(prev => [...prev, aiMessage]);
-          setCurrentQuestionIndex(nextQuestionIndex);
-        } else {
-          // Interview completed
-          const aiMessage: Message = {
-            type: 'ai',
-            content: 'Thank you for your responses. The interview is now complete.',
-            timestamp: new Date().toLocaleTimeString(),
-            questionType: 'behavioral'
-          };
-
-          setConversation(prev => [...prev, aiMessage]);
-          setTimeout(() => {
-            onInterviewComplete(role, difficulty, duration);
-          }, 3000);
+        // Heuristic for coding
+        if (aiText.toLowerCase().includes("code") || aiText.toLowerCase().includes("function") || aiText.toLowerCase().includes("program")) {
+          // Only switch if it explicitly looks like a coding request and we aren't already there? 
+          // Or allow toggling.
+          if (!showCodeEditor) setShowCodeEditor(true);
         }
-      }, 2000);
+      } catch (err) {
+        console.error("AI Error", err);
+      } finally {
+        setIsAITyping(false);
+      }
     }
   };
 
@@ -408,13 +343,7 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center gap-4">
             <div className="relative h-14 w-20 bg-slate-100 rounded-xl overflow-hidden border border-slate-200">
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                muted
-                className="w-full h-full object-cover scale-x-[-1]"
-              />
+              <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover scale-x-[-1]" />
               <div className="absolute bottom-0 right-0 p-0.5 bg-black/50 text-[8px] text-white">You</div>
             </div>
             <div>
@@ -432,7 +361,7 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({
             </div>
             <Button variant="destructive" onClick={handleEndInterview}>
               <LogOut className="h-4 w-4 mr-2" />
-              Exit Interview
+              Exit
             </Button>
           </div>
         </div>
@@ -441,11 +370,11 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({
       {/* Main Content */}
       <div className="flex h-[calc(100vh-80px)]">
         {/* Left Panel - Conversation */}
-        <div className={`flex flex-col bg-card m-4 rounded-lg border transition-all duration-300 ${showCodeEditor && currentQuestion?.type === 'coding' ? 'w-1/2' : 'flex-1 w-full'}`}>
+        <div className={`flex flex-col bg-card m-4 rounded-lg border transition-all duration-300 ${showCodeEditor ? 'w-1/2' : 'flex-1 w-full'}`}>
           <div className="p-4 border-b">
             <div className="flex items-center justify-between">
               <h2 className="font-semibold">Interview Conversation</h2>
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" onClick={() => speakText(conversation.length > 0 ? conversation[conversation.length - 1].content : "")}>
                 <RotateCcw className="h-4 w-4" />
               </Button>
             </div>
@@ -463,73 +392,36 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({
                     <span className="text-xs opacity-70">
                       {message.type === 'ai' ? 'AI Interviewer' : 'You'} • {message.timestamp}
                     </span>
-                    {message.questionType === 'coding' && (
-                      <Badge variant="outline" className="ml-2 text-xs">
-                        <Code className="h-3 w-3 mr-1" />
-                        Coding
-                      </Badge>
-                    )}
                   </div>
-                  <p className="text-sm user-select-text">{message.content}</p>
+                  <p className="text-sm user-select-text whitespace-pre-wrap">{message.content}</p>
 
-                  {/* Show code submission for user messages */}
-                  {message.type === 'user' && message.codeSubmission && (
-                    <div className="mt-2 p-2 bg-background/20 rounded border">
-                      <div className="text-xs opacity-70 mb-1">Code Submission:</div>
-                      <pre className="text-xs overflow-x-auto">
-                        <code>{message.codeSubmission}</code>
-                      </pre>
+                  {message.codeSubmission && (
+                    <div className="mt-2 p-2 bg-black/10 rounded border text-xs font-mono overflow-x-auto">
+                      {message.codeSubmission.substring(0, 100)}...
                     </div>
                   )}
                 </div>
               </div>
             ))}
 
-            {/* User typing indicator */}
+            {/* Typing Indicators */}
             {isUserTyping && (
               <div className="flex justify-end">
                 <div className="max-w-[80%] rounded-lg p-3 bg-primary text-primary-foreground">
-                  <div className="flex items-center gap-2 mb-1">
-                    <User className="h-4 w-4" />
-                    <span className="text-xs opacity-70">You • {new Date().toLocaleTimeString()}</span>
-                  </div>
+                  <User className="h-4 w-4 mb-1" />
                   <div className="text-sm">
-                    {currentUserAnswer ? (
-                      <span>
-                        {currentUserAnswer.replace(/\[interim\].*$/, '')}
-                        {currentUserAnswer.includes('[interim]') && (
-                          <span className="opacity-60">
-                            {currentUserAnswer.match(/\[interim\](.*)/)?.[1] || ''}
-                          </span>
-                        )}
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-1">
-                        <span className="animate-pulse">●</span>
-                        <span className="animate-pulse">●</span>
-                        <span className="animate-pulse">●</span>
-                        Listening...
-                      </span>
-                    )}
+                    {currentUserAnswer.split(" [interim]")[0] || "Listening..."}
+                    <span className="opacity-50">{currentUserAnswer.includes("[interim]") ? currentUserAnswer.split("[interim]")[1] : ""}</span>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* AI typing indicator */}
             {isAITyping && (
               <div className="flex justify-start">
-                <div className="max-w-[80%] rounded-lg p-3 bg-muted text-muted-foreground">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Bot className="h-4 w-4" />
-                    <span className="text-xs opacity-70">AI Interviewer • {new Date().toLocaleTimeString()}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span className="animate-pulse">●</span>
-                    <span className="animate-pulse">●</span>
-                    <span className="animate-pulse">●</span>
-                    <span className="text-sm">AI is thinking...</span>
-                  </div>
+                <div className="bg-muted p-3 rounded-lg text-sm flex items-center gap-2">
+                  <Bot className="h-4 w-4" />
+                  <span className="animate-pulse">AI is thinking...</span>
                 </div>
               </div>
             )}
@@ -537,7 +429,6 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({
             <div ref={conversationEndRef} />
           </div>
 
-          {/* Recording Controls */}
           <div className="p-4 border-t">
             <Button
               onClick={handleToggleRecording}
@@ -547,41 +438,35 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({
               {isRecording ? (
                 <>
                   <MicOff className="h-4 w-4 mr-2" />
-                  End Answer
+                  Stop & Submit Answer
                 </>
               ) : (
                 <>
                   <Mic className="h-4 w-4 mr-2" />
-                  {showCodeEditor && currentQuestion?.type === 'coding' ? 'Start Answer (Voice + Code)' : 'Start Answer'}
+                  Start Answer
                 </>
               )}
             </Button>
-            {(showCodeEditor && currentQuestion?.type === 'coding') && (
-              <p className="text-xs text-muted-foreground mt-2 text-center">
-                Provide verbal explanation while coding your solution
-              </p>
-            )}
           </div>
         </div>
 
-        {/* Right Panel - Code Editor (Visible only for coding questions) */}
-        {showCodeEditor && currentQuestion?.type === 'coding' && (
+        {/* Right Panel - Code Editor */}
+        {showCodeEditor && (
           <div className="w-1/2 m-4 ml-0 flex flex-col bg-card rounded-lg border overflow-hidden">
             <div className="p-4 border-b bg-muted/30 flex items-center justify-between">
               <h4 className="font-semibold flex items-center">
                 <Code className="h-4 w-4 mr-2" />
                 Code Editor
               </h4>
-              <Badge variant="outline">{currentQuestion.language || 'javascript'}</Badge>
+              <Badge variant="outline">javascript</Badge>
             </div>
             <div className="flex-1 overflow-hidden">
               <CodeEditor
                 initialCode={currentCode}
-                initialLanguage={currentQuestion.language || 'javascript'}
+                initialLanguage={'javascript'}
                 onCodeChange={setCurrentCode}
                 className="h-full"
                 showFullscreenButton={true}
-                key={currentQuestion.content}
               />
             </div>
           </div>

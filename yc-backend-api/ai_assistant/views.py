@@ -221,7 +221,12 @@ class ChatSessionViewSet(viewsets.ModelViewSet):
         # Add conversation history
         chat_messages = chat_session.messages.order_by("created_at")
         for msg in chat_messages:
-            role = "user" if msg.message_type == "user" else "assistant"
+            if msg.message_type == "system":
+                role = "system"
+            elif msg.message_type == "user":
+                role = "user"
+            else:
+                role = "assistant"
             messages.append({"role": role, "content": msg.content})
 
         return messages
@@ -337,7 +342,13 @@ class ChatViewSet(viewsets.ViewSet):
 
         if serializer.is_valid():
             validated_data = serializer.validated_data
-            ai_agent_id = validated_data["ai_agent_id"]
+            ai_agent_id = validated_data.get("ai_agent_id")
+            if not ai_agent_id:
+                return Response(
+                    {"ai_agent_id": ["This field is required for quick chat."]},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            
             message_content = validated_data["message"]
             page_content = validated_data.get("page_content")
 

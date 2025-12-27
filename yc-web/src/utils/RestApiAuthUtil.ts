@@ -91,7 +91,13 @@ class RestApiAuthUtil extends RestApiUtil {
     }
 
     protected async request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
-        let authHeaders = this.getAuthHeaders();
+        let authHeaders = this.getAuthHeaders() as Record<string, string>;
+
+        // If body is FormData, remove Content-Type to allow browser to set boundary
+        if (options.body instanceof FormData) {
+            delete authHeaders['Content-Type'];
+        }
+
         let optionsWithAuth = {
             ...options,
             headers: {

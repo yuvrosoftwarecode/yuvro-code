@@ -19,9 +19,12 @@ from .serializers import (
     ContestSerializer, SkillTestSerializer, MockInterviewSerializer,
     SkillTestSubmissionSerializer
 )
+
 from course.models import Question
 from authentication.permissions import IsOwnerOrInstructorOrAdmin
 from .mixins import ProctoringMixin
+from django.core.mail import send_mail
+from django.conf import settings
 
 
 class CodeSubmissionViewSet(viewsets.ViewSet):
@@ -213,6 +216,32 @@ class ContestViewSet(viewsets.ModelViewSet):
             return Response({'message': 'Already Registered'}, status=status.HTTP_200_OK)
 
         ContestSubmission.objects.create(contest=contest, user=user, status=ContestSubmission.STATUS_STARTED)
+
+        try:
+            subject = f"Registration Confirmed: {contest.title}"
+            message = f"""
+        Hello {user.first_name or user.username},
+
+        You have successfully registered for the contest: {contest.title}.
+
+        Start Time: {contest.start_datetime.strftime('%Y-%m-%d %H:%M:%Z')}
+        End Time: {contest.end_datetime.strftime('%Y-%m-%d %H:%M:%Z')}
+        
+        Good Luck!
+
+        Team Yuvro
+        """
+
+            send_mail(
+                subject=subject,
+                message=message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+                fail_silently=True
+            )
+
+        except Exception as e:
+            print(f"Failed to send email: {str(e)}")
 
         return Response({'status': 'Registered'}, status=status.HTTP_201_CREATED)
 

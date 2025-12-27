@@ -11,6 +11,9 @@ interface Role {
   description: string;
   category: string;
   level: 'Beginner' | 'Intermediate' | 'Advanced';
+  interviewer_name?: string;
+  interviewer_voice_id?: string;
+  voice_speed?: number;
 }
 
 interface InterviewScreenProps {
@@ -71,31 +74,43 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({
     speechRef.current = utterance;
 
     const voices = window.speechSynthesis.getVoices();
-    console.log("Available voices:", voices.map(v => `${v.name} (${v.lang})`)); // Log available voices
+    // console.log("Available voices:", voices.map(v => `${v.name} (${v.lang})`)); 
 
     let selectedVoice = null;
+    const targetVoiceName = role.interviewer_voice_id;
 
-    if (interviewer === 'Junnu') {
-      // IN Male preference
-      selectedVoice = voices.find(voice => voice.name.includes("Microsoft Ravi")) ||
-        voices.find(voice => voice.lang === "en-IN" && voice.name.toLowerCase().includes("male")) ||
-        voices.find(voice => voice.name.includes("Male") && (voice.lang.includes("en-IN") || voice.name.includes("India"))) ||
-        voices.find(voice => voice.name.includes("Google UK English Male")); // Fallback to UK Male which is often available
-    } else {
-      // Munnu (Default) - US Female preference
-      selectedVoice = voices.find(voice => voice.name.includes("Google US English")) ||
-        voices.find(voice => voice.name.includes("Microsoft Zira")) ||
-        voices.find(voice => voice.lang === "en-US" && !voice.name.toLowerCase().includes("male"));
+    if (targetVoiceName) {
+        selectedVoice = voices.find(voice => voice.name === targetVoiceName);
+        if (!selectedVoice) {
+             // Try fuzzy match
+             selectedVoice = voices.find(voice => voice.name.includes(targetVoiceName));
+        }
+    }
+
+    // Fallback logic if no specific voice or specific voice not found
+    if (!selectedVoice) {
+        if (interviewer === 'Junnu') {
+          // IN Male preference
+          selectedVoice = voices.find(voice => voice.name.includes("Microsoft Ravi")) ||
+            voices.find(voice => voice.lang === "en-IN" && voice.name.toLowerCase().includes("male")) ||
+            voices.find(voice => voice.name.includes("Male") && (voice.lang.includes("en-IN") || voice.name.includes("India"))) ||
+            voices.find(voice => voice.name.includes("Google UK English Male"));
+        } else {
+          // Munnu (Default) - US Female preference
+          selectedVoice = voices.find(voice => voice.name.includes("Google US English")) ||
+            voices.find(voice => voice.name.includes("Microsoft Zira")) ||
+            voices.find(voice => voice.lang === "en-US" && !voice.name.toLowerCase().includes("male"));
+        }
     }
 
     if (selectedVoice) {
-      console.log(`Selected voice for ${interviewer}: ${selectedVoice.name}`);
+    //   console.log(`Selected voice for ${interviewer}: ${selectedVoice.name}`);
       utterance.voice = selectedVoice;
     } else {
       console.warn(`No specific voice found for ${interviewer}, using default.`);
     }
 
-    utterance.rate = 1;
+    utterance.rate = role.voice_speed || 1;
     utterance.pitch = 1;
     utterance.volume = 1;
 

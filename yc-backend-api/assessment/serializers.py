@@ -90,8 +90,8 @@ class MockInterviewSerializer(serializers.ModelSerializer):
         model = MockInterview
         fields = [
             'id', 'title', 'description', 'instructions', 'max_duration',
-            'ai_generation_mode', 'ai_verbal_question_count', 'ai_coding_question_count',
-            'voice_type', 'voice_speed', 'audio_settings',
+            'ai_generation_mode', 'ai_percentage', 'ai_verbal_question_count', 'ai_coding_question_count',
+            'voice_type', 'interviewer_name', 'interviewer_voice_id', 'voice_speed', 'audio_settings',
             'required_skills', 'optional_skills',
             'questions_config', 'questions_random_config', 'publish_status',
             'participants_count', 'created_by', 'created_at', 'updated_at',

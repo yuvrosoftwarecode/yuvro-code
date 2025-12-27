@@ -24,6 +24,50 @@ export default function InterviewsForm() {
   const [currentFormTab, setCurrentFormTab] = useState('details');
   const [loading, setLoading] = useState(false);
 
+  // Voice State
+  const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [previewText, setPreviewText] = useState('Hello! I am your interviewer for today. How are you doing?');
+
+  useEffect(() => {
+    const loadVoices = () => {
+      const voices = window.speechSynthesis.getVoices();
+      // Filter for useful voices (optional, but keeping all for now as user requested "all")
+      // Sorting to put Google voices on top might be nice
+      voices.sort((a, b) => {
+        if (a.name.includes('Google') && !b.name.includes('Google')) return -1;
+        if (!a.name.includes('Google') && b.name.includes('Google')) return 1;
+        return a.name.localeCompare(b.name);
+      });
+      setAvailableVoices(voices);
+    };
+
+    loadVoices();
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+
+    return () => {
+      window.speechSynthesis.onvoiceschanged = null;
+    }
+  }, []);
+
+  const playVoicePreview = (voiceName: string, text: string) => {
+    window.speechSynthesis.cancel();
+    if (!voiceName) {
+      toast.error("Please select a voice actor first.");
+      return;
+    }
+    const voice = availableVoices.find(v => v.name === voiceName);
+    if (!voice) {
+      toast.error("Selected voice not found on this system.");
+      return;
+    }
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.voice = voice;
+    utterance.rate = formData.voice_speed;
+    window.speechSynthesis.speak(utterance);
+  };
+
+
   // Form State matching the new model
   const [formData, setFormData] = useState({
     title: '',
@@ -33,11 +77,14 @@ export default function InterviewsForm() {
 
     // AI Config
     ai_generation_mode: 'full_ai' as 'full_ai' | 'mixed' | 'predefined',
+    ai_percentage: 100,
     ai_verbal_question_count: 5,
     ai_coding_question_count: 1,
 
     // Voice Config
-    voice_type: 'junnu' as 'junnu' | 'munnu',
+    voice_type: 'junnu' as 'junnu' | 'munnu', // Deprecated but kept for type safety if needed temporarily
+    interviewer_name: 'Junnu',
+    interviewer_voice_id: '',
     voice_speed: 1.0,
 
     // Skills (comma separated for input)
@@ -75,10 +122,13 @@ export default function InterviewsForm() {
           max_duration: data.max_duration || 30,
 
           ai_generation_mode: data.ai_generation_mode || 'full_ai',
+          ai_percentage: data.ai_percentage || 100,
           ai_verbal_question_count: data.ai_verbal_question_count || 5,
           ai_coding_question_count: data.ai_coding_question_count || 1,
 
           voice_type: data.voice_type || 'junnu',
+          interviewer_name: data.interviewer_name || 'Junnu',
+          interviewer_voice_id: data.interviewer_voice_id || '',
           voice_speed: data.voice_speed || 1.0,
 
           required_skills: (data.required_skills || []).join(', '),
@@ -116,10 +166,13 @@ export default function InterviewsForm() {
         max_duration: Number(formData.max_duration),
 
         ai_generation_mode: formData.ai_generation_mode,
+        ai_percentage: formData.ai_percentage,
         ai_verbal_question_count: Number(formData.ai_verbal_question_count),
         ai_coding_question_count: Number(formData.ai_coding_question_count),
 
         voice_type: formData.voice_type,
+        interviewer_name: formData.interviewer_name,
+        interviewer_voice_id: formData.interviewer_voice_id,
         voice_speed: Number(formData.voice_speed),
 
         required_skills: formData.required_skills.split(',').map(s => s.trim()).filter(Boolean),
@@ -249,7 +302,41 @@ export default function InterviewsForm() {
                           <option value="mixed">Mixed (AI + Predefined Questions)</option>
                           <option value="predefined">Predefined Questions Only</option>
                         </select>
+                        <p className="text-xs text-gray-500 mt-1">Controls how questions are selected for the interview.</p>
                       </div>
+
+                      {formData.ai_generation_mode === 'mixed' && (
+                        <div className="grid grid-cols-2 gap-4 border p-4 rounded-md bg-gray-50">
+                          <div>
+                            <label className="block text-sm font-medium mb-1">AI Generated (%)</label>
+                            <Input
+                              type="number"
+                              min={0}
+                              max={100}
+                              value={formData.ai_percentage}
+                              onChange={(e) => {
+                                const val = Math.min(100, Math.max(0, parseInt(e.target.value) || 0));
+                                setFormData({ ...formData, ai_percentage: val });
+                              }}
+                            />
+                            <p className="text-xs text-gray-500 mt-1">
+                              Questions to be generated by AI.
+                            </p>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium mb-1">Fixed Questions (%)</label>
+                            <Input
+                              disabled
+                              value={100 - (formData.ai_percentage || 0)}
+                              className="bg-gray-100 cursor-not-allowed"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">
+                              Remaining % will be from fixed/random question bank.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-sm font-medium mb-1">Verbal Questions Count</label>
@@ -275,17 +362,59 @@ export default function InterviewsForm() {
                     <CardContent className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm font-medium mb-1">Interviewer Voice</label>
-                          <select value={formData.voice_type} onChange={e => setFormData({ ...formData, voice_type: e.target.value as any })} className="w-full border rounded px-3 py-2">
-                            <option value="junnu">Junnu (Male - Indian Accent)</option>
-                            <option value="munnu">Munnu (Female - US Accent)</option>
-                          </select>
+                          <label className="block text-sm font-medium mb-1">Interviewer Name</label>
+                          <Input
+                            value={formData.interviewer_name}
+                            onChange={e => setFormData({ ...formData, interviewer_name: e.target.value })}
+                            placeholder="e.g. Junnu, Sarah, Mike"
+                          />
                         </div>
+
                         <div>
                           <label className="block text-sm font-medium mb-1">Voice Speed (0.5x - 2.0x)</label>
                           <Input type="number" value={formData.voice_speed} onChange={e => setFormData({ ...formData, voice_speed: parseFloat(e.target.value) })} min={0.5} max={2.0} step={0.1} />
                         </div>
                       </div>
+
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium">Select Voice Actor</label>
+                        <select
+                          value={formData.interviewer_voice_id}
+                          onChange={e => setFormData({ ...formData, interviewer_voice_id: e.target.value })}
+                          className="w-full border rounded px-3 py-2"
+                        >
+                          <option value="">-- Select a Google Voice --</option>
+                          {availableVoices.map((voice, idx) => (
+                            <option key={idx} value={voice.name}>
+                              {voice.name} ({voice.lang})
+                            </option>
+                          ))}
+                        </select>
+                        <p className="text-xs text-gray-500">
+                          Note: Available voices depend on your browser and operating system. Google voices are recommended for best quality.
+                        </p>
+                      </div>
+
+                      {/* Voice Preview Section */}
+                      <div className="mt-4 p-4 border rounded-lg bg-gray-50">
+                        <label className="block text-sm font-medium mb-2">Voice Preview</label>
+                        <div className="flex gap-2">
+                          <Input
+                            value={previewText}
+                            onChange={e => setPreviewText(e.target.value)}
+                            placeholder="Type something to hear the voice..."
+                            className="flex-1"
+                          />
+                          <Button
+                            type="button"
+                            onClick={() => playVoicePreview(formData.interviewer_voice_id, previewText)}
+                            variant="outline"
+                          >
+                            Play Preview
+                          </Button>
+                        </div>
+                      </div>
+
                     </CardContent>
                   </Card>
                 </TabsContent>

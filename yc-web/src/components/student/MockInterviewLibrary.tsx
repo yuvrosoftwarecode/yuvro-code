@@ -18,7 +18,10 @@ interface Role {
   description: string;
   category: string;
   level: 'Beginner' | 'Intermediate' | 'Advanced';
-  max_duration: number; // New field
+  max_duration: number;
+  interviewer_name: string; // New field
+  interviewer_voice_id: string; // New field
+  voice_speed: number; // New field
   icon?: string;
   iconBg?: string;
   iconColor?: string;
@@ -98,7 +101,10 @@ const MockInterviewLibrary: React.FC<MockInterviewLibraryProps> = ({ onStartInte
             description: item.description,
             category: item.ai_generation_mode.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()),
             level: level,
-            max_duration: item.max_duration, // Map max_duration
+            max_duration: item.max_duration,
+            interviewer_name: item.interviewer_name || 'Junnu',
+            interviewer_voice_id: item.interviewer_voice_id || '',
+            voice_speed: item.voice_speed || 1.0,
             icon: icon,
             iconBg: iconBg,
             iconColor: iconColor
@@ -208,6 +214,7 @@ const MockInterviewLibrary: React.FC<MockInterviewLibraryProps> = ({ onStartInte
       const settings: InterviewSettings = {
         difficulty: selectedDifficulty,
         duration: selectedDuration,
+        interviewer: selectedRole?.interviewer_name || 'Junnu',
         mediaStream: stream
       };
 

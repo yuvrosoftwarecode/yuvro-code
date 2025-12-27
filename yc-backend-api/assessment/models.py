@@ -171,9 +171,13 @@ class MockInterview(BaseModel):
     ai_generation_mode = models.CharField(max_length=20, choices=AI_GEN_CHOICES, default=AI_GEN_FULL)
     ai_verbal_question_count = models.IntegerField(default=5, help_text="Number of verbal questions AI should ask")
     ai_coding_question_count = models.IntegerField(default=1, help_text="Number of coding questions AI should ask")
+    ai_percentage = models.IntegerField(default=100, help_text="Percentage of AI generated questions (0-100)")
     
     # Voice Configuration
-    voice_type = models.CharField(max_length=20, choices=VOICE_CHOICES, default=VOICE_JUNNU)
+    voice_type = models.CharField(max_length=20, choices=VOICE_CHOICES, default=VOICE_JUNNU) # Deprecated
+    interviewer_name = models.CharField(max_length=100, default='Junnu', help_text="Name of the AI interviewer")
+    interviewer_voice_id = models.CharField(max_length=255, blank=True, default='', help_text="Specific voice ID for TTS")
+    
     voice_speed = models.FloatField(default=1.0, help_text="Voice playback speed (0.5 to 2.0)")
     audio_settings = models.JSONField(default=dict, blank=True, help_text="Additional audio settings")
 

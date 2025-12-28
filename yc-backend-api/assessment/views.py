@@ -18,7 +18,8 @@ from .models import (
     Contest, MockInterview, JobTest, SkillTest,
     ContestSubmission, MockInterviewSubmission, 
     JobTestSubmission, SkillTestSubmission,
-    SkillTestQuestionActivity, ContestQuestionActivity, MockInterviewQuestionActivity
+    SkillTestQuestionActivity, ContestQuestionActivity, MockInterviewQuestionActivity,
+    CodePracticeQuestionSubmission
 )
 from .serializers import (
     ContestSerializer, SkillTestSerializer, MockInterviewSerializer,
@@ -32,151 +33,10 @@ from django.core.mail import send_mail
 from django.conf import settings
 
 
-class CodeSubmissionViewSet(viewsets.ViewSet):
-    """
-    ViewSet to handle code execution requests Proxy.
-    Mimics the old code_executor API but logic is now effectively stateless or handled here.
-    """
-    permission_classes = [AllowAny] # Or IsAuthenticated depending on requirements
-
-    @action(detail=False, methods=['post'], url_path='execute')
-    def execute_code(self, request):
-        """
-        Execute code with test cases.
-        Proxies to the yc-code-executor microservice.
-        """
-        try:
-            # 1. Get Data
-            code = request.data.get('code')
-            language = request.data.get('language')
-            test_cases = request.data.get('test_cases', [])
-            test_cases_custom = request.data.get('test_cases_custom', [])
-            coding_problem_id = request.data.get('coding_problem_id')
-            
-            # 2. Call Code Executor Service
-            service_url = os.environ.get('CODE_EXECUTOR_URL', 'http://code-executor:8002')
-            
-            payload = {
-                'code': code,
-                'language': language,
-                'test_cases': test_cases,
-                'test_cases_custom': test_cases_custom,
-                'timeout': 10
-            }
-            
-            executor_response = requests.post(
-                f"{service_url}/execute-with-tests",
-                json=payload,
-                timeout=15
-            )
-            response_data = executor_response.json()
-
-            # 3. Plagiarism Check (if coding question and execution successful)
-            if coding_problem_id:
-                try:
-                    reference_submissions = []
-                    
-                    # Fetch from various activity models
-                    exclude_user_kwargs = {'user': request.user} if request.user.is_authenticated else {}
-                    
-                    models_to_check = [
-                        SkillTestQuestionActivity,
-                        ContestQuestionActivity,
-                        MockInterviewQuestionActivity
-                    ]
-                    
-                    for model_class in models_to_check:
-                         qs = model_class.objects.filter(
-                             question_id=coding_problem_id, 
-                             is_final_answer=True
-                         ).exclude(**exclude_user_kwargs).select_related('user').order_by('-updated_at')[:20]
-                         
-                         for activity in qs:
-                             reference_submissions.append({
-                                 'submission_id': str(activity.id),
-                                 'user_id': str(activity.user.id),
-                                 'answer_data': activity.answer_data
-                             })
-                             
-                    if reference_submissions:
-                        plagiarism_payload = {
-                            'target_code': code,
-                            'language': language,
-                            'reference_submissions': reference_submissions
-                        }
-                        
-                        plag_response = requests.post(
-                            f"{service_url}/plagiarism-check",
-                            json=plagiarism_payload,
-                            timeout=5
-                        )
-                        
-                        if plag_response.status_code == 200:
-                            plag_data = plag_response.json()
-                            response_data['plagiarism_score'] = plag_data.get('max_similarity', 0.0)
-                            response_data['plagiarism_details'] = plag_data
-                        
-                except Exception as e:
-                    print(f"Plagiarism check failed: {e}")
-                    pass
-
-            # 4. Format Response to match frontend expectation
-            exec_res = response_data.get('execution_result', {})
-            t_results = response_data.get('test_results', [])
-            
-            formatted_response = {
-                'id': 0, # Placeholder
-                'coding_problem': coding_problem_id or '',
-                'problem_title': 'Assessment Problem',
-                'problem_description': '',
-                'code': code,
-                'language': language,
-                'status': exec_res.get('status', 'error'),
-                'output': exec_res.get('output', ''),
-                'error_message': exec_res.get('error', ''),
-                'execution_time': exec_res.get('execution_time', 0),
-                'memory_usage': exec_res.get('memory_usage', 0),
-                'test_cases_passed': response_data.get('total_passed', 0),
-                'total_test_cases': response_data.get('total_tests', 0),
-                'plagiarism_score': response_data.get('plagiarism_score', 0),
-                'plagiarism_details': response_data.get('plagiarism_details', None),
-                'created_at': timezone.now().isoformat(),
-                'updated_at': timezone.now().isoformat(),
-                'test_results': {
-                    'passed': response_data.get('total_passed', 0),
-                    'total': response_data.get('total_tests', 0),
-                    'success': exec_res.get('success', False),
-                    'results': t_results
-                },
-                'plagiarism_flagged': response_data.get('plagiarism_score', 0) > 0.8
-            }
-
-            return Response(formatted_response, status=executor_response.status_code)
-
-        except requests.exceptions.RequestException as e:
-             return Response({
-                'status': 'error',
-                'error_message': f"Executor Service Unavailable: {str(e)}",
-                'execution_result': {'success': False},
-                'test_results': []
-            }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
-        except Exception as e:
-             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-    def list(self, request):
-        # Stub for getSubmissions
-        return Response([])
-
-    def retrieve(self, request, pk=None):
-        # Stub for getSubmission
-        return Response({})
-
-
 class ContestViewSet(ProctoringMixin, viewsets.ModelViewSet):
     queryset = Contest.objects.all()
     serializer_class = ContestSerializer
     
-    # ProctoringMixin Config
     submission_model = ContestSubmission
     question_activity_model = ContestQuestionActivity
     submission_lookup_field = 'contest'
@@ -274,7 +134,6 @@ class ContestViewSet(ProctoringMixin, viewsets.ModelViewSet):
 
         questions_to_send = []
 
-        # Option A: Fixed Configuration
         if contest.questions_config:
             all_ids = []
             for q_type, ids in contest.questions_config.items():
@@ -284,18 +143,13 @@ class ContestViewSet(ProctoringMixin, viewsets.ModelViewSet):
             if all_ids:
                 questions_to_send = list(Question.objects.filter(id__in=all_ids).values('id', 'title', 'content', 'type', 'mcq_options', 'marks', 'test_cases_basic'))
 
-        # Option B: Random Configuration
         if contest.questions_random_config:
             existing_ids = [q['id'] for q in questions_to_send]
             
             for q_type, count in contest.questions_random_config.items():
                 if count > 0:
-                    # Filter questions by type and ensure they are contest-appropriate
-                    # You might want to filter by difficulty or category if needed
-                    # For now, we assume any question of that type (maybe filtered by category='contest' if strictly enforced)
                     candidates = list(Question.objects.filter(
                         type=q_type
-                        # category='contest' # Uncomment if you want to restrict to contest questions only
                     ).exclude(id__in=existing_ids).values('id', 'title', 'content', 'type', 'mcq_options', 'marks', 'test_cases_basic'))
                     
                     if len(candidates) >= count:
@@ -324,7 +178,6 @@ class ContestViewSet(ProctoringMixin, viewsets.ModelViewSet):
         submission.status = ContestSubmission.STATUS_SUBMITTED
         submission.submitted_at = timezone.now()
         
-        # Auto-Grading Logic
         total_score = 0
         question_ids = answers.keys()
         db_questions = Question.objects.filter(id__in=question_ids)
@@ -335,13 +188,11 @@ class ContestViewSet(ProctoringMixin, viewsets.ModelViewSet):
                 continue
             question = q_map[q_id]
             
-            # MCQ Single
             if question.type == 'mcq_single':
                 correct_opt = next((opt for opt in question.mcq_options if opt.get('is_correct')), None)
                 if correct_opt and user_ans == correct_opt['text']:
                     total_score += question.marks
             
-            # MCQ Multiple
             elif question.type == 'mcq_multiple':
                 correct_opts = set(opt['text'] for opt in question.mcq_options if opt.get('is_correct'))
                 user_opts = set(user_ans) if isinstance(user_ans, list) else set([user_ans])
@@ -401,7 +252,6 @@ class SkillTestViewSet(ProctoringMixin, viewsets.ModelViewSet):
     queryset = SkillTest.objects.all()
     serializer_class = SkillTestSerializer
     
-    # ProctoringMixin Config
     submission_model = SkillTestSubmission
     question_activity_model = SkillTestQuestionActivity
     submission_lookup_field = 'skill_test'
@@ -816,3 +666,438 @@ class SkillTestSubmissionViewSet(viewsets.ReadOnlyModelViewSet):
         if skill_test_id:
             qs = qs.filter(skill_test_id=skill_test_id)
         return qs
+
+
+class CodePracticeSubmissionViewSet(viewsets.ModelViewSet):
+    queryset = CodePracticeQuestionSubmission.objects.all()
+    permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ['created_at', 'marks_obtained']
+    
+    def _mask_test_data(self, data_str):
+        """Mask sensitive parts of test data while keeping structure visible"""
+        if not data_str:
+            return data_str
+            
+        # For arrays/lists, show structure but mask some values
+        if data_str.startswith('[') and data_str.endswith(']'):
+            try:
+                import json
+                data = json.loads(data_str)
+                if isinstance(data, list) and len(data) > 0:
+                    if len(data) <= 3:
+                        # For small arrays, mask middle elements
+                        masked = data.copy()
+                        for i in range(1, len(masked) - 1):
+                            masked[i] = '***'
+                        return json.dumps(masked)
+                    else:
+                        # For larger arrays, show first, last, and some masked elements
+                        masked = [data[0], '***', '***']
+                        if len(data) > 3:
+                            masked.append('***')
+                        masked.append(data[-1])
+                        return json.dumps(masked)
+            except:
+                pass
+        
+        # For simple values, partially mask
+        if len(data_str) <= 3:
+            return '***'
+        elif len(data_str) <= 10:
+            return data_str[:2] + '***'
+        else:
+            return data_str[:3] + '***' + data_str[-2:]
+    
+    def get_queryset(self):
+        qs = super().get_queryset()
+        user = self.request.user
+        
+        if not user.is_staff:
+            qs = qs.filter(user=user)
+            
+        question_id = self.request.query_params.get('question_id')
+        if question_id:
+            qs = qs.filter(question_id=question_id)
+            
+        return qs
+    
+    def get_serializer_class(self):
+        from .serializers import CodePracticeQuestionSubmissionSerializer
+        return CodePracticeQuestionSubmissionSerializer
+    
+    @action(detail=False, methods=['post'], url_path='submit')
+    def submit_code(self, request):
+        try:
+            code = request.data.get('code')
+            language = request.data.get('language')
+            question_id = request.data.get('coding_problem_id')
+            course_id = request.data.get('course_id')
+            topic_id = request.data.get('topic_id')
+            test_cases_basic = request.data.get('test_cases_basic', [])
+            test_cases_advanced = request.data.get('test_cases_advanced', [])
+            test_cases_custom = request.data.get('test_cases_custom', [])
+            
+            if not code or not language or not question_id:
+                return Response({
+                    'error': 'Missing required fields: code, language, coding_problem_id'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            try:
+                question = Question.objects.get(id=question_id)
+            except Question.DoesNotExist:
+                return Response({
+                    'error': 'Question not found'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Use provided test cases or fall back to question's test cases
+            if not test_cases_basic:
+                test_cases_basic = question.test_cases_basic or []
+            if not test_cases_advanced:
+                test_cases_advanced = question.test_cases_advanced or []
+            
+            service_url = os.environ.get('CODE_EXECUTOR_URL', 'http://code-executor:8002')
+            
+            payload = {
+                'code': code,
+                'language': language,
+                'test_cases_basic': test_cases_basic,
+                'test_cases_advanced': test_cases_advanced,
+                'test_cases_custom': test_cases_custom,
+                'timeout': 10
+            }
+            
+            executor_response = requests.post(
+                f"{service_url}/execute-with-tests",
+                json=payload,
+                timeout=15
+            )
+            response_data = executor_response.json()
+            
+            plagiarism_score = 0.0
+            plagiarism_details = {}
+            
+            try:
+                reference_submissions = []
+                
+                recent_submissions = CodePracticeQuestionSubmission.objects.filter(
+                    question=question
+                ).exclude(user=request.user).select_related('user').order_by('-created_at')[:20]
+                
+                for submission in recent_submissions:
+                    code_data = submission.answer_data.get('code', '') if submission.answer_data else ''
+                    reference_submissions.append({
+                        'submission_id': str(submission.id),
+                        'user_id': str(submission.user.id),
+                        'answer_data': {'code': code_data}
+                    })
+                
+                if reference_submissions:
+                    plagiarism_payload = {
+                        'target_code': code,
+                        'language': language,
+                        'reference_submissions': reference_submissions
+                    }
+                    
+                    plag_response = requests.post(
+                        f"{service_url}/plagiarism-check",
+                        json=plagiarism_payload,
+                        timeout=5
+                    )
+                    
+                    if plag_response.status_code == 200:
+                        plag_data = plag_response.json()
+                        plagiarism_score = plag_data.get('max_similarity', 0.0)
+                        plagiarism_details = plag_data
+                        
+            except Exception as e:
+                print(f"Plagiarism check failed: {e}")
+                pass
+            
+            exec_res = response_data.get('execution_result', {})
+            
+            # Get separate test results
+            basic_results = response_data.get('basic_results', [])
+            advanced_results = response_data.get('advanced_results', [])
+            custom_results = response_data.get('custom_results', [])
+            
+            # Get counts
+            basic_passed = response_data.get('basic_passed', 0)
+            advanced_passed = response_data.get('advanced_passed', 0)
+            custom_passed = response_data.get('custom_passed', 0)
+            
+            total_tests = response_data.get('total_tests', 0)
+            total_passed = response_data.get('total_passed', 0)
+            is_successful = total_tests > 0 and total_passed == total_tests
+            
+            # Check if submission already exists for this user and question
+            existing_submission = CodePracticeQuestionSubmission.objects.filter(
+                user=request.user,
+                question=question
+            ).first()
+            
+            if existing_submission:
+                # Update existing submission
+                submission = existing_submission
+                
+                # Add current submission to history
+                history_entry = {
+                    'timestamp': timezone.now().isoformat(),
+                    'answer_data': {
+                        'code': code,
+                        'language': language,
+                        'test_cases_basic': test_cases_basic,
+                        'test_cases_advanced': test_cases_advanced,
+                        'test_cases_custom': test_cases_custom
+                    },
+                    'execution_results': {
+                        'execution_result': exec_res,
+                        'basic_results': basic_results,
+                        'advanced_results': advanced_results,
+                        'custom_results': custom_results,
+                        'basic_passed': basic_passed,
+                        'advanced_passed': advanced_passed,
+                        'custom_passed': custom_passed,
+                        'total_passed': total_passed,
+                        'total_tests': total_tests,
+                        'success': exec_res.get('success', False)
+                    },
+                    'plagiarism_data': {
+                        'is_plagiarized': plagiarism_score > 0.8,
+                        'similarity_score': plagiarism_score,
+                        'matched_with': plagiarism_details.get('best_match', {}).get('submission_id', '') if plagiarism_details else ''
+                    },
+                    'is_auto_save': False
+                }
+                
+                # Update submission fields
+                submission.answer_latest = {
+                    'code': code,
+                    'language': language,
+                    'test_cases_basic': test_cases_basic,
+                    'test_cases_advanced': test_cases_advanced,
+                    'test_cases_custom': test_cases_custom
+                }
+                submission.answer_history.append(history_entry)
+                submission.answer_attempt_count += 1
+                submission.execution_output = exec_res.get('output', '')
+                submission.evaluation_results = {
+                    'execution_result': exec_res,
+                    'basic_results': basic_results,
+                    'advanced_results': advanced_results,
+                    'custom_results': custom_results,
+                    'basic_passed': basic_passed,
+                    'advanced_passed': advanced_passed,
+                    'custom_passed': custom_passed,
+                    'total_passed': total_passed,
+                    'total_tests': total_tests,
+                    'success': exec_res.get('success', False)
+                }
+                submission.plagiarism_data = {
+                    'is_plagiarized': plagiarism_score > 0.8,
+                    'similarity_score': plagiarism_score,
+                    'matched_with': plagiarism_details.get('best_match', {}).get('submission_id', '') if plagiarism_details else ''
+                }
+                submission.marks_obtained = question.marks if is_successful else 0
+                
+                # Update course and topic from frontend or question if not set
+                if course_id and not submission.course:
+                    try:
+                        from course.models import Course
+                        submission.course = Course.objects.get(id=course_id)
+                    except Course.DoesNotExist:
+                        pass
+                elif not submission.course and question.course:
+                    submission.course = question.course
+                    
+                if topic_id and not submission.topic:
+                    try:
+                        from course.models import Topic
+                        submission.topic = Topic.objects.get(id=topic_id)
+                    except Topic.DoesNotExist:
+                        pass
+                elif not submission.topic and question.topic:
+                    submission.topic = question.topic
+                elif not submission.topic and question.subtopic and question.subtopic.topic:
+                    submission.topic = question.subtopic.topic
+                    
+                submission.save()
+                
+            else:
+                # Determine course and topic from frontend or question
+                course = None
+                topic = None
+                
+                # Try to get course and topic from frontend parameters first
+                if course_id:
+                    try:
+                        from course.models import Course
+                        course = Course.objects.get(id=course_id)
+                    except Course.DoesNotExist:
+                        pass
+                        
+                if topic_id:
+                    try:
+                        from course.models import Topic
+                        topic = Topic.objects.get(id=topic_id)
+                    except Topic.DoesNotExist:
+                        pass
+                
+                # Fall back to question's relationships if not provided from frontend
+                if not course:
+                    course = question.course
+                if not topic:
+                    topic = question.topic
+                    if not topic and question.subtopic:
+                        topic = question.subtopic.topic
+                
+                # Create new submission
+                submission = CodePracticeQuestionSubmission.objects.create(
+                    user=request.user,
+                    question=question,
+                    course=course,
+                    topic=topic,
+                    status=CodePracticeQuestionSubmission.STATUS_COMPLETED,
+                    answer_latest={
+                        'code': code,
+                        'language': language,
+                        'test_cases_basic': test_cases_basic,
+                        'test_cases_advanced': test_cases_advanced,
+                        'test_cases_custom': test_cases_custom
+                    },
+                    answer_history=[{
+                        'timestamp': timezone.now().isoformat(),
+                        'answer_data': {
+                            'code': code,
+                            'language': language,
+                            'test_cases_basic': test_cases_basic,
+                            'test_cases_advanced': test_cases_advanced,
+                            'test_cases_custom': test_cases_custom
+                        },
+                        'execution_results': {
+                            'execution_result': exec_res,
+                            'basic_results': basic_results,
+                            'advanced_results': advanced_results,
+                            'custom_results': custom_results,
+                            'basic_passed': basic_passed,
+                            'advanced_passed': advanced_passed,
+                            'custom_passed': custom_passed,
+                            'total_passed': total_passed,
+                            'total_tests': total_tests,
+                            'success': exec_res.get('success', False)
+                        },
+                        'plagiarism_data': {
+                            'is_plagiarized': plagiarism_score > 0.8,
+                            'similarity_score': plagiarism_score,
+                            'matched_with': plagiarism_details.get('best_match', {}).get('submission_id', '') if plagiarism_details else ''
+                        },
+                        'is_auto_save': False
+                    }],
+                    execution_output=exec_res.get('output', ''),
+                    evaluation_results={
+                        'execution_result': exec_res,
+                        'basic_results': basic_results,
+                        'advanced_results': advanced_results,
+                        'custom_results': custom_results,
+                        'basic_passed': basic_passed,
+                        'advanced_passed': advanced_passed,
+                        'custom_passed': custom_passed,
+                        'total_passed': total_passed,
+                        'total_tests': total_tests,
+                        'success': exec_res.get('success', False)
+                    },
+                    plagiarism_data={
+                        'is_plagiarized': plagiarism_score > 0.8,
+                        'similarity_score': plagiarism_score,
+                        'matched_with': plagiarism_details.get('best_match', {}).get('submission_id', '') if plagiarism_details else ''
+                    },
+                    answer_attempt_count=1,
+                    marks_obtained=question.marks if is_successful else 0
+                )
+            
+            # Calculate test case counts for filtering results
+            basic_count = len(test_cases_basic)
+            custom_count = len(test_cases_custom)
+            advanced_count = len(test_cases_advanced)
+            visible_test_count = basic_count + custom_count
+            total_test_count = basic_count + custom_count + advanced_count
+            
+            # Show basic and custom test case results to the user
+            visible_test_results = basic_results + custom_results
+            visible_passed = basic_passed + custom_passed
+            visible_test_count = len(basic_results) + len(custom_results)
+            
+            # Create masked advanced test case results
+            masked_advanced_results = []
+            for i, result in enumerate(advanced_results):
+                # Mask parts of input and expected output for advanced test cases
+                masked_input = self._mask_test_data(result.get('input', ''))
+                masked_expected = self._mask_test_data(result.get('expected_output', ''))
+                
+                masked_advanced_results.append({
+                    'passed': result.get('passed', False),
+                    'input': masked_input,
+                    'expected_output': masked_expected,
+                    'actual_output': result.get('actual_output', '') if result.get('passed', False) else '***',
+                    'error': result.get('error', '') if not result.get('passed', False) else '',
+                    'execution_time': result.get('execution_time', 0),
+                    'is_hidden': True,
+                    'test_case_number': visible_test_count + i + 1
+                })
+            
+            # Combine visible and masked advanced test results
+            all_displayed_results = visible_test_results + masked_advanced_results
+            
+            # Calculate overall success including hidden advanced tests
+            overall_success = total_tests > 0 and total_passed == total_tests
+            
+            formatted_response = {
+                'id': submission.id,
+                'coding_problem': str(question.id),
+                'problem_title': question.title,
+                'problem_description': question.content,
+                'code': code,
+                'language': language,
+                'status': 'completed',  # Always completed if submission was processed
+                'output': submission.execution_output,
+                'error_message': exec_res.get('error', ''),
+                'execution_time': exec_res.get('execution_time', 0),
+                'memory_usage': exec_res.get('memory_usage', 0),
+                'test_cases_passed': total_passed,  # Show total passed including advanced
+                'total_test_cases': total_tests,  # Show total including advanced
+                'plagiarism_score': plagiarism_score,
+                'plagiarism_details': plagiarism_details,
+                'created_at': submission.created_at.isoformat(),
+                'updated_at': submission.updated_at.isoformat(),
+                'test_results': {
+                    'passed': total_passed,
+                    'total': total_tests,
+                    'total_passed': total_passed,
+                    'total_tests': total_tests,
+                    'success': overall_success,
+                    'test_results': all_displayed_results,
+                    'results': all_displayed_results,
+                    'visible_passed': visible_passed,
+                    'visible_total': visible_test_count,
+                    'advanced_passed': total_passed - visible_passed if total_tests > visible_test_count else 0,
+                    'advanced_total': advanced_count,
+                    'overall_success': overall_success
+                },
+                'plagiarism_flagged': plagiarism_score > 0.8
+            }
+            
+            return Response(formatted_response, status=status.HTTP_201_CREATED)
+            
+        except requests.exceptions.RequestException as e:
+            return Response({
+                'status': 'error',
+                'error_message': f"Code Executor Service Unavailable: {str(e)}",
+                'execution_result': {'success': False},
+                'test_results': []
+            }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        except Exception as e:
+            return Response({
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+ 

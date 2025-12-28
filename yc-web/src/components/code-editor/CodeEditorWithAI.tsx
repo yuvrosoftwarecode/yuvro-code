@@ -9,7 +9,7 @@ import CodeEditor, { CodeEditorHandle } from './CodeEditor';
 import type { Course, Topic, CodingProblem } from '@/pages/student/CodePractice';
 import { ResizablePanel, ResizablePanelGroup, ResizableHandle } from '@/components/ui/resizable';
 import AIChatContainer from '@/components/student/LearnCertify/AIChatWidget/AIChatContainer';
-import codeExecutorService from '@/services/codeExecutorService';
+import codeEditorService from '@/services/codeEditorService';
 
 interface CodeEditorWithAIProps {
   problem: CodingProblem;
@@ -64,7 +64,7 @@ const CodeEditorWithAI = forwardRef<CodeEditorWithAIHandle, CodeEditorWithAIProp
   useEffect(() => {
     const fetchTemplates = async () => {
       try {
-        const data = await codeExecutorService.getSupportedLanguagesAndTemplates();
+        const data = await codeEditorService.getSupportedLanguagesAndTemplates();
         const templateMap: Record<string, string> = {};
         if (data.details) {
           Object.entries(data.details).forEach(([lang, config]: [string, any]) => {
@@ -416,10 +416,9 @@ ${codeEditorRef.current?.getCode() || ''}
                   onLanguageChange={setLanguage}
                   problemTitle={problem.title}
                   problemId={problem.id}
-                  testCases={[
-                    ...(problem.test_cases_basic || []),
-                    ...(problem.test_cases_advanced || [])
-                  ]}
+                  courseId={course.id}
+                  topicId={topic.id}
+                  testCases={problem.test_cases_basic || []}
                   showTestCases={true}
                   allowCustomTestCases={true}
                   showFullscreenButton={true}
@@ -507,10 +506,9 @@ ${codeEditorRef.current?.getCode() || ''}
                     onLanguageChange={setLanguage}
                     problemTitle={problem.title}
                     problemId={problem.id}
-                    testCases={[
-                      ...(problem.test_cases_basic || []),
-                      ...(problem.test_cases_advanced || [])
-                    ]}
+                    courseId={course.id}
+                    topicId={topic.id}
+                    testCases={problem.test_cases_basic || []}
                     showTestCases={true}
                     allowCustomTestCases={true}
                     showFullscreenButton={true}

@@ -1,4 +1,4 @@
-import { RestApiUtil } from '@/utils/RestApiUtil';
+import restApiAuthUtil from '@/utils/RestApiAuthUtil';
 
 export interface DashboardStats {
   coursesEnrolled: number;
@@ -59,18 +59,17 @@ class StudentDashboardService {
 
   async getDashboardData(): Promise<DashboardData> {
     try {
-      const response = await RestApiUtil.get<DashboardData>(`${this.baseUrl}/`);
+      const response = await restApiAuthUtil.get<DashboardData>(`${this.baseUrl}/`);
       return response;
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
-      // Return mock data as fallback
       return this.getMockDashboardData();
     }
   }
 
   async getStats(): Promise<DashboardStats> {
     try {
-      const response = await RestApiUtil.get<DashboardStats>(`${this.baseUrl}/stats/`);
+      const response = await restApiAuthUtil.get<DashboardStats>(`${this.baseUrl}/stats/`);
       return response;
     } catch (error) {
       console.error('Error fetching dashboard stats:', error);
@@ -87,7 +86,7 @@ class StudentDashboardService {
 
   async getRecentActivity(): Promise<RecentActivity[]> {
     try {
-      const response = await RestApiUtil.get<RecentActivity[]>(`${this.baseUrl}/activity/`);
+      const response = await restApiAuthUtil.get<RecentActivity[]>(`${this.baseUrl}/activity/`);
       return response;
     } catch (error) {
       console.error('Error fetching recent activity:', error);
@@ -97,7 +96,7 @@ class StudentDashboardService {
 
   async getUpcomingEvents(): Promise<UpcomingEvent[]> {
     try {
-      const response = await RestApiUtil.get<UpcomingEvent[]>(`${this.baseUrl}/events/`);
+      const response = await restApiAuthUtil.get<UpcomingEvent[]>(`${this.baseUrl}/events/`);
       return response;
     } catch (error) {
       console.error('Error fetching upcoming events:', error);
@@ -107,7 +106,7 @@ class StudentDashboardService {
 
   async getRecommendedJobs(): Promise<RecommendedJob[]> {
     try {
-      const response = await RestApiUtil.get<RecommendedJob[]>(`${this.baseUrl}/recommended-jobs/`);
+      const response = await restApiAuthUtil.get<RecommendedJob[]>(`${this.baseUrl}/recommended-jobs/`);
       return response;
     } catch (error) {
       console.error('Error fetching recommended jobs:', error);
@@ -117,7 +116,7 @@ class StudentDashboardService {
 
   async getCourseProgress(): Promise<CourseProgress[]> {
     try {
-      const response = await RestApiUtil.get<CourseProgress[]>(`${this.baseUrl}/course-progress/`);
+      const response = await restApiAuthUtil.get<CourseProgress[]>(`${this.baseUrl}/course-progress/`);
       return response;
     } catch (error) {
       console.error('Error fetching course progress:', error);

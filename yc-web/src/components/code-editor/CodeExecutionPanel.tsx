@@ -4,10 +4,10 @@ import ExecutionResults from './ExecutionResults';
 import TestCaseViewer from './TestCaseViewer';
 import CustomTestCaseManager from './CustomTestCaseManager';
 import ExampleCodeGallery from './ExampleCodeGallery';
-import codeExecutorService, {
+import codeEditorService, {
   CodeExecutionRequest,
   ExecutionResult
-} from '../../services/codeExecutorService';
+} from '../../services/codeEditorService';
 
 export interface CodingProblem {
   id: string;
@@ -159,7 +159,7 @@ const CodeExecutionPanel: React.FC<CodeExecutionPanelProps> = ({
 
     try {
       // Run code directly with FastAPI (no saving to database)
-      const executionResult = await codeExecutorService.runCode({
+      const executionResult = await codeEditorService.runCode({
         code,
         language,
         test_cases: allTestCases,
@@ -220,7 +220,7 @@ const CodeExecutionPanel: React.FC<CodeExecutionPanelProps> = ({
       console.log('Submitting request:', request);
 
       // Submit solution via Django API (saves to database)
-      const executionResult = await codeExecutorService.submitSolution(request);
+      const executionResult = await codeEditorService.submitSolution(request);
       console.log('Submit Solution Result:', executionResult);
       setResult(executionResult);
       onSubmissionComplete?.(executionResult);

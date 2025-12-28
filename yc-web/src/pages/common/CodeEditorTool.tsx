@@ -70,6 +70,7 @@ const CodeEditorPage: React.FC = () => {
                         isEmbedded={true}
                         showAiBuddy={true}
                         showProblemDescription={false}
+                        codeSubmissionType="practice"
                     />
                 </div>
             </div>

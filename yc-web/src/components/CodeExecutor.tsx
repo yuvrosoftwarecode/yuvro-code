@@ -1,6 +1,6 @@
 import React from 'react';
 import { CodeExecutionPanel } from './code-editor';
-import { ExecutionResult } from '../services/codeExecutorService';
+import { ExecutionResult } from '../services/codeEditorService';
 
 interface CodeExecutorProps {
   codingProblem?: {

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 're
 import { Button } from '@/components/ui/button';
 import { Play, Send, X, FlaskConical, Terminal, CheckCircle2, XCircle, Zap, Activity } from 'lucide-react';
 import MonacoCodeEditor from './MonacoCodeEditor';
-import codeExecutorService from '@/services/codeExecutorService';
+import codeEditorService from '@/services/codeEditorService';
 import ExampleCodeGallery from '@/components/code-editor/ExampleCodeGallery';
 import { ResizablePanel, ResizablePanelGroup, ResizableHandle } from '@/components/ui/resizable';
 import { toast } from 'sonner';
@@ -24,6 +24,14 @@ interface CodeEditorProps {
   initialLanguage?: string;
   problemTitle?: string;
   problemId?: string;
+  courseId?: string;
+  topicId?: string;
+  submissionType?: 'code_practice' | 'skill_test' | 'contest' | 'mock_interview';
+  codeSubmissionType?: 'learn' | 'practice';
+  submissionId?: string;
+  contestId?: string;
+  skillTestId?: string;
+  mockInterviewId?: string;
   testCases?: Array<{
     input: string;
     expected_output: string;
@@ -56,6 +64,14 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(({
   initialLanguage = 'python',
   problemTitle = 'Code Practice',
   problemId = 'practice',
+  courseId,
+  topicId,
+  submissionType = 'code_practice',
+  codeSubmissionType = 'practice',
+  submissionId,
+  contestId,
+  skillTestId,
+  mockInterviewId,
   testCases = [],
   showTestCases = true,
   allowCustomTestCases = true,
@@ -145,7 +161,7 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(({
       }
 
       try {
-        const data = await codeExecutorService.getSupportedLanguagesAndTemplates();
+        const data = await codeEditorService.getSupportedLanguagesAndTemplates();
         const templateMap: Record<string, string> = {};
         if (data.details) {
           Object.entries(data.details).forEach(([lang, config]: [string, any]) => {
@@ -252,7 +268,7 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(({
     setActiveBottomTab('output');
 
     try {
-      const res = await codeExecutorService.runCode({
+      const res = await codeEditorService.runCode({
         code,
         language,
         test_cases: basicTestCases,
@@ -293,17 +309,27 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(({
     setActiveBottomTab('output');
 
     try {
-      const allTestCases = testCases.map((t: any) => ({
-        input: typeof t.input === 'string' ? t.input : JSON.stringify(t.input),
-        expected_output: typeof t.expected_output === 'string' ? t.expected_output : JSON.stringify(t.expected_output),
-        weight: t.weight || 1,
-      }));
-
-      const res = await codeExecutorService.submitSolution({
+      const res = await codeEditorService.submitSolution({
         code,
         language,
         coding_problem_id: problemId,
-        test_cases: allTestCases,
+        course_id: courseId,
+        topic_id: topicId,
+        submission_type: submissionType, // This is for assessment type (code_practice, skill_test, etc.)
+        code_submission_type: codeSubmissionType, // This is for learn/practice
+        submission_id: submissionId,
+        contest_id: contestId,
+        skill_test_id: skillTestId,
+        mock_interview_id: mockInterviewId,
+        test_cases_basic: testCases.map(tc => ({
+          input: typeof tc.input === 'string' ? tc.input : JSON.stringify(tc.input),
+          expected_output: typeof tc.expected_output === 'string' ? tc.expected_output : JSON.stringify(tc.expected_output),
+          weight: tc.weight || 1
+        })),
+        test_cases_custom: customTestCases.map(tc => ({
+          input: tc.input,
+          expected_output: tc.expected_output
+        }))
       });
 
       setTestResults(res.test_results ?? null);
@@ -314,13 +340,16 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(({
         plagiarism_score: res.plagiarism_score,
       });
 
-      if (res.status === 'completed') {
-        const passed = res.test_results?.passed ?? 0;
-        const total = res.test_results?.total ?? 0;
-        const passRate = total ? ((passed / total) * 100).toFixed(1) : '0.0';
-        toast.success(`Solution submitted: ${passed}/${total} passed (${passRate}%)`);
+      const passed = res.test_cases_passed ?? 0;
+      const total = res.total_test_cases ?? 0;
+      const passRate = total ? ((passed / total) * 100).toFixed(1) : '0.0';
+      
+      if (passed === total && total > 0) {
+        toast.success(`Solution submitted: All ${total} test cases passed (100%)`);
+      } else if (total > 0) {
+        toast.success(`Solution submitted: ${passed}/${total} test cases passed (${passRate}%)`);
       } else {
-        toast.error('Submission failed');
+        toast.success('Solution submitted successfully');
       }
 
       onSubmissionComplete?.(res);
@@ -460,7 +489,20 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(({
                                   <div className="text-xs text-purple-600 mt-1">KB</div>
                                 </div>
                               )}
-                              {executionMetrics.status && (
+                              {(testResults?.passed !== undefined && testResults?.total !== undefined) ? (
+                                <div className={`p-5 rounded-xl border shadow-md hover:shadow-lg transition-shadow ${testResults.passed === testResults.total
+                                  ? 'bg-gradient-to-br from-green-50 to-green-100/50 border-green-200'
+                                  : 'bg-gradient-to-br from-amber-50 to-amber-100/50 border-amber-200'
+                                  }`}>
+                                  <div className={`text-xs font-semibold uppercase tracking-wide mb-2 ${testResults.passed === testResults.total ? 'text-green-700' : 'text-amber-700'}`}>Test Cases</div>
+                                  <div className={`text-2xl font-bold ${testResults.passed === testResults.total ? 'text-green-900' : 'text-amber-900'}`}>
+                                    {testResults.passed}/{testResults.total}
+                                  </div>
+                                  <div className={`text-xs mt-1 ${testResults.passed === testResults.total ? 'text-green-600' : 'text-amber-600'}`}>
+                                    {testResults.passed === testResults.total ? 'All Passed' : 'Some Failed'}
+                                  </div>
+                                </div>
+                              ) : executionMetrics.status && (
                                 <div className={`p-5 rounded-xl border shadow-md hover:shadow-lg transition-shadow ${executionMetrics.status === 'completed'
                                   ? 'bg-gradient-to-br from-green-50 to-green-100/50 border-green-200'
                                   : 'bg-gradient-to-br from-amber-50 to-amber-100/50 border-amber-200'
@@ -491,7 +533,7 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(({
                         )}
 
                         {/* Console Output */}
-                        {output && (
+                        {(output || (testResults && testResults.results)) && (
                           <div>
                             <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                               <Activity className="h-5 w-5 text-emerald-600" />
@@ -499,14 +541,33 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(({
                             </h4>
                             <div className="bg-gradient-to-br from-gray-900 to-gray-800 p-5 rounded-xl border border-gray-700 shadow-xl">
                               <pre className="text-green-400 text-sm whitespace-pre-wrap overflow-auto font-mono leading-relaxed">
-                                {output}
+                                {(() => {
+                                  // Show console outputs from basic test cases only
+                                  if (testResults && testResults.results && Array.isArray(testResults.results)) {
+                                    const basicTestResults = testResults.results.filter((result: any) => !result.is_hidden);
+                                    const consoleOutputs = basicTestResults
+                                      .map((result: any, idx: number) => {
+                                        const consoleOutput = result.console_output || '';
+                                        return consoleOutput ? `Test Case ${idx + 1}:\n${consoleOutput}` : '';
+                                      })
+                                      .filter((output: string) => output)
+                                      .join('\n\n');
+                                    
+                                    if (consoleOutputs) {
+                                      return consoleOutputs;
+                                    }
+                                  }
+                                  
+                                  // Fallback to original output if no console outputs from test cases
+                                  return output || 'No console output available';
+                                })()}
                               </pre>
                             </div>
                           </div>
                         )}
 
                         {/* Test Results */}
-                        {testResults && Array.isArray(testResults.results) && (
+                        {testResults && testResults.results && Array.isArray(testResults.results) && (
                           <div>
                             <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
                               <CheckCircle2 className="h-5 w-5 text-blue-600" />
@@ -519,46 +580,97 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(({
                               </span>
                             </h4>
                             <div className="grid grid-cols-1 gap-5">
-                              {testResults.results.map((result: any, idx: number) => (
-                                <div key={idx} className={`border-2 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow ${result.passed ? 'border-green-200 bg-gradient-to-br from-green-50/50 to-green-100/30' : 'border-red-200 bg-gradient-to-br from-red-50/50 to-red-100/30'}`}>
-                                  <div className={`px-6 py-4 border-b-2 flex justify-between items-center ${result.passed ? 'bg-green-100/60 border-green-200' : 'bg-red-100/60 border-red-200'}`}>
-                                    <div className="flex items-center gap-3">
-                                      {result.passed ? <CheckCircle2 className="h-5 w-5 text-green-600" /> : <XCircle className="h-5 w-5 text-red-600" />}
-                                      <span className="font-bold text-lg text-gray-800">Test Case #{idx + 1}</span>
+                              {testResults.results.map((result: any, idx: number) => {
+                                const isHidden = result.is_hidden || false;
+                                const testCaseNumber = result.test_case_number || idx + 1;
+                                
+                                return (
+                                  <div key={idx} className={`border-2 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow ${
+                                    isHidden 
+                                      ? result.passed 
+                                        ? 'border-blue-200 bg-gradient-to-br from-blue-50/50 to-blue-100/30' 
+                                        : 'border-purple-200 bg-gradient-to-br from-purple-50/50 to-purple-100/30'
+                                      : result.passed 
+                                        ? 'border-green-200 bg-gradient-to-br from-green-50/50 to-green-100/30' 
+                                        : 'border-red-200 bg-gradient-to-br from-red-50/50 to-red-100/30'
+                                  }`}>
+                                    <div className={`px-6 py-4 border-b-2 flex justify-between items-center ${
+                                      isHidden
+                                        ? result.passed 
+                                          ? 'bg-blue-100/60 border-blue-200' 
+                                          : 'bg-purple-100/60 border-purple-200'
+                                        : result.passed 
+                                          ? 'bg-green-100/60 border-green-200' 
+                                          : 'bg-red-100/60 border-red-200'
+                                    }`}>
+                                      <div className="flex items-center gap-3">
+                                        {result.passed ? <CheckCircle2 className="h-5 w-5 text-green-600" /> : <XCircle className="h-5 w-5 text-red-600" />}
+                                        <span className="font-bold text-lg text-gray-800">
+                                          Test Case #{testCaseNumber}
+                                          {isHidden && (
+                                            <span className="ml-2 text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded-full font-medium">
+                                              Hidden
+                                            </span>
+                                          )}
+                                        </span>
+                                      </div>
+                                      <span className={`text-sm font-bold px-4 py-2 rounded-full ${
+                                        result.passed 
+                                          ? 'bg-green-200 text-green-800' 
+                                          : 'bg-red-200 text-red-800'
+                                      }`}>
+                                        {result.passed ? '✓ PASSED' : '✗ FAILED'}
+                                      </span>
                                     </div>
-                                    <span className={`text-sm font-bold px-4 py-2 rounded-full ${result.passed ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'}`}>
-                                      {result.passed ? '✓ PASSED' : '✗ FAILED'}
-                                    </span>
-                                  </div>
-                                  <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 bg-white/80">
-                                    <div className="space-y-2">
-                                      <div className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Input</div>
-                                      <pre className="text-sm bg-gray-50 p-4 border border-gray-200 rounded-lg font-mono text-gray-800 overflow-x-auto shadow-sm">{result.input}</pre>
-                                    </div>
-                                    <div className="space-y-2">
-                                      <div className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Expected Output</div>
-                                      <pre className="text-sm bg-gray-50 p-4 border border-gray-200 rounded-lg font-mono text-gray-800 overflow-x-auto shadow-sm">{result.expected_output}</pre>
-                                    </div>
-                                    <div className="space-y-2 col-span-1 md:col-span-2">
-                                      <div className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Actual Output</div>
-                                      <pre className={`text-sm p-4 border rounded-lg font-mono overflow-x-auto shadow-sm ${result.passed
-                                        ? 'bg-green-50 border-green-200 text-green-800'
-                                        : 'bg-red-50 border-red-200 text-red-800'
+                                    <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 bg-white/80">
+                                      <div className="space-y-2">
+                                        <div className="text-xs text-gray-500 font-semibold uppercase tracking-wider">
+                                          Input {isHidden && <span className="text-gray-400">(Partially Hidden)</span>}
+                                        </div>
+                                        <pre className={`text-sm p-4 border rounded-lg font-mono overflow-x-auto shadow-sm ${
+                                          isHidden 
+                                            ? 'bg-gray-100 border-gray-300 text-gray-600' 
+                                            : 'bg-gray-50 border-gray-200 text-gray-800'
                                         }`}>
-                                        {result.actual_output}
-                                      </pre>
-                                    </div>
-                                    {result.error_message && result.error_message !== 'N/A' && (
-                                      <div className="col-span-1 md:col-span-2">
-                                        <div className="text-xs font-semibold text-red-600 uppercase tracking-wide mb-2">Error Message</div>
-                                        <pre className="bg-red-50 p-4 rounded-lg text-sm whitespace-pre-wrap overflow-x-auto border border-red-200 font-mono text-red-700 shadow-sm">
-                                          {result.error_message}
+                                          {result.input}
                                         </pre>
                                       </div>
-                                    )}
+                                      <div className="space-y-2">
+                                        <div className="text-xs text-gray-500 font-semibold uppercase tracking-wider">
+                                          Expected Output {isHidden && <span className="text-gray-400">(Partially Hidden)</span>}
+                                        </div>
+                                        <pre className={`text-sm p-4 border rounded-lg font-mono overflow-x-auto shadow-sm ${
+                                          isHidden 
+                                            ? 'bg-gray-100 border-gray-300 text-gray-600' 
+                                            : 'bg-gray-50 border-gray-200 text-gray-800'
+                                        }`}>
+                                          {result.expected_output}
+                                        </pre>
+                                      </div>
+                                      <div className="space-y-2 col-span-1 md:col-span-2">
+                                        <div className="text-xs text-gray-500 font-semibold uppercase tracking-wider">
+                                          Actual Output {isHidden && result.actual_output === '***' && <span className="text-gray-400">(Hidden)</span>}
+                                        </div>
+                                        <pre className={`text-sm p-4 border rounded-lg font-mono overflow-x-auto shadow-sm ${
+                                          result.passed
+                                            ? 'bg-green-50 border-green-200 text-green-800'
+                                            : 'bg-red-50 border-red-200 text-red-800'
+                                        }`}>
+                                          {result.actual_output}
+                                        </pre>
+                                      </div>
+                                      {result.error_message && result.error_message !== 'N/A' && (
+                                        <div className="col-span-1 md:col-span-2">
+                                          <div className="text-xs font-semibold text-red-600 uppercase tracking-wide mb-2">Error Message</div>
+                                          <pre className="bg-red-50 p-4 rounded-lg text-sm whitespace-pre-wrap overflow-x-auto border border-red-200 font-mono text-red-700 shadow-sm">
+                                            {result.error_message}
+                                          </pre>
+                                        </div>
+                                      )}
+                                    </div>
                                   </div>
-                                </div>
-                              ))}
+                                );
+                              })}
                             </div>
                           </div>
                         )}

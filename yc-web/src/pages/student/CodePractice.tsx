@@ -253,6 +253,7 @@ const CodePractice = () => {
                 topic={selectedTopic}
                 onBack={handleBackToTopics}
                 onViewAnalytics={handleViewAnalytics}
+                codeSubmissionType="practice"
               />
             )}
 

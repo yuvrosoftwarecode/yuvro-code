@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ChevronLeft, TrendingUp, Trophy, Target, Clock, Brain, CheckCircle2 } from 'lucide-react';
-import codeExecutorService from '@/services/codeExecutorService';
+import codeEditorService from '@/services/codeEditorService';
 import { toast } from 'sonner';
 
 interface ScoreAnalyticsProps {
@@ -29,7 +29,7 @@ const ScoreAnalytics = ({ onBack, onViewInsights }: ScoreAnalyticsProps) => {
   useEffect(() => {
     const loadAnalytics = async () => {
       try {
-        const submissions = await codeExecutorService.getSubmissions();
+        const submissions = await codeEditorService.getSubmissions();
 
         // Calculate statistics
         const totalSubmissions = submissions.length;

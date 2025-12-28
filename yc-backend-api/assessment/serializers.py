@@ -4,7 +4,7 @@ from .models import (
     Contest, MockInterview, JobTest, SkillTest, 
     ContestSubmission, MockInterviewSubmission, 
     JobTestSubmission, SkillTestSubmission,
-    SkillTestQuestionActivity
+    SkillTestQuestionActivity, LearnOrPracticeSubmission
 )
 
 User = get_user_model()
@@ -54,7 +54,6 @@ class SkillTestSerializer(serializers.ModelSerializer):
         return obj.skill_test_submissions.count()
 
     def get_total_questions(self, obj):
-        # Sum of fixed questions and random questions
         fixed_count = 0
         if obj.questions_config:
             for q_type, ids in obj.questions_config.items():
@@ -201,3 +200,63 @@ class JobTestSubmissionSerializer(serializers.ModelSerializer):
             'created_at', 'updated_at',
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
+
+
+class LearnOrPracticeSubmissionSerializer(serializers.ModelSerializer):
+    question_title = serializers.CharField(source='question.title', read_only=True)
+    question_content = serializers.CharField(source='question.content', read_only=True)
+    user_name = serializers.CharField(source='user.get_full_name', read_only=True)
+    course_name = serializers.CharField(source='course.name', read_only=True)
+    topic_name = serializers.CharField(source='topic.name', read_only=True)
+    programming_language = serializers.SerializerMethodField()
+    
+    test_cases_passed = serializers.SerializerMethodField()
+    total_test_cases = serializers.SerializerMethodField()
+    is_successful = serializers.SerializerMethodField()
+    success_rate = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = LearnOrPracticeSubmission
+        fields = [
+            'id', 'user', 'user_name', 'question', 'question_title', 'question_content',
+            'course', 'course_name', 'topic', 'topic_name', 'submission_type',
+            'programming_language', 'status', 'execution_output', 'evaluation_results',
+            'plagiarism_data', 'answer_latest', 'answer_history', 'answer_attempt_count',
+            'marks_obtained', 'test_cases_passed', 'total_test_cases', 'is_successful', 'success_rate',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = [
+            'id', 'user', 'course', 'topic', 'programming_language', 'test_cases_passed', 'total_test_cases', 
+            'is_successful', 'success_rate', 'created_at', 'updated_at'
+        ]
+    
+    def get_programming_language(self, obj):
+        """Get programming language from answer_latest"""
+        if obj.answer_latest and 'language' in obj.answer_latest:
+            return obj.answer_latest['language']
+        return None
+    
+    def get_test_cases_passed(self, obj):
+        if obj.evaluation_results:
+            return obj.evaluation_results.get('total_passed', 0)
+        return 0
+    
+    def get_total_test_cases(self, obj):
+        if obj.evaluation_results:
+            return obj.evaluation_results.get('total_tests', 0)
+        return 0
+    
+    def get_is_successful(self, obj):
+        if obj.evaluation_results:
+            total_tests = obj.evaluation_results.get('total_tests', 0)
+            total_passed = obj.evaluation_results.get('total_passed', 0)
+            return total_tests > 0 and total_passed == total_tests
+        return False
+    
+    def get_success_rate(self, obj):
+        if obj.evaluation_results:
+            total_tests = obj.evaluation_results.get('total_tests', 0)
+            total_passed = obj.evaluation_results.get('total_passed', 0)
+            if total_tests > 0:
+                return (total_passed / total_tests) * 100
+        return 0.0

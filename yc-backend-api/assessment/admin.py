@@ -5,7 +5,8 @@ from .models import (
     SkillTestSubmission, ContestSubmission, 
     MockInterviewSubmission, JobTestSubmission,
     SkillTestQuestionActivity, ContestQuestionActivity,
-    MockInterviewQuestionActivity, JobTestQuestionActivity
+    MockInterviewQuestionActivity, JobTestQuestionActivity,
+    LearnOrPracticeSubmission
 )
 
 
@@ -323,3 +324,54 @@ class MockInterviewQuestionActivityAdmin(BaseQuestionActivityAdmin):
 @admin.register(JobTestQuestionActivity)
 class JobTestQuestionActivityAdmin(BaseQuestionActivityAdmin):
     list_display = BaseQuestionActivityAdmin.list_display + ['job_test_submission']
+
+
+@admin.register(LearnOrPracticeSubmission)
+class LearnOrPracticeSubmissionAdmin(admin.ModelAdmin):
+    list_display = ['user', 'question', 'submission_type', 'status', 'marks_obtained', 'answer_attempt_count', 'created_at']
+    list_filter = ['status', 'submission_type', 'course', 'topic', 'created_at']
+    search_fields = ['user__username', 'user__email', 'question__title', 'question__content']
+    readonly_fields = ['id', 'created_at', 'updated_at', 'answer_history', 'evaluation_results', 'plagiarism_data']
+    fieldsets = (
+        ('Submission Info', {
+            'fields': ('user', 'question', 'course', 'topic', 'submission_type', 'status')
+        }),
+        ('Latest Answer', {
+            'fields': ('answer_latest', 'answer_attempt_count')
+        }),
+        ('Results & Grading', {
+            'fields': ('marks_obtained', 'execution_output')
+        }),
+        ('Evaluation Data', {
+            'fields': ('evaluation_results', 'plagiarism_data'),
+            'classes': ('collapse',)
+        }),
+        ('History', {
+            'fields': ('answer_history',),
+            'classes': ('collapse',)
+        }),
+        ('Metadata', {
+            'fields': ('id', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        })
+    )
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('user', 'question', 'course', 'topic')
+    
+    def get_language(self, obj):
+        if obj.answer_latest and 'language' in obj.answer_latest:
+            return obj.answer_latest['language']
+        return 'Unknown'
+    get_language.short_description = 'Language'
+    
+    def get_success_rate(self, obj):
+        if obj.evaluation_results:
+            total_tests = obj.evaluation_results.get('total_tests', 0)
+            total_passed = obj.evaluation_results.get('total_passed', 0)
+            if total_tests > 0:
+                return f"{total_passed}/{total_tests} ({(total_passed/total_tests)*100:.1f}%)"
+        return 'N/A'
+    get_success_rate.short_description = 'Success Rate'
+    
+    list_display = list_display + ['get_language', 'get_success_rate']

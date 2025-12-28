@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ChevronLeft, Play, Send, Maximize2, Minimize2, Plus, Trash2, Clock, CheckCircle2, XCircle, Zap, MemoryStick, Activity, Shield, Sparkles, X, FlaskConical, Terminal, BookOpen } from 'lucide-react';
 import { CodeExecutionPanel } from '@/components/code-editor';
-import codeExecutorService from '@/services/codeExecutorService';
+import codeEditorService from '@/services/codeEditorService';
 import ExampleCodeGallery from '@/components/code-editor/ExampleCodeGallery';
 import type { Course, Topic, CodingProblem } from '@/pages/student/CodePractice';
 import { ResizablePanel, ResizablePanelGroup, ResizableHandle } from '@/components/ui/resizable';
@@ -107,7 +107,7 @@ const ProblemSolving = forwardRef<ProblemSolvingHandle, ProblemSolvingProps>(({ 
       }
 
       try {
-        const data = await codeExecutorService.getSupportedLanguagesAndTemplates();
+        const data = await codeEditorService.getSupportedLanguagesAndTemplates();
         const templateMap: Record<string, string> = {};
         if (data.details) {
           Object.entries(data.details).forEach(([lang, config]: [string, any]) => {
@@ -325,7 +325,7 @@ int main() {
 
       const transformed = [...basicTestCases, ...customMapped];
 
-      const res = await codeExecutorService.runCode({
+      const res = await codeEditorService.runCode({
         code,
         language,
         test_cases: basicTestCases,
@@ -376,7 +376,7 @@ int main() {
         weight: t.weight || 1,
       }));
 
-      const res = await codeExecutorService.submitSolution({
+      const res = await codeEditorService.submitSolution({
         code,
         language,
         coding_problem_id: problem.id,

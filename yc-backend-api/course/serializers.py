@@ -9,6 +9,7 @@ from .models import (
     CourseInstructor,
     Question,
     UserCourseProgress,
+    StudentCodePractice,
 )
 from authentication.serializers import UserSerializer
 from django.contrib.auth import get_user_model
@@ -319,3 +320,43 @@ class UserCourseProgressSerializer(serializers.ModelSerializer):
             "last_accessed"
         ]
         read_only_fields = ["id", "user", "course", "topic", "subtopic", "progress_percent", "completed_at", "last_accessed"]
+
+
+class StudentCodePracticeSerializer(serializers.ModelSerializer):
+    """
+    Serializer for StudentCodePractice model
+    """
+    user = serializers.StringRelatedField(read_only=True)
+    question = serializers.StringRelatedField(read_only=True)
+    course = serializers.StringRelatedField(read_only=True)
+    topic = serializers.StringRelatedField(read_only=True)
+    
+    class Meta:
+        model = StudentCodePractice
+        fields = [
+            "id",
+            "user",
+            "question",
+            "course",
+            "topic",
+            "status",
+            "answer_latest",
+            "answer_history",
+            "answer_attempt_count",
+            "execution_output",
+            "plagiarism_data",
+            "evaluation_results",
+            "marks_obtained",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "user", "created_at", "updated_at"]
+        
+    def validate_status(self, value):
+        """
+        Validate status is one of the allowed choices
+        """
+        valid_statuses = [choice[0] for choice in StudentCodePractice.STATUS_CHOICES]
+        if value not in valid_statuses:
+            raise serializers.ValidationError(f"Status must be one of: {', '.join(valid_statuses)}")
+        return value

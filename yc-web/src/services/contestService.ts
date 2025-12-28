@@ -108,6 +108,10 @@ export const contestService = {
     });
   },
 
+  async getContestLeaderboard(contestId: string): Promise<any> {
+    return restApiAuthUtil.get(`/contests/${contestId}/leaderboard/`);
+  },
+
   async getQuestion(questionId: number): Promise<Question> {
     return restApiAuthUtil.get(`/course/questions/${questionId}/`);
   },

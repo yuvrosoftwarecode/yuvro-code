@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { fetchContests, contestService } from "@/services/contestService";
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import ContestLeaderboard from '../../components/student/ContestLeaderboard';
 
 interface Contest {
   id: number | string;
@@ -454,7 +455,13 @@ const ContestPage = () => {
               </Card>
             )}
 
-            {/* Global Ranking */}
+            {/* Global Ranking / Contest Leaderboard */}
+            {ongoingContest && (
+              <ContestLeaderboard
+                contestId={ongoingContest.id}
+                contestTitle={ongoingContest.title}
+              />
+            )}
           </div>
         </div>
       </div>

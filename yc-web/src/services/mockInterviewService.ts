@@ -128,7 +128,7 @@ class MockInterviewService {
         formData.append('resume', resume);
       }
 
-      const response = await restApiAuthUtil.post<any>(`/mock-interviews/${id}/start_interview/`, formData);
+      const response = await restApiAuthUtil.post<any>(`/assessment/mock-interviews/${id}/start_interview/`, formData);
       return response;
     } catch (error) {
       console.error('Error starting interview:', error);
@@ -138,7 +138,7 @@ class MockInterviewService {
 
   async completeInterview(id: string, data: CompleteMockInterviewData): Promise<MockInterview> {
     try {
-      const response = await restApiAuthUtil.post<any>(`/mock-interviews/${id}/complete_interview/`, data);
+      const response = await restApiAuthUtil.post<any>(`/assessment/mock-interviews/${id}/complete_interview/`, data);
       return response;
     } catch (error) {
       console.error('Error completing interview:', error);
@@ -148,7 +148,7 @@ class MockInterviewService {
 
   async cancelInterview(id: string): Promise<MockInterview> {
     try {
-      const response = await restApiAuthUtil.post<any>(`/mock-interviews/${id}/cancel_interview/`, {});
+      const response = await restApiAuthUtil.post<any>(`/assessment/mock-interviews/${id}/cancel_interview/`, {});
       return response;
     } catch (error) {
       console.error('Error cancelling interview:', error);
@@ -158,7 +158,7 @@ class MockInterviewService {
 
   async getMyInterviews(): Promise<MockInterview[]> {
     try {
-      const response = await restApiAuthUtil.get<any[]>('/mock-interviews/my_interviews/');
+      const response = await restApiAuthUtil.get<any[]>('/assessment/mock-interviews/my_interviews/');
       return response;
     } catch (error) {
       console.error('Error fetching my interviews:', error);
@@ -168,7 +168,7 @@ class MockInterviewService {
 
   async getUpcomingInterviews(): Promise<MockInterview[]> {
     try {
-      const response = await restApiAuthUtil.get<any[]>('/mock-interviews/upcoming/');
+      const response = await restApiAuthUtil.get<any[]>('/assessment/mock-interviews/upcoming/');
       return response;
     } catch (error) {
       console.error('Error fetching upcoming interviews:', error);

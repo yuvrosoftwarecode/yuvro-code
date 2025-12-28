@@ -40,9 +40,16 @@ class RestApiUtil {
         const url = this.buildUrl(endpoint, params);
         const startTime = performance.now();
 
+        // Determine if Content-Type should be JSON or omitted (for FormData)
+        const isFormData = fetchOptions.body instanceof FormData;
+        const defaultHeaders: Record<string, string> = {};
+        if (!isFormData) {
+            defaultHeaders['Content-Type'] = 'application/json';
+        }
+
         const config: RequestInit = {
             headers: {
-                'Content-Type': 'application/json',
+                ...defaultHeaders,
                 ...fetchOptions.headers,
             },
             ...fetchOptions,
@@ -108,7 +115,7 @@ class RestApiUtil {
     async post<T>(endpoint: string, data?: any, options?: RequestOptions): Promise<T> {
         return this.request<T>(endpoint, {
             method: 'POST',
-            body: data ? JSON.stringify(data) : undefined,
+            body: (data instanceof FormData) ? data : (data ? JSON.stringify(data) : undefined),
             ...options,
         });
     }
@@ -116,7 +123,7 @@ class RestApiUtil {
     async put<T>(endpoint: string, data?: any, options?: RequestOptions): Promise<T> {
         return this.request<T>(endpoint, {
             method: 'PUT',
-            body: data ? JSON.stringify(data) : undefined,
+            body: (data instanceof FormData) ? data : (data ? JSON.stringify(data) : undefined),
             ...options,
         });
     }
@@ -124,7 +131,7 @@ class RestApiUtil {
     async patch<T>(endpoint: string, data?: any, options?: RequestOptions): Promise<T> {
         return this.request<T>(endpoint, {
             method: 'PATCH',
-            body: data ? JSON.stringify(data) : undefined,
+            body: (data instanceof FormData) ? data : (data ? JSON.stringify(data) : undefined),
             ...options,
         });
     }

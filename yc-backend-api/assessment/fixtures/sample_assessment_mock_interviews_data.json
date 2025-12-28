@@ -2,93 +2,171 @@
   "mock_interviews": [
     {
       "title": "Mock Interview — Java Developer",
-      "role": "Java Developer",
-      "role_level": "Intermediate",
       "description": "Master Java programming fundamentals, object-oriented design, and enterprise development patterns.",
       "instructions": "60 minutes. Includes MCQs, short design prompts, and one coding task in Java.",
-      "difficulty": "medium",
-      "duration": 60,
-      "total_marks": 100,
-      "passing_marks": 60,
-      "enable_proctoring": false,
-      "course_short_code": "JAVA101",
+      "max_duration": 60,
+      "ai_generation_mode": "mixed",
+      "voice_type": "junnu",
+      "voice_speed": 1.0,
+      "audio_settings": {},
+      "required_skills": [
+        "Java",
+        "OOP",
+        "Spring Boot"
+      ],
+      "optional_skills": [
+        "Hibernate",
+        "Microservices"
+      ],
+      "ai_verbal_question_count": 5,
+      "ai_coding_question_count": 2,
       "publish_status": "active",
-      "questions_random_config": {"mcq_single": 3, "mcq_multiple": 2, "coding": 3, "descriptive": 2}
+      "questions_random_config": {
+        "mcq_single": 3,
+        "mcq_multiple": 2,
+        "coding": 3,
+        "descriptive": 2
+      }
     },
     {
       "title": "Mock Interview — Python Developer",
-      "role": "Python Developer",
-      "role_level": "Beginner",
       "description": "Learn Python programming, data structures, algorithms, and web development with Django/Flask.",
       "instructions": "50 minutes. MCQs and one coding task; focus on Pythonic solutions.",
-      "difficulty": "easy",
-      "duration": 50,
-      "total_marks": 90,
-      "passing_marks": 54,
-      "enable_proctoring": false,
-      "course_short_code": "PY101",
+      "max_duration": 50,
+      "ai_generation_mode": "mixed",
+      "voice_type": "munnu",
+      "voice_speed": 1.1,
+      "audio_settings": {},
+      "required_skills": [
+        "Python",
+        "Django",
+        "DSA"
+      ],
+      "optional_skills": [
+        "Flask",
+        "AWS"
+      ],
+      "ai_verbal_question_count": 5,
+      "ai_coding_question_count": 2,
       "publish_status": "active",
-      "questions_random_config": {"mcq_single": 3, "mcq_multiple": 2, "coding": 3, "descriptive": 2}
+      "questions_random_config": {
+        "mcq_single": 3,
+        "mcq_multiple": 2,
+        "coding": 3,
+        "descriptive": 2
+      }
     },
     {
       "title": "Mock Interview — Frontend Developer",
-      "role": "Frontend Developer",
-      "role_level": "Intermediate",
       "description": "Master HTML, CSS, JavaScript, React, and modern frontend development practices.",
       "instructions": "55 minutes. MCQs, DOM/CSS problems, and a small implementation task.",
-      "difficulty": "medium",
-      "duration": 55,
-      "total_marks": 95,
-      "passing_marks": 57,
-      "enable_proctoring": false,
-      "course_short_code": "WEB101",
+      "max_duration": 55,
+      "ai_generation_mode": "mixed",
+      "voice_type": "junnu",
+      "voice_speed": 1.0,
+      "audio_settings": {},
+      "required_skills": [
+        "React",
+        "JavaScript",
+        "CSS"
+      ],
+      "optional_skills": [
+        "TypeScript",
+        "Tailwind"
+      ],
+      "ai_verbal_question_count": 5,
+      "ai_coding_question_count": 1,
       "publish_status": "active",
-      "questions_random_config": {"mcq_single": 3, "mcq_multiple": 2, "coding": 3, "descriptive": 2}
+      "questions_random_config": {
+        "mcq_single": 3,
+        "mcq_multiple": 2,
+        "coding": 3,
+        "descriptive": 2
+      }
     },
     {
       "title": "Mock Interview — Data Scientist",
-      "role": "Data Scientist",
-      "role_level": "Advanced",
       "description": "Learn data analysis, machine learning, statistical modeling, and data visualization.",
       "instructions": "75 minutes. MCQs, short analytical problems, and one coding/data task.",
-      "difficulty": "hard",
-      "duration": 75,
-      "total_marks": 120,
-      "passing_marks": 72,
-      "enable_proctoring": true,
-      "course_short_code": "AI101",
+      "max_duration": 75,
+      "ai_generation_mode": "full_ai",
+      "voice_type": "munnu",
+      "voice_speed": 1.0,
+      "audio_settings": {},
+      "required_skills": [
+        "Python",
+        "Machine Learning",
+        "Statistics"
+      ],
+      "optional_skills": [
+        "Pandas",
+        "Scikit-Learn"
+      ],
+      "ai_verbal_question_count": 8,
+      "ai_coding_question_count": 2,
       "publish_status": "active",
-      "questions_random_config": {"mcq_single": 3, "mcq_multiple": 2, "coding": 3, "descriptive": 2}
+      "questions_random_config": {
+        "mcq_single": 3,
+        "mcq_multiple": 2,
+        "coding": 3,
+        "descriptive": 2
+      }
     },
     {
       "title": "Mock Interview — System Design Engineer",
-      "role": "System Design Engineer",
-      "role_level": "Advanced",
       "description": "Master distributed systems, scalability, microservices, and system architecture patterns.",
       "instructions": "90 minutes. Design prompts and discussion-based questions; include one architecture diagram task.",
-      "difficulty": "hard",
-      "duration": 90,
-      "total_marks": 150,
-      "passing_marks": 90,
-      "enable_proctoring": true,
-      "course_short_code": "SYS101",
+      "max_duration": 90,
+      "ai_generation_mode": "mixed",
+      "voice_type": "junnu",
+      "voice_speed": 1.0,
+      "audio_settings": {},
+      "required_skills": [
+        "System Design",
+        "Scalability",
+        "Distributed Systems"
+      ],
+      "optional_skills": [
+        "Kafka",
+        "Redis"
+      ],
+      "ai_verbal_question_count": 6,
+      "ai_coding_question_count": 0,
       "publish_status": "active",
-      "questions_random_config": {"mcq_single": 3, "mcq_multiple": 2, "coding": 3, "descriptive": 2}
+      "questions_random_config": {
+        "mcq_single": 3,
+        "mcq_multiple": 2,
+        "coding": 3,
+        "descriptive": 2
+      }
     },
     {
       "title": "Mock Interview — DevOps Engineer",
-      "role": "DevOps Engineer",
-      "role_level": "Intermediate",
       "description": "Learn CI/CD pipelines, containerization, cloud platforms, and infrastructure automation.",
       "instructions": "60 minutes. MCQs, short scenario-based tasks, and one practical automation task.",
-      "difficulty": "medium",
-      "duration": 60,
-      "total_marks": 100,
-      "passing_marks": 60,
-      "enable_proctoring": false,
-      "course_short_code": "DEVOPS101",
+      "max_duration": 60,
+      "ai_generation_mode": "mixed",
+      "voice_type": "munnu",
+      "voice_speed": 1.0,
+      "audio_settings": {},
+      "required_skills": [
+        "Docker",
+        "Kubernetes",
+        "CI/CD"
+      ],
+      "optional_skills": [
+        "AWS",
+        "Terraform"
+      ],
+      "ai_verbal_question_count": 5,
+      "ai_coding_question_count": 1,
       "publish_status": "active",
-      "questions_random_config": {"mcq_single": 3, "mcq_multiple": 2, "coding": 3, "descriptive": 2}
+      "questions_random_config": {
+        "mcq_single": 3,
+        "mcq_multiple": 2,
+        "coding": 3,
+        "descriptive": 2
+      }
     }
   ]
 }

@@ -297,21 +297,19 @@ class Command(BaseCommand):
             if topic_name and course:
                 topic = Topic.objects.filter(course=course, name=topic_name).first()
 
-            # Calculate scheduled time
-            scheduled_days = mock_interview_data.get('scheduled_days_from_now', 1)
-            scheduled_datetime = timezone.now() + timedelta(days=scheduled_days)
-
             mock_interview_kwargs = {
                 'title': mock_interview_data['title'],
                 'description': mock_interview_data.get('description', ''),
                 'instructions': mock_interview_data.get('instructions', ''),
-                'type': mock_interview_data.get('type', MockInterview.TYPE_CODING),
-                'difficulty': mock_interview_data.get('difficulty', 'medium'),
-                'duration': mock_interview_data.get('duration', 45),
-                'total_marks': mock_interview_data.get('total_marks', 100),
-                'passing_marks': mock_interview_data.get('passing_marks', 60),
-                'enable_proctoring': mock_interview_data.get('enable_proctoring', False),
-                'scheduled_datetime': scheduled_datetime,
+                'max_duration': mock_interview_data.get('duration', 45),
+                
+                # AI / Voice configuration defaults
+                'ai_generation_mode': mock_interview_data.get('ai_generation_mode', 'full_ai'),
+                'ai_verbal_question_count': mock_interview_data.get('ai_verbal_question_count', 5),
+                'ai_coding_question_count': mock_interview_data.get('ai_coding_question_count', 1),
+                'voice_type': 'junnu',
+                'voice_speed': 1.0,
+
                 'questions_random_config': mock_interview_data.get('questions_random_config', {}),
                 'publish_status': mock_interview_data.get('publish_status', 'draft'),
                 'created_by': default_user
@@ -333,6 +331,7 @@ class Command(BaseCommand):
             ).first()
 
             if not existing_mock_interview:
+                # Remove deprecated args before create if data had them, but here we just use what we built
                 MockInterview.objects.create(**mock_interview_kwargs)
                 self.stdout.write(f'✓ Created mock interview: {mock_interview_data["title"]}')
             else:

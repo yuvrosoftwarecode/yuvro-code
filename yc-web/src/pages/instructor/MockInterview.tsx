@@ -4,125 +4,90 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Trophy, Users, Calendar, Clock, Building2, GraduationCap, Pencil, Trash2, Eye, FileText, Code, CheckCircle } from 'lucide-react';
+import { Trophy, Users, Calendar, Clock, Building2, GraduationCap, Pencil, Trash2, Eye, FileText, Code, CheckCircle, Mic, Brain, Settings } from 'lucide-react';
 import { toast } from 'sonner';
 import RoleSidebar from '@/components/common/RoleSidebar';
 import RoleHeader from '@/components/common/RoleHeader';
 import SearchBar from '@/components/common/SearchBar';
 import { useAuth } from "@/contexts/AuthContext";
-import { mockInterviewService, MockInterview, CreateMockInterviewData } from '@/services/mockInterviewService';
+import { mockInterviewService } from '@/services/mockInterviewService';
+import { Question } from '@/services/questionService';
+// Assuming Question type is needed for the preview, if not import it or define it. 
+// Note: original code imported Question implicitly or it was missing in the view.
+// Let's assume we can treat questions as any for the UI preview or minimal type.
 
-interface Contest {
+// Redefine local interface to match the VIEW requirements, but aligned with new backend data
+interface MockInterviewUI {
   id: string;
   title: string;
-  organizer: string;
-  type: 'company' | 'college' | 'weekly' | 'monthly';
-  // Normalize to backend values: 'scheduled' | 'ongoing' | 'completed' | 'cancelled'
-  status: 'scheduled' | 'ongoing' | 'completed' | 'cancelled';
-  startDate: string;
-  endDate: string;
-  duration: string;
-  participants: number;
-  prize?: string;
-  difficulty: 'Easy' | 'Medium' | 'Hard';
   description: string;
-  Interviewee_config?: {
-    mcq_single: string[];
-    mcq_multiple: string[];
-    coding: string[];
-    descriptive: string[];
-  };
-  Interviewee_random_config?: {
-    mcq_single: number;
-    mcq_multiple: number;
-    coding: number;
-    descriptive: number;
-  };
+  instructions: string;
+  max_duration: number;
+
+  // AI Params
+  ai_generation_mode: string;
+  ai_verbal_question_count: number;
+  ai_coding_question_count: number;
+
+  // Voice
+  voice_type: string;
+  voice_speed: number;
+
+  // Skills
+  required_skills: string[];
+  optional_skills: string[];
+
+  // Config
+  questions_config: Record<string, string[]>;
+  questions_random_config: Record<string, number>;
+
+  publish_status: string;
+  participants: number;
+  created_by?: string;
+  created_at?: string;
 }
 
-function mapContestFromBackend(c: any): Contest {
-  const rawStatus = String(c.status || 'scheduled').toLowerCase().trim();
-  let status = rawStatus;
-  if (status === 'past') status = 'completed';
-  if (status === 'upcoming') status = 'scheduled';
-
-  try {
-    const start = c.scheduled_datetime ? new Date(c.scheduled_datetime) : (c.start_datetime ? new Date(c.start_datetime) : null);
-    const durationMinutes = Number(c.duration) || 0;
-    if (start && durationMinutes > 0) {
-      const now = new Date();
-      const end = new Date(start.getTime() + durationMinutes * 60 * 1000);
-      if (now >= start && now <= end) {
-        if (status !== 'ongoing') {
-          console.debug(`Marking interview ${c.id} as ongoing (client-side) based on scheduled_datetime and duration)`);
-          status = 'ongoing';
-        }
-      }
-    }
-  } catch (e) {
-  }
-
+function mapMockInterviewFromBackend(c: any): MockInterviewUI {
   return {
     id: String(c.id),
     title: c.title,
-    organizer: c.organizer,
-    type: c.type,
-    status,
-    startDate: c.scheduled_datetime || c.start_datetime || c.start_date || '',
-    endDate: c.end_datetime || c.end_date || '',
-    duration: c.duration ? `${Math.round((typeof c.duration === 'string' ? parseFloat(c.duration) : c.duration) / 60)} min` : '',
-    participants: c.participants_count ?? 0,
-    prize: c.prize ?? '',
-    difficulty: c.difficulty.charAt(0).toUpperCase() + c.difficulty.slice(1),
     description: c.description ?? '',
-    Interviewee_config: c.Interviewee_config ?? {
-      mcq_single: [],
-      mcq_multiple: [],
-      coding: [],
-      descriptive: []
-    },
-    Interviewee_random_config: c.Interviewee_random_config ?? {
-      mcq_single: 0,
-      mcq_multiple: 0,
-      coding: 0,
-      descriptive: 0
-    },
+    instructions: c.instructions ?? '',
+    max_duration: c.max_duration ?? 60,
+
+    ai_generation_mode: c.ai_generation_mode ?? 'full_ai',
+    ai_verbal_question_count: c.ai_verbal_question_count ?? 0,
+    ai_coding_question_count: c.ai_coding_question_count ?? 0,
+
+    voice_type: c.voice_type ?? 'junnu',
+    voice_speed: c.voice_speed ?? 1.0,
+
+    required_skills: c.required_skills ?? [],
+    optional_skills: c.optional_skills ?? [],
+
+    questions_config: c.questions_config ?? {},
+    questions_random_config: c.questions_random_config ?? {},
+
+    publish_status: c.publish_status ?? 'draft',
+    participants: c.participants_count ?? 0,
+    created_at: c.created_at
   };
 }
 
-export default function OwnerContest() {
-  const [mockInterviews, setMockInterviews] = useState<Contest[]>([]);
+export default function MockInterviewPage() {
+  const [mockInterviews, setMockInterviews] = useState<MockInterviewUI[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTab, setSelectedTab] = useState('all');
   const [currentView, setCurrentView] = useState<'list' | 'view'>('list');
-  const [selectedContest, setSelectedContest] = useState<Contest | null>(null);
-  const [contestInterviewee, setContestInterviewee] = useState<{
-    mcq_single: Question[];
-    mcq_multiple: Question[];
-    coding: Question[];
-    descriptive: Question[];
-  }>({
-    mcq_single: [],
-    mcq_multiple: [],
-    coding: [],
-    descriptive: []
-  });
-  const [loadingInterviewee, setLoadingInterviewee] = useState(false);
+  const [selectedInterview, setSelectedInterview] = useState<MockInterviewUI | null>(null);
   const { token } = useAuth();
   const navigate = useNavigate();
-
-
 
   const fetchMockInterviews = async () => {
     try {
       const data = await mockInterviewService.getAllMockInterviews();
       if (Array.isArray(data)) {
-        const mapped = data.map(mapContestFromBackend);
-        const counts = mapped.reduce((acc: Record<string, number>, c) => {
-          acc[c.status] = (acc[c.status] || 0) + 1;
-          return acc;
-        }, {} as Record<string, number>);
-        console.debug('Fetched mock interviews status counts:', counts);
+        const mapped = data.map(mapMockInterviewFromBackend);
         setMockInterviews(mapped);
       }
     } catch (err) {
@@ -137,155 +102,58 @@ export default function OwnerContest() {
     fetchMockInterviews();
   }, [location.state]);
 
-
-
-  const handleDeleteContest = async (id: string) => {
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this mock interview?")) return;
     try {
       await mockInterviewService.deleteMockInterview(id);
-      toast.success('Contest deleted successfully');
+      toast.success('Mock Interview deleted successfully');
       fetchMockInterviews();
     } catch (err) {
-      toast.error('Failed to delete contest');
+      toast.error('Failed to delete mock interview');
     }
   };
 
-
-
-  const openEditForm = (contest?: Contest | null) => {
-    if (!contest) {
-      toast.error('No contest selected for editing');
+  const openEditForm = (interview?: MockInterviewUI | null) => {
+    if (!interview) {
+      toast.error('No interview selected for editing');
       return;
     }
-
-    navigate(`/instructor/mock-interview/${contest.id}/edit`);
+    navigate(`/instructor/mock-interview/${interview.id}/edit`);
   };
 
-  const fetchContestInterviewee = async (IntervieweeConfig: Contest['Interviewee_config']) => {
-    if (!IntervieweeConfig) return;
-
-    setLoadingInterviewee(true);
-    try {
-      const fetchedInterviewee = {
-        mcq_single: [] as Question[],
-        mcq_multiple: [] as Question[],
-        coding: [] as Question[],
-        descriptive: [] as Question[]
-      };
-
-      const normalizedIntervieweeConfig = {
-        mcq_single: [],
-        mcq_multiple: [],
-        coding: [],
-        descriptive: [],
-        ...IntervieweeConfig
-      };
-
-      for (const [type, ids] of Object.entries(normalizedIntervieweeConfig)) {
-        let questionIdArray: string[] = [];
-
-        if (Array.isArray(ids)) {
-          questionIdArray = ids;
-        } else if (typeof ids === 'string') {
-          questionIdArray = [ids];
-        } else if (ids && typeof ids === 'object') {
-          questionIdArray = Object.values(ids).flat().filter(id => typeof id === 'string');
-        }
-
-        if (questionIdArray.length > 0) {
-          try {
-            const Interviewee = await Promise.all(
-              questionIdArray.map(id => fetchQuestionById(String(id)))
-            );
-            fetchedInterviewee[type as keyof typeof fetchedInterviewee] = Interviewee;
-          } catch (questionError) {
-            console.error(`Failed to fetch Interviewee for type ${type}:`, questionError);
-          }
-        }
-      }
-
-      setContestInterviewee(fetchedInterviewee);
-    } catch (error) {
-      console.error('Failed to fetch contest Interviewee:', error);
-      toast.error('Failed to load contest Interviewee');
-    } finally {
-      setLoadingInterviewee(false);
-    }
-  };
-
-  const openViewForm = (contest: Contest) => {
-    setSelectedContest(contest);
+  const openViewForm = (interview: MockInterviewUI) => {
+    setSelectedInterview(interview);
     setCurrentView('view');
-    if (contest.Interviewee_config) {
-      fetchContestInterviewee(contest.Interviewee_config);
-    }
   };
 
-  const filteredMockInterviews = mockInterviews.filter(contest => {
+  const filteredMockInterviews = mockInterviews.filter(interview => {
     const q = (searchQuery || '').toString().trim().toLowerCase();
     const matchesSearch = !q || [
-      contest.title,
-      contest.organizer,
-      contest.type,
-      contest.difficulty,
-      contest.status,
-      contest.startDate
+      interview.title,
+      interview.description,
+      interview.ai_generation_mode,
+      interview.voice_type
     ].some(field => (field || '').toString().toLowerCase().includes(q));
-    const normalizedStatus = (contest.status || '').toString().toLowerCase().trim();
-    const matchesTab = selectedTab === 'all' || normalizedStatus === selectedTab || (
-      selectedTab === 'ongoing' && (
-        normalizedStatus.includes('ongo') || normalizedStatus.includes('in_progress') || normalizedStatus.includes('running')
-      )
-    );
+
+    const status = (interview.publish_status || '').toLowerCase();
+    const matchesTab = selectedTab === 'all' || status === selectedTab;
+
     return matchesSearch && matchesTab;
   });
 
-  useEffect(() => {
-    try {
-      console.debug('MockInterview: selectedTab=', selectedTab, 'filteredCount=', filteredMockInterviews.length, 'statusCounts=', mockInterviews.reduce((acc: Record<string, number>, c) => { acc[c.status] = (acc[c.status] || 0) + 1; return acc; }, {} as Record<string, number>));
-    } catch (e) {
-    }
-  }, [selectedTab, searchQuery, mockInterviews]);
-
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'company': return 'bg-blue-100 text-blue-700 border-blue-200';
-      case 'college': return 'bg-purple-100 text-purple-700 border-purple-200';
-      case 'weekly': return 'bg-orange-100 text-orange-700 border-orange-200';
-      case 'monthly': return 'bg-amber-100 text-amber-700 border-amber-200';
-      default: return 'bg-muted text-muted-foreground';
-    }
-  };
-
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case 'Easy': return 'bg-green-100 text-green-700 border-green-200';
-      case 'Medium': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
-      case 'Hard': return 'bg-red-100 text-red-700 border-red-200';
-      default: return 'bg-muted text-muted-foreground';
-    }
-  };
-
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'ongoing': return 'bg-green-100 text-green-700 border-green-200';
-      case 'scheduled': return 'bg-blue-100 text-blue-700 border-blue-200';
-      case 'completed': return 'bg-gray-100 text-gray-700 border-gray-200';
-      case 'cancelled': return 'bg-red-100 text-red-700 border-red-200';
+      case 'active': return 'bg-green-100 text-green-700 border-green-200';
+      case 'draft': return 'bg-gray-100 text-gray-700 border-gray-200';
+      case 'archived': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
       default: return 'bg-muted text-muted-foreground';
     }
   };
 
   const getHeaderTitle = () => {
     switch (currentView) {
-      case 'view': return `Contest Details: ${selectedContest?.title}`;
+      case 'view': return `Interview Details: ${selectedInterview?.title}`;
       default: return 'Mock Interview Management';
-    }
-  };
-
-  const getHeaderSubtitle = () => {
-    switch (currentView) {
-      case 'view': return 'View contest information and details';
-      default: return 'Schedule and manage mock interviews for students';
     }
   };
 
@@ -300,13 +168,14 @@ export default function OwnerContest() {
     <button
       onClick={() => {
         setCurrentView('list');
-        setSelectedContest(null);
+        setSelectedInterview(null);
       }}
       className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 transition-colors"
     >
       ← Back to List
     </button>
   );
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="flex">
@@ -314,7 +183,7 @@ export default function OwnerContest() {
         <div className="flex-1">
           <RoleHeader
             title={getHeaderTitle()}
-            subtitle={getHeaderSubtitle()}
+            subtitle="Manage AI-powered mock interviews"
             actions={headerActions}
           />
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -326,46 +195,46 @@ export default function OwnerContest() {
                     <CardHeader className="pb-3">
                       <CardTitle className="text-md font-medium text-gray-600">Total Interviews</CardTitle>
                     </CardHeader>
-                     <CardContent>
-      <div className="flex items-center justify-between">
-        <div className="text-xl font-bold">{mockInterviews.length}</div>
-        <Trophy className="h-8 w-8 text-blue-500" />
-      </div>
-    </CardContent>
-                  </Card>
-
-                  <Card className="border border-gray-200">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-md font-medium text-gray-600">Scheduled</CardTitle>
-                    </CardHeader>
                     <CardContent>
                       <div className="flex items-center justify-between">
-                        <div className="text-xl font-bold">{mockInterviews.filter(c => c.status === 'scheduled').length}</div>
-                        <Calendar className="h-8 w-8 text-blue-500" />
+                        <div className="text-xl font-bold">{mockInterviews.length}</div>
+                        <Brain className="h-8 w-8 text-blue-500" />
                       </div>
                     </CardContent>
                   </Card>
 
                   <Card className="border border-gray-200">
                     <CardHeader className="pb-3">
-                      <CardTitle className="text-md font-medium text-gray-600">Ongoing</CardTitle>
+                      <CardTitle className="text-md font-medium text-gray-600">Published</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-center justify-between">
-                        <div className="text-2xl font-bold text-green-600">{mockInterviews.filter(c => c.status === 'ongoing').length}</div>
-                        <Clock className="h-8 w-8 text-green-600" />
+                        <div className="text-xl font-bold">{mockInterviews.filter(c => c.publish_status === 'active').length}</div>
+                        <CheckCircle className="h-8 w-8 text-green-500" />
                       </div>
                     </CardContent>
                   </Card>
 
                   <Card className="border border-gray-200">
                     <CardHeader className="pb-3">
-                      <CardTitle className="text-md font-medium text-gray-600">Completed</CardTitle>
+                      <CardTitle className="text-md font-medium text-gray-600">Drafts</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-center justify-between">
-                        <div className="text-xl font-bold">{mockInterviews.filter(c => c.status === 'completed').length}</div>
-                        <Users className="h-8 w-8 text-gray-600" />
+                        <div className="text-2xl font-bold text-gray-600">{mockInterviews.filter(c => c.publish_status === 'draft').length}</div>
+                        <Pencil className="h-8 w-8 text-gray-400" />
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border border-gray-200">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-md font-medium text-gray-600">Archived</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center justify-between">
+                        <div className="text-xl font-bold">{mockInterviews.filter(c => c.publish_status === 'archived').length}</div>
+                        <Trash2 className="h-8 w-8 text-gray-600" />
                       </div>
                     </CardContent>
                   </Card>
@@ -379,25 +248,19 @@ export default function OwnerContest() {
                           className={`px-5 h-8 text-sm font-medium rounded-lg transition-colors duration-150 ${selectedTab === 'all' ? 'bg-gray-200 text-gray-900 shadow-sm' : 'bg-white text-gray-600'}`}
                           value="all"
                         >
-                          All Interviews
+                          All
                         </TabsTrigger>
                         <TabsTrigger
-                          className={`px-5 h-8 text-sm font-medium rounded-lg transition-colors duration-150 ${selectedTab === 'scheduled' ? 'bg-gray-100 text-gray-900 shadow-sm' : 'bg-white text-gray-600'}`}
-                          value="scheduled"
+                          className={`px-5 h-8 text-sm font-medium rounded-lg transition-colors duration-150 ${selectedTab === 'active' ? 'bg-gray-100 text-gray-900 shadow-sm' : 'bg-white text-gray-600'}`}
+                          value="active"
                         >
-                          Scheduled
+                          Active
                         </TabsTrigger>
                         <TabsTrigger
-                          className={`px-5 h-8 text-sm font-medium rounded-lg transition-colors duration-150 ${selectedTab === 'ongoing' ? 'bg-gray-100 text-gray-900 shadow-sm' : 'bg-white text-gray-600'}`}
-                          value="ongoing"
+                          className={`px-5 h-8 text-sm font-medium rounded-lg transition-colors duration-150 ${selectedTab === 'draft' ? 'bg-gray-100 text-gray-900 shadow-sm' : 'bg-white text-gray-600'}`}
+                          value="draft"
                         >
-                          Ongoing
-                        </TabsTrigger>
-                        <TabsTrigger
-                          className={`px-5 h-8 text-sm font-medium rounded-lg transition-colors duration-150 ${selectedTab === 'completed' ? 'bg-gray-100 text-gray-900 shadow-sm' : 'bg-white text-gray-600'}`}
-                          value="completed"
-                        >
-                          Completed
+                          Draft
                         </TabsTrigger>
                       </TabsList>
                     </Tabs>
@@ -410,357 +273,110 @@ export default function OwnerContest() {
               </>
             )}
 
-
-
-            {currentView === 'view' && selectedContest && (
+            {currentView === 'view' && selectedInterview && (
               <div className="bg-white shadow rounded-lg mb-6 p-6">
                 <div className="space-y-6">
                   <Card className="border border-gray-200 shadow-sm">
                     <CardHeader className="pb-4">
                       <CardTitle className="text-lg font-semibold text-gray-900 flex items-center">
-                        <Trophy className="h-5 w-5 mr-2 text-blue-500" />
+                        <Brain className="h-5 w-5 mr-2 text-blue-500" />
                         Basic Information
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Contest Title</label>
-                          <div className="text-gray-900 font-medium">{selectedContest.title}</div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                          <div className="text-gray-900 font-medium">{selectedInterview.title}</div>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Organizer</label>
-                          <div className="text-gray-900">{selectedContest.organizer}</div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                          <Badge className={getStatusColor(selectedInterview.publish_status)} variant="outline">
+                            {selectedInterview.publish_status}
+                          </Badge>
                         </div>
                       </div>
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                        <div className="text-gray-900">{selectedContest.description || 'No description provided'}</div>
+                        <div className="text-gray-900">{selectedInterview.description || 'No description provided'}</div>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Contest Type</label>
-                          <Badge className={getTypeColor(selectedContest.type)} variant="outline">
-                            <span className="mr-1">{selectedContest.type === 'company' ? <Building2 className="h-3 w-3" /> : <GraduationCap className="h-3 w-3" />}</span>
-                            {selectedContest.type}
-                          </Badge>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Difficulty Level</label>
-                          <Badge className={getDifficultyColor(selectedContest.difficulty)} variant="outline">
-                            {selectedContest.difficulty}
-                          </Badge>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border border-gray-200 shadow-sm">
-                    <CardHeader className="pb-4">
-                      <CardTitle className="text-lg font-semibold text-gray-900 flex items-center">
-                        <Calendar className="h-5 w-5 mr-2 text-green-500" />
-                        Schedule & Duration
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
-                          <div className="text-gray-900">
-                            {selectedContest.startDate
-                              ? new Date(selectedContest.startDate).toLocaleDateString()
-                              : 'Not set'
-                            }
-                          </div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">AI Mode</label>
+                          <div className="text-gray-900 capitalize">{selectedInterview.ai_generation_mode.replace('_', ' ')}</div>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
-                          <div className="text-gray-900">
-                            {selectedContest.endDate
-                              ? new Date(selectedContest.endDate).toLocaleDateString()
-                              : 'Not set'
-                            }
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Voice</label>
+                          <div className="flex items-center space-x-2">
+                            <Mic className="w-4 h-4 text-gray-500" />
+                            <span className="text-gray-900">{selectedInterview.voice_type} ({selectedInterview.voice_speed}x)</span>
                           </div>
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">Duration</label>
-                          <div className="text-gray-900">{selectedContest.duration}</div>
+                          <div className="text-gray-900">{selectedInterview.max_duration} mins</div>
                         </div>
                       </div>
+                    </CardContent>
+                  </Card>
 
+                  <Card className="border border-gray-200 shadow-sm">
+                    <CardHeader className="pb-4">
+                      <CardTitle className="text-lg font-semibold text-gray-900 flex items-center">
+                        <Settings className="h-5 w-5 mr-2 text-purple-500" />
+                        Configuration
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                          <Badge className={getStatusColor(selectedContest.status)} variant="outline">
-                            {selectedContest.status}
-                          </Badge>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Participants</label>
-                          <div className="text-gray-900">{selectedContest.participants}</div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border border-gray-200 shadow-sm">
-                    <CardHeader className="pb-4">
-                      <CardTitle className="text-lg font-semibold text-gray-900 flex items-center">
-                        <Trophy className="h-5 w-5 mr-2 text-yellow-500" />
-                        Prize Information
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Prize</label>
-                        <div className="text-gray-900">{selectedContest.prize || 'No prize specified'}</div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border border-gray-200 shadow-sm">
-                    <CardHeader className="pb-4">
-                      <CardTitle className="text-lg font-semibold text-gray-900 flex items-center">
-                        <FileText className="h-5 w-5 mr-2 text-purple-500" />
-                        Interviewee Configuration
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                      {selectedContest.Interviewee_random_config && Object.values(selectedContest.Interviewee_random_config).some(count => count > 0) && (
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-3">Random Interviewee</label>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            {selectedContest.Interviewee_random_config.mcq_single > 0 && (
-                              <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
-                                <div className="text-sm font-medium text-purple-700">MCQ Single</div>
-                                <div className="text-lg font-bold text-purple-900">{selectedContest.Interviewee_random_config.mcq_single}</div>
-                              </div>
-                            )}
-                            {selectedContest.Interviewee_random_config.mcq_multiple > 0 && (
-                              <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
-                                <div className="text-sm font-medium text-purple-700">MCQ Multiple</div>
-                                <div className="text-lg font-bold text-purple-900">{selectedContest.Interviewee_random_config.mcq_multiple}</div>
-                              </div>
-                            )}
-                            {selectedContest.Interviewee_random_config.coding > 0 && (
-                              <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
-                                <div className="text-sm font-medium text-blue-700">Coding</div>
-                                <div className="text-lg font-bold text-blue-900">{selectedContest.Interviewee_random_config.coding}</div>
-                              </div>
-                            )}
-                            {selectedContest.Interviewee_random_config.descriptive > 0 && (
-                              <div className="bg-orange-50 p-3 rounded-lg border border-orange-200">
-                                <div className="text-sm font-medium text-orange-700">Descriptive</div>
-                                <div className="text-lg font-bold text-orange-900">{selectedContest.Interviewee_random_config.descriptive}</div>
-                              </div>
-                            )}
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Required Skills</label>
+                          <div className="flex flex-wrap gap-2">
+                            {selectedInterview.required_skills.length > 0 ? (
+                              selectedInterview.required_skills.map(s => (
+                                <Badge key={s} variant="secondary">{s}</Badge>
+                              ))
+                            ) : <span className="text-gray-500 text-sm">None</span>}
                           </div>
                         </div>
-                      )}
-
-                      {selectedContest.Interviewee_config && Object.values(selectedContest.Interviewee_config).flat().length > 0 && (
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-3">
-                            Specific Interviewee ({Object.values(selectedContest.Interviewee_config).flat().length})
-                          </label>
-
-                          {loadingInterviewee ? (
-                            <div className="flex justify-center items-center py-8">
-                              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                              <span className="ml-2 text-gray-600">Loading Interviewee...</span>
-                            </div>
-                          ) : (
-                            <div className="space-y-4">
-                              {contestInterviewee.mcq_single.length > 0 && (
-                                <div>
-                                  <h4 className="text-sm font-medium text-purple-700 mb-3 flex items-center">
-                                    <CheckCircle className="h-4 w-4 mr-1" />
-                                    MCQ Single Choice ({contestInterviewee.mcq_single.length})
-                                  </h4>
-                                  <div className="space-y-3">
-                                    {contestInterviewee.mcq_single.map((question, index) => (
-                                      <div key={question.id} className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                                        <div className="flex items-start justify-between mb-2">
-                                          <div className="flex items-center gap-2">
-                                            <span className="text-sm font-medium text-purple-700">Q{index + 1}.</span>
-                                            <Badge className="bg-purple-100 text-purple-700 border-purple-200" variant="outline">
-                                              {question.difficulty}
-                                            </Badge>
-                                            <span className="text-xs text-purple-600">{question.marks} marks</span>
-                                          </div>
-                                        </div>
-                                        <h5 className="text-sm font-medium text-gray-900 mb-2">{question.title}</h5>
-                                        <div className="text-sm text-gray-700 line-clamp-3">
-                                          {question.content.replace(/<[^>]*>/g, '')}
-                                        </div>
-                                        {question.categories.length > 0 && (
-                                          <div className="flex flex-wrap gap-1 mt-2">
-                                            {question.categories.slice(0, 3).map((category, idx) => (
-                                              <Badge key={idx} variant="secondary" className="text-xs">
-                                                {category}
-                                              </Badge>
-                                            ))}
-                                            {question.categories.length > 3 && (
-                                              <Badge variant="secondary" className="text-xs">
-                                                +{question.categories.length - 3}
-                                              </Badge>
-                                            )}
-                                          </div>
-                                        )}
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-
-                              {contestInterviewee.mcq_multiple.length > 0 && (
-                                <div>
-                                  <h4 className="text-sm font-medium text-purple-700 mb-3 flex items-center">
-                                    <CheckCircle className="h-4 w-4 mr-1" />
-                                    MCQ Multiple Choice ({contestInterviewee.mcq_multiple.length})
-                                  </h4>
-                                  <div className="space-y-3">
-                                    {contestInterviewee.mcq_multiple.map((question, index) => (
-                                      <div key={question.id} className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                                        <div className="flex items-start justify-between mb-2">
-                                          <div className="flex items-center gap-2">
-                                            <span className="text-sm font-medium text-purple-700">Q{index + 1}.</span>
-                                            <Badge className="bg-purple-100 text-purple-700 border-purple-200" variant="outline">
-                                              {question.difficulty}
-                                            </Badge>
-                                            <span className="text-xs text-purple-600">{question.marks} marks</span>
-                                          </div>
-                                        </div>
-                                        <h5 className="text-sm font-medium text-gray-900 mb-2">{question.title}</h5>
-                                        <div className="text-sm text-gray-700 line-clamp-3">
-                                          {question.content.replace(/<[^>]*>/g, '')}
-                                        </div>
-                                        {question.categories.length > 0 && (
-                                          <div className="flex flex-wrap gap-1 mt-2">
-                                            {question.categories.slice(0, 3).map((category, idx) => (
-                                              <Badge key={idx} variant="secondary" className="text-xs">
-                                                {category}
-                                              </Badge>
-                                            ))}
-                                            {question.categories.length > 3 && (
-                                              <Badge variant="secondary" className="text-xs">
-                                                +{question.categories.length - 3}
-                                              </Badge>
-                                            )}
-                                          </div>
-                                        )}
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-
-                              {contestInterviewee.coding.length > 0 && (
-                                <div>
-                                  <h4 className="text-sm font-medium text-blue-700 mb-3 flex items-center">
-                                    <Code className="h-4 w-4 mr-1" />
-                                    Coding Interviewee ({contestInterviewee.coding.length})
-                                  </h4>
-                                  <div className="space-y-3">
-                                    {contestInterviewee.coding.map((question, index) => (
-                                      <div key={question.id} className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                                        <div className="flex items-start justify-between mb-2">
-                                          <div className="flex items-center gap-2">
-                                            <span className="text-sm font-medium text-blue-700">Q{index + 1}.</span>
-                                            <Badge className="bg-blue-100 text-blue-700 border-blue-200" variant="outline">
-                                              {question.difficulty}
-                                            </Badge>
-                                            <span className="text-xs text-blue-600">{question.marks} marks</span>
-                                          </div>
-                                        </div>
-                                        <h5 className="text-sm font-medium text-gray-900 mb-2">{question.title}</h5>
-                                        <div className="text-sm text-gray-700 line-clamp-3">
-                                          {question.content.replace(/<[^>]*>/g, '')}
-                                        </div>
-                                        {question.categories.length > 0 && (
-                                          <div className="flex flex-wrap gap-1 mt-2">
-                                            {question.categories.slice(0, 3).map((category, idx) => (
-                                              <Badge key={idx} variant="secondary" className="text-xs">
-                                                {category}
-                                              </Badge>
-                                            ))}
-                                            {question.categories.length > 3 && (
-                                              <Badge variant="secondary" className="text-xs">
-                                                +{question.categories.length - 3}
-                                              </Badge>
-                                            )}
-                                          </div>
-                                        )}
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-
-                              {contestInterviewee.descriptive.length > 0 && (
-                                <div>
-                                  <h4 className="text-sm font-medium text-orange-700 mb-3 flex items-center">
-                                    <FileText className="h-4 w-4 mr-1" />
-                                    Descriptive Interviewee ({contestInterviewee.descriptive.length})
-                                  </h4>
-                                  <div className="space-y-3">
-                                    {contestInterviewee.descriptive.map((question, index) => (
-                                      <div key={question.id} className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                                        <div className="flex items-start justify-between mb-2">
-                                          <div className="flex items-center gap-2">
-                                            <span className="text-sm font-medium text-orange-700">Q{index + 1}.</span>
-                                            <Badge className="bg-orange-100 text-orange-700 border-orange-200" variant="outline">
-                                              {question.difficulty}
-                                            </Badge>
-                                            <span className="text-xs text-orange-600">{question.marks} marks</span>
-                                          </div>
-                                        </div>
-                                        <h5 className="text-sm font-medium text-gray-900 mb-2">{question.title}</h5>
-                                        <div className="text-sm text-gray-700 line-clamp-3">
-                                          {question.content.replace(/<[^>]*>/g, '')}
-                                        </div>
-                                        {question.categories.length > 0 && (
-                                          <div className="flex flex-wrap gap-1 mt-2">
-                                            {question.categories.slice(0, 3).map((category, idx) => (
-                                              <Badge key={idx} variant="secondary" className="text-xs">
-                                                {category}
-                                              </Badge>
-                                            ))}
-                                            {question.categories.length > 3 && (
-                                              <Badge variant="secondary" className="text-xs">
-                                                +{question.categories.length - 3}
-                                              </Badge>
-                                            )}
-                                          </div>
-                                        )}
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {(!selectedContest.Interviewee_config || Object.values(selectedContest.Interviewee_config).flat().length === 0) &&
-                        (!selectedContest.Interviewee_random_config || Object.values(selectedContest.Interviewee_random_config).every(count => count === 0)) && (
-                          <div className="text-center py-8 text-gray-500">
-                            <FileText className="mx-auto h-8 w-8 text-gray-400 mb-2" />
-                            <p className="text-sm">No Interviewee configured for this contest</p>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Optional Skills</label>
+                          <div className="flex flex-wrap gap-2">
+                            {selectedInterview.optional_skills.length > 0 ? (
+                              selectedInterview.optional_skills.map(s => (
+                                <Badge key={s} variant="outline">{s}</Badge>
+                              ))
+                            ) : <span className="text-gray-500 text-sm">None</span>}
                           </div>
-                        )}
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Verbal Questions</label>
+                          <div className="text-2xl font-bold">{selectedInterview.ai_verbal_question_count}</div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Coding Questions</label>
+                          <div className="text-2xl font-bold">{selectedInterview.ai_coding_question_count}</div>
+                        </div>
+                      </div>
                     </CardContent>
                   </Card>
 
                   <div className="flex justify-end gap-3 pt-6 border-t border-gray-200">
                     <button
-                      onClick={() => openEditForm(selectedContest)}
+                      onClick={() => openEditForm(selectedInterview)}
                       className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
                     >
-                      Edit Contest
+                      Edit Interview
+                    </button>
+                    <button
+                      onClick={() => handleDelete(selectedInterview.id)}
+                      className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
+                    >
+                      Delete
                     </button>
                   </div>
                 </div>
@@ -771,9 +387,9 @@ export default function OwnerContest() {
               <>
                 <Card className="border border-gray-200 rounded-lg">
                   <CardHeader className="pb-1">
-                    <CardTitle className="text-2xl font-semibold">MockInterviews</CardTitle>
+                    <CardTitle className="text-2xl font-semibold">Mock Interviews</CardTitle>
                     <CardDescription className="text-gray-600">
-                      {filteredMockInterviews.length} Interviews(s) found
+                      {filteredMockInterviews.length} interview(s) found
                     </CardDescription>
                   </CardHeader>
 
@@ -782,87 +398,64 @@ export default function OwnerContest() {
                       <Table className="border border-gray-200 rounded-lg">
                         <TableHeader>
                           <TableRow className="border border-gray-200">
-                            <TableHead>Interviews</TableHead>
-                            <TableHead>Type</TableHead>
-                            <TableHead>Difficulty</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Interviewee</TableHead>
-                            <TableHead>Start Date</TableHead>
+                            <TableHead>Title</TableHead>
+                            <TableHead>Mode</TableHead>
                             <TableHead>Duration</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Questions (V/C)</TableHead>
+                            <TableHead>Participants</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {filteredMockInterviews.map((contest) => {
-                            const specificInterviewee = Object.values(contest.Interviewee_config || {}).flat().length;
-                            const randomInterviewee = Object.values(contest.Interviewee_random_config || {}).reduce((sum, count) => sum + count, 0);
-                            const totalInterviewee = specificInterviewee + randomInterviewee;
-
-                            return (
-                              <TableRow className="border border-gray-200" key={contest.id}>
-                                <TableCell className="font-medium">
-                                  <div>
-                                    <div className="text-sm font-medium text-gray-900">{contest.title}</div>
-                                    <div className="text-sm text-gray-500">{contest.organizer}</div>
-                                  </div>
-                                </TableCell>
-                                <TableCell>
-                                  <Badge className={getTypeColor(contest.type)} variant="outline">
-                                    <span className="mr-1">{contest.type === 'company' ? <Building2 className="h-3 w-3" /> : <GraduationCap className="h-3 w-3" />}</span>
-                                    {contest.type}
-                                  </Badge>
-                                </TableCell>
-                                <TableCell>
-                                  <Badge className={getDifficultyColor(contest.difficulty)} variant="outline">
-                                    {contest.difficulty}
-                                  </Badge>
-                                </TableCell>
-                                <TableCell>
-                                  <Badge className={getStatusColor(contest.status)} variant="outline">
-                                    {contest.status}
-                                  </Badge>
-                                </TableCell>
-                                <TableCell>
-                                  <div className="text-sm">
-                                    <div className="font-medium text-gray-900">{totalInterviewee} total</div>
-                                    {specificInterviewee > 0 && (
-                                      <div className="text-xs text-gray-500">{specificInterviewee} specific</div>
-                                    )}
-                                    {randomInterviewee > 0 && (
-                                      <div className="text-xs text-gray-500">{randomInterviewee} random</div>
-                                    )}
-                                  </div>
-                                </TableCell>
-                                <TableCell>{new Date(contest.startDate).toLocaleDateString()}</TableCell>
-                                <TableCell>{contest.duration}</TableCell>
-                                <TableCell className="text-right">
-                                  <div className="flex justify-end space-x-2">
-                                    <button
-                                      onClick={() => openViewForm(contest)}
-                                      className="p-1 text-gray-400 hover:text-blue-600"
-                                      title="View Details"
-                                    >
-                                      <Eye className="h-4 w-4" />
-                                    </button>
-                                    <button
-                                      onClick={() => openEditForm(contest)}
-                                      className="p-1 text-gray-400 hover:text-green-600"
-                                      title="Edit Contest"
-                                    >
-                                      <Pencil className="h-4 w-4" />
-                                    </button>
-                                    <button
-                                      onClick={() => handleDeleteContest(contest.id)}
-                                      className="p-1 text-gray-400 hover:text-red-600"
-                                      title="Delete Contest"
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </button>
-                                  </div>
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })}
+                          {filteredMockInterviews.map((interview) => (
+                            <TableRow key={interview.id} className="cursor-pointer hover:bg-gray-50" onClick={() => openViewForm(interview)}>
+                              <TableCell className="font-medium">{interview.title}</TableCell>
+                              <TableCell>
+                                <Badge variant="outline" className="capitalize">
+                                  {interview.ai_generation_mode.replace('_', ' ')}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>{interview.max_duration} mins</TableCell>
+                              <TableCell>
+                                <Badge className={getStatusColor(interview.publish_status)} variant="outline">
+                                  {interview.publish_status}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                {interview.ai_verbal_question_count} / {interview.ai_coding_question_count}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-1">
+                                  <Users className="w-4 h-4 text-gray-500" />
+                                  {interview.participants}
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                                  <button
+                                    onClick={() => openEditForm(interview)}
+                                    className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded"
+                                  >
+                                    <Pencil className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDelete(interview.id)}
+                                    className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                          {filteredMockInterviews.length === 0 && (
+                            <TableRow>
+                              <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                                No mock interviews found.
+                              </TableCell>
+                            </TableRow>
+                          )}
                         </TableBody>
                       </Table>
                     </div>

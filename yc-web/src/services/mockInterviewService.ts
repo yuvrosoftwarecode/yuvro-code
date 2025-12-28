@@ -4,36 +4,31 @@ export interface MockInterview {
   id: string;
   title: string;
   description: string;
-  type: 'technical' | 'behavioral' | 'system_design' | 'coding';
-  difficulty: 'easy' | 'medium' | 'hard';
-  status: 'scheduled' | 'ongoing' | 'completed' | 'cancelled';
-  scheduled_date: string;
-  duration: number;
-  interviewer: string;
-  interviewee?: string;
-  interviewer_details?: {
-    id: string;
-    username: string;
-    email: string;
-    first_name: string;
-    last_name: string;
-  };
-  interviewee_details?: {
-    id: string;
-    username: string;
-    email: string;
-    first_name: string;
-    last_name: string;
-  };
-  questions: any[];
-  notes: string;
-  feedback: string;
-  technical_score?: number;
-  communication_score?: number;
-  problem_solving_score?: number;
-  overall_score?: number;
-  meeting_link: string;
-  meeting_id: string;
+  instructions: string;
+  max_duration: number;
+
+  // AI Config
+  ai_generation_mode: 'full_ai' | 'mixed' | 'predefined';
+  ai_percentage: number;
+  ai_verbal_question_count: number;
+  ai_coding_question_count: number;
+
+  // Voice Config
+  voice_type: 'junnu' | 'munnu';
+  interviewer_name: string;
+  interviewer_voice_id: string;
+  voice_speed: number;
+  audio_settings: any;
+
+  // Skills
+  required_skills: string[];
+  optional_skills: string[];
+
+  // Publishing & Questions
+  publish_status: 'draft' | 'active' | 'inactive' | 'archived';
+  questions_config: any;
+  questions_random_config: any;
+
   created_at: string;
   updated_at: string;
 }
@@ -41,22 +36,31 @@ export interface MockInterview {
 export interface CreateMockInterviewData {
   title: string;
   description: string;
-  type: 'coding' | 'system_design' | 'aptitude' | 'behavioral' | 'domain_specific';
-  difficulty: 'easy' | 'medium' | 'hard';
-  scheduled_datetime: string;
-  duration: number;
-  interviewee?: string;
-  questions: any[];
-  meeting_link: string;
-  meeting_id: string;
+  instructions: string;
+  max_duration: number;
+
+  ai_generation_mode: 'full_ai' | 'mixed' | 'predefined';
+  ai_verbal_question_count: number;
+  ai_coding_question_count: number;
+
+  voice_type: 'junnu' | 'munnu';
+  interviewer_name: string;
+  interviewer_voice_id: string;
+  voice_speed: number;
+  audio_settings?: any;
+
+  required_skills: string[];
+  optional_skills: string[];
+
+  publish_status: 'draft' | 'active' | 'inactive' | 'archived';
+  questions_config?: any;
+  questions_random_config?: any;
 }
 
 export interface CompleteMockInterviewData {
-  technical_score?: number;
-  communication_score?: number;
-  problem_solving_score?: number;
   feedback?: string;
   notes?: string;
+  // Add other result fields if needed
 }
 
 class MockInterviewService {
@@ -69,6 +73,11 @@ class MockInterviewService {
       console.error('Error fetching mock interviews:', error);
       throw error;
     }
+  }
+
+  // Compatibility method for existing code
+  async getMockInterviews(): Promise<MockInterview[]> {
+    return this.getAllMockInterviews();
   }
 
   async getMockInterview(id: string): Promise<MockInterview> {
@@ -110,9 +119,16 @@ class MockInterviewService {
     }
   }
 
-  async startInterview(id: string): Promise<MockInterview> {
+  async startInterview(id: string, experience_level: string, selected_duration: number, resume?: File): Promise<any> {
     try {
-      const response = await restApiAuthUtil.post<any>(`/mock-interviews/${id}/start_interview/`, {});
+      const formData = new FormData();
+      formData.append('experience_level', experience_level);
+      formData.append('selected_duration', selected_duration.toString());
+      if (resume) {
+        formData.append('resume', resume);
+      }
+
+      const response = await restApiAuthUtil.post<any>(`/mock-interviews/${id}/start_interview/`, formData);
       return response;
     } catch (error) {
       console.error('Error starting interview:', error);

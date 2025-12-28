@@ -97,7 +97,7 @@ export const fetchSkillTests = async (filters?: SkillTestFilters): Promise<Skill
     }
 
     const queryString = params.toString();
-    const url = queryString ? `/skill-tests/?${queryString}` : '/skill-tests/';
+    const url = queryString ? `/assessment/skill-tests/?${queryString}` : '/assessment/skill-tests/';
 
     const response = await restApiAuthUtil.get(url);
     return response as SkillTest[];
@@ -109,7 +109,7 @@ export const fetchSkillTests = async (filters?: SkillTestFilters): Promise<Skill
 
 export const fetchSkillTestById = async (id: string): Promise<SkillTest> => {
   try {
-    const response = await restApiAuthUtil.get(`/skill-tests/${id}/`);
+    const response = await restApiAuthUtil.get(`/assessment/skill-tests/${id}/`);
     return response as SkillTest;
   } catch (error) {
     console.error('Error fetching skill test:', error);
@@ -119,7 +119,7 @@ export const fetchSkillTestById = async (id: string): Promise<SkillTest> => {
 
 export const createSkillTest = async (data: CreateSkillTestData): Promise<SkillTest> => {
   try {
-    const response = await restApiAuthUtil.post('/skill-tests/', data);
+    const response = await restApiAuthUtil.post('/assessment/skill-tests/', data);
     return response as SkillTest;
   } catch (error) {
     console.error('Error creating skill test:', error);
@@ -129,7 +129,7 @@ export const createSkillTest = async (data: CreateSkillTestData): Promise<SkillT
 
 export const updateSkillTest = async (id: string, data: UpdateSkillTestData): Promise<SkillTest> => {
   try {
-    const response = await restApiAuthUtil.patch(`/skill-tests/${id}/`, data);
+    const response = await restApiAuthUtil.patch(`/assessment/skill-tests/${id}/`, data);
     return response as SkillTest;
   } catch (error) {
     console.error('Error updating skill test:', error);
@@ -139,7 +139,7 @@ export const updateSkillTest = async (id: string, data: UpdateSkillTestData): Pr
 
 export const deleteSkillTest = async (id: string): Promise<void> => {
   try {
-    await restApiAuthUtil.delete(`/skill-tests/${id}/`);
+    await restApiAuthUtil.delete(`/assessment/skill-tests/${id}/`);
   } catch (error) {
     console.error('Error deleting skill test:', error);
     throw error;
@@ -150,7 +150,7 @@ export const deleteSkillTest = async (id: string): Promise<void> => {
 
 export const startSkillTest = async (testId: string): Promise<StartTestResponse> => {
   try {
-    const response = await restApiAuthUtil.post(`/skill-tests/${testId}/start/`, {});
+    const response = await restApiAuthUtil.post(`/assessment/skill-tests/${testId}/start/`, {});
     return response as StartTestResponse;
   } catch (error) {
     console.error('Error starting skill test:', error);
@@ -160,7 +160,7 @@ export const startSkillTest = async (testId: string): Promise<StartTestResponse>
 
 export const submitSkillTest = async (testId: string, submissionId: string, answers: any, explanations?: any, all_question_ids?: string[]): Promise<SubmitTestResponse> => {
   try {
-    const response = await restApiAuthUtil.post(`/skill-tests/${testId}/submit/`, {
+    const response = await restApiAuthUtil.post(`/assessment/skill-tests/${testId}/submit/`, {
       submission_id: submissionId,
       answers,
       explanations,
@@ -185,7 +185,7 @@ export const getSkillTestsByTopic = async (topicId: string): Promise<SkillTest[]
 
 export const getSkillTestSubmissions = async (skillTestId: string): Promise<any[]> => {
   try {
-    const response = await restApiAuthUtil.get(`/skill-test/submissions/?skill_test=${skillTestId}`);
+    const response = await restApiAuthUtil.get(`/assessment/skill-test/submissions/?skill_test=${skillTestId}`);
     return response as any[];
   } catch (error) {
     console.error('Error fetching submissions:', error);
@@ -195,7 +195,7 @@ export const getSkillTestSubmissions = async (skillTestId: string): Promise<any[
 
 export const getSkillTestSubmission = async (submissionId: string): Promise<any> => {
   try {
-    const response = await restApiAuthUtil.get(`/skill-test/submissions/${submissionId}/`);
+    const response = await restApiAuthUtil.get(`/assessment/skill-test/submissions/${submissionId}/`);
     return response as any;
   } catch (error) {
     console.error('Error fetching submission:', error);

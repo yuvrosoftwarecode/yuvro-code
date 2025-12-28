@@ -131,52 +131,61 @@ class CodeEditorService {
     }
   }
 
-  async submitSolution(request: CodeExecutionRequest & { 
+  async submitSolution(request: {
+    code: string;
+    language: string;
+    question_id: string;
+    course_id?: string;
+    topic_id?: string;
+    subtopic_id?: string;
     test_cases_basic?: any[];
+    test_cases_advanced?: any[];
     test_cases_custom?: any[];
     submission_id?: string;
     contest_id?: string;
     skill_test_id?: string;
     mock_interview_id?: string;
-    course_id?: string;
-    topic_id?: string;
-    code_submission_type?: 'learn' | 'practice';
+    submissionType?: 'learn' | 'practice' | 'skill_test' | 'contest' | 'mock_interview';
   }): Promise<ExecutionResult> {
     try {
-      const submissionType = request.submission_type || 'code_practice';
+      const submissionType = request.submissionType || 'practice';
       let endpoint = '';
-      let payload: any = {
-        code: request.code,
+      
+      const payload = {
+        subtopic_id: request.subtopic_id,
+        question_id: request.question_id,
         language: request.language,
-        coding_problem_id: request.coding_problem_id,
+        code: request.code,
+        test_cases_basic: request.test_cases_basic || [],
+        test_cases_advanced: request.test_cases_advanced || [],
+        test_cases_custom: request.test_cases_custom || [],
+        coding_status: {},
         course_id: request.course_id,
         topic_id: request.topic_id,
-        submission_type: request.code_submission_type || 'practice', // Default to 'practice'
-        test_cases_basic: request.test_cases_basic || [],
-        test_cases_custom: request.test_cases_custom || []
+        submission_id: request.submission_id,
+        contest_id: request.contest_id,
+        skill_test_id: request.skill_test_id,
+        mock_interview_id: request.mock_interview_id
       };
 
       switch (submissionType) {
-        case 'code_practice':
-          endpoint = '/assessment/learn-practice-submission/submit/';
+        case 'learn':
+          endpoint = '/course/student-course-progress/submit_coding/';
+          break;
+        case 'practice':
+          endpoint = '/course/student-code-practices/submit/';
           break;
         case 'skill_test':
           endpoint = '/assessment/skill-tests/submit/';
-          payload.submission_id = request.submission_id;
-          payload.skill_test_id = request.skill_test_id;
           break;
         case 'contest':
           endpoint = '/assessment/contests/submit/';
-          payload.submission_id = request.submission_id;
-          payload.contest_id = request.contest_id;
           break;
         case 'mock_interview':
           endpoint = '/assessment/mock-interviews/submit/';
-          payload.submission_id = request.submission_id;
-          payload.mock_interview_id = request.mock_interview_id;
           break;
         default:
-          endpoint = '/assessment/learn-practice-submission/submit/';
+          endpoint = '/course/student-code-practices/submit/';
       }
 
       const response: any = await restApiAuthUtil.post(endpoint, payload);
@@ -223,7 +232,7 @@ class CodeEditorService {
     let endpoint = '';
     switch (submissionType) {
       case 'code_practice':
-        endpoint = '/assessment/learn-practice-submission/';
+        endpoint = '/course/student-code-practices/';
         break;
       case 'skill_test':
         endpoint = '/assessment/skill-test/submissions/';
@@ -234,8 +243,6 @@ class CodeEditorService {
       case 'mock_interview':
         endpoint = '/assessment/mock-interviews/submissions/';
         break;
-      default:
-        endpoint = '/assessment/learn-practice-submission/';
     }
     
     return restApiAuthUtil.get(endpoint, { params });
@@ -245,7 +252,7 @@ class CodeEditorService {
     let endpoint = '';
     switch (submissionType) {
       case 'code_practice':
-        endpoint = `/assessment/learn-practice-submission/${id}/`;
+        endpoint = `/course/student-code-practices/${id}/`;
         break;
       case 'skill_test':
         endpoint = `/assessment/skill-test/submissions/${id}/`;
@@ -257,7 +264,7 @@ class CodeEditorService {
         endpoint = `/assessment/mock-interviews/submissions/${id}/`;
         break;
       default:
-        endpoint = `/assessment/learn-practice-submission/${id}/`;
+        endpoint = `/course/student-code-practices/${id}/`;
     }
     
     return restApiAuthUtil.get(endpoint);

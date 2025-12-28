@@ -4,10 +4,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Code, CheckCircle, Terminal } from "lucide-react";
 import { CodeEditorWithAI, CodeEditorWithAIHandle } from "@/components/code-editor";
+import restApiAuthUtil from "@/utils/RestApiAuthUtil";
 
 interface StudentCodingEmbedProps {
   subtopicId: string;
   onComplete?: (status: boolean) => void;
+  codeSubmissionType?: 'learn' | 'practice';
+  courseId?: string;
+  topicId?: string;
 }
 
 // Import types from CodePractice for compatibility
@@ -15,7 +19,7 @@ import type { Course, Topic, CodingProblem } from '@/pages/student/CodePractice'
 
 // Layout components removed as CodeEditorWithAI handles layout internally
 
-const StudentCodingEmbed = ({ subtopicId, onComplete }: StudentCodingEmbedProps) => {
+const StudentCodingEmbed = ({ subtopicId, onComplete, codeSubmissionType = 'practice', courseId, topicId }: StudentCodingEmbedProps) => {
   const [isCompleted, setIsCompleted] = useState(false);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,10 +33,13 @@ const StudentCodingEmbed = ({ subtopicId, onComplete }: StudentCodingEmbedProps)
 
   // Track solved questions IDs
   const [solvedMap, setSolvedMap] = useState<Record<string, boolean>>({});
+  
+  // Track processed submissions to prevent duplicate API calls
+  const processedSubmissions = useRef<Set<string>>(new Set());
 
   // Mock course and topic data for CodeEditorWithAI
   const mockCourse: Course = {
-    id: subtopicId,
+    id: courseId || subtopicId,
     name: "Coding Practice",
     icon: "💻",
     progress: 0,
@@ -42,7 +49,7 @@ const StudentCodingEmbed = ({ subtopicId, onComplete }: StudentCodingEmbedProps)
   };
 
   const mockTopic: Topic = {
-    id: subtopicId,
+    id: topicId || subtopicId,
     name: "Coding Problems",
     problemCount: questions.length,
     order_index: 1
@@ -52,6 +59,7 @@ const StudentCodingEmbed = ({ subtopicId, onComplete }: StudentCodingEmbedProps)
     setSolvedMap({});
     setViewMode('list');
     setSelectedQuestion(null);
+    processedSubmissions.current.clear();
   }, [subtopicId]);
 
   useEffect(() => {
@@ -97,6 +105,69 @@ const StudentCodingEmbed = ({ subtopicId, onComplete }: StudentCodingEmbedProps)
   const handleBackToList = () => {
     setViewMode('list');
     setSelectedQuestion(null);
+  };
+
+  const handleSubmissionComplete = async (problemId: string, success: boolean, submissionResult?: any) => {
+    console.log('handleSubmissionComplete called:', { problemId, success, submissionResult });
+    
+    if (success) {
+      const submissionKey = `${problemId}-${success}`;
+      
+      if (processedSubmissions.current.has(submissionKey)) {
+        console.log('Submission already processed, skipping API call');
+        return;
+      }
+      
+      // Update local state regardless of submission type
+      const newSolvedMap = { ...solvedMap, [problemId]: true };
+      setSolvedMap(newSolvedMap);
+      
+      // Only call progress API for learn mode
+      if (codeSubmissionType === 'learn') {
+        // Validate that we have actual submission data
+        if (!submissionResult || !submissionResult.code) {
+          console.warn('No submission result or code provided, skipping detailed tracking');
+          console.log('Available submissionResult keys:', submissionResult ? Object.keys(submissionResult) : 'null');
+          return;
+        }
+        
+        try {
+          processedSubmissions.current.add(submissionKey);
+          
+          // Only update progress via StudentCourseProgressViewSet
+          console.log('Updating progress via submit_coding API...');
+          const submissionDetails = {
+            subtopic_id: subtopicId,
+            coding_status: {}, // Empty for detailed submissions
+            question_id: problemId,
+            language: submissionResult.language || 'python',
+            code: submissionResult.code || '',
+            test_results: submissionResult.test_results || {},
+            execution_output: submissionResult.output || ''
+          };
+          
+          await restApiAuthUtil.post('/course/student-course-progress/submit_coding/', submissionDetails);
+          console.log('Coding progress updated successfully', {
+            questionId: submissionDetails?.question_id,
+            language: submissionDetails?.language,
+            testsPassed: submissionDetails?.test_results?.passed,
+            testsTotal: submissionDetails?.test_results?.total
+          });
+          
+          // Notify parent component that progress has been updated (similar to quiz)
+          if (onComplete) {
+            console.log('Calling onComplete to refresh progress display');
+            onComplete(true);
+          }
+        } catch (error) {
+          console.error('Failed to update coding progress:', error);
+          processedSubmissions.current.delete(submissionKey);
+        }
+      } else {
+        // For practice mode, just update UI state
+        console.log('Practice mode: Updated local solved state for question', problemId);
+      }
+    }
   };
 
   // Note: CodeEditorWithAI handles submissions internally
@@ -204,11 +275,13 @@ const StudentCodingEmbed = ({ subtopicId, onComplete }: StudentCodingEmbedProps)
         problem={convertToCodingProblem(selectedQuestion!)}
         course={mockCourse}
         topic={mockTopic}
+        subtopicId={subtopicId}
         onBack={handleBackToList}
         initialFullscreen={false}
         initialEditorOpen={true}
         isEmbedded={false}
-        codeSubmissionType="learn"
+        codeSubmissionType={codeSubmissionType}
+        onSubmissionComplete={handleSubmissionComplete}
       />
     </div>
   );

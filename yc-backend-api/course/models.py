@@ -466,3 +466,99 @@ class Question(models.Model):
 
     def __str__(self):
         return f"{self.type.upper()}: {self.title[:50]}..."
+
+
+class StudentCodePractice(BaseTimestampedModel):
+    """
+    Model for tracking student code practice submissions for learn and practice contexts
+    """
+    STATUS_STARTED = 'started'
+    STATUS_IN_PROGRESS = 'in_progress'
+    STATUS_COMPLETED = 'completed'
+    STATUS_SUBMITTED = 'submitted'
+    STATUS_EVALUATED = 'evaluated'
+    STATUS_CANCELLED = 'cancelled'
+    STATUS_CHOICES = [
+        (STATUS_STARTED, 'Started'),
+        (STATUS_IN_PROGRESS, 'In Progress'),
+        (STATUS_COMPLETED, 'Completed'),
+        (STATUS_SUBMITTED, 'Submitted'),
+        (STATUS_EVALUATED, 'Evaluated'),
+        (STATUS_CANCELLED, 'Cancelled'),
+    ]
+    
+    QUESTION_TYPES = [
+        ("mcq_single", "MCQ - Single Answer"),
+        ("mcq_multiple", "MCQ - Multiple Answers"),
+        ("coding", "Coding Problem"),
+        ("descriptive", "Descriptive Question"),
+    ]
+   
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='student_code_practices')
+    question = models.ForeignKey(
+        Question, 
+        on_delete=models.CASCADE, 
+        related_name='student_code_practices',
+        help_text="The coding question being solved"
+    )
+    
+    course = models.ForeignKey(
+        Course,
+        on_delete=models.CASCADE,
+        related_name='student_code_practices',
+        null=True,
+        blank=True,
+        help_text="Course this submission belongs to"
+    )
+    topic = models.ForeignKey(
+        Topic,
+        on_delete=models.CASCADE,
+        related_name='student_code_practices',
+        null=True,
+        blank=True,
+        help_text="Topic this submission belongs to"
+    )
+    
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_STARTED)
+    
+    answer_latest = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Latest answer content including code, language, and test cases"
+    )
+    answer_history = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Complete submission history: [{'timestamp': '2024-12-14T10:05:00Z', 'answer_data': {...}, 'is_auto_save': false, 'execution_results': {...}}]"
+    )
+    
+    answer_attempt_count = models.IntegerField(default=0, help_text="Number of times answer was modified")
+    
+    execution_output = models.TextField(blank=True, help_text="Code execution output")
+  
+    plagiarism_data = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Plagiarism check results: {'is_plagiarized': true, 'similarity_score': 0.95, 'matched_with': 'submission_id'}"
+    )
+    
+    evaluation_results = models.JSONField(
+        default=dict, 
+        blank=True,
+        help_text="Detailed test case results"
+    )
+    marks_obtained = models.FloatField(null=True, blank=True)
+       
+    class Meta:
+        ordering = ['-created_at']
+        unique_together = ['user', 'question']
+        
+    def __str__(self):
+        language = self.answer_latest.get('language', 'Unknown') if self.answer_latest else 'Unknown'
+        success_rate = 0.0
+        if self.evaluation_results:
+            total_tests = self.evaluation_results.get('total_tests', 0)
+            total_passed = self.evaluation_results.get('total_passed', 0)
+            if total_tests > 0:
+                success_rate = (total_passed / total_tests) * 100
+        return f"{self.user.username} - {self.question.title[:30]} - {language} ({success_rate:.1f}%)"

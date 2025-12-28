@@ -42,7 +42,7 @@ export interface Question {
 }
 
 export const fetchContests = async (): Promise<Contest[]> => {
-  return restApiAuthUtil.get('/contests/');
+  return restApiAuthUtil.get('/assessment/contests/');
 };
 
 export interface CreateContestData {
@@ -78,38 +78,38 @@ export const contestService = {
   },
 
   async getContest(contestId: string): Promise<Contest> {
-    return restApiAuthUtil.get(`/contests/${contestId}/`);
+    return restApiAuthUtil.get(`/assessment/contests/${contestId}/`);
   },
 
   async createContest(data: CreateContestData): Promise<Contest> {
-    return restApiAuthUtil.post('/contests/', data);
+    return restApiAuthUtil.post('/assessment/contests/', data);
   },
 
   async updateContest(contestId: string, data: Partial<Contest>): Promise<Contest> {
-    return restApiAuthUtil.patch(`/contests/${contestId}/`, data);
+    return restApiAuthUtil.patch(`/assessment/contests/${contestId}/`, data);
   },
 
   async deleteContest(contestId: string): Promise<void> {
-    return restApiAuthUtil.delete(`/contests/${contestId}/`);
+    return restApiAuthUtil.delete(`/assessment/contests/${contestId}/`);
   },
 
   async registerContest(contestId: string): Promise<any> {
-    return restApiAuthUtil.post(`/contests/${contestId}/register/`);
+    return restApiAuthUtil.post(`/assessment/contests/${contestId}/register/`);
   },
 
   async startContest(contestId: string): Promise<any> {
-    return restApiAuthUtil.post(`/contests/${contestId}/start/`);
+    return restApiAuthUtil.post(`/assessment/contests/${contestId}/start/`);
   },
 
   async submitContest(contestId: string, submissionId: string, answers: any): Promise<any> {
-    return restApiAuthUtil.post(`/contests/${contestId}/submit/`, {
+    return restApiAuthUtil.post(`/assessment/contests/${contestId}/submit/`, {
       submission_id: submissionId,
       answers,
     });
   },
 
   async getContestLeaderboard(contestId: string): Promise<any> {
-    return restApiAuthUtil.get(`/contests/${contestId}/leaderboard/`);
+    return restApiAuthUtil.get(`/assessment/contests/${contestId}/leaderboard/`);
   },
 
   async getQuestion(questionId: number): Promise<Question> {

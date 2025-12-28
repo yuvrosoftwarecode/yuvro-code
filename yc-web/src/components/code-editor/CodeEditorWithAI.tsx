@@ -15,6 +15,7 @@ interface CodeEditorWithAIProps {
   problem: CodingProblem;
   course: Course;
   topic: Topic;
+  subtopicId?: string;
   onBack: () => void;
   onViewAnalytics?: () => void;
   initialFullscreen?: boolean;
@@ -26,6 +27,7 @@ interface CodeEditorWithAIProps {
   showAiBuddy?: boolean;
   showProblemDescription?: boolean;
   codeSubmissionType?: 'learn' | 'practice';
+  onSubmissionComplete?: (problemId: string, success: boolean, submissionResult?: any) => void;
 }
 
 export interface CodeEditorWithAIHandle {
@@ -37,6 +39,7 @@ const CodeEditorWithAI = forwardRef<CodeEditorWithAIHandle, CodeEditorWithAIProp
   problem,
   course,
   topic,
+  subtopicId,
   onBack,
   initialFullscreen = false,
   initialEditorOpen = false,
@@ -46,7 +49,8 @@ const CodeEditorWithAI = forwardRef<CodeEditorWithAIHandle, CodeEditorWithAIProp
   isEmbedded = false,
   showAiBuddy = true,
   showProblemDescription = true,
-  codeSubmissionType = 'practice'
+  codeSubmissionType = 'practice',
+  onSubmissionComplete
 }, ref) => {
   // UI state
   const [editorOpen, setEditorOpen] = useState(initialEditorOpen);
@@ -420,6 +424,7 @@ ${codeEditorRef.current?.getCode() || ''}
                   problemId={problem.id}
                   courseId={course.id}
                   topicId={topic.id}
+                  subtopicId={subtopicId}
                   testCases={problem.test_cases_basic || []}
                   showTestCases={true}
                   allowCustomTestCases={true}
@@ -432,6 +437,7 @@ ${codeEditorRef.current?.getCode() || ''}
                   className="h-full"
                   templates={apiTemplates}
                   codeSubmissionType={codeSubmissionType}
+                  onSubmissionComplete={onSubmissionComplete ? (result) => onSubmissionComplete(problem.id, result?.test_results?.success || false, result) : undefined}
                 />
               </div>
             </ResizablePanel>
@@ -511,6 +517,7 @@ ${codeEditorRef.current?.getCode() || ''}
                     problemId={problem.id}
                     courseId={course.id}
                     topicId={topic.id}
+                    subtopicId={subtopicId}
                     testCases={problem.test_cases_basic || []}
                     showTestCases={true}
                     allowCustomTestCases={true}
@@ -523,6 +530,7 @@ ${codeEditorRef.current?.getCode() || ''}
                     className="h-full"
                     templates={apiTemplates}
                     codeSubmissionType={codeSubmissionType}
+                    onSubmissionComplete={onSubmissionComplete ? (result) => onSubmissionComplete(problem.id, result?.test_results?.success || false, result) : undefined}
                   />
                 </div>
               </ResizablePanel>

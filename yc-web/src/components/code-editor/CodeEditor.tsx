@@ -26,7 +26,7 @@ interface CodeEditorProps {
   problemId?: string;
   courseId?: string;
   topicId?: string;
-  submissionType?: 'code_practice' | 'skill_test' | 'contest' | 'mock_interview';
+  subtopicId?: string;
   codeSubmissionType?: 'learn' | 'practice';
   submissionId?: string;
   contestId?: string;
@@ -66,7 +66,7 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(({
   problemId = 'practice',
   courseId,
   topicId,
-  submissionType = 'code_practice',
+  subtopicId,
   codeSubmissionType = 'practice',
   submissionId,
   contestId,
@@ -309,28 +309,54 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(({
     setActiveBottomTab('output');
 
     try {
-      const res = await codeEditorService.submitSolution({
-        code,
-        language,
-        coding_problem_id: problemId,
-        course_id: courseId,
-        topic_id: topicId,
-        submission_type: submissionType, // This is for assessment type (code_practice, skill_test, etc.)
-        code_submission_type: codeSubmissionType, // This is for learn/practice
-        submission_id: submissionId,
-        contest_id: contestId,
-        skill_test_id: skillTestId,
-        mock_interview_id: mockInterviewId,
-        test_cases_basic: testCases.map(tc => ({
-          input: typeof tc.input === 'string' ? tc.input : JSON.stringify(tc.input),
-          expected_output: typeof tc.expected_output === 'string' ? tc.expected_output : JSON.stringify(tc.expected_output),
-          weight: tc.weight || 1
-        })),
-        test_cases_custom: customTestCases.map(tc => ({
-          input: tc.input,
-          expected_output: tc.expected_output
-        }))
-      });
+      let res;
+      
+      if (codeSubmissionType === 'learn') {
+        console.log('Learn mode: submitting to student-course-progress');
+        
+        res = await codeEditorService.submitSolution({
+          code,
+          language,
+          subtopic_id: subtopicId || null,
+          question_id: problemId,
+          course_id: courseId,
+          topic_id: topicId,
+          submissionType: 'learn',
+          test_cases_basic: testCases.map(tc => ({
+            input: typeof tc.input === 'string' ? tc.input : JSON.stringify(tc.input),
+            expected_output: typeof tc.expected_output === 'string' ? tc.expected_output : JSON.stringify(tc.expected_output),
+            weight: tc.weight || 1
+          })),
+          test_cases_custom: customTestCases.map(tc => ({
+            input: tc.input,
+            expected_output: tc.expected_output
+          }))
+        });
+      } else {
+        console.log('Practice mode: submitting to student-code-practices');
+        res = await codeEditorService.submitSolution({
+          code,
+          language,
+          question_id: problemId,
+          course_id: courseId,
+          topic_id: topicId,
+          subtopic_id: subtopicId,
+          submissionType: 'practice',
+          submission_id: submissionId,
+          contest_id: contestId,
+          skill_test_id: skillTestId,
+          mock_interview_id: mockInterviewId,
+          test_cases_basic: testCases.map(tc => ({
+            input: typeof tc.input === 'string' ? tc.input : JSON.stringify(tc.input),
+            expected_output: typeof tc.expected_output === 'string' ? tc.expected_output : JSON.stringify(tc.expected_output),
+            weight: tc.weight || 1
+          })),
+          test_cases_custom: customTestCases.map(tc => ({
+            input: tc.input,
+            expected_output: tc.expected_output
+          }))
+        });
+      }
 
       setTestResults(res.test_results ?? null);
       setExecutionMetrics({

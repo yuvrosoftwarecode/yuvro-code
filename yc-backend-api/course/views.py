@@ -1,10 +1,13 @@
-from rest_framework import viewsets, permissions, status
+from rest_framework import viewsets, permissions, status, filters
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.db import IntegrityError
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+import os
+import requests
 from authentication.permissions import CanManageCourses, IsAuthenticatedUser
+from .utils import CodeExecutionUtil
 from .models import (
     Course,
     Topic,
@@ -14,6 +17,7 @@ from .models import (
     CourseInstructor,
     Question,
     UserCourseProgress,
+    StudentCodePractice,
 )
 from .serializers import (
     CourseSerializer,
@@ -24,6 +28,7 @@ from .serializers import (
     VideoSerializer,
     NoteSerializer,
     QuestionSerializer,
+    StudentCodePracticeSerializer,
 )
 from django.contrib.auth import get_user_model
 
@@ -472,11 +477,12 @@ class QuestionViewSet(viewsets.ModelViewSet):
         return Response({"error": "Not allowed"}, status=403)
 
 
-class StudentCourseProgressViewSet(viewsets.ViewSet):
+class StudentCourseProgressViewSet(viewsets.GenericViewSet):
     """
     ViewSet to handle student-specific actions like progress, continue learning, etc.
     Route: /api/course/student-course-progress/
     """
+    queryset = UserCourseProgress.objects.all()
     permission_classes = [IsAuthenticatedUser]
 
     @action(detail=False, methods=["post"])
@@ -551,48 +557,170 @@ class StudentCourseProgressViewSet(viewsets.ViewSet):
         subtopic_id = request.data.get("subtopic_id")
         coding_status = request.data.get("coding_status", {})
         
-        if not subtopic_id:
-            return Response({"error": "subtopic_id is required"}, status=400)
-
-        subtopic = get_object_or_404(Subtopic, id=subtopic_id)
+        question_id = request.data.get("question_id")
+        language = request.data.get("language")
+        code = request.data.get("code")
+        test_cases_basic = request.data.get("test_cases_basic", [])
+        test_cases_advanced = request.data.get("test_cases_advanced", [])
+        test_cases_custom = request.data.get("test_cases_custom", [])
         
-        progress, _ = UserCourseProgress.objects.get_or_create(
-            user=user,
-            subtopic=subtopic,
-            defaults={
-                "course": subtopic.topic.course,
-                "topic": subtopic.topic
-            }
-        )
-        
-        total_questions = Question.objects.filter(
-            subtopic=subtopic, 
-            type="coding"
-        ).count()
-        
-        solved_count = len([k for k, v in coding_status.items() if v])
-        
-        coding_score = 0.0
-        if total_questions > 0:
-            coding_score = (solved_count / total_questions) * 100.0
+        # Try to get subtopic from subtopic_id or derive from question
+        subtopic = None
+        if subtopic_id:
+            try:
+                subtopic = Subtopic.objects.get(id=subtopic_id)
+            except Subtopic.DoesNotExist:
+                return Response({"error": "Subtopic not found"}, status=400)
+        elif question_id:
+            # Try to get subtopic from question
+            try:
+                question = get_object_or_404(Question, id=question_id)
+                if question.subtopic:
+                    subtopic = question.subtopic
+                elif question.topic:
+                    # For topic-level questions without subtopic_id, we'll skip progress tracking
+                    # but still allow code execution
+                    subtopic = None
+                else:
+                    return Response({"error": "Cannot determine subtopic from question"}, status=400)
+            except Question.DoesNotExist:
+                return Response({"error": "Question not found"}, status=400)
         else:
-            coding_score = 100.0
-            
-        progress.coding_score = coding_score
-        progress.coding_answers = coding_status
-        progress.is_coding_completed = (coding_score >= 100.0)
+            return Response({"error": "Either subtopic_id or question_id is required"}, status=400)
         
-        new_percent = progress.calculate_progress()
-        if new_percent >= 100:
-             progress.completed_at = timezone.now()
-             
-        progress.save()
+        execution_results = {}
+        test_results = {}
+        execution_output = ""
+        
+        if question_id and language and code:
+            try:
+                question = get_object_or_404(Question, id=question_id)
+                
+                result = CodeExecutionUtil.execute_code(
+                    code=code,
+                    language=language,
+                    question_id=question_id,
+                    test_cases_basic=test_cases_basic,
+                    test_cases_advanced=test_cases_advanced,
+                    test_cases_custom=test_cases_custom
+                )
+                
+                execution_results = result['execution_results']
+                test_results = result['test_results']
+                execution_output = result['execution_output']
+                
+                CodeExecutionUtil.create_or_update_practice_record(
+                    user=user,
+                    question=question,
+                    code=code,
+                    language=language,
+                    execution_results=execution_results,
+                    execution_output=execution_output,
+                    test_results=test_results,
+                    course=subtopic.topic.course,
+                    topic=subtopic.topic
+                )
+                
+            except requests.exceptions.RequestException as e:
+                return Response({
+                    'error': f"Code Executor Service Unavailable: {str(e)}",
+                    'status': 'error'
+                }, status=503)
+            except Exception as e:
+                return Response({
+                    'error': f"Code execution failed: {str(e)}",
+                    'status': 'error'
+                }, status=500)
+        
+        # Only update progress if we have a subtopic
+        if subtopic:
+            progress, _ = UserCourseProgress.objects.get_or_create(
+                user=user,
+                subtopic=subtopic,
+                defaults={
+                    "course": subtopic.topic.course,
+                    "topic": subtopic.topic
+                }
+            )
+            
+            if not progress.coding_answers:
+                progress.coding_answers = {}
+            
+            if question_id and language and code:
+                progress.coding_answers[question_id] = {
+                    'user_code': code,
+                    'language': language,
+                    'test_results': test_results,
+                    'is_correct': test_results.get('passed', 0) == test_results.get('total', 0) if test_results else False,
+                    'timestamp': timezone.now().isoformat(),
+                    'execution_output': execution_output
+                }
+            
+            for q_id, is_solved in coding_status.items():
+                if q_id not in progress.coding_answers:
+                    progress.coding_answers[q_id] = is_solved
+            
+            total_questions = Question.objects.filter(
+                subtopic=subtopic, 
+                type="coding"
+            ).count()
+            
+            solved_count = 0
+            if progress.coding_answers:
+                for q_id, answer_data in progress.coding_answers.items():
+                    if isinstance(answer_data, dict):
+                        if answer_data.get('is_correct', False):
+                            solved_count += 1
+                    elif isinstance(answer_data, bool):
+                        if answer_data:
+                            solved_count += 1
+            
+            for q_id, is_solved in coding_status.items():
+                if is_solved and q_id not in progress.coding_answers:
+                    solved_count += 1
+            
+            coding_score = 0.0
+            if total_questions > 0:
+                coding_score = (solved_count / total_questions) * 100.0
+            else:
+                coding_score = 100.0
+                
+            progress.coding_score = coding_score
+            progress.is_coding_completed = (coding_score >= 100.0)
+            
+            new_percent = progress.calculate_progress()
+            if new_percent >= 100:
+                 progress.completed_at = timezone.now()
+                 
+            progress.save()
+        else:
+            # No subtopic, so no progress tracking
+            new_percent = 0
+            coding_score = 0.0
 
-        return Response({
-            "message": "Coding progress updated",
+        response_data = {
+            "message": "Coding progress updated" if subtopic else "Code executed successfully",
             "progress": new_percent,
-            "is_completed": progress.is_completed
-        })
+            "is_completed": progress.is_completed if subtopic else False,
+            "coding_score": coding_score,
+            "question_solved": question_id and test_results.get('passed', 0) == test_results.get('total', 0) if test_results else False
+        }
+        
+        if question_id and language and code:
+            response_data.update({
+                "code": code,
+                "language": language,
+                "test_results": test_results,
+                "execution_output": execution_output,
+                "status": "completed"
+            })
+        
+        return Response(response_data)
+
+    @action(detail=False, methods=["get"])
+    def test_endpoint(self, request):
+        """Test endpoint to verify routing is working"""
+        return Response({"message": "StudentCourseProgressViewSet is working", "user": str(request.user)})
 
     @action(detail=False, methods=["post"])
     def mark_video_watched(self, request):
@@ -843,3 +971,288 @@ class StudentCourseProgressViewSet(viewsets.ViewSet):
         progress.save(update_fields=['last_accessed', 'updated_at'])
         
         return Response({"message": "Access logged"})
+
+
+class StudentCodePracticeViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing student code practice submissions
+    """
+    queryset = StudentCodePractice.objects.all()
+    serializer_class = StudentCodePracticeSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ['created_at', 'marks_obtained']
+    
+    def get_queryset(self):
+        qs = super().get_queryset()
+        user = self.request.user
+        
+        if not user.is_staff:
+            qs = qs.filter(user=user)
+            
+        question_id = self.request.query_params.get('question_id')
+        if question_id:
+            qs = qs.filter(question_id=question_id)
+            
+        return qs
+    
+    @action(detail=False, methods=['post'], url_path='submit')
+    def submit_code(self, request):
+        try:
+            code = request.data.get('code')
+            language = request.data.get('language')
+            question_id = request.data.get('question_id')  # Updated to match learn mode
+            course_id = request.data.get('course_id')
+            topic_id = request.data.get('topic_id')
+            test_cases_basic = request.data.get('test_cases_basic', [])
+            test_cases_advanced = request.data.get('test_cases_advanced', [])
+            test_cases_custom = request.data.get('test_cases_custom', [])
+            
+            if not code or not language or not question_id:
+                return Response({
+                    'error': 'Missing required fields: code, language, question_id'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            try:
+                question = Question.objects.get(id=question_id)
+            except Question.DoesNotExist:
+                return Response({
+                    'error': 'Question not found'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            try:
+                result = CodeExecutionUtil.execute_code(
+                    code=code,
+                    language=language,
+                    question_id=question_id,
+                    test_cases_basic=test_cases_basic,
+                    test_cases_advanced=test_cases_advanced,
+                    test_cases_custom=test_cases_custom
+                )
+                
+                execution_results = result['execution_results']
+                test_results = result['test_results']
+                execution_output = result['execution_output']
+                response_data = result['response_data']
+                
+                service_url = os.environ.get('CODE_EXECUTOR_URL', 'http://code-executor:8002')
+                plagiarism_score, plagiarism_details = CodeExecutionUtil.check_plagiarism(
+                    code, language, question, request.user, service_url
+                )
+                
+                course = None
+                topic = None
+                
+                if course_id:
+                    try:
+                        course = Course.objects.get(id=course_id)
+                    except Course.DoesNotExist:
+                        pass
+                        
+                if topic_id:
+                    try:
+                        topic = Topic.objects.get(id=topic_id)
+                    except Topic.DoesNotExist:
+                        pass
+                
+                if not course:
+                    course = question.course
+                if not topic:
+                    topic = question.topic
+                    if not topic and question.subtopic:
+                        topic = question.subtopic.topic
+                
+                exec_res = execution_results.get('execution_result', {})
+                basic_results = execution_results.get('basic_results', [])
+                advanced_results = execution_results.get('advanced_results', [])
+                custom_results = execution_results.get('custom_results', [])
+                
+                total_tests = test_results.get('total', 0)
+                total_passed = test_results.get('passed', 0)
+                basic_passed = test_results.get('basic_passed', 0)
+                advanced_passed = test_results.get('advanced_passed', 0)
+                custom_passed = test_results.get('custom_passed', 0)
+                
+                is_successful = total_tests > 0 and total_passed == total_tests
+                
+                existing_submission = StudentCodePractice.objects.filter(
+                    user=request.user,
+                    question=question
+                ).first()
+                
+                if existing_submission:
+                    submission = existing_submission
+                    
+                    history_entry = {
+                        'timestamp': timezone.now().isoformat(),
+                        'answer_data': {
+                            'code': code,
+                            'language': language,
+                            'test_cases_basic': test_cases_basic,
+                            'test_cases_advanced': test_cases_advanced,
+                            'test_cases_custom': test_cases_custom
+                        },
+                        'execution_results': execution_results,
+                        'plagiarism_data': {
+                            'is_plagiarized': plagiarism_score > 0.8,
+                            'similarity_score': plagiarism_score,
+                            'matched_with': plagiarism_details.get('best_match', {}).get('submission_id', '') if plagiarism_details else ''
+                        },
+                        'is_auto_save': False
+                    }
+                    
+                    submission.answer_latest = {
+                        'code': code,
+                        'language': language,
+                        'test_cases_basic': test_cases_basic,
+                        'test_cases_advanced': test_cases_advanced,
+                        'test_cases_custom': test_cases_custom
+                    }
+                    submission.answer_history.append(history_entry)
+                    submission.answer_attempt_count += 1
+                    submission.execution_output = execution_output
+                    submission.evaluation_results = execution_results
+                    submission.plagiarism_data = {
+                        'is_plagiarized': plagiarism_score > 0.8,
+                        'similarity_score': plagiarism_score,
+                        'matched_with': plagiarism_details.get('best_match', {}).get('submission_id', '') if plagiarism_details else ''
+                    }
+                    submission.marks_obtained = question.marks if is_successful else 0
+                    
+                    if course_id and not submission.course:
+                        submission.course = course
+                    elif not submission.course and question.course:
+                        submission.course = question.course
+                        
+                    if topic_id and not submission.topic:
+                        submission.topic = topic
+                    elif not submission.topic and question.topic:
+                        submission.topic = question.topic
+                    elif not submission.topic and question.subtopic and question.subtopic.topic:
+                        submission.topic = question.subtopic.topic
+                        
+                    submission.save()
+                    
+                else:
+                    submission = StudentCodePractice.objects.create(
+                        user=request.user,
+                        question=question,
+                        course=course,
+                        topic=topic,
+                        status=StudentCodePractice.STATUS_COMPLETED,
+                        answer_latest={
+                            'code': code,
+                            'language': language,
+                            'test_cases_basic': test_cases_basic,
+                            'test_cases_advanced': test_cases_advanced,
+                            'test_cases_custom': test_cases_custom
+                        },
+                        answer_history=[{
+                            'timestamp': timezone.now().isoformat(),
+                            'answer_data': {
+                                'code': code,
+                                'language': language,
+                                'test_cases_basic': test_cases_basic,
+                                'test_cases_advanced': test_cases_advanced,
+                                'test_cases_custom': test_cases_custom
+                            },
+                            'execution_results': execution_results,
+                            'plagiarism_data': {
+                                'is_plagiarized': plagiarism_score > 0.8,
+                                'similarity_score': plagiarism_score,
+                                'matched_with': plagiarism_details.get('best_match', {}).get('submission_id', '') if plagiarism_details else ''
+                            },
+                            'is_auto_save': False
+                        }],
+                        execution_output=execution_output,
+                        evaluation_results=execution_results,
+                        plagiarism_data={
+                            'is_plagiarized': plagiarism_score > 0.8,
+                            'similarity_score': plagiarism_score,
+                            'matched_with': plagiarism_details.get('best_match', {}).get('submission_id', '') if plagiarism_details else ''
+                        },
+                        answer_attempt_count=1,
+                        marks_obtained=question.marks if is_successful else 0
+                    )
+                
+                basic_count = len(test_cases_basic)
+                custom_count = len(test_cases_custom)
+                advanced_count = len(test_cases_advanced)
+                visible_test_count = basic_count + custom_count
+                
+                visible_test_results = basic_results + custom_results
+                visible_passed = basic_passed + custom_passed
+                visible_test_count = len(basic_results) + len(custom_results)
+                
+                masked_advanced_results = []
+                for i, result in enumerate(advanced_results):
+                    masked_input = CodeExecutionUtil.mask_test_data(result.get('input', ''))
+                    masked_expected = CodeExecutionUtil.mask_test_data(result.get('expected_output', ''))
+                    
+                    masked_advanced_results.append({
+                        'passed': result.get('passed', False),
+                        'input': masked_input,
+                        'expected_output': masked_expected,
+                        'actual_output': result.get('actual_output', '') if result.get('passed', False) else '***',
+                        'error': result.get('error', '') if not result.get('passed', False) else '',
+                        'execution_time': result.get('execution_time', 0),
+                        'is_hidden': True,
+                        'test_case_number': visible_test_count + i + 1
+                    })
+                
+                all_displayed_results = visible_test_results + masked_advanced_results
+                overall_success = total_tests > 0 and total_passed == total_tests
+                
+                formatted_response = {
+                    'id': submission.id,
+                    'coding_problem': str(question.id),
+                    'problem_title': question.title,
+                    'problem_description': question.content,
+                    'code': code,
+                    'language': language,
+                    'status': 'completed',
+                    'output': submission.execution_output,
+                    'error_message': exec_res.get('error', ''),
+                    'execution_time': exec_res.get('execution_time', 0),
+                    'memory_usage': exec_res.get('memory_usage', 0),
+                    'test_cases_passed': total_passed,
+                    'total_test_cases': total_tests,
+                    'plagiarism_score': plagiarism_score,
+                    'plagiarism_details': plagiarism_details,
+                    'created_at': submission.created_at.isoformat(),
+                    'updated_at': submission.updated_at.isoformat(),
+                    'test_results': {
+                        'passed': total_passed,
+                        'total': total_tests,
+                        'total_passed': total_passed,
+                        'total_tests': total_tests,
+                        'success': overall_success,
+                        'test_results': all_displayed_results,
+                        'results': all_displayed_results,
+                        'visible_passed': visible_passed,
+                        'visible_total': visible_test_count,
+                        'advanced_passed': total_passed - visible_passed if total_tests > visible_test_count else 0,
+                        'advanced_total': advanced_count,
+                        'overall_success': overall_success
+                    },
+                    'plagiarism_flagged': plagiarism_score > 0.8
+                }
+                
+                return Response(formatted_response, status=status.HTTP_201_CREATED)
+                
+            except requests.exceptions.RequestException as e:
+                return Response({
+                    'status': 'error',
+                    'error_message': f"Code Executor Service Unavailable: {str(e)}",
+                    'execution_result': {'success': False},
+                    'test_results': []
+                }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            except Exception as e:
+                return Response({
+                    'error': str(e)
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                
+        except Exception as e:
+            return Response({
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -1,172 +1,156 @@
 {
   "mock_interviews": [
     {
-      "title": "Mock Interview — Java Developer",
-      "description": "Master Java programming fundamentals, object-oriented design, and enterprise development patterns.",
-      "instructions": "60 minutes. Includes MCQs, short design prompts, and one coding task in Java.",
+      "title": "Software Engineer - Full Stack Developer",
+      "description": "Comprehensive mock interview for full-stack development positions covering frontend, backend, and system design concepts.",
+      "instructions": "This interview will test your knowledge of web development, databases, APIs, and problem-solving skills. Be prepared for both technical and behavioral questions.",
       "max_duration": 60,
+      "required_skills": ["JavaScript", "React", "Node.js", "SQL", "REST APIs"],
+      "optional_skills": ["TypeScript", "MongoDB", "AWS", "Docker"],
       "ai_generation_mode": "mixed",
-      "voice_type": "junnu",
-      "voice_speed": 1.0,
-      "audio_settings": {},
-      "required_skills": [
-        "Java",
-        "OOP",
-        "Spring Boot"
-      ],
-      "optional_skills": [
-        "Hibernate",
-        "Microservices"
-      ],
-      "ai_verbal_question_count": 5,
-      "ai_coding_question_count": 2,
-      "publish_status": "active",
-      "questions_random_config": {
-        "mcq_single": 3,
-        "mcq_multiple": 2,
-        "coding": 3,
-        "descriptive": 2
-      }
-    },
-    {
-      "title": "Mock Interview — Python Developer",
-      "description": "Learn Python programming, data structures, algorithms, and web development with Django/Flask.",
-      "instructions": "50 minutes. MCQs and one coding task; focus on Pythonic solutions.",
-      "max_duration": 50,
-      "ai_generation_mode": "mixed",
-      "voice_type": "munnu",
-      "voice_speed": 1.1,
-      "audio_settings": {},
-      "required_skills": [
-        "Python",
-        "Django",
-        "DSA"
-      ],
-      "optional_skills": [
-        "Flask",
-        "AWS"
-      ],
-      "ai_verbal_question_count": 5,
-      "ai_coding_question_count": 2,
-      "publish_status": "active",
-      "questions_random_config": {
-        "mcq_single": 3,
-        "mcq_multiple": 2,
-        "coding": 3,
-        "descriptive": 2
-      }
-    },
-    {
-      "title": "Mock Interview — Frontend Developer",
-      "description": "Master HTML, CSS, JavaScript, React, and modern frontend development practices.",
-      "instructions": "55 minutes. MCQs, DOM/CSS problems, and a small implementation task.",
-      "max_duration": 55,
-      "ai_generation_mode": "mixed",
-      "voice_type": "junnu",
-      "voice_speed": 1.0,
-      "audio_settings": {},
-      "required_skills": [
-        "React",
-        "JavaScript",
-        "CSS"
-      ],
-      "optional_skills": [
-        "TypeScript",
-        "Tailwind"
-      ],
-      "ai_verbal_question_count": 5,
-      "ai_coding_question_count": 1,
-      "publish_status": "active",
-      "questions_random_config": {
-        "mcq_single": 3,
-        "mcq_multiple": 2,
-        "coding": 3,
-        "descriptive": 2
-      }
-    },
-    {
-      "title": "Mock Interview — Data Scientist",
-      "description": "Learn data analysis, machine learning, statistical modeling, and data visualization.",
-      "instructions": "75 minutes. MCQs, short analytical problems, and one coding/data task.",
-      "max_duration": 75,
-      "ai_generation_mode": "full_ai",
-      "voice_type": "munnu",
-      "voice_speed": 1.0,
-      "audio_settings": {},
-      "required_skills": [
-        "Python",
-        "Machine Learning",
-        "Statistics"
-      ],
-      "optional_skills": [
-        "Pandas",
-        "Scikit-Learn"
-      ],
       "ai_verbal_question_count": 8,
       "ai_coding_question_count": 2,
-      "publish_status": "active",
-      "questions_random_config": {
-        "mcq_single": 3,
-        "mcq_multiple": 2,
-        "coding": 3,
-        "descriptive": 2
-      }
-    },
-    {
-      "title": "Mock Interview — System Design Engineer",
-      "description": "Master distributed systems, scalability, microservices, and system architecture patterns.",
-      "instructions": "90 minutes. Design prompts and discussion-based questions; include one architecture diagram task.",
-      "max_duration": 90,
-      "ai_generation_mode": "mixed",
+      "ai_percentage": 70,
       "voice_type": "junnu",
+      "interviewer_name": "Alex Chen",
+      "interviewer_voice_id": "alex_tech_interviewer",
       "voice_speed": 1.0,
-      "audio_settings": {},
-      "required_skills": [
-        "System Design",
-        "Scalability",
-        "Distributed Systems"
-      ],
-      "optional_skills": [
-        "Kafka",
-        "Redis"
-      ],
-      "ai_verbal_question_count": 6,
-      "ai_coding_question_count": 0,
+      "audio_settings": {"background_noise": false, "echo_cancellation": true},
       "publish_status": "active",
-      "questions_random_config": {
-        "mcq_single": 3,
-        "mcq_multiple": 2,
-        "coding": 3,
-        "descriptive": 2
-      }
+      "questions_random_config": {"mcq_single": 3, "mcq_multiple": 2, "coding": 3, "descriptive": 2}
     },
     {
-      "title": "Mock Interview — DevOps Engineer",
-      "description": "Learn CI/CD pipelines, containerization, cloud platforms, and infrastructure automation.",
-      "instructions": "60 minutes. MCQs, short scenario-based tasks, and one practical automation task.",
-      "max_duration": 60,
-      "ai_generation_mode": "mixed",
+      "title": "Data Scientist - Machine Learning Engineer",
+      "description": "Mock interview focused on data science, machine learning algorithms, and statistical analysis for ML engineering roles.",
+      "instructions": "Expect questions on machine learning algorithms, data preprocessing, model evaluation, and Python programming. Some coding challenges will involve data manipulation.",
+      "max_duration": 75,
+      "required_skills": ["Python", "Machine Learning", "Statistics", "Pandas", "Scikit-learn"],
+      "optional_skills": ["TensorFlow", "PyTorch", "SQL", "R", "Deep Learning"],
+      "ai_generation_mode": "full_ai",
+      "ai_verbal_question_count": 10,
+      "ai_coding_question_count": 3,
+      "ai_percentage": 85,
       "voice_type": "munnu",
-      "voice_speed": 1.0,
-      "audio_settings": {},
-      "required_skills": [
-        "Docker",
-        "Kubernetes",
-        "CI/CD"
-      ],
-      "optional_skills": [
-        "AWS",
-        "Terraform"
-      ],
-      "ai_verbal_question_count": 5,
-      "ai_coding_question_count": 1,
+      "interviewer_name": "Dr. Sarah Johnson",
+      "interviewer_voice_id": "sarah_data_scientist",
+      "voice_speed": 0.9,
+      "audio_settings": {"background_noise": false, "echo_cancellation": true},
       "publish_status": "active",
-      "questions_random_config": {
-        "mcq_single": 3,
-        "mcq_multiple": 2,
-        "coding": 3,
-        "descriptive": 2
-      }
+      "questions_random_config": {"mcq_single": 4, "mcq_multiple": 2, "coding": 2, "descriptive": 3}
+    },
+    {
+      "title": "Frontend Developer - React Specialist",
+      "description": "Specialized mock interview for React developers focusing on component architecture, state management, and modern frontend practices.",
+      "instructions": "This interview covers React fundamentals, hooks, state management, performance optimization, and frontend best practices. Coding challenges will involve React components.",
+      "max_duration": 50,
+      "required_skills": ["React", "JavaScript", "HTML", "CSS", "Redux"],
+      "optional_skills": ["TypeScript", "Next.js", "Tailwind CSS", "Jest", "Webpack"],
+      "ai_generation_mode": "mixed",
+      "ai_verbal_question_count": 6,
+      "ai_coding_question_count": 2,
+      "ai_percentage": 60,
+      "voice_type": "junnu",
+      "interviewer_name": "Mike Rodriguez",
+      "interviewer_voice_id": "mike_frontend_lead",
+      "voice_speed": 1.1,
+      "audio_settings": {"background_noise": false, "echo_cancellation": true},
+      "publish_status": "active",
+      "questions_random_config": {"mcq_single": 5, "mcq_multiple": 1, "coding": 3, "descriptive": 1}
+    },
+    {
+      "title": "Backend Developer - Python/Django",
+      "description": "Backend-focused mock interview covering server-side development, APIs, databases, and Python frameworks.",
+      "instructions": "Interview will cover Python programming, Django framework, database design, API development, and system architecture. Expect both theoretical and practical questions.",
+      "max_duration": 65,
+      "required_skills": ["Python", "Django", "PostgreSQL", "REST APIs", "Git"],
+      "optional_skills": ["Redis", "Celery", "Docker", "AWS", "GraphQL"],
+      "ai_generation_mode": "mixed",
+      "ai_verbal_question_count": 7,
+      "ai_coding_question_count": 2,
+      "ai_percentage": 75,
+      "voice_type": "munnu",
+      "interviewer_name": "Jennifer Kim",
+      "interviewer_voice_id": "jennifer_backend_architect",
+      "voice_speed": 1.0,
+      "audio_settings": {"background_noise": false, "echo_cancellation": true},
+      "publish_status": "active",
+      "questions_random_config": {"mcq_single": 3, "mcq_multiple": 2, "coding": 3, "descriptive": 2}
+    },
+    {
+      "title": "DevOps Engineer - Cloud Infrastructure",
+      "description": "DevOps and cloud infrastructure interview covering CI/CD, containerization, monitoring, and cloud platforms.",
+      "instructions": "This interview focuses on DevOps practices, cloud services, infrastructure as code, monitoring, and automation. Practical scenarios will be discussed.",
+      "max_duration": 70,
+      "required_skills": ["Docker", "Kubernetes", "AWS", "CI/CD", "Linux"],
+      "optional_skills": ["Terraform", "Ansible", "Prometheus", "Jenkins", "Helm"],
+      "ai_generation_mode": "mixed",
+      "ai_verbal_question_count": 8,
+      "ai_coding_question_count": 1,
+      "ai_percentage": 65,
+      "voice_type": "junnu",
+      "interviewer_name": "David Thompson",
+      "interviewer_voice_id": "david_devops_lead",
+      "voice_speed": 0.95,
+      "audio_settings": {"background_noise": false, "echo_cancellation": true},
+      "publish_status": "active",
+      "questions_random_config": {"mcq_single": 4, "mcq_multiple": 2, "coding": 1, "descriptive": 4}
+    },
+    {
+      "title": "Mobile Developer - React Native",
+      "description": "Mobile development interview focusing on React Native, mobile app architecture, and cross-platform development.",
+      "instructions": "Interview covers React Native development, mobile UI/UX principles, app store deployment, and mobile-specific challenges. Coding will involve mobile components.",
+      "max_duration": 55,
+      "required_skills": ["React Native", "JavaScript", "Mobile Development", "Redux", "API Integration"],
+      "optional_skills": ["TypeScript", "Expo", "Firebase", "Push Notifications", "App Store Optimization"],
+      "ai_generation_mode": "mixed",
+      "ai_verbal_question_count": 6,
+      "ai_coding_question_count": 2,
+      "ai_percentage": 70,
+      "voice_type": "munnu",
+      "interviewer_name": "Lisa Wang",
+      "interviewer_voice_id": "lisa_mobile_expert",
+      "voice_speed": 1.05,
+      "audio_settings": {"background_noise": false, "echo_cancellation": true},
+      "publish_status": "active",
+      "questions_random_config": {"mcq_single": 4, "mcq_multiple": 1, "coding": 3, "descriptive": 2}
+    },
+    {
+      "title": "System Design - Senior Engineer",
+      "description": "Senior-level system design interview covering scalability, architecture patterns, and distributed systems.",
+      "instructions": "This interview focuses on system design principles, scalability challenges, microservices architecture, and distributed systems. Expect whiteboard-style design questions.",
+      "max_duration": 90,
+      "required_skills": ["System Design", "Scalability", "Distributed Systems", "Microservices", "Database Design"],
+      "optional_skills": ["Load Balancing", "Caching", "Message Queues", "CDN", "Monitoring"],
+      "ai_generation_mode": "mixed",
+      "ai_verbal_question_count": 10,
+      "ai_coding_question_count": 0,
+      "ai_percentage": 80,
+      "voice_type": "junnu",
+      "interviewer_name": "Robert Chen",
+      "interviewer_voice_id": "robert_system_architect",
+      "voice_speed": 0.9,
+      "audio_settings": {"background_noise": false, "echo_cancellation": true},
+      "publish_status": "active",
+      "questions_random_config": {"mcq_single": 2, "mcq_multiple": 2, "coding": 0, "descriptive": 6}
+    },
+    {
+      "title": "QA Engineer - Test Automation",
+      "description": "Quality assurance interview covering test automation, testing frameworks, and quality processes.",
+      "instructions": "Interview covers testing methodologies, automation frameworks, bug tracking, and quality assurance processes. Some coding challenges will involve test scripts.",
+      "max_duration": 45,
+      "required_skills": ["Test Automation", "Selenium", "Testing Frameworks", "Bug Tracking", "Quality Assurance"],
+      "optional_skills": ["Cypress", "Jest", "Postman", "Performance Testing", "Security Testing"],
+      "ai_generation_mode": "mixed",
+      "ai_verbal_question_count": 5,
+      "ai_coding_question_count": 2,
+      "ai_percentage": 65,
+      "voice_type": "munnu",
+      "interviewer_name": "Amanda Foster",
+      "interviewer_voice_id": "amanda_qa_lead",
+      "voice_speed": 1.0,
+      "audio_settings": {"background_noise": false, "echo_cancellation": true},
+      "publish_status": "active",
+      "questions_random_config": {"mcq_single": 4, "mcq_multiple": 2, "coding": 2, "descriptive": 2}
     }
   ]
 }

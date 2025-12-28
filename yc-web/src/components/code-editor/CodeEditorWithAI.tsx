@@ -25,6 +25,7 @@ interface CodeEditorWithAIProps {
   isEmbedded?: boolean;
   showAiBuddy?: boolean;
   showProblemDescription?: boolean;
+  codeSubmissionType?: 'learn' | 'practice';
 }
 
 export interface CodeEditorWithAIHandle {
@@ -44,7 +45,8 @@ const CodeEditorWithAI = forwardRef<CodeEditorWithAIHandle, CodeEditorWithAIProp
   showBreadcrumb = true,
   isEmbedded = false,
   showAiBuddy = true,
-  showProblemDescription = true
+  showProblemDescription = true,
+  codeSubmissionType = 'practice'
 }, ref) => {
   // UI state
   const [editorOpen, setEditorOpen] = useState(initialEditorOpen);
@@ -429,6 +431,7 @@ ${codeEditorRef.current?.getCode() || ''}
                   isFullscreen={isEditorFullscreen}
                   className="h-full"
                   templates={apiTemplates}
+                  codeSubmissionType={codeSubmissionType}
                 />
               </div>
             </ResizablePanel>
@@ -519,6 +522,7 @@ ${codeEditorRef.current?.getCode() || ''}
                     isFullscreen={isEditorFullscreen}
                     className="h-full"
                     templates={apiTemplates}
+                    codeSubmissionType={codeSubmissionType}
                   />
                 </div>
               </ResizablePanel>

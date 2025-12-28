@@ -19,7 +19,7 @@ from .models import (
     ContestSubmission, MockInterviewSubmission, 
     JobTestSubmission, SkillTestSubmission,
     SkillTestQuestionActivity, ContestQuestionActivity, MockInterviewQuestionActivity,
-    CodePracticeQuestionSubmission
+    LearnOrPracticeSubmission
 )
 from .serializers import (
     ContestSerializer, SkillTestSerializer, MockInterviewSerializer,
@@ -668,8 +668,8 @@ class SkillTestSubmissionViewSet(viewsets.ReadOnlyModelViewSet):
         return qs
 
 
-class CodePracticeSubmissionViewSet(viewsets.ModelViewSet):
-    queryset = CodePracticeQuestionSubmission.objects.all()
+class LearnOrPracticeSubmissionViewSet(viewsets.ModelViewSet):
+    queryset = LearnOrPracticeSubmission.objects.all()
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [filters.OrderingFilter]
     ordering_fields = ['created_at', 'marks_obtained']
@@ -723,8 +723,8 @@ class CodePracticeSubmissionViewSet(viewsets.ModelViewSet):
         return qs
     
     def get_serializer_class(self):
-        from .serializers import CodePracticeQuestionSubmissionSerializer
-        return CodePracticeQuestionSubmissionSerializer
+        from .serializers import LearnOrPracticeSubmissionSerializer
+        return LearnOrPracticeSubmissionSerializer
     
     @action(detail=False, methods=['post'], url_path='submit')
     def submit_code(self, request):
@@ -734,6 +734,7 @@ class CodePracticeSubmissionViewSet(viewsets.ModelViewSet):
             question_id = request.data.get('coding_problem_id')
             course_id = request.data.get('course_id')
             topic_id = request.data.get('topic_id')
+            submission_type = request.data.get('submission_type', 'practice')  # Default to 'practice'
             test_cases_basic = request.data.get('test_cases_basic', [])
             test_cases_advanced = request.data.get('test_cases_advanced', [])
             test_cases_custom = request.data.get('test_cases_custom', [])
@@ -742,6 +743,10 @@ class CodePracticeSubmissionViewSet(viewsets.ModelViewSet):
                 return Response({
                     'error': 'Missing required fields: code, language, coding_problem_id'
                 }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Validate submission_type
+            if submission_type not in ['learn', 'practice']:
+                submission_type = 'practice'  # Default fallback
             
             try:
                 question = Question.objects.get(id=question_id)
@@ -780,7 +785,7 @@ class CodePracticeSubmissionViewSet(viewsets.ModelViewSet):
             try:
                 reference_submissions = []
                 
-                recent_submissions = CodePracticeQuestionSubmission.objects.filter(
+                recent_submissions = LearnOrPracticeSubmission.objects.filter(
                     question=question
                 ).exclude(user=request.user).select_related('user').order_by('-created_at')[:20]
                 
@@ -830,10 +835,11 @@ class CodePracticeSubmissionViewSet(viewsets.ModelViewSet):
             total_passed = response_data.get('total_passed', 0)
             is_successful = total_tests > 0 and total_passed == total_tests
             
-            # Check if submission already exists for this user and question
-            existing_submission = CodePracticeQuestionSubmission.objects.filter(
+            # Check if submission already exists for this user, question, and submission_type
+            existing_submission = LearnOrPracticeSubmission.objects.filter(
                 user=request.user,
-                question=question
+                question=question,
+                submission_type=submission_type
             ).first()
             
             if existing_submission:
@@ -952,12 +958,13 @@ class CodePracticeSubmissionViewSet(viewsets.ModelViewSet):
                         topic = question.subtopic.topic
                 
                 # Create new submission
-                submission = CodePracticeQuestionSubmission.objects.create(
+                submission = LearnOrPracticeSubmission.objects.create(
                     user=request.user,
                     question=question,
                     course=course,
                     topic=topic,
-                    status=CodePracticeQuestionSubmission.STATUS_COMPLETED,
+                    submission_type=submission_type,
+                    status=LearnOrPracticeSubmission.STATUS_COMPLETED,
                     answer_latest={
                         'code': code,
                         'language': language,

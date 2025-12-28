@@ -208,6 +208,7 @@ const StudentCodingEmbed = ({ subtopicId, onComplete }: StudentCodingEmbedProps)
         initialFullscreen={false}
         initialEditorOpen={true}
         isEmbedded={false}
+        codeSubmissionType="learn"
       />
     </div>
   );

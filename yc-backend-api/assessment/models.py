@@ -567,7 +567,7 @@ class JobTestQuestionActivity(BaseQuestionActivity):
         return f"{self.user.username} - {self.question.title[:30]} - {'Final' if self.is_final_answer else 'Draft'}"
 
 
-class CodePracticeQuestionSubmission(BaseTimestampedModel):
+class LearnOrPracticeSubmission(BaseTimestampedModel):
     STATUS_STARTED = 'started'
     STATUS_IN_PROGRESS = 'in_progress'
     STATUS_COMPLETED = 'completed'
@@ -582,19 +582,31 @@ class CodePracticeQuestionSubmission(BaseTimestampedModel):
         (STATUS_EVALUATED, 'Evaluated'),
         (STATUS_CANCELLED, 'Cancelled'),
     ]
+    
+    SUBMISSION_TYPES = [
+        ("learn", "Learn"),
+        ("practice", "Practice"),
+    ]
+    
+    QUESTION_TYPES = [
+        ("mcq_single", "MCQ - Single Answer"),
+        ("mcq_multiple", "MCQ - Multiple Answers"),
+        ("coding", "Coding Problem"),
+        ("descriptive", "Descriptive Question"),
+    ]
    
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='code_practice_question_submissions')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='learn_or_practice_submissions')
     question = models.ForeignKey(
         'course.Question', 
         on_delete=models.CASCADE, 
-        related_name='code_practice_question_submissions',
+        related_name='learn_or_practice_submissions',
         help_text="The coding question being solved"
     )
     
     course = models.ForeignKey(
         'course.Course',
         on_delete=models.CASCADE,
-        related_name='code_practice_question_submissions',
+        related_name='learn_or_practice_submissions',
         null=True,
         blank=True,
         help_text="Course this submission belongs to"
@@ -602,13 +614,20 @@ class CodePracticeQuestionSubmission(BaseTimestampedModel):
     topic = models.ForeignKey(
         'course.Topic',
         on_delete=models.CASCADE,
-        related_name='code_practice_question_submissions',
+        related_name='learn_or_practice_submissions',
         null=True,
         blank=True,
         help_text="Topic this submission belongs to"
     )
     
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_STARTED)
+    
+    submission_type = models.CharField(
+        max_length=20,
+        choices=SUBMISSION_TYPES,
+        default="practice",
+        help_text="Type of submission - learn or practice"
+    )
     
     answer_latest = models.JSONField(
         default=dict,
@@ -640,7 +659,7 @@ class CodePracticeQuestionSubmission(BaseTimestampedModel):
        
     class Meta:
         ordering = ['-created_at']
-        unique_together = ['user', 'question']
+        unique_together = ['user', 'question', 'submission_type']
         
     def __str__(self):
         language = self.answer_latest.get('language', 'Unknown') if self.answer_latest else 'Unknown'

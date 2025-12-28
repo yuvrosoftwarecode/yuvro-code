@@ -6,7 +6,7 @@ from .models import (
     MockInterviewSubmission, JobTestSubmission,
     SkillTestQuestionActivity, ContestQuestionActivity,
     MockInterviewQuestionActivity, JobTestQuestionActivity,
-    CodePracticeQuestionSubmission
+    LearnOrPracticeSubmission
 )
 
 
@@ -326,28 +326,28 @@ class JobTestQuestionActivityAdmin(BaseQuestionActivityAdmin):
     list_display = BaseQuestionActivityAdmin.list_display + ['job_test_submission']
 
 
-@admin.register(CodePracticeQuestionSubmission)
-class CodePracticeQuestionSubmissionAdmin(admin.ModelAdmin):
-    list_display = ['user', 'question', 'get_language', 'status', 'marks_obtained', 'created_at']
-    list_filter = ['status', 'course', 'topic', 'created_at']
-    search_fields = ['user__username', 'user__email', 'question__title', 'course__name', 'topic__name']
-    readonly_fields = ['id', 'created_at', 'updated_at', 'evaluation_results', 'plagiarism_data']
+@admin.register(LearnOrPracticeSubmission)
+class LearnOrPracticeSubmissionAdmin(admin.ModelAdmin):
+    list_display = ['user', 'question', 'submission_type', 'status', 'marks_obtained', 'answer_attempt_count', 'created_at']
+    list_filter = ['status', 'submission_type', 'course', 'topic', 'created_at']
+    search_fields = ['user__username', 'user__email', 'question__title', 'question__content']
+    readonly_fields = ['id', 'created_at', 'updated_at', 'answer_history', 'evaluation_results', 'plagiarism_data']
     fieldsets = (
         ('Submission Info', {
-            'fields': ('user', 'question', 'course', 'topic', 'status')
+            'fields': ('user', 'question', 'course', 'topic', 'submission_type', 'status')
         }),
-        ('Code Details', {
-            'fields': ('answer_latest', 'answer_history', 'answer_attempt_count')
+        ('Latest Answer', {
+            'fields': ('answer_latest', 'answer_attempt_count')
         }),
-        ('Execution Results', {
-            'fields': ('execution_output', 'evaluation_results'),
+        ('Results & Grading', {
+            'fields': ('marks_obtained', 'execution_output')
+        }),
+        ('Evaluation Data', {
+            'fields': ('evaluation_results', 'plagiarism_data'),
             'classes': ('collapse',)
         }),
-        ('Grading', {
-            'fields': ('marks_obtained',)
-        }),
-        ('Plagiarism Check', {
-            'fields': ('plagiarism_data',),
+        ('History', {
+            'fields': ('answer_history',),
             'classes': ('collapse',)
         }),
         ('Metadata', {
@@ -360,23 +360,18 @@ class CodePracticeQuestionSubmissionAdmin(admin.ModelAdmin):
         return super().get_queryset(request).select_related('user', 'question', 'course', 'topic')
     
     def get_language(self, obj):
-        """Get programming language from answer_latest"""
         if obj.answer_latest and 'language' in obj.answer_latest:
             return obj.answer_latest['language']
         return 'Unknown'
     get_language.short_description = 'Language'
-    
-    def get_test_cases_passed(self, obj):
-        if obj.evaluation_results:
-            return f"{obj.evaluation_results.get('total_passed', 0)}/{obj.evaluation_results.get('total_tests', 0)}"
-        return "0/0"
-    get_test_cases_passed.short_description = "Test Cases"
     
     def get_success_rate(self, obj):
         if obj.evaluation_results:
             total_tests = obj.evaluation_results.get('total_tests', 0)
             total_passed = obj.evaluation_results.get('total_passed', 0)
             if total_tests > 0:
-                return f"{(total_passed / total_tests) * 100:.1f}%"
-        return "0%"
-    get_success_rate.short_description = "Success Rate"
+                return f"{total_passed}/{total_tests} ({(total_passed/total_tests)*100:.1f}%)"
+        return 'N/A'
+    get_success_rate.short_description = 'Success Rate'
+    
+    list_display = list_display + ['get_language', 'get_success_rate']

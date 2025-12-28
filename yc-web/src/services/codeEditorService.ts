@@ -140,6 +140,7 @@ class CodeEditorService {
     mock_interview_id?: string;
     course_id?: string;
     topic_id?: string;
+    code_submission_type?: 'learn' | 'practice';
   }): Promise<ExecutionResult> {
     try {
       const submissionType = request.submission_type || 'code_practice';
@@ -150,13 +151,14 @@ class CodeEditorService {
         coding_problem_id: request.coding_problem_id,
         course_id: request.course_id,
         topic_id: request.topic_id,
+        submission_type: request.code_submission_type || 'practice', // Default to 'practice'
         test_cases_basic: request.test_cases_basic || [],
         test_cases_custom: request.test_cases_custom || []
       };
 
       switch (submissionType) {
         case 'code_practice':
-          endpoint = '/assessment/code-practice/submit/';
+          endpoint = '/assessment/learn-practice-submission/submit/';
           break;
         case 'skill_test':
           endpoint = '/assessment/skill-tests/submit/';
@@ -174,7 +176,7 @@ class CodeEditorService {
           payload.mock_interview_id = request.mock_interview_id;
           break;
         default:
-          endpoint = '/assessment/code-practice/submit/';
+          endpoint = '/assessment/learn-practice-submission/submit/';
       }
 
       const response: any = await restApiAuthUtil.post(endpoint, payload);
@@ -221,7 +223,7 @@ class CodeEditorService {
     let endpoint = '';
     switch (submissionType) {
       case 'code_practice':
-        endpoint = '/assessment/code-practice/';
+        endpoint = '/assessment/learn-practice-submission/';
         break;
       case 'skill_test':
         endpoint = '/assessment/skill-test/submissions/';
@@ -233,7 +235,7 @@ class CodeEditorService {
         endpoint = '/assessment/mock-interviews/submissions/';
         break;
       default:
-        endpoint = '/assessment/code-practice/';
+        endpoint = '/assessment/learn-practice-submission/';
     }
     
     return restApiAuthUtil.get(endpoint, { params });
@@ -243,7 +245,7 @@ class CodeEditorService {
     let endpoint = '';
     switch (submissionType) {
       case 'code_practice':
-        endpoint = `/assessment/code-practice/${id}/`;
+        endpoint = `/assessment/learn-practice-submission/${id}/`;
         break;
       case 'skill_test':
         endpoint = `/assessment/skill-test/submissions/${id}/`;
@@ -255,7 +257,7 @@ class CodeEditorService {
         endpoint = `/assessment/mock-interviews/submissions/${id}/`;
         break;
       default:
-        endpoint = `/assessment/code-practice/${id}/`;
+        endpoint = `/assessment/learn-practice-submission/${id}/`;
     }
     
     return restApiAuthUtil.get(endpoint);

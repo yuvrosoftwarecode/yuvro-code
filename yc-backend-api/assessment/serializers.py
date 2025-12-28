@@ -4,7 +4,7 @@ from .models import (
     Contest, MockInterview, JobTest, SkillTest, 
     ContestSubmission, MockInterviewSubmission, 
     JobTestSubmission, SkillTestSubmission,
-    SkillTestQuestionActivity, CodePracticeQuestionSubmission
+    SkillTestQuestionActivity, LearnOrPracticeSubmission
 )
 
 User = get_user_model()
@@ -202,7 +202,7 @@ class JobTestSubmissionSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at']
 
 
-class CodePracticeQuestionSubmissionSerializer(serializers.ModelSerializer):
+class LearnOrPracticeSubmissionSerializer(serializers.ModelSerializer):
     question_title = serializers.CharField(source='question.title', read_only=True)
     question_content = serializers.CharField(source='question.content', read_only=True)
     user_name = serializers.CharField(source='user.get_full_name', read_only=True)
@@ -216,10 +216,10 @@ class CodePracticeQuestionSubmissionSerializer(serializers.ModelSerializer):
     success_rate = serializers.SerializerMethodField()
     
     class Meta:
-        model = CodePracticeQuestionSubmission
+        model = LearnOrPracticeSubmission
         fields = [
             'id', 'user', 'user_name', 'question', 'question_title', 'question_content',
-            'course', 'course_name', 'topic', 'topic_name',
+            'course', 'course_name', 'topic', 'topic_name', 'submission_type',
             'programming_language', 'status', 'execution_output', 'evaluation_results',
             'plagiarism_data', 'answer_latest', 'answer_history', 'answer_attempt_count',
             'marks_obtained', 'test_cases_passed', 'total_test_cases', 'is_successful', 'success_rate',

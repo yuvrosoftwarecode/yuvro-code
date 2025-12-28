@@ -27,6 +27,7 @@ interface CodeEditorProps {
   courseId?: string;
   topicId?: string;
   submissionType?: 'code_practice' | 'skill_test' | 'contest' | 'mock_interview';
+  codeSubmissionType?: 'learn' | 'practice';
   submissionId?: string;
   contestId?: string;
   skillTestId?: string;
@@ -66,6 +67,7 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(({
   courseId,
   topicId,
   submissionType = 'code_practice',
+  codeSubmissionType = 'practice',
   submissionId,
   contestId,
   skillTestId,
@@ -313,7 +315,8 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(({
         coding_problem_id: problemId,
         course_id: courseId,
         topic_id: topicId,
-        submission_type: submissionType,
+        submission_type: submissionType, // This is for assessment type (code_practice, skill_test, etc.)
+        code_submission_type: codeSubmissionType, // This is for learn/practice
         submission_id: submissionId,
         contest_id: contestId,
         skill_test_id: skillTestId,
@@ -544,7 +547,7 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(({
                                     const basicTestResults = testResults.results.filter((result: any) => !result.is_hidden);
                                     const consoleOutputs = basicTestResults
                                       .map((result: any, idx: number) => {
-                                        const consoleOutput = result.console_output || result.actual_output || '';
+                                        const consoleOutput = result.console_output || '';
                                         return consoleOutput ? `Test Case ${idx + 1}:\n${consoleOutput}` : '';
                                       })
                                       .filter((output: string) => output)
@@ -555,7 +558,7 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(({
                                     }
                                   }
                                   
-                                  // Fallback to original output
+                                  // Fallback to original output if no console outputs from test cases
                                   return output || 'No console output available';
                                 })()}
                               </pre>

@@ -1,5 +1,4 @@
 import { RestApiUtil, ApiError } from './RestApiUtil';
-import { safeLocalStorage } from './localStorageUtil';
 
 const API_BASE_URL = import.meta.env.VITE_BACKEND_API_BASE_URL;
 
@@ -30,13 +29,13 @@ class RestApiAuthUtil extends RestApiUtil {
     }
 
     getAuthToken(): string | null {
-        return this.token || safeLocalStorage.getItem('access');
+        return this.token || localStorage.getItem('access');
     }
 
     clearAuthToken() {
         this.token = null;
-        safeLocalStorage.removeItem('access');
-        safeLocalStorage.removeItem('refresh');
+        localStorage.removeItem('access');
+        localStorage.removeItem('refresh');
     }
 
     isAuthenticated(): boolean {
@@ -58,7 +57,7 @@ class RestApiAuthUtil extends RestApiUtil {
     }
 
     private async refreshToken(): Promise<boolean> {
-        const refreshToken = safeLocalStorage.getItem('refresh');
+        const refreshToken = localStorage.getItem('refresh');
         if (!refreshToken) {
             console.warn('No refresh token available');
             return false;
@@ -68,9 +67,9 @@ class RestApiAuthUtil extends RestApiUtil {
             console.log('Attempting to refresh token...');
             const response = await super.post<{ access: string; refresh?: string }>('/auth/token/refresh/', { refresh: refreshToken });
 
-            safeLocalStorage.setItem('access', response.access);
+            localStorage.setItem('access', response.access);
             if (response.refresh) {
-                safeLocalStorage.setItem('refresh', response.refresh);
+                localStorage.setItem('refresh', response.refresh);
             }
             this.token = response.access;
             console.log('Token refreshed successfully');
@@ -91,7 +90,12 @@ class RestApiAuthUtil extends RestApiUtil {
     }
 
     protected async request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
-        let authHeaders = this.getAuthHeaders();
+        let authHeaders = this.getAuthHeaders() as Record<string, string>;
+
+        if (options.body instanceof FormData) {
+            delete authHeaders['Content-Type'];
+        }
+
         let optionsWithAuth = {
             ...options,
             headers: {

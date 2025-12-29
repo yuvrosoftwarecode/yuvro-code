@@ -5,8 +5,10 @@ import RoleSidebar from "../../components/common/RoleSidebar";
 import RoleHeader from "../../components/common/RoleHeader";
 import SearchBar from "../../components/common/SearchBar";
 import { toast } from "sonner";
+import { useAuth } from "../../contexts/AuthContext";
 
 const JobsApproval: React.FC = () => {
+  const { user } = useAuth();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [approvedJobs, setApprovedJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
@@ -17,8 +19,46 @@ const JobsApproval: React.FC = () => {
   const [showJobDetails, setShowJobDetails] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [jobToReject, setJobToReject] = useState<Job | null>(null);
 
-  // Debug state changes
+  const allowedEmails = ['recruiter@yuvro.com', 'recruiter_admin@yuvro.com', 'admin@yuvro.com'];
+  const hasJobsApprovalAccess = user?.email && allowedEmails.includes(user.email);
+
+  if (!hasJobsApprovalAccess) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="flex">
+          <RoleSidebar />
+          <div className="flex-1">
+            <RoleHeader 
+              title="Jobs Approval" 
+              subtitle="Review and approve job postings"
+            />
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center">
+                <div className="text-red-600 mb-4">
+                  <XCircle className="h-12 w-12 mx-auto mb-2" />
+                  <p className="text-lg font-medium">Access Denied</p>
+                  <p className="text-sm text-gray-600 mt-1">
+                    You don't have permission to access Jobs Approval.
+                  </p>
+                </div>
+                <button
+                  onClick={() => window.history.back()}
+                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                >
+                  Go Back
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   useEffect(() => {
     console.log('Jobs state updated:', jobs.length, 'jobs');
   }, [jobs]);
@@ -92,12 +132,12 @@ const JobsApproval: React.FC = () => {
       setError(errorMessage);
       toast.error('Failed to load pending jobs: ' + errorMessage);
     }
-  }, []); // Remove loading dependency to prevent circular re-renders
+  }, []); 
 
   const handleTabChange = async (tab: 'pending' | 'approved') => {
     setSelectedTab(tab);
     setLoading(true);
-    setSearchQuery(''); // Clear search when switching tabs
+    setSearchQuery(''); 
     
     try {
       if (tab === 'pending') {
@@ -114,7 +154,6 @@ const JobsApproval: React.FC = () => {
 
 
 
-  // Setup initial load
   useEffect(() => {
     console.log('=== JobsApproval useEffect triggered ===');
     
@@ -134,15 +173,11 @@ const JobsApproval: React.FC = () => {
     };
 
     loadInitialData();
-  }, []); // Only run on mount
+  }, []); 
 
   const handleApproveJob = async (jobId: string) => {
     const job = jobs.find(j => j.id === jobId);
     if (!job) return;
-    
-    if (!window.confirm(`Are you sure you want to approve "${job.title}"? This will publish the job and make it visible to candidates.`)) {
-      return;
-    }
     
     try {
       setActionLoading(jobId);
@@ -186,22 +221,28 @@ const JobsApproval: React.FC = () => {
     const job = jobs.find(j => j.id === jobId);
     if (!job) return;
     
-    if (!window.confirm(`Are you sure you want to reject "${job.title}"? This action cannot be undone.`)) {
-      return;
-    }
+    setJobToReject(job);
+    setShowRejectModal(true);
+  };
+
+  const confirmRejectJob = async () => {
+    if (!jobToReject) return;
     
     try {
-      setActionLoading(jobId);
-      const response = await jobService.rejectJob(jobId);
+      setActionLoading(jobToReject.id);
+      const response = await jobService.rejectJob(jobToReject.id);
       
       toast.success(response.message || 'Job rejected successfully');
       
-      setJobs(prevJobs => prevJobs.filter(job => job.id !== jobId));
+      setJobs(prevJobs => prevJobs.filter(job => job.id !== jobToReject.id));
       
-      if (selectedJob && selectedJob.id === jobId) {
+      if (selectedJob && selectedJob.id === jobToReject.id) {
         setSelectedJob(null);
         setShowJobDetails(false);
       }
+      
+      setShowRejectModal(false);
+      setJobToReject(null);
       
     } catch (error: any) {
       console.error('Error rejecting job:', error);
@@ -220,6 +261,11 @@ const JobsApproval: React.FC = () => {
     } finally {
       setActionLoading(null);
     }
+  };
+
+  const cancelRejectJob = () => {
+    setShowRejectModal(false);
+    setJobToReject(null);
   };
 
   const handleViewJob = (job: Job) => {
@@ -656,6 +702,47 @@ const JobsApproval: React.FC = () => {
                   <span className="font-medium">This job is approved and active</span>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Rejection Confirmation Modal */}
+      {showRejectModal && jobToReject && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full">
+            <div className="p-6">
+              <div className="flex items-center mb-4">
+                <div className="flex-shrink-0">
+                  <XCircle className="h-6 w-6 text-red-600" />
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-lg font-medium text-gray-900">Reject Job</h3>
+                </div>
+              </div>
+              
+              <div className="mb-6">
+                <p className="text-sm text-gray-600">
+                  Are you sure you want to reject "<span className="font-medium">{jobToReject.title}</span>"? 
+                  This action cannot be undone and the job will be moved to the rejected status.
+                </p>
+              </div>
+              
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={cancelRejectJob}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmRejectJob}
+                  disabled={actionLoading === jobToReject.id}
+                  className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50 transition-colors"
+                >
+                  {actionLoading === jobToReject.id ? 'Rejecting...' : 'OK'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

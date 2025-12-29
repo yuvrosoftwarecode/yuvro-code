@@ -84,7 +84,7 @@ const sidebarItems: SidebarItem[] = [
     label: 'Jobs Approval',
     icon: CheckCircle,
     path: '/recruiter/jobs-approval',
-    roles: ['admin', 'recruiter', 'instructor']
+    roles: ['admin', 'recruiter_admin']  
   },
   {
     id: 'contests',
@@ -112,8 +112,16 @@ const RoleSidebar: React.FC<RoleSidebarProps> = ({ className = '' }) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const userRole = user?.role || 'instructor';
+  const userEmail = user?.email || '';
 
-  const filteredItems = sidebarItems.filter(item => item.roles.includes(userRole));
+  const hasJobsApprovalAccess = ['recruiter@yuvro.com', 'recruiter_admin@yuvro.com', 'admin@yuvro.com'].includes(userEmail);
+
+  const filteredItems = sidebarItems.filter(item => {
+    if (item.id === 'recruiter-jobs-approval') {
+      return hasJobsApprovalAccess;
+    }
+    return item.roles.includes(userRole);
+  });
 
   const getPortalTitle = () => {
     switch (userRole) {

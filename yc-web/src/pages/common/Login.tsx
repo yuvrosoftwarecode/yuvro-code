@@ -3,7 +3,6 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { ApiError } from '../../utils/RestApiUtil';
 import { redirectToDashboard } from '../../utils/redirectToDashboard';
-import { safeLocalStorage } from '../../utils/localStorageUtil';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -17,7 +16,6 @@ const Login: React.FC = () => {
   const location = useLocation();
   const from = (location.state as any)?.from?.pathname || '/dashboard';
 
-  // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated && user && user.role) {
       redirectToDashboard(user, navigate);
@@ -28,7 +26,6 @@ const Login: React.FC = () => {
     e.preventDefault();
     setError('');
     
-    // Basic validation
     if (!email.trim()) {
       setError('Please enter your email address.');
       return;
@@ -49,10 +46,7 @@ const Login: React.FC = () => {
     try {
       const loggedInUser = await login(email, password);
       
-      // The login function should have updated the AuthContext state
-      // The useEffect above will handle the redirect when the state updates
-      
-      // Force immediate redirect as backup
+
       if (loggedInUser && loggedInUser.role) {
         redirectToDashboard(loggedInUser, navigate);
       }
@@ -128,7 +122,7 @@ const Login: React.FC = () => {
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);
-                  if (error) setError(''); // Clear error when user starts typing
+                  if (error) setError(''); 
                 }}
                 disabled={isLoading}
                 required
@@ -148,7 +142,7 @@ const Login: React.FC = () => {
                   value={password}
                   onChange={(e) => {
                     setPassword(e.target.value);
-                    if (error) setError(''); // Clear error when user starts typing
+                    if (error) setError(''); 
                   }}
                   disabled={isLoading}
                   required

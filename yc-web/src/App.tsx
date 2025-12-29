@@ -224,7 +224,7 @@ function App() {
               <Route
                 path="/recruiter/jobs-approval"
                 element={
-                  <ProtectedRoute allowedRoles={["admin", "instructor", "recruiter"]}>
+                  <ProtectedRoute allowedEmails={["recruiter@yuvro.com", "recruiter_admin@yuvro.com", "admin@yuvro.com"]}>
                     <RecruiterJobsApproval />
                   </ProtectedRoute>
                 }

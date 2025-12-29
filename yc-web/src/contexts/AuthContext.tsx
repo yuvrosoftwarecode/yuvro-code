@@ -2,7 +2,6 @@ import { createContext, useContext, useReducer, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import authService from '../services/authService';
 import { ApiError } from '../utils/RestApiUtil';
-import { safeLocalStorage } from '../utils/localStorageUtil';
 
 export interface User {
   id: string;
@@ -36,7 +35,7 @@ type AuthAction =
   | { type: 'SET_LOADING'; payload: boolean };
 
 interface AuthContextType extends AuthState {
-  login: (email: string, password: string) => Promise<User>;
+  login: (email: string, password: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
   register: (
     email: string,
@@ -90,14 +89,12 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
 };
 
 const getInitialState = (): AuthState => {
-  safeLocalStorage.cleanup();
-  
-  const accessToken = safeLocalStorage.getItem('access');
-  const user = safeLocalStorage.getJSON<User>('user');
+  const accessToken = localStorage.getItem('access');
+  const storedUser = localStorage.getItem('user');
 
   if (accessToken) {
     return {
-      user,
+      user: storedUser ? JSON.parse(storedUser) : null, 
       token: accessToken,
       isLoading: true, 
       isAuthenticated: true, 
@@ -122,21 +119,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     if (state.isAuthenticated && state.token) {
-      safeLocalStorage.setItem('access', state.token);
+      localStorage.setItem('access', state.token);
       authService.setAuthToken(state.token);
-      
-      if (state.user) {
-        safeLocalStorage.setJSON('user', state.user);
-      }
     } else {
-      safeLocalStorage.removeItem('access');
-      safeLocalStorage.removeItem('refresh');
-      safeLocalStorage.removeItem('user');
+      localStorage.removeItem('access');
+      localStorage.removeItem('refresh');
     }
-  }, [state.isAuthenticated, state.token, state.user]);
+  }, [state.isAuthenticated, state.token]);
 
   useEffect(() => {
-    const accessToken = safeLocalStorage.getItem('access');
+    const accessToken = localStorage.getItem('access');
 
     if (accessToken) {
       authService.setAuthToken(accessToken);
@@ -153,8 +145,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         .catch((error) => {
           console.error('Failed to get current user:', error);
           if (error.status === 401 && error.message?.includes('Session expired')) {
-            safeLocalStorage.removeItem('access');
-            safeLocalStorage.removeItem('refresh');
+            localStorage.removeItem('access');
+            localStorage.removeItem('refresh');
             dispatch({ type: 'LOGIN_FAILURE' });
           } else {
             console.warn('Could not fetch user data, but keeping authentication');
@@ -164,21 +156,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, []);
 
-  const login = async (email: string, password: string): Promise<User> => {
+
+  const login = async (email: string, password: string): Promise<void> => {
     dispatch({ type: 'LOGIN_START' });
     try {
       const response = await authService.login(email, password);
 
-      safeLocalStorage.setJSON('user', response.user);
+      localStorage.setItem('user', JSON.stringify(response.user));
 
       dispatch({
         type: 'LOGIN_SUCCESS',
         payload: { user: response.user, token: response.access },
       });
-
-      await new Promise(resolve => setTimeout(resolve, 10));
-
-      return response.user;
     } catch (error) {
       dispatch({ type: 'LOGIN_FAILURE' });
       throw error;
@@ -210,7 +199,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         password_confirm: password
       });
 
-      safeLocalStorage.setJSON('user', response.user);
+      localStorage.setItem('user', JSON.stringify(response.user));
 
       dispatch({
         type: 'LOGIN_SUCCESS',

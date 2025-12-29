@@ -51,7 +51,7 @@ User = get_user_model()
 
 @extend_schema(
     summary="User Login",
-    description="Login with email and password to get access and refresh tokens with user role information.",
+    description="Login with email and password to get JWT tokens.",
     request=UserLoginSerializer,
     examples=[
         OpenApiExample(
@@ -63,18 +63,23 @@ User = get_user_model()
 @api_view(["POST"])
 @permission_classes([permissions.AllowAny])
 def login_view(request):
+    """User login endpoint."""
     serializer = UserLoginSerializer(data=request.data)
-    if serializer.is_valid():
-        user = serializer.validated_data['user']
-        
-        token_serializer = CustomTokenObtainPairSerializer()
-        refresh = token_serializer.get_token(user)
-        
-        return Response({
+    serializer.is_valid(raise_exception=True)
+
+    user = serializer.validated_data["user"]
+    login(request, user)
+
+    token_serializer = CustomTokenObtainPairSerializer()
+    refresh = token_serializer.get_token(user)
+
+    return Response(
+        {
             "user": UserSerializer(user).data,
             "refresh": str(refresh),
             "access": str(refresh.access_token),
-        }, status=status.HTTP_200_OK)
+        }
+    )
     
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

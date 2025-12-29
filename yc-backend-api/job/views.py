@@ -245,9 +245,10 @@ class JobViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def pending_approval(self, request):
-        if not request.user.role in ['recruiter', 'admin', 'instructor']:
+        allowed_emails = ['recruiter@yuvro.com', 'recruiter_admin@yuvro.com', 'admin@yuvro.com']
+        if request.user.email not in allowed_emails:
             return Response({
-                'error': 'Permission denied'
+                'error': 'Access denied. Jobs Approval is restricted to authorized users only.'
             }, status=status.HTTP_403_FORBIDDEN)
         
         logger.info("Fetching jobs pending approval")
@@ -268,10 +269,10 @@ class JobViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def approve(self, request, pk=None):
-        """Approve a job (change status to active) - for Jobs Approval workflow"""
-        if not request.user.role in ['recruiter', 'admin', 'instructor']:
+        allowed_emails = ['recruiter@yuvro.com', 'recruiter_admin@yuvro.com', 'admin@yuvro.com']
+        if request.user.email not in allowed_emails:
             return Response({
-                'error': 'Permission denied'
+                'error': 'Access denied. Jobs Approval is restricted to authorized users only.'
             }, status=status.HTTP_403_FORBIDDEN)
         
         job = self.get_object()
@@ -298,9 +299,10 @@ class JobViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def reject(self, request, pk=None):
-        if not request.user.role in ['recruiter', 'admin', 'instructor']:
+        allowed_emails = ['recruiter@yuvro.com', 'recruiter_admin@yuvro.com', 'admin@yuvro.com']
+        if request.user.email not in allowed_emails:
             return Response({
-                'error': 'Permission denied'
+                'error': 'Access denied. Jobs Approval is restricted to authorized users only.'
             }, status=status.HTTP_403_FORBIDDEN)
         
         job = self.get_object()
@@ -340,7 +342,6 @@ class JobApplicationViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def my_applications(self, request):
-        """Get current user's job applications"""
         applications = JobApplication.objects.filter(
             applicant=request.user,
             is_applied=True

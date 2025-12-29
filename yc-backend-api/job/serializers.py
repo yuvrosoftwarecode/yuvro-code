@@ -7,6 +7,7 @@ from .models import (
     SocialLinks, Skill, Experience, Project, Education, Certification
 )
 from authentication.models import Profile
+from authentication.serializers import UserSerializer
 import logging
 
 User = get_user_model()
@@ -153,7 +154,6 @@ class JobApplicationSerializer(serializers.ModelSerializer):
 
 
 class JobApplicationListSerializer(serializers.ModelSerializer):
-    """Serializer for listing applications with full job data"""
     applicant_name = serializers.SerializerMethodField()
     applicant_email = serializers.SerializerMethodField()
     job = JobSerializer(read_only=True)
@@ -267,7 +267,6 @@ class JobProfileSerializer(serializers.ModelSerializer):
 
 
 class CandidateSearchSerializer(serializers.Serializer):
-    """Serializer for candidate search filters with proper empty value handling"""
     
     skills = serializers.CharField(required=False, allow_blank=True)
     keywords = serializers.CharField(required=False, allow_blank=True)
@@ -442,13 +441,6 @@ class CertificationSerializer(serializers.ModelSerializer):
         read_only_fields = ["id"]
 
 
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['id', 'email', 'username', 'first_name', 'last_name', 'role']
-        read_only_fields = ['id']
-
-
 class ProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
 
@@ -490,7 +482,6 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         user = instance.user
-
         first_name = validated_data.pop("first_name", None)
         last_name = validated_data.pop("last_name", None)
 

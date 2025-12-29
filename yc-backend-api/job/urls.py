@@ -23,6 +23,9 @@ urlpatterns = [
     path('applications/', JobApplicationViewSet.as_view({'get': 'list', 'post': 'create'}), name='application-list'),
     
     path('with-applications/', JobViewSet.as_view({'get': 'with_applications'}), name='jobs-with-applications'),
+    path('pending-approval/', JobViewSet.as_view({'get': 'pending_approval'}), name='jobs-pending-approval'),
+    path('<uuid:pk>/approve/', JobViewSet.as_view({'post': 'approve'}), name='job-approve'),
+    path('<uuid:pk>/reject/', JobViewSet.as_view({'post': 'reject'}), name='job-reject'),
     path('filter/', JobViewSet.as_view({'post': 'filter'}), name='job-filter'),
     path('<uuid:pk>/applications/', JobViewSet.as_view({'get': 'applications'}), name='job-applications'),
     path('<uuid:pk>/apply/', JobViewSet.as_view({'post': 'apply'}), name='job-apply'),

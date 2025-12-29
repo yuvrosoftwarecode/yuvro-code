@@ -120,6 +120,23 @@
       }
     },
     {
+      "email": "recruiter_admin@yuvro.com",
+      "username": "recruiter_admin",
+      "first_name": "Recruiter",
+      "last_name": "Admin",
+      "role": "recruiter",
+      "password": "recruiter123",
+      "is_staff": true,
+      "is_superuser": false,
+      "profile": {
+        "full_name": "Recruiter Admin",
+        "title": "Recruitment Admin",
+        "location": "India",
+        "about": "Recruiter admin with access to manage candidates and hiring workflows.",
+        "gender": "prefer_not_to_say"
+      }
+    },    
+    {
       "email": "recruiter@yuvro.com",
       "username": "recruiter",
       "first_name": "Tech",

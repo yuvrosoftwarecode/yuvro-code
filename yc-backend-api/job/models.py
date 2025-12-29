@@ -30,6 +30,7 @@ class Job(BaseModel):
         ('active', 'Active'),
         ('paused', 'Paused'),
         ('closed', 'Closed'),
+        ('rejected', 'Rejected'),
     ]
     
     CURRENCY_CHOICES = [
@@ -56,7 +57,7 @@ class Job(BaseModel):
     experience_min_years = models.PositiveIntegerField(default=0)
     experience_max_years = models.PositiveIntegerField(blank=True, null=True)
     
-    locations = models.JSONField(default=list, blank=True)  # Array of location strings
+    locations = models.JSONField(default=list, blank=True)  
     is_remote = models.BooleanField(default=False)
     
     min_salary = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)

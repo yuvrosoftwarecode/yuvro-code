@@ -24,6 +24,7 @@ from .serializers import (
     UserRegistrationSerializer,
     UserSerializer,
     UserUpdateSerializer,
+    UserLoginSerializer,
 )
 from job.serializers import (
     ProfileSerializer,
@@ -42,28 +43,40 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
-from authentication.permissions import IsAdminUser, IsAuthenticatedUser
+from authentication.permissions import IsAdminUser, IsAuthenticatedUser, IsInstructorOrAdmin
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
 
-class CustomTokenObtainPairView(TokenObtainPairView):
-
-    serializer_class = CustomTokenObtainPairSerializer
-
-    @extend_schema(
-        summary="Obtain JWT Token Pair",
-        description="Login with email/username and password to get access and refresh tokens with user role information.",
-        examples=[
-            OpenApiExample(
-                "Login Example",
-                value={"email": "user@example.com", "password": "your_password"},
-            )
-        ],
-    )
-    def post(self, request, *args, **kwargs):
-        return super().post(request, *args, **kwargs)
+@extend_schema(
+    summary="User Login",
+    description="Login with email and password to get access and refresh tokens with user role information.",
+    request=UserLoginSerializer,
+    examples=[
+        OpenApiExample(
+            "Login Example",
+            value={"email": "user@example.com", "password": "your_password"},
+        )
+    ],
+)
+@api_view(["POST"])
+@permission_classes([permissions.AllowAny])
+def login_view(request):
+    serializer = UserLoginSerializer(data=request.data)
+    if serializer.is_valid():
+        user = serializer.validated_data['user']
+        
+        token_serializer = CustomTokenObtainPairSerializer()
+        refresh = token_serializer.get_token(user)
+        
+        return Response({
+            "user": UserSerializer(user).data,
+            "refresh": str(refresh),
+            "access": str(refresh.access_token),
+        }, status=status.HTTP_200_OK)
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserRegistrationView(generics.CreateAPIView):
@@ -104,10 +117,6 @@ class UserRegistrationView(generics.CreateAPIView):
             },
             status=status.HTTP_201_CREATED,
         )
-
-
-class CustomTokenObtainPairView(TokenObtainPairView):
-    serializer_class = CustomTokenObtainPairSerializer
 
 
 @extend_schema(

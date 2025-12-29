@@ -92,6 +92,66 @@ class JobViewSet(viewsets.ModelViewSet):
         logger.info(f"Returning {len(response.data)} jobs")
         return response
     
+    def update(self, request, *args, **kwargs):
+        logger.info(f"Updating job {kwargs.get('pk')} with data: {request.data}")
+        
+        instance = self.get_object()
+        original_status = instance.status
+        
+        if original_status == 'active' and 'status' not in request.data:
+            content_fields = ['title', 'description', 'employment_type', 'experience_min_years', 
+                            'experience_max_years', 'locations', 'is_remote', 'min_salary', 
+                            'max_salary', 'currency', 'skills', 'notice_period', 'education_level',
+                            'screening_questions_config', 'screening_questions_random_config']
+            
+            is_content_update = any(field in request.data for field in content_fields)
+            
+            if is_content_update:
+                if hasattr(request.data, '_mutable'):
+                    request.data._mutable = True
+                request.data['status'] = 'draft'
+                if hasattr(request.data, '_mutable'):
+                    request.data._mutable = False
+                logger.info(f"Job {instance.id} status changed from 'active' to 'draft' due to content update - requires re-approval")
+        
+        response = super().update(request, *args, **kwargs)
+        
+        updated_instance = self.get_object()
+        if original_status == 'active' and updated_instance.status == 'draft':
+            logger.info(f"Job {updated_instance.id} moved to Jobs Approval queue after edit")
+        
+        return response
+    
+    def partial_update(self, request, *args, **kwargs):
+        logger.info(f"Partially updating job {kwargs.get('pk')} with data: {request.data}")
+        
+        instance = self.get_object()
+        original_status = instance.status
+        
+        if original_status == 'active' and 'status' not in request.data:
+            content_fields = ['title', 'description', 'employment_type', 'experience_min_years', 
+                            'experience_max_years', 'locations', 'is_remote', 'min_salary', 
+                            'max_salary', 'currency', 'skills', 'notice_period', 'education_level',
+                            'screening_questions_config', 'screening_questions_random_config']
+            
+            is_content_update = any(field in request.data for field in content_fields)
+            
+            if is_content_update:
+                if hasattr(request.data, '_mutable'):
+                    request.data._mutable = True
+                request.data['status'] = 'draft'
+                if hasattr(request.data, '_mutable'):
+                    request.data._mutable = False
+                logger.info(f"Job {instance.id} status changed from 'active' to 'draft' due to content update - requires re-approval")
+        
+        response = super().partial_update(request, *args, **kwargs)
+        
+        updated_instance = self.get_object()
+        if original_status == 'active' and updated_instance.status == 'draft':
+            logger.info(f"Job {updated_instance.id} moved to Jobs Approval queue after edit")
+        
+        return response
+    
     @action(detail=False, methods=['post'])
     def filter(self, request):
         """Filter jobs based on provided criteria"""
@@ -118,7 +178,6 @@ class JobViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def apply(self, request, pk=None):
-        """Apply to a job"""
         job = self.get_object()
         user = request.user
         
@@ -156,7 +215,6 @@ class JobViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['get'])
     def applications(self, request, pk=None):
-        """Get applications for a specific job (recruiter only)"""
         job = self.get_object()
         
         if not request.user.role in ['recruiter', 'admin', 'instructor']:
@@ -176,7 +234,6 @@ class JobViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def with_applications(self, request):
-        """Get jobs with application counts (recruiter only)"""
         if not request.user.role in ['recruiter', 'admin', 'instructor']:
             return Response({
                 'error': 'Permission denied'
@@ -185,6 +242,86 @@ class JobViewSet(viewsets.ModelViewSet):
         queryset = self.get_queryset()
         serializer = JobWithApplicationsSerializer(queryset, many=True)
         return Response(serializer.data)
+    
+    @action(detail=False, methods=['get'])
+    def pending_approval(self, request):
+        if not request.user.role in ['recruiter', 'admin', 'instructor']:
+            return Response({
+                'error': 'Permission denied'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        logger.info("Fetching jobs pending approval")
+        
+        queryset = self.get_queryset().filter(status__in=['draft', 'paused'])
+        
+        search = request.query_params.get('search', None)
+        if search:
+            queryset = queryset.filter(
+                Q(title__icontains=search) |
+                Q(company__name__icontains=search) |
+                Q(description__icontains=search)
+            )
+        
+        serializer = self.get_serializer(queryset, many=True)
+        logger.info(f"Returning {len(serializer.data)} jobs pending approval")
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['post'])
+    def approve(self, request, pk=None):
+        """Approve a job (change status to active) - for Jobs Approval workflow"""
+        if not request.user.role in ['recruiter', 'admin', 'instructor']:
+            return Response({
+                'error': 'Permission denied'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        job = self.get_object()
+        
+        if job.status not in ['draft', 'paused']:
+            return Response({
+                'error': f'Cannot approve job with status: {job.status}. Only draft or paused jobs can be approved.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        logger.info(f"Approving job {job.id}: {job.title}")
+        
+        job.status = 'active'
+        if not job.posted_at:
+            job.posted_at = timezone.now()
+        job.save()
+        
+        logger.info(f"Job {job.id} approved and published successfully")
+        
+        serializer = self.get_serializer(job)
+        return Response({
+            'message': f'Job "{job.title}" approved and published successfully',
+            'job': serializer.data
+        }, status=status.HTTP_200_OK)
+    
+    @action(detail=True, methods=['post'])
+    def reject(self, request, pk=None):
+        if not request.user.role in ['recruiter', 'admin', 'instructor']:
+            return Response({
+                'error': 'Permission denied'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        job = self.get_object()
+        
+        if job.status not in ['draft', 'paused']:
+            return Response({
+                'error': f'Cannot reject job with status: {job.status}. Only draft or paused jobs can be rejected.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        logger.info(f"Rejecting job {job.id}: {job.title}")
+        
+        job.status = 'rejected'
+        job.save()
+        
+        logger.info(f"Job {job.id} rejected successfully")
+        
+        serializer = self.get_serializer(job)
+        return Response({
+            'message': f'Job "{job.title}" rejected successfully',
+            'job': serializer.data
+        }, status=status.HTTP_200_OK)
 
 
 class JobApplicationViewSet(viewsets.ModelViewSet):
@@ -213,7 +350,6 @@ class JobApplicationViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def bookmarked(self, request):
-        """Get current user's bookmarked jobs"""
         bookmarked_apps = JobApplication.objects.filter(
             applicant=request.user, 
             is_bookmarked=True
@@ -223,7 +359,6 @@ class JobApplicationViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['post'])
     def bookmark(self, request):
-        """Bookmark a job"""
         job_id = request.data.get('job_id')
         if not job_id:
             return Response({'error': 'job_id is required'}, status=status.HTTP_400_BAD_REQUEST)
@@ -258,7 +393,6 @@ class JobApplicationViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['post'])
     def remove_bookmark(self, request):
-        """Remove bookmark from a job"""
         job_id = request.data.get('job_id')
         if not job_id:
             return Response({'error': 'job_id is required'}, status=status.HTTP_400_BAD_REQUEST)
@@ -280,7 +414,6 @@ class JobApplicationViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def user_job_status(self, request):
-        """Get user's bookmark and application status for all jobs"""
         applications = JobApplication.objects.filter(applicant=request.user)
         
         job_status = {}
@@ -296,7 +429,6 @@ class JobApplicationViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['patch'])
     def update_status(self, request, pk=None):
-        """Update application status (recruiter only)"""
         if not request.user.role in ['recruiter', 'admin', 'instructor']:
             return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
         
@@ -401,14 +533,11 @@ class CertificationUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticatedUser]
 
 
-class CandidateSearchViewSet(viewsets.ViewSet):
-    """ViewSet for candidate search functionality"""
-    
+class CandidateSearchViewSet(viewsets.ViewSet):    
     permission_classes = [permissions.IsAuthenticated]
     
     @action(detail=False, methods=['get'])
     def health(self, request):
-        """Health check endpoint"""
         return Response({
             'status': 'healthy',
             'service': 'candidate-search',
@@ -416,28 +545,21 @@ class CandidateSearchViewSet(viewsets.ViewSet):
         })
     
     @action(detail=False, methods=['post'])
-    def search(self, request):
-        """Search candidates with filters - Enhanced with safe filtering and combined filter support"""
-        
-        # Validate search filters
+    def search(self, request):        
         search_serializer = CandidateSearchSerializer(data=request.data)
         if not search_serializer.is_valid():
             return Response(search_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
         filters = search_serializer.validated_data
         
-        # Start with all job profiles
         queryset = JobProfile.objects.select_related('profile__user').prefetch_related(
             'job_skills', 'profile__skills', 'profile__experiences'
         ).all()
         
-        # Apply filters with safe null/undefined handling
         
-        # Skills filter - supports multiple skills (comma-separated) with OR logic
         if filters.get('skills'):
             skills_query = filters['skills'].strip()
             if skills_query:
-                # Handle multiple skills separated by comma
                 skills_list = [skill.strip() for skill in skills_query.split(',') if skill.strip()]
                 if skills_list:
                     skills_q = Q()
@@ -448,7 +570,6 @@ class CandidateSearchViewSet(viewsets.ViewSet):
                         )
                     queryset = queryset.filter(skills_q).distinct()
         
-        # Keywords filter - searches in profile about and title
         if filters.get('keywords'):
             keywords = filters['keywords'].strip()
             if keywords:
@@ -457,15 +578,12 @@ class CandidateSearchViewSet(viewsets.ViewSet):
                     Q(profile__title__icontains=keywords)
                 ).distinct()
         
-        # Experience filters - handle both from and to with proper null checking
-        # Ignore experience_from when it's 0 (default/no filter)
         if filters.get('experience_from') is not None and filters['experience_from'] > 0:
             queryset = queryset.filter(total_experience_years__gte=filters['experience_from'])
         
         if filters.get('experience_to') is not None and filters['experience_to'] >= 0:
             queryset = queryset.filter(total_experience_years__lte=filters['experience_to'])
         
-        # Location filter - searches in both profile location and preferred locations
         if filters.get('location'):
             location = filters['location'].strip()
             if location:
@@ -474,79 +592,65 @@ class CandidateSearchViewSet(viewsets.ViewSet):
                     Q(preferred_locations__icontains=location)
                 ).distinct()
         
-        # CTC filters - handle null CTC values safely
-        # Frontend sends CTC in lakhs (LPA), backend stores in rupees
-        # Convert lakhs to rupees by multiplying by 100,000
-        # Ignore ctc_from when it's 0 (default/no filter)
+
         if filters.get('ctc_from') is not None and filters['ctc_from'] > 0:
-            ctc_from_rupees = filters['ctc_from'] * 100000  # Convert lakhs to rupees
+            ctc_from_rupees = filters['ctc_from'] * 100000  
             queryset = queryset.filter(
                 Q(expected_ctc__gte=ctc_from_rupees) & 
                 Q(expected_ctc__isnull=False)
             )
         
         if filters.get('ctc_to') is not None and filters['ctc_to'] >= 0:
-            ctc_to_rupees = filters['ctc_to'] * 100000  # Convert lakhs to rupees
+            ctc_to_rupees = filters['ctc_to'] * 100000  
             queryset = queryset.filter(
                 Q(expected_ctc__lte=ctc_to_rupees) & 
                 Q(expected_ctc__isnull=False)
             )
         
-        # Notice period filter - supports multiple periods with IN logic
         if filters.get('notice_period') and isinstance(filters['notice_period'], list):
             valid_periods = [period.strip() for period in filters['notice_period'] if period and period.strip()]
             if valid_periods:
                 queryset = queryset.filter(notice_period__in=valid_periods)
         
-        # Education filter - exact match
         if filters.get('education'):
             education = filters['education'].strip()
             if education:
                 queryset = queryset.filter(highest_education=education)
         
-        # Domain filter - case-insensitive contains
         if filters.get('domain'):
             domain = filters['domain'].strip()
             if domain:
                 queryset = queryset.filter(domain__icontains=domain)
         
-        # Employment type filter - OR logic for multiple types
         if filters.get('employment_type') and isinstance(filters['employment_type'], list):
             valid_emp_types = [emp_type.strip() for emp_type in filters['employment_type'] if emp_type and emp_type.strip()]
             if valid_emp_types:
-                # Use OR logic: candidate matches if ANY of their preferred types match ANY of the filter types
                 emp_q = Q()
                 for emp_type in valid_emp_types:
                     emp_q |= Q(preferred_employment_types__contains=emp_type)
                 queryset = queryset.filter(emp_q)
         
-        # Company type filter - handle 'any' value and null safety
         if filters.get('company_type'):
             company_type = filters['company_type'].strip()
             if company_type and company_type.lower() != 'any':
                 queryset = queryset.filter(preferred_company_types__contains=company_type)
         
-        # Active in last N days filter
         if filters.get('active_in_days') and filters['active_in_days'] > 0:
             days = filters['active_in_days']
             cutoff_date = timezone.now() - timedelta(days=days)
             queryset = queryset.filter(last_active__gte=cutoff_date)
         
-        # Get total count before pagination
         total_count = queryset.count()
         
-        # Pagination with safe defaults
         page = max(1, filters.get('page', 1))
         page_size = max(1, min(100, filters.get('page_size', 20)))
         
         paginator = Paginator(queryset, page_size)
         total_pages = paginator.num_pages
         
-        # Handle invalid page numbers gracefully
         try:
             candidates_page = paginator.page(page)
         except (EmptyPage, PageNotAnInteger):
-            # If page is out of range, deliver last page or first page
             if page > total_pages and total_pages > 0:
                 candidates_page = paginator.page(total_pages)
                 page = total_pages
@@ -554,17 +658,14 @@ class CandidateSearchViewSet(viewsets.ViewSet):
                 candidates_page = paginator.page(1) if total_pages > 0 else None
                 page = 1
         except Exception:
-            # Fallback for any other pagination errors
             candidates_page = paginator.page(1) if total_pages > 0 else None
             page = 1
         
-        # Serialize results
         candidates_data = []
         if candidates_page:
             candidates_serializer = JobProfileSerializer(candidates_page.object_list, many=True)
             candidates_data = candidates_serializer.data
         
-        # Log search for analytics (only for authorized roles)
         if hasattr(request.user, 'role') and request.user.role in ['recruiter', 'admin', 'instructor']:
             try:
                 CandidateSearchLog.objects.create(
@@ -573,12 +674,10 @@ class CandidateSearchViewSet(viewsets.ViewSet):
                     results_count=total_count
                 )
             except Exception as e:
-                # Log the error but don't fail the search
                 import logging
                 logger = logging.getLogger(__name__)
                 logger.warning(f"Failed to log candidate search: {str(e)}")
         
-        # Prepare response with applied filters for debugging
         result = {
             'candidates': candidates_data,
             'total_count': total_count,
@@ -601,7 +700,6 @@ class CandidateSearchViewSet(viewsets.ViewSet):
     
     @action(detail=False, methods=['get'])
     def stats(self, request):
-        """Get candidate statistics"""
         
         total_candidates = JobProfile.objects.count()
         
@@ -629,7 +727,6 @@ class CandidateSearchViewSet(viewsets.ViewSet):
     
     @action(detail=False, methods=['get'])
     def filter_options(self, request):
-        """Get available filter options"""
         
         options = {
             'notice_periods': [
@@ -670,7 +767,6 @@ class CandidateSearchViewSet(viewsets.ViewSet):
         return Response(options)
     
     def retrieve(self, request, pk=None):
-        """Get specific candidate details"""
         
         try:
             job_profile = JobProfile.objects.select_related('profile__user').prefetch_related(
@@ -687,7 +783,6 @@ class CandidateSearchViewSet(viewsets.ViewSet):
             )
     
     def list(self, request):
-        """List all candidates"""
         
         queryset = JobProfile.objects.select_related('profile__user').prefetch_related(
             'job_skills', 'profile__skills', 'profile__experiences'

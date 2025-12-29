@@ -24,27 +24,21 @@ class User(AbstractUser):
         return self.email
 
     def is_admin(self):
-        """Check if user has admin role."""
         return self.role == "admin"
 
     def is_instructor(self):
-        """Check if user has instructor role."""
         return self.role == "instructor"
 
     def is_recruiter(self):
-        """Check if user has recruiter role."""
         return self.role == "recruiter"
 
     def is_student(self):
-        """Check if user has student role."""
         return self.role == "student"
 
     def can_manage_content(self):
-        """Check if user can manage content (admin or instructor)."""
         return self.role in ["admin", "instructor"]
 
     def can_manage_users(self):
-        """Check if user can manage users (admin only)."""
         return self.role == "admin"
 
     def save(self, *args, **kwargs):
@@ -54,9 +48,6 @@ class User(AbstractUser):
 
 
 class Profile(models.Model):
-    """
-    Profile model to store additional user information and OAuth data.
-    """
 
     GENDER_CHOICES = [
         ("male", "Male"),

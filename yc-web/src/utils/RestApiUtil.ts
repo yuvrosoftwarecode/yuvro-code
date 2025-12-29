@@ -1,6 +1,8 @@
 import { trackApiCall } from '../observability/telemetry';
 
-const API_BASE_URL = import.meta.env.VITE_BACKEND_API_BASE_URL;
+const API_BASE_URL = import.meta.env.VITE_BACKEND_API_BASE_URL || 'http://localhost:8000/api';
+
+console.log('API_BASE_URL:', API_BASE_URL); // Debug log
 
 export class ApiError extends Error {
     status: number;
@@ -57,7 +59,6 @@ class RestApiUtil {
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
 
-                // Handle different error response formats
                 let errorMessage = 'Request failed';
 
                 if (errorData.detail) {
@@ -65,14 +66,12 @@ class RestApiUtil {
                 } else if (errorData.message) {
                     errorMessage = errorData.message;
                 } else if (errorData.non_field_errors && Array.isArray(errorData.non_field_errors)) {
-                    // Handle Django REST Framework non_field_errors
                     errorMessage = errorData.non_field_errors[0];
                 } else if (errorData.error) {
                     errorMessage = errorData.error;
                 } else if (typeof errorData === 'string') {
                     errorMessage = errorData;
                 } else {
-                    // Try to extract first error from field-specific errors
                     const firstFieldError = Object.values(errorData).find(value =>
                         Array.isArray(value) && value.length > 0
                     );

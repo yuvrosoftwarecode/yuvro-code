@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { safeLocalStorage } from '../utils/localStorageUtil';
 import Navigation from './Navigation';
 
 interface ProtectedRouteProps {
@@ -13,7 +14,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
   const location = useLocation();
 
   // Check if we have a token in localStorage as fallback
-  const hasToken = localStorage.getItem('access');
+  const hasToken = safeLocalStorage.getItem('access');
 
   if (isLoading) {
     return (
@@ -34,8 +35,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
     switch (user.role) {
       case "admin":
       case "instructor":
-      case "recruiter":
         return <Navigate to="/instructor/dashboard" replace />;
+      case "recruiter":
+        return <Navigate to="/recruiter/dashboard" replace />;
       default:
         return <Navigate to="/student/dashboard" replace />;
     }

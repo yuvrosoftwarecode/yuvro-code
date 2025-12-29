@@ -17,7 +17,7 @@ export interface Job {
     skills: string[];
     notice_period?: number;
     education_level: 'high_school' | 'diploma' | 'bachelor' | 'master' | 'phd' | 'any';
-    status: 'draft' | 'active' | 'paused' | 'closed';
+    status: 'draft' | 'active' | 'paused' | 'closed' | 'rejected';
     posted_at?: string;
     expires_at?: string;
     created_at: string;
@@ -79,7 +79,7 @@ export interface CreateJobData {
     skills?: string[];
     notice_period?: number;
     education_level?: 'high_school' | 'diploma' | 'bachelor' | 'master' | 'phd' | 'any';
-    status?: 'draft' | 'active' | 'paused' | 'closed';
+    status?: 'draft' | 'active' | 'paused' | 'closed' | 'rejected';
     posted_at?: string;
     expires_at?: string;
     screening_questions_config?: {
@@ -108,7 +108,7 @@ export interface JobFilterData {
     max_salary?: number;
     currency?: 'INR' | 'USD' | 'EUR' | 'GBP';
     education_level?: 'high_school' | 'diploma' | 'bachelor' | 'master' | 'phd' | 'any';
-    status?: 'draft' | 'active' | 'paused' | 'closed';
+    status?: 'draft' | 'active' | 'paused' | 'closed' | 'rejected';
 }
 
 export const jobService = {
@@ -200,6 +200,18 @@ export const jobService = {
                 updatedQuestionsConfig[questionType as keyof typeof updatedQuestionsConfig].filter(id => id !== questionId);
         }
         return this.updateJob(jobId, { screening_questions_config: updatedQuestionsConfig });
+    },
+
+    async getPendingJobs(): Promise<Job[]> {
+        return restApiAuthUtil.get('/jobs/pending-approval/');
+    },
+
+    async approveJob(jobId: string): Promise<{ message: string; job: Job }> {
+        return restApiAuthUtil.post(`/jobs/${jobId}/approve/`);
+    },
+
+    async rejectJob(jobId: string): Promise<{ message: string; job: Job }> {
+        return restApiAuthUtil.post(`/jobs/${jobId}/reject/`);
     },
 };
 

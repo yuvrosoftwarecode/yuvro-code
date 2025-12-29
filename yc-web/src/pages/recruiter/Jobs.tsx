@@ -72,7 +72,6 @@ const Jobs: React.FC = () => {
     loadCompanies();
     loadJobsWithApplications();
 
-    // Auto-refresh application counts every 30 seconds
     const interval = setInterval(() => {
       loadJobsWithApplications(false);
     }, 30000);
@@ -242,12 +241,11 @@ const Jobs: React.FC = () => {
       skills: job.skills,
       notice_period: job.notice_period,
       education_level: job.education_level as "any",
-      status: "draft", // Always set to draft for new jobs
+      status: "draft", 
       posted_at: undefined,
       expires_at: undefined,
     });
 
-    // Handle screening questions
     const allQuestions = [
       ...(job.screening_questions_config?.mcq_single || []),
       ...(job.screening_questions_config?.mcq_multiple || []),
@@ -296,7 +294,6 @@ const Jobs: React.FC = () => {
       expires_at: job.expires_at,
     });
 
-    // Handle screening questions
     const allQuestions = [
       ...(job.screening_questions_config?.mcq_single || []),
       ...(job.screening_questions_config?.mcq_multiple || []),
@@ -339,8 +336,18 @@ const Jobs: React.FC = () => {
 
     try {
       if (isEditing && selectedJobId) {
-        await jobService.updateJob(selectedJobId, payload);
-        toast.success('Job updated successfully');
+        const originalJob = jobs.find(job => job.id === selectedJobId);
+        const wasActive = originalJob?.status === 'active';
+        
+        const updatedJob = await jobService.updateJob(selectedJobId, payload);
+        
+        if (wasActive && updatedJob.status === 'draft') {
+          toast.success('Job updated successfully! Since this was an active job, it has been moved to Jobs Approval for re-approval before going live again.', {
+            duration: 6000
+          });
+        } else {
+          toast.success('Job updated successfully');
+        }
       } else {
         await jobService.createJob(payload);
         toast.success('Job posted successfully');
@@ -388,7 +395,16 @@ const Jobs: React.FC = () => {
     const matchesSearch = job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       job.company.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       job.skills.some(skill => skill.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesTab = selectedTab === 'all' || job.status === selectedTab;
+    
+    let matchesTab = false;
+    if (selectedTab === 'all') {
+      matchesTab = true;
+    } else if (selectedTab === 'Approved') {
+      matchesTab = job.status === 'active';
+    } else {
+      matchesTab = job.status === selectedTab;
+    }
+    
     return matchesSearch && matchesTab;
   });
 
@@ -398,6 +414,7 @@ const Jobs: React.FC = () => {
       case 'draft': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
       case 'paused': return 'bg-orange-100 text-orange-700 border-orange-200';
       case 'closed': return 'bg-gray-100 text-gray-700 border-gray-200';
+      case 'rejected': return 'bg-red-100 text-red-700 border-red-200';
       default: return 'bg-gray-100 text-gray-700 border-gray-200';
     }
   };
@@ -438,12 +455,9 @@ const Jobs: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="flex">
-        {/* Sidebar */}
         <RoleSidebar />
 
-        {/* Main Content */}
         <div className="flex-1">
-          {/* Header */}
           <RoleHeader
             title="Job Management Dashboard"
             subtitle="Manage your job recruitment pipeline"
@@ -451,10 +465,8 @@ const Jobs: React.FC = () => {
           />
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            {/* Job Listings - Only show when no forms are open */}
             {!showJobForm && (
               <>
-                {/* Stats Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                   <div className="bg-white border border-gray-200 rounded-lg p-6">
                     <div className="pb-3">
@@ -499,7 +511,6 @@ const Jobs: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Tabs and Search */}
                 <div className="mb-6 flex items-center justify-between gap-4">
                   <div className="flex w-full items-center gap-4 h-12">
                     <div className="h-full flex items-center border border-gray-200 rounded-lg">
@@ -539,6 +550,23 @@ const Jobs: React.FC = () => {
                         >
                           Closed
                         </button>
+                        <button
+                          onClick={() => setSelectedTab('Approved')}
+                          className={`px-5 h-8 text-sm font-medium rounded-lg transition-colors duration-150 ${selectedTab === 'Approved' ? 'bg-gray-100 text-gray-900 shadow-sm' : 'bg-white text-gray-600'
+                            }`}
+                        >
+                          Approved
+                          <span className={`ml-1 text-xs ${selectedTab === 'Approved' ? 'text-gray-700' : 'text-gray-500'}`}>
+                            ({jobs.filter(j => j.status === 'active').length})
+                          </span>
+                        </button>
+                        <button
+                          onClick={() => setSelectedTab('rejected')}
+                          className={`px-5 h-8 text-sm font-medium rounded-lg transition-colors duration-150 ${selectedTab === 'rejected' ? 'bg-gray-100 text-gray-900 shadow-sm' : 'bg-white text-gray-600'
+                            }`}
+                        >
+                          Rejected
+                        </button>
                       </div>
                     </div>
 
@@ -552,7 +580,6 @@ const Jobs: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Job List Table */}
                 <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
@@ -637,7 +664,10 @@ const Jobs: React.FC = () => {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(job.status)}`}>
-                                {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
+                                {job.status === 'active' && selectedTab === 'Approved' 
+                                  ? 'Approved' 
+                                  : job.status.charAt(0).toUpperCase() + job.status.slice(1)
+                                }
                               </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
@@ -689,7 +719,6 @@ const Jobs: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Empty State */}
                 {filteredJobs.length === 0 && (
                   <div className="text-center py-12">
                     <Briefcase className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -713,7 +742,6 @@ const Jobs: React.FC = () => {
               </>
             )}
 
-            {/* Inline Job Form */}
             {showJobForm && (
               <div className="mb-8 bg-white shadow rounded-lg p-6">
                 <div className="flex justify-between items-center mb-6">
@@ -728,7 +756,6 @@ const Jobs: React.FC = () => {
                   </button>
                 </div>
 
-                {/* Use Previous Post Section - Only show when adding new job */}
                 {!isEditing && (
                   <div className="mb-6 border border-gray-200 shadow-sm rounded-lg">
                     <div className="pb-4 p-6 border-b">
@@ -824,7 +851,6 @@ const Jobs: React.FC = () => {
 
                   {currentFormTab === 'details' && (
                     <div className="space-y-6">
-                      {/* Basic Job Information */}
                       <div className="border border-gray-200 shadow-sm rounded-lg">
                         <div className="pb-4 p-6 border-b">
                           <h3 className="text-lg font-semibold text-gray-900 flex items-center">
@@ -963,6 +989,25 @@ const Jobs: React.FC = () => {
                                 <option value="paused">Paused</option>
                                 <option value="closed">Closed</option>
                               </select>
+                              {isEditing && jobs.find(job => job.id === selectedJobId)?.status === 'active' && (
+                                <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                                  <div className="flex items-start">
+                                    <div className="flex-shrink-0">
+                                      <svg className="h-5 w-5 text-amber-400" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                      </svg>
+                                    </div>
+                                    <div className="ml-3">
+                                      <h3 className="text-sm font-medium text-amber-800">
+                                        Editing Active Job
+                                      </h3>
+                                      <div className="mt-1 text-sm text-amber-700">
+                                        <p>This job is currently active. Any content changes will move it to draft status and require re-approval before going live again.</p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           </div>
 
@@ -1006,7 +1051,6 @@ const Jobs: React.FC = () => {
                         </div>
                       </div>
 
-                      {/* Skills and Requirements */}
                       <div className="border border-gray-200 shadow-sm rounded-lg">
                         <div className="pb-4 p-6 border-b">
                           <h3 className="text-lg font-semibold text-gray-900 flex items-center">
@@ -1046,7 +1090,6 @@ const Jobs: React.FC = () => {
 
                   {currentFormTab === 'screening' && (
                     <div className="space-y-6">
-                      {/* Random Questions Configuration */}
                       <div className="border border-gray-200 shadow-sm rounded-lg">
                         <div className="pb-4 p-6 border-b">
                           <h3 className="text-lg font-semibold text-gray-900 flex items-center">
@@ -1119,7 +1162,6 @@ const Jobs: React.FC = () => {
                         </div>
                       </div>
 
-                      {/* Specific Question Selection */}
                       <div className="border border-gray-200 shadow-sm rounded-lg">
                         <div className="pb-4 p-6 border-b">
                           <h3 className="text-lg font-semibold text-gray-900 flex items-center">
@@ -1140,7 +1182,6 @@ const Jobs: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Action Buttons */}
                   <div className="flex justify-end space-x-4 mt-6 pt-6 border-t">
                     <button
                       onClick={() => setShowJobForm(false)}
@@ -1161,7 +1202,6 @@ const Jobs: React.FC = () => {
 
 
 
-            {/* Delete Confirmation Modal */}
             {isDeleteModalOpen && (
               <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                 <div className="bg-white rounded-lg p-6 w-96">

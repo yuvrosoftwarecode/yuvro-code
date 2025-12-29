@@ -1,4 +1,5 @@
 import { RestApiUtil, ApiError } from './RestApiUtil';
+import { safeLocalStorage } from './localStorageUtil';
 
 const API_BASE_URL = import.meta.env.VITE_BACKEND_API_BASE_URL;
 
@@ -29,13 +30,13 @@ class RestApiAuthUtil extends RestApiUtil {
     }
 
     getAuthToken(): string | null {
-        return this.token || localStorage.getItem('access');
+        return this.token || safeLocalStorage.getItem('access');
     }
 
     clearAuthToken() {
         this.token = null;
-        localStorage.removeItem('access');
-        localStorage.removeItem('refresh');
+        safeLocalStorage.removeItem('access');
+        safeLocalStorage.removeItem('refresh');
     }
 
     isAuthenticated(): boolean {
@@ -57,7 +58,7 @@ class RestApiAuthUtil extends RestApiUtil {
     }
 
     private async refreshToken(): Promise<boolean> {
-        const refreshToken = localStorage.getItem('refresh');
+        const refreshToken = safeLocalStorage.getItem('refresh');
         if (!refreshToken) {
             console.warn('No refresh token available');
             return false;
@@ -67,9 +68,9 @@ class RestApiAuthUtil extends RestApiUtil {
             console.log('Attempting to refresh token...');
             const response = await super.post<{ access: string; refresh?: string }>('/auth/token/refresh/', { refresh: refreshToken });
 
-            localStorage.setItem('access', response.access);
+            safeLocalStorage.setItem('access', response.access);
             if (response.refresh) {
-                localStorage.setItem('refresh', response.refresh);
+                safeLocalStorage.setItem('refresh', response.refresh);
             }
             this.token = response.access;
             console.log('Token refreshed successfully');
@@ -84,7 +85,6 @@ class RestApiAuthUtil extends RestApiUtil {
     private logout(): void {
         console.log('Logging out user due to authentication failure');
         this.clearAuthToken();
-        // Only redirect if we're not already on the login page
         if (!window.location.pathname.includes('/login')) {
             window.location.href = '/login';
         }
@@ -104,7 +104,6 @@ class RestApiAuthUtil extends RestApiUtil {
             return await super.request<T>(endpoint, optionsWithAuth);
         } catch (error) {
             if (error instanceof ApiError && error.status === 401) {
-                // Don't attempt token refresh for auth endpoints (login, register, etc.)
                 const isAuthEndpoint = endpoint.includes('/auth/login') ||
                     endpoint.includes('/auth/register') ||
                     endpoint.includes('/auth/token/refresh');
@@ -120,20 +119,16 @@ class RestApiAuthUtil extends RestApiUtil {
                         if (success && this.token) {
                             this.onRefreshed(this.token);
                         } else {
-                            // If refresh fails, clear queue. The refreshToken method handles logout.
                             this.refreshSubscribers = [];
                         }
                     });
                 }
 
-                // Return a promise that waits for the refresh to complete
                 return new Promise<T>((resolve) => {
                     this.addSubscriber((newToken) => {
-                        // Update headers with new token
                         const retryHeaders: HeadersInit = {
                             ...options.headers,
                             'Authorization': `Bearer ${newToken}`,
-                            // Ensure Content-Type is preserved if it was set in getAuthHeaders or options
                             ...((authHeaders as Record<string, string>)['Content-Type'] ? { 'Content-Type': (authHeaders as Record<string, string>)['Content-Type'] } : {})
                         };
 

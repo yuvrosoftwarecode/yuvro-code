@@ -80,6 +80,13 @@ const sidebarItems: SidebarItem[] = [
     roles: ['admin', 'recruiter', 'instructor']
   },
   {
+    id: 'recruiter-jobs-approval',
+    label: 'Jobs Approval',
+    icon: CheckCircle,
+    path: '/recruiter/jobs-approval',
+    roles: ['admin', 'recruiter', 'instructor']
+  },
+  {
     id: 'contests',
     label: 'Contests',
     icon: Trophy,
@@ -106,10 +113,8 @@ const RoleSidebar: React.FC<RoleSidebarProps> = ({ className = '' }) => {
 
   const userRole = user?.role || 'instructor';
 
-  // Filter items based on user role
   const filteredItems = sidebarItems.filter(item => item.roles.includes(userRole));
 
-  // Get portal title based on role
   const getPortalTitle = () => {
     switch (userRole) {
       case 'admin':
@@ -123,7 +128,6 @@ const RoleSidebar: React.FC<RoleSidebarProps> = ({ className = '' }) => {
     }
   };
 
-  // Get tools section based on role
   const getToolsSection = () => {
     switch (userRole) {
       case 'admin':
@@ -158,7 +162,6 @@ const RoleSidebar: React.FC<RoleSidebarProps> = ({ className = '' }) => {
   return (
     <div className={`${sidebarCollapsed ? 'w-16' : 'w-64'} bg-white shadow-sm border-r border-gray-200 min-h-screen transition-all duration-300 ease-in-out ${className}`}>
       <div className="p-4">
-        {/* Header with toggle button */}
         <div className="flex items-center justify-between mb-6">
           {!sidebarCollapsed && (
             <h2 className="text-lg font-semibold text-gray-800">{getPortalTitle()}</h2>

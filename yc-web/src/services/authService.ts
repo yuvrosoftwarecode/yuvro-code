@@ -1,5 +1,6 @@
 import type { User } from '../contexts/AuthContext';
 import restApiAuthUtil from '../utils/RestApiAuthUtil';
+import { safeLocalStorage } from '../utils/localStorageUtil';
 
 export interface LoginResponse {
   access: string;
@@ -32,7 +33,7 @@ class AuthService {
   }
 
   initializeFromStorage(): void {
-    const token = localStorage.getItem('access');
+    const token = safeLocalStorage.getItem('access');
     if (token) {
       restApiAuthUtil.setAuthToken(token);
     }
@@ -41,9 +42,15 @@ class AuthService {
   async login(email: string, password: string): Promise<LoginResponse> {
     const response = await restApiAuthUtil.post<LoginResponse>('/auth/login/', { email, password });
 
-    localStorage.setItem('access', response.access);
-    localStorage.setItem('refresh', response.refresh);
-    restApiAuthUtil.setAuthToken(response.access);
+    if (response.access) {
+      safeLocalStorage.setItem('access', response.access);
+    }
+    if (response.refresh) {
+      safeLocalStorage.setItem('refresh', response.refresh);
+    }
+    if (response.access) {
+      restApiAuthUtil.setAuthToken(response.access);
+    }
 
     return response;
   }
@@ -51,9 +58,15 @@ class AuthService {
   async register(data: RegisterRequest): Promise<LoginResponse> {
     const response = await restApiAuthUtil.post<LoginResponse>('/auth/register/', data);
 
-    localStorage.setItem('access', response.access);
-    localStorage.setItem('refresh', response.refresh);
-    restApiAuthUtil.setAuthToken(response.access);
+    if (response.access) {
+      safeLocalStorage.setItem('access', response.access);
+    }
+    if (response.refresh) {
+      safeLocalStorage.setItem('refresh', response.refresh);
+    }
+    if (response.access) {
+      restApiAuthUtil.setAuthToken(response.access);
+    }
 
     return response;
   }
@@ -77,9 +90,8 @@ class AuthService {
   }
 
   async logoutUser(): Promise<void> {
-    const refreshToken = localStorage.getItem('refresh');
+    const refreshToken = safeLocalStorage.getItem('refresh');
     if (refreshToken) {
-      // Fire-and-forget backend logout
       restApiAuthUtil.post('/auth/logout/', { refresh: refreshToken }).catch(error => {
         console.warn('Logout error:', error);
       });

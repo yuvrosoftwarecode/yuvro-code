@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { ApiError } from '../../utils/RestApiUtil';
 import { redirectToDashboard } from '../../utils/redirectToDashboard';
+import { safeLocalStorage } from '../../utils/localStorageUtil';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -11,10 +12,17 @@ const Login: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const { login, loginWithGoogle, user } = useAuth();
+  const { login, loginWithGoogle, user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as any)?.from?.pathname || '/dashboard';
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated && user && user.role) {
+      redirectToDashboard(user, navigate);
+    }
+  }, [isAuthenticated, user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,19 +47,14 @@ const Login: React.FC = () => {
     setIsLoading(true);
 
     try {
-      await login(email, password);
+      const loggedInUser = await login(email, password);
       
-      // After successful login, the user will be available in the AuthContext
-      // We need to wait a moment for the context to update, or use a different approach
-      // Let's use the authService directly to get the user data
+      // The login function should have updated the AuthContext state
+      // The useEffect above will handle the redirect when the state updates
       
-      // For now, let's use a simple redirect based on localStorage
-      const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
-      if (storedUser && storedUser.role) {
-        redirectToDashboard(storedUser, navigate);
-      } else {
-        // Fallback redirect
-        navigate('/dashboard');
+      // Force immediate redirect as backup
+      if (loggedInUser && loggedInUser.role) {
+        redirectToDashboard(loggedInUser, navigate);
       }
 
     } catch (err) {

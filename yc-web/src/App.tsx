@@ -40,13 +40,13 @@ import MockInterviewForm from './components/instructor/mock-interviews/MockInter
 import SkillTestSubmissions from './pages/instructor/SkillTestSubmissions';
 import SubmissionAnalytics from './pages/instructor/SubmissionAnalytics';
 import RecruiterJobs from "./pages/recruiter/Jobs";
+import RecruiterJobsApproval from "./pages/recruiter/JobsApproval";
 import RecruiterJobApplicants from "./pages/recruiter/JobApplicants";
 import RecruiterCompanies from "./pages/recruiter/Companies";
 import RecruiterCompanyDetail from "./pages/recruiter/CompanyDetail";
 import RecruiterDashboard from "./pages/recruiter/Dashboard";
 import RecruiterProfile from "./pages/recruiter/Profile";
 import RecruiterCandidates from "./pages/recruiter/Candidates";
-// @ts-ignore
 import AddJob from "./components/student/AddJob";
 import ApplicationTracker from "@/components/student/jobs/ApplicationTracker";
 import CodeEditorTool from './pages/common/CodeEditorTool';
@@ -67,13 +67,10 @@ function App() {
               <Route path="/dashboard" element={<DashboardRedirect />} />
               <Route path="/jobs/:jobId" element={<JobDetails />} />
               <Route path="/recruiter/jobs" element={<RecruiterJobs />} />
-              {/* <Route path="/" element={<JobList />} /> */}
               <Route path="/add-job" element={<AddJob />} />
               <Route path="/student/applications" element={<ApplicationTracker appliedJobs={[]} />} />
 
 
-              {/* Protected routes */}
-              {/* Student Routes */}
               <Route
                 path="/student/profile"
                 element={
@@ -225,6 +222,15 @@ function App() {
               />
 
               <Route
+                path="/recruiter/jobs-approval"
+                element={
+                  <ProtectedRoute allowedRoles={["admin", "instructor", "recruiter"]}>
+                    <RecruiterJobsApproval />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
                 path="/recruiter/jobs/:jobId/applicants"
                 element={
                   <ProtectedRoute allowedRoles={["admin", "instructor", "recruiter"]}>
@@ -241,6 +247,7 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              
 
               <Route
                 path="/recruiter/jobs/companies"
@@ -471,7 +478,6 @@ function App() {
                 }
               />
 
-              {/* 404 route */}
               <Route path="/404" element={<NotFound />} />
               <Route path="*" element={<Navigate to="/404" replace />} />
             </Routes>

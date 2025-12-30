@@ -14,5 +14,5 @@ router.register(r'skill-test/submissions', SkillTestSubmissionViewSet, basename=
 
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path('assessment/', include(router.urls)),
 ]

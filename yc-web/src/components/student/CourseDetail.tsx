@@ -88,15 +88,20 @@ const CourseDetail: React.FC = () => {
 
   // Ref to prevent duplicate API calls
   const markingRef = React.useRef<boolean>(false);
+  const loadingProgressRef = React.useRef<boolean>(false);
+  const lastProgressFetchRef = React.useRef<number>(0);
 
   // Reset progress and Check Requirements when subtopic changes
   useEffect(() => {
     setActiveProgress({ quiz: false, coding: false, video: false });
     setRequirements({ hasQuiz: false, hasCoding: false, loaded: false });
     markingRef.current = false; // Reset lock on subtopic change
+    loadingProgressRef.current = false; // Reset progress loading lock
+    lastProgressFetchRef.current = 0; // Reset cache timer
 
     if (selectedSubtopic) {
       checkRequirements(selectedSubtopic.id);
+      // Note: Don't call loadProgress here as it will be called by handleProgressUpdate when needed
     }
   }, [selectedSubtopic?.id]);
 
@@ -122,10 +127,25 @@ const CourseDetail: React.FC = () => {
 
 
   const handleProgressUpdate = useCallback(async () => {
-    if (!selectedSubtopic) return;
+    if (!selectedSubtopic || loadingProgressRef.current) return;
 
+    console.log('handleProgressUpdate called for subtopic:', selectedSubtopic.id);
     await loadProgress();
-  }, [selectedSubtopic, requirements]);
+  }, [selectedSubtopic?.id]); // Remove requirements dependency to prevent excessive calls
+
+  // Debounced version to prevent rapid successive calls
+  const debouncedProgressUpdate = useCallback(
+    React.useMemo(() => {
+      let timeoutId: NodeJS.Timeout;
+      return () => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+          handleProgressUpdate();
+        }, 300); // 300ms debounce
+      };
+    }, [handleProgressUpdate]),
+    [handleProgressUpdate]
+  );
 
   /* PROGRESS CALCULATION */
   const getTopicProgress = (topicId: string): number => {
@@ -142,6 +162,13 @@ const CourseDetail: React.FC = () => {
   useEffect(() => {
     loadPage();
   }, [courseId]);
+
+  const overallProgress = React.useMemo(() => {
+    const allSubs = Object.values(subtopicsMap).flat();
+    if (allSubs.length === 0) return 0;
+    const total = allSubs.reduce((acc, s) => acc + (progressMap[s.id] || 0), 0);
+    return Math.round(total / allSubs.length);
+  }, [subtopicsMap, progressMap]);
 
   const loadPage = async () => {
     if (!courseId) return;
@@ -205,7 +232,19 @@ const CourseDetail: React.FC = () => {
   };
 
   const loadProgress = async () => {
-    if (!courseId) return;
+    if (!courseId || loadingProgressRef.current) return;
+    
+    // Prevent API calls within 1 second of the last call
+    const now = Date.now();
+    if (now - lastProgressFetchRef.current < 1000) {
+      console.log('Skipping loadProgress - too soon after last call');
+      return;
+    }
+    
+    loadingProgressRef.current = true;
+    lastProgressFetchRef.current = now;
+    console.log('loadProgress called for course:', courseId);
+    
     try {
       const progressData = await fetchUserCourseProgress(courseId) as any;
       // console.log("Progress Data", progressData);
@@ -232,15 +271,18 @@ const CourseDetail: React.FC = () => {
       setReadMap(newReadMap);
     } catch (err) {
       console.warn("Could not fetch progress map", err);
+    } finally {
+      loadingProgressRef.current = false;
     }
   };
 
-  // refresh progress when subtopic changes to ensure activeProgress is correct
-  useEffect(() => {
-    if (selectedSubtopic && !loading) {
-      loadProgress();
-    }
-  }, [selectedSubtopic, loading]);
+  // Remove this useEffect as it causes duplicate API calls
+  // Progress will be loaded by handleProgressUpdate when needed
+  // useEffect(() => {
+  //   if (selectedSubtopic && !loading) {
+  //     loadProgress();
+  //   }
+  // }, [selectedSubtopic, loading]);
 
   const toggleExpandTopic = async (topicId: string) => {
     const isOpen = expandedTopics[topicId];
@@ -336,6 +378,17 @@ const CourseDetail: React.FC = () => {
                 </div>
 
                 <p className="text-sm text-gray-500 mb-5 ml-1">Track your learning progress</p>
+                <div className="mb-5 px-1">
+                  <div className="flex justify-between text-xs font-semibold text-gray-700 mb-1">
+                    <span>{overallProgress}% Completed</span>
+                  </div>
+                  <ProgressBar
+                    value={overallProgress}
+                    height={8}
+                    trackClassName="bg-gray-100 rounded-full"
+                    barClassName="bg-blue-600 rounded-full"
+                  />
+                </div>
 
                 <div className="h-px bg-gray-100 w-full mb-5" />
 
@@ -540,13 +593,16 @@ const CourseDetail: React.FC = () => {
                 {rightTab === "quizzes" && (
                   <StudentQuizEmbed
                     subtopicId={selectedSubtopic.id}
-                    onComplete={() => handleProgressUpdate()}
+                    onComplete={() => debouncedProgressUpdate()}
                   />
                 )}
                 {rightTab === "coding" && (
                   <StudentCodingEmbed
                     subtopicId={selectedSubtopic.id}
-                    onComplete={() => handleProgressUpdate()}
+                    onComplete={() => debouncedProgressUpdate()}
+                    codeSubmissionType="learn"
+                    courseId={courseId}
+                    topicId={selectedSubtopic.topic}
                   />
                 )}
                 {rightTab === "notes" && <StudentNotes subtopicId={selectedSubtopic.id} />}

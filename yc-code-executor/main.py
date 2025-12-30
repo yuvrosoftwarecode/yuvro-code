@@ -52,7 +52,8 @@ class TestCase(BaseModel):
 class CodeExecutionWithTestsRequest(BaseModel):
     code: str
     language: str
-    test_cases: List[TestCase]
+    test_cases_basic: Optional[List[TestCase]] = []
+    test_cases_advanced: Optional[List[TestCase]] = []
     test_cases_custom: Optional[List[TestCase]] = []
     timeout: int = 10
 
@@ -71,6 +72,7 @@ class TestResult(BaseModel):
     actual_output: str
     error: str
     execution_time: float
+    console_output: str = ""  # Add console output field
 
 class CodeExecutionResponse(BaseModel):
     execution_result: ExecutionResult
@@ -78,15 +80,76 @@ class CodeExecutionResponse(BaseModel):
     total_passed: int
     total_tests: int
     plagiarism_score: float = 0.0
+    # Separate results for different test case types
+    basic_results: List[TestResult] = []
+    advanced_results: List[TestResult] = []
+    custom_results: List[TestResult] = []
+    basic_passed: int = 0
+    advanced_passed: int = 0
+    custom_passed: int = 0
+
+class ReferenceSubmission(BaseModel):
+    submission_id: str
+    user_id: str
+    answer_data: Dict[str, Any]
 
 class PlagiarismCheckRequest(BaseModel):
-    code1: str
-    code2: str
+    target_code: str
     language: str
+    reference_submissions: List[ReferenceSubmission]
+
+class PlagiarismMatch(BaseModel):
+    submission_id: str
+    user_id: str
+    similarity_score: float
 
 class PlagiarismResult(BaseModel):
-    similarity_score: float
-    flagged: bool
+    is_plagiarized: bool
+    max_similarity: float
+    matches: List[PlagiarismMatch]
+
+@app.post("/plagiarism-check", response_model=PlagiarismResult)
+async def check_plagiarism(request: PlagiarismCheckRequest):
+    """Check plagiarism between target code and multiple reference submissions"""
+    try:
+        matches = []
+        max_similarity = 0.0
+        
+        target_code = request.target_code
+        if not target_code:
+            return PlagiarismResult(is_plagiarized=False, max_similarity=0.0, matches=[])
+
+        for ref in request.reference_submissions:
+            # Extract code from answer_data
+            # Assuming answer_data has a 'code' field or similar structure for coding questions
+            ref_code = ref.answer_data.get('code') or ref.answer_data.get('source_code') or ""
+            
+            if not isinstance(ref_code, str) or not ref_code:
+                continue
+                
+            similarity = CodeExecutorService.calculate_similarity(target_code, ref_code)
+            
+            if similarity > 0.0:  # You might want a threshold here, e.g., > 0.5 to reduce noise
+                matches.append(PlagiarismMatch(
+                    submission_id=ref.submission_id,
+                    user_id=ref.user_id,
+                    similarity_score=similarity
+                ))
+                max_similarity = max(max_similarity, similarity)
+        
+        # Sort matches by similarity descending
+        matches.sort(key=lambda x: x.similarity_score, reverse=True)
+        
+        return PlagiarismResult(
+            is_plagiarized=max_similarity > 0.8,  # Threshold for flagging
+            max_similarity=max_similarity,
+            matches=matches[:10]  # Return top 10 matches
+        )
+        
+    except Exception as e:
+        # Log error or return empty result so we don't block submission
+        print(f"Plagiarism check error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 # Language configurations
 LANGUAGE_CONFIGS = {
@@ -231,6 +294,8 @@ PYTHON_DRIVER_CODE = """
 import sys
 import json
 import ast
+import io
+from contextlib import redirect_stdout
 
 def _driver_execution():
     # check if Solution class exists
@@ -267,10 +332,17 @@ def _driver_execution():
                     arg = line
             args.append(arg)
             
-        # Call method
-        result = method(*args)
+        # Capture stdout (print statements) separately from return value
+        console_output = io.StringIO()
+        with redirect_stdout(console_output):
+            result = method(*args)
         
-        # Print result
+        # Print console output to stderr so we can capture it separately
+        console_content = console_output.getvalue()
+        if console_content:
+            print(console_content, file=sys.stderr, end='')
+        
+        # Print only the result to stdout
         if result is not None:
             # formatted output
             if isinstance(result, (list, dict, tuple)):
@@ -572,8 +644,16 @@ async def execute_code(request: CodeExecutionRequest):
 async def execute_code_with_tests(request: CodeExecutionWithTestsRequest):
     """Execute code and run test cases"""
     try:
-        # Check if we have any test cases (either basic or custom)
-        all_test_cases = request.test_cases + (request.test_cases_custom or [])
+        all_test_cases = []
+        all_test_cases.extend(request.test_cases_basic or [])
+        all_test_cases.extend(request.test_cases_advanced or [])
+        all_test_cases.extend(request.test_cases_custom or [])
+        
+        # Track counts for separation
+        basic_count = len(request.test_cases_basic or [])
+        advanced_count = len(request.test_cases_advanced or [])
+        custom_count = len(request.test_cases_custom or [])
+        
         if not all_test_cases:
             raise HTTPException(status_code=400, detail="No test cases provided")
 
@@ -615,16 +695,47 @@ async def execute_code_with_tests(request: CodeExecutionWithTestsRequest):
                 
                 if compile_process.returncode != 0:
                     # Return error for all tests if compilation failed
-                    test_results = [
-                        TestResult(
-                            passed=False,
-                            input=tc.input,
-                            expected_output=tc.expected_output,
-                            actual_output='',
-                            error=stderr.decode(),
-                            execution_time=0
-                        ) for tc in (request.test_cases + (request.test_cases_custom or []))
-                    ]
+                    error_result = TestResult(
+                        passed=False,
+                        input='',
+                        expected_output='',
+                        actual_output='',
+                        error=stderr.decode(),
+                        execution_time=0
+                    )
+                    
+                    basic_results = [TestResult(
+                        passed=False,
+                        input=tc.input,
+                        expected_output=tc.expected_output,
+                        actual_output='',
+                        error=stderr.decode(),
+                        execution_time=0,
+                        console_output=''
+                    ) for tc in (request.test_cases_basic or [])]
+                    
+                    advanced_results = [TestResult(
+                        passed=False,
+                        input=tc.input,
+                        expected_output=tc.expected_output,
+                        actual_output='',
+                        error=stderr.decode(),
+                        execution_time=0,
+                        console_output=''
+                    ) for tc in (request.test_cases_advanced or [])]
+                    
+                    custom_results = [TestResult(
+                        passed=False,
+                        input=tc.input,
+                        expected_output=tc.expected_output,
+                        actual_output='',
+                        error=stderr.decode(),
+                        execution_time=0,
+                        console_output=''
+                    ) for tc in (request.test_cases_custom or [])]
+                    
+                    all_results = basic_results + advanced_results + custom_results
+                    
                     return CodeExecutionResponse(
                         execution_result=ExecutionResult(
                             success=False,
@@ -634,15 +745,20 @@ async def execute_code_with_tests(request: CodeExecutionWithTestsRequest):
                             memory_usage=0,
                             status='compilation_error'
                         ),
-                        test_results=test_results,
+                        test_results=all_results,
                         total_passed=0,
-                        total_tests=len(test_results)
+                        total_tests=len(all_results),
+                        basic_results=basic_results,
+                        advanced_results=advanced_results,
+                        custom_results=custom_results,
+                        basic_passed=0,
+                        advanced_passed=0,
+                        custom_passed=0
                     )
 
             # 2. Run all test cases using the compiled binary (or source for script langs)
             test_results = []
             passed_count = 0
-            all_test_cases = request.test_cases + (request.test_cases_custom or [])
 
             for test_case in all_test_cases:
                 # Pre-process input for this test case
@@ -705,6 +821,7 @@ async def execute_code_with_tests(request: CodeExecutionWithTestsRequest):
 
 
                     actual_output = stdout.decode().strip()
+                    console_output = stderr.decode().strip()  # Console output from print statements
                     expected_output = test_case.expected_output.strip()
                     
                     passed = actual_output == expected_output
@@ -715,8 +832,9 @@ async def execute_code_with_tests(request: CodeExecutionWithTestsRequest):
                         input=test_case.input,
                         expected_output=expected_output,
                         actual_output=actual_output,
-                        error=stderr.decode() if not passed else "",
-                        execution_time=execution_time
+                        error=stderr.decode() if not passed and not console_output else "",
+                        execution_time=execution_time,
+                        console_output=console_output
                     ))
                 except asyncio.TimeoutError:
                     try: process.kill()
@@ -727,7 +845,8 @@ async def execute_code_with_tests(request: CodeExecutionWithTestsRequest):
                         expected_output=test_case.expected_output,
                         actual_output='',
                         error='Timeout',
-                        execution_time=request.timeout
+                        execution_time=request.timeout,
+                        console_output=''
                     ))
 
             # Determine basic_result (first test or summary)
@@ -740,32 +859,33 @@ async def execute_code_with_tests(request: CodeExecutionWithTestsRequest):
                 status='completed'
             )
 
+            # Separate results by type
+            basic_results = test_results[:basic_count]
+            advanced_results = test_results[basic_count:basic_count + advanced_count]
+            custom_results = test_results[basic_count + advanced_count:]
+            
+            # Count passed tests by type
+            basic_passed = sum(1 for result in basic_results if result.passed)
+            advanced_passed = sum(1 for result in advanced_results if result.passed)
+            custom_passed = sum(1 for result in custom_results if result.passed)
+
             return CodeExecutionResponse(
                 execution_result=basic_result,
                 test_results=test_results,
                 total_passed=passed_count,
-                total_tests=len(all_test_cases)
+                total_tests=len(all_test_cases),
+                basic_results=basic_results,
+                advanced_results=advanced_results,
+                custom_results=custom_results,
+                basic_passed=basic_passed,
+                advanced_passed=advanced_passed,
+                custom_passed=custom_passed
             )
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/plagiarism-check", response_model=PlagiarismResult)
-async def check_plagiarism(request: PlagiarismCheckRequest):
-    """Check plagiarism between two code snippets"""
-    try:
-        similarity_score = CodeExecutorService.calculate_similarity(
-            request.code1,
-            request.code2
-        )
-        
-        return PlagiarismResult(
-            similarity_score=similarity_score,
-            flagged=similarity_score > 0.7
-        )
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.get("/supported-languages-and-templates")
 async def get_supported_languages():

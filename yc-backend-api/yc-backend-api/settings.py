@@ -37,7 +37,6 @@ INSTALLED_APPS = [
     "authentication",
     "course",
     "ai_assistant",
-    "code_executor",
     "job",
     "assessment",
 ]

@@ -1,16 +1,16 @@
+// src/components/student/code-practice/TopicSelection.tsx
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ChevronLeft, ChevronRight, Code2, Target, CheckCircle2 } from 'lucide-react';
+import { Code2, ChevronLeft, ChevronRight } from 'lucide-react';
 import {
   fetchTopicsByCourse,
-  fetchSubtopicsByTopic,
-  fetchCodingProblemsBySubtopic,
 } from '@/services/courseService';
 import { fetchQuestions } from '@/services/questionService';
 import type { Course, Topic, CodingProblem } from '@/pages/student/CodePractice';
 import { toast } from 'sonner';
+import TopicSidebar, { SidebarCourse, SidebarTopic } from '@/components/student/skill-test/TopicSidebar';
 
 interface TopicSelectionProps {
   course: Course;
@@ -26,14 +26,6 @@ interface BackendTopic {
   order_index: number;
 }
 
-interface BackendCodingProblem {
-  id: string;
-  title: string;
-  description: string;
-  test_cases_basic: any[];
-  test_cases_advanced: any[];
-}
-
 const TopicSelection = ({
   course,
   selectedTopic,
@@ -46,6 +38,8 @@ const TopicSelection = ({
   const [loading, setLoading] = useState(true);
   const [problemsLoading, setProblemsLoading] = useState(false);
   const [difficulty, setDifficulty] = useState<'All' | 'Easy' | 'Medium' | 'Hard'>('All');
+
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // Load topics
   useEffect(() => {
@@ -154,118 +148,92 @@ const TopicSelection = ({
     Hard: 'bg-red-100 text-red-700 border border-red-300',
   };
 
-  if (loading) {
-    return (
-      <div className="container mx-auto px-4 py-6 max-w-7xl">
-        <div className="animate-pulse space-y-6">
-          <div className="h-6 bg-gray-200 w-1/4 rounded"></div>
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            <div className="h-96 bg-gray-200 rounded"></div>
-            <div className="lg:col-span-3 space-y-4">
-              <div className="h-32 bg-gray-200 rounded"></div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {[...Array(4)].map((_, i) => (
-                  <div key={i} className="h-48 bg-gray-200 rounded"></div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Construct SidebarCourse object for TopicSidebar
+  const sidebarCourse: SidebarCourse = {
+    id: course.id,
+    name: course.name,
+    icon: '💻',
+    topics: topics.map(t => ({
+      id: t.id,
+      name: t.name,
+      problemCount: t.problemCount,
+      // progress is typically 0 here since this is practice mode, or we could calculate if needed
+      progress: 0
+    }))
+  };
 
   return (
-    <div className="container mx-auto px-[1px] py-3 max-w-9xl">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-2 mb-3 text-sm text-gray-500">
-        <Button variant="ghost" size="sm" onClick={onBack} className="h-auto p-0 hover:bg-transparent hover:text-gray-900 transition-colors">
-          Code Practice
-        </Button>
-        <span>/</span>
-        <span className="text-gray-700 font-medium">{course.name}</span>
-      </div>
+    <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-gray-50">
+      {/* Reusable Sidebar */}
+      <TopicSidebar
+        course={sidebarCourse}
+        selectedTopic={selectedTopic as SidebarTopic}
+        onTopicSelect={(t) => {
+          const original = topics.find(orig => orig.id === t.id);
+          if (original) onTopicSelect(original);
+        }}
+        isOpen={sidebarOpen}
+        onToggle={() => setSidebarOpen(!sidebarOpen)}
+        showProgress={true}
+      />
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Sidebar Topics */}
-        <Card className="lg:col-span-1 border border-gray-200 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-lg text-gray-900">Topics</CardTitle>
-          </CardHeader>
-
-          <CardContent className="space-y-2">
-            {topics.map((topic) => (
-              <button
-                key={topic.id}
-                onClick={() => onTopicSelect(topic)}
-                className={`w-full text-left p-3 rounded-lg transition ${selectedTopic?.id === topic.id
-                  ? 'bg-black text-white'
-                  : 'hover:bg-gray-100 text-gray-800'
-                  }`}
-              >
-                <div className="font-medium">{topic.name}</div>
-                <div
-                  className={`text-xs ${selectedTopic?.id === topic.id
-                    ? 'text-white'
-                    : 'text-gray-500'
-                    }`}
-                >
-                  {topic.problemCount} problems
-                </div>
-              </button>
-            ))}
-
-            {topics.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
-                <Code2 className="h-8 w-8 mx-auto mb-2" />
-                <p className="text-sm">No topics available</p>
-              </div>
+      {/* Main Content Area */}
+      <div className="flex-1 overflow-auto">
+        <div className="p-6 max-w-7xl mx-auto min-h-full">
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-2 mb-6 text-sm text-gray-500">
+            <Button variant="ghost" size="sm" onClick={onBack} className="h-auto p-0 hover:bg-transparent hover:text-gray-900 transition-colors">
+              Code Practice
+            </Button>
+            <span>/</span>
+            <span className="text-gray-700 font-medium">{course.name}</span>
+            {selectedTopic && (
+              <>
+                <span>/</span>
+                <span className="text-gray-900 font-semibold">{selectedTopic.name}</span>
+              </>
             )}
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* Problems Section */}
-        <div className="lg:col-span-3 space-y-4">
           {!selectedTopic ? (
-            <Card className="border border-gray-200 shadow-sm">
-              <CardContent className="p-12 text-center">
-                <Code2 className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  Select a Topic
-                </h3>
-                <p className="text-gray-500">
-                  Choose a topic from the left to view available problems.
-                </p>
-              </CardContent>
-            </Card>
+            <div className="flex flex-col items-center justify-center py-20 bg-white rounded-xl border border-gray-200 shadow-sm text-center">
+              <div className="bg-blue-50 p-4 rounded-full mb-4">
+                <Code2 className="h-10 w-10 text-blue-500" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                Select a Topic
+              </h3>
+              <p className="text-gray-500 max-w-md">
+                Choose a topic from the sidebar to view practice problems and start coding.
+              </p>
+            </div>
           ) : (
-            <>
-              {/* Difficulty Filter */}
-              <Card className="border border-gray-200 shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-lg text-gray-900">
-                    {selectedTopic.name} · Difficulty
-                  </CardTitle>
-                </CardHeader>
+            <div className="space-y-6">
+              {/* Header */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">{selectedTopic.name}</h2>
+                  <p className="text-gray-500 text-sm mt-1">
+                    {filteredProblems.length} problems available
+                  </p>
+                </div>
 
-                <CardContent className="flex gap-2 flex-wrap ">
+                {/* Difficulty Filter */}
+                <div className="flex bg-white rounded-lg border border-gray-200 p-1 shadow-sm">
                   {(['All', 'Easy', 'Medium', 'Hard'] as const).map((level) => (
-                    <Button
+                    <button
                       key={level}
-                      variant="ghost"
-                      size="sm"
-                      className={
-                        difficulty === level
-                          ? 'bg-black text-white !border-none shadow-sm'
-                          : 'hover:bg-gray-100 text-gray-800'
-                      }
+                      className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all duration-200 ${difficulty === level
+                        ? 'bg-black text-white shadow-sm'
+                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                        }`}
                       onClick={() => setDifficulty(level)}
                     >
                       {level}
-                    </Button>
+                    </button>
                   ))}
-                </CardContent>
-              </Card>
+                </div>
+              </div>
 
               {/* Problems Grid */}
               {problemsLoading ? (
@@ -278,21 +246,20 @@ const TopicSelection = ({
                   ))}
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   {filteredProblems.map((problem) => (
                     <Card
                       key={problem.id}
-                      className="border border-gray-200 shadow-sm hover:shadow-md transition"
+                      className="group border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 hover:border-gray-300"
                     >
-                      <CardHeader>
-                        <div className="flex items-start justify-between">
-                          <CardTitle className="text-base text-gray-900">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <CardTitle className="text-base font-semibold text-gray-900 leading-tight">
                             {problem.title}
                           </CardTitle>
-
                           <Badge
                             variant="outline"
-                            className={`px-2 py-1 rounded-md text-xs font-medium ${difficultyColors[problem.difficulty]}`}
+                            className={`flex-shrink-0 px-2.5 py-0.5 rounded-full text-xs font-semibold border-0 ${difficultyColors[problem.difficulty]}`}
                           >
                             {problem.difficulty}
                           </Badge>
@@ -300,21 +267,21 @@ const TopicSelection = ({
                       </CardHeader>
 
                       <CardContent className="space-y-4">
-                        <p className="text-sm text-gray-600 line-clamp-2">
+                        <p className="text-sm text-gray-600 line-clamp-2 h-10">
                           {problem.description}
                         </p>
 
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-gray-700">
-                            Score: {problem.score}
+                        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                          <span className="text-xs font-medium text-gray-500">
+                            Score: <span className="text-gray-900">{problem.score}</span>
                           </span>
 
                           <Button
                             size="sm"
-                            className="bg-black text-white hover:bg-gray-800"
+                            className="bg-gray-900 text-white hover:bg-black transition-colors shadow-sm text-xs h-8"
                             onClick={() => onProblemSelect(problem)}
                           >
-                            Solve Problem
+                            Solve Challenge
                           </Button>
                         </div>
                       </CardContent>
@@ -322,44 +289,19 @@ const TopicSelection = ({
                   ))}
 
                   {filteredProblems.length === 0 && (
-                    <div className="col-span-full text-center py-12">
-                      <Code2 className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                        No Problems Available
+                    <div className="col-span-full py-16 text-center bg-white rounded-xl border border-gray-200 border-dashed">
+                      <Code2 className="h-10 w-10 text-gray-300 mx-auto mb-3" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-1">
+                        No Problems Found
                       </h3>
-                      <p className="text-gray-500">
-                        No problems match this difficulty level.
+                      <p className="text-gray-500 text-sm">
+                        Try selecting a different difficulty level.
                       </p>
                     </div>
                   )}
                 </div>
               )}
-
-              {/* Pagination */}
-              {filteredProblems.length > 0 && (
-                <div className="flex justify-center gap-2 pt-4">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled
-                    className="border-gray-300 text-gray-600"
-                  >
-                    <ChevronLeft className="h-4 w-4 mr-1" />
-                    Previous
-                  </Button>
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled
-                    className="border-gray-300 text-gray-600"
-                  >
-                    Next
-                    <ChevronRight className="h-4 w-4 ml-1" />
-                  </Button>
-                </div>
-              )}
-            </>
+            </div>
           )}
         </div>
       </div>

@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { X, Copy, Check, Play, BookOpen, Loader2, CheckCircle2, XCircle, Code2, Clock, Zap } from 'lucide-react';
 import { toast } from 'sonner';
-import codeExecutorService from '@/services/codeExecutorService';
+import codeEditorService from '@/services/codeEditorService';
 import restApiUtilCodeExecuter from '@/utils/RestApiUtilCodeExecuter';
 
 interface TestCase {
@@ -106,7 +106,7 @@ const ExampleCodeGallery: React.FC<ExampleCodeGalleryProps> = ({ onClose, curren
                 weight: 1,
             }));
 
-            const res = await codeExecutorService.runCode({
+            const res = await codeEditorService.runCode({
                 code,
                 language: selectedLanguage,
                 test_cases: testCases,

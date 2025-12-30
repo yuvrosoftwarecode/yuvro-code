@@ -1,5 +1,5 @@
 import React from 'react';
-import { ExecutionResult } from '../../services/codeExecutorService';
+import { ExecutionResult } from '../../services/codeEditorService';
 
 interface PerformanceMetricsProps {
   result: ExecutionResult;

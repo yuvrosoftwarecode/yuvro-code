@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ChevronLeft, Brain, TrendingUp, Target, Lightbulb, BookOpen, Zap } from 'lucide-react';
-import codeExecutorService from '@/services/codeExecutorService';
+import codeEditorService from '@/services/codeEditorService';
 import { toast } from 'sonner';
 
 interface AIInsightsProps {
@@ -27,7 +27,7 @@ const AIInsights = ({ onBack, onGeneratePracticeSet }: AIInsightsProps) => {
   useEffect(() => {
     const generateInsights = async () => {
       try {
-        const submissions = await codeExecutorService.getSubmissions();
+        const submissions = await codeEditorService.getSubmissions();
 
         const generatedInsights: Insight[] = [];
 

@@ -325,11 +325,32 @@ export async function submitQuiz(subtopicId: string, answers: any, scorePercent:
   });
 }
 
-export async function submitCoding(subtopicId: string, codingStatus: Record<string, boolean>) {
-  return restApiAuthUtil.post('/course/student-course-progress/submit_coding/', {
+export async function submitCoding(
+  subtopicId: string, 
+  codingStatus: Record<string, boolean>,
+  submissionDetails?: {
+    questionId: string;
+    language: string;
+    code: string;
+    testResults: any;
+    executionOutput: string;
+  }
+) {
+  const payload: any = {
     subtopic_id: subtopicId,
     coding_status: codingStatus
-  });
+  };
+  
+  // Add detailed submission data if provided
+  if (submissionDetails) {
+    payload.question_id = submissionDetails.questionId;
+    payload.language = submissionDetails.language;
+    payload.code = submissionDetails.code;
+    payload.test_results = submissionDetails.testResults;
+    payload.execution_output = submissionDetails.executionOutput;
+  }
+  
+  return restApiAuthUtil.post('/course/student-course-progress/submit_coding/', payload);
 }
 
 export async function fetchUserCourseProgress(courseId: string) {

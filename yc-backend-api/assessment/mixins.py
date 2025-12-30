@@ -8,6 +8,8 @@ from django.shortcuts import get_object_or_404
 from .models import BaseQuestionActivity
 from rest_framework import permissions
 from rest_framework.decorators import action
+import requests
+import json
 
 
 class ProctoringMixin:
@@ -46,9 +48,10 @@ class ProctoringMixin:
             self.submission_lookup_field: assessment_object
         }
         
-        try:
-            submission = self.submission_model.objects.get(**lookup_kwargs)
-        except self.submission_model.DoesNotExist:
+        # Order by created_at desc to get the latest (current) attempt
+        submission = self.submission_model.objects.filter(**lookup_kwargs).order_by('-created_at').first()
+
+        if not submission:
              return Response({'error': 'Submission not found'}, status=status.HTTP_404_NOT_FOUND)
 
         # 3. Handle Question-Specific Activity
@@ -100,6 +103,10 @@ class ProctoringMixin:
         elif activity_type == 'answer_submitted':
             qa_record.is_final_answer = True
             qa_record_updated = True
+            
+            # Trigger plagiarism check for coding questions
+            if qa_record.question.type == 'coding':
+                self._check_plagiarism(qa_record, request)
         
         # 2. Violation Logic
         # Explicit violation types from requirements
@@ -158,6 +165,69 @@ class ProctoringMixin:
             qa_record.save()
             
         return Response({'status': 'logged', 'scope': 'question'}, status=status.HTTP_200_OK)
+
+    def _check_plagiarism(self, qa_record, request):
+        """
+        Check for plagiarism against other submissions for the same question.
+        """
+        try:
+            # 1. Extract Code and Language
+            answer_data = qa_record.answer_data
+            if not isinstance(answer_data, dict):
+                return
+                
+            code = answer_data.get('code') or answer_data.get('source_code')
+            language = answer_data.get('language')
+            
+            if not code or not language:
+                return
+
+            # 2. Fetch Reference Submissions
+            # Find all other finalized answers for this question
+            # Using the same model class (e.g. SkillTestQuestionActivity)
+            model_class = qa_record.__class__
+            
+            # Limit to recent 100 or reasonable number to avoid huge payloads
+            # Exclude current user's submissions
+            refs = model_class.objects.filter(
+                question=qa_record.question,
+                is_final_answer=True
+            ).exclude(
+                user=request.user
+            ).values('id', 'user__id', 'answer_data').order_by('-updated_at')[:50]
+            
+            reference_submissions = []
+            for ref in refs:
+                reference_submissions.append({
+                    'submission_id': str(ref['id']),
+                    'user_id': str(ref['user__id']),
+                    'answer_data': ref['answer_data']
+                })
+            
+            if not reference_submissions:
+                return
+
+            # 3. Call Plagiarism Service
+            service_url = os.environ.get('CODE_EXECUTOR_URL', 'http://code-executor:8002')
+            payload = {
+                'target_code': code,
+                'language': language,
+                'reference_submissions': reference_submissions
+            }
+            
+            response = requests.post(
+                f"{service_url}/plagiarism-check",
+                json=payload,
+                timeout=5
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                qa_record.plagiarism_data = result
+                qa_record.save(update_fields=['plagiarism_data'])
+                
+        except Exception as e:
+            print(f"Plagiarism check failed: {e}")
 
     def _handle_submission_activity(self, submission, request, activity_type, meta_data, timestamp):
         event = {

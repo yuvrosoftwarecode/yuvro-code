@@ -12,7 +12,6 @@ import ResetPassword from './pages/common/ResetPassword';
 import ForgotPassword from './pages/common/ForgotPassword';
 import InstructorDashboard from './pages/instructor/Dashboard';
 import Courses from './pages/instructor/Courses';
-
 import CourseEdit from './components/instructor/courses/CourseEdit';
 
 import Users from './pages/instructor/Users';
@@ -23,6 +22,7 @@ import MockInterview from './pages/student/MockInterview';
 import StudentJobs from './pages/student/Jobs';
 import JobDetails from './pages/student/JobDetails';
 import Contest from './pages/student/Contest';
+import ContestAttempt from './pages/student/ContestAttempt';
 import CodePractice from './pages/student/CodePractice';
 import StudentQuiz from './components/student/StudentQuiz';
 import StudentCoding from './components/student/StudentCoding';
@@ -126,6 +126,33 @@ function App() {
               />
 
               <Route
+                path="/student/courses/:courseId/skill-tests"
+                element={
+                  <ProtectedRoute allowedRoles={["student"]}>
+                    <SkillTest />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/student/courses/:courseId/skill-tests/:testId"
+                element={
+                  <ProtectedRoute allowedRoles={["student"]}>
+                    <SkillTest />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/student/courses/:courseId/skill-tests/:testId/results"
+                element={
+                  <ProtectedRoute allowedRoles={["student"]}>
+                    <SkillTest />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
                 path="/student/mock-interview"
                 element={
                   <ProtectedRoute allowedRoles={["student"]}>
@@ -157,6 +184,15 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={["student"]}>
                     <Contest />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/student/contests/:contestId/attempt"
+                element={
+                  <ProtectedRoute allowedRoles={["student"]}>
+                    <ContestAttempt />
                   </ProtectedRoute>
                 }
               />

@@ -77,14 +77,14 @@ const sidebarItems: SidebarItem[] = [
     label: 'Jobs',
     icon: Briefcase,
     path: '/recruiter/jobs',
-    roles: ['recruiter']
+    roles: ['admin', 'recruiter', 'instructor']
   },
   {
-    id: 'instructor-jobs',
-    label: 'Jobs',
-    icon: Briefcase,
-    path: '/instructor/jobs',
-    roles: ['admin', 'instructor']
+    id: 'recruiter-jobs-approval',
+    label: 'Jobs Approval',
+    icon: CheckCircle,
+    path: '/recruiter/jobs-approval',
+    roles: ['admin', 'recruiter_admin']  
   },
   {
     id: 'contests',
@@ -112,11 +112,17 @@ const RoleSidebar: React.FC<RoleSidebarProps> = ({ className = '' }) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const userRole = user?.role || 'instructor';
+  const userEmail = user?.email || '';
 
-  // Filter items based on user role
-  const filteredItems = sidebarItems.filter(item => item.roles.includes(userRole));
+  const hasJobsApprovalAccess = ['recruiter@yuvro.com', 'recruiter_admin@yuvro.com', 'admin@yuvro.com'].includes(userEmail);
 
-  // Get portal title based on role
+  const filteredItems = sidebarItems.filter(item => {
+    if (item.id === 'recruiter-jobs-approval') {
+      return hasJobsApprovalAccess;
+    }
+    return item.roles.includes(userRole);
+  });
+
   const getPortalTitle = () => {
     switch (userRole) {
       case 'admin':
@@ -130,7 +136,6 @@ const RoleSidebar: React.FC<RoleSidebarProps> = ({ className = '' }) => {
     }
   };
 
-  // Get tools section based on role
   const getToolsSection = () => {
     switch (userRole) {
       case 'admin':
@@ -165,7 +170,6 @@ const RoleSidebar: React.FC<RoleSidebarProps> = ({ className = '' }) => {
   return (
     <div className={`${sidebarCollapsed ? 'w-16' : 'w-64'} bg-white shadow-sm border-r border-gray-200 min-h-screen transition-all duration-300 ease-in-out ${className}`}>
       <div className="p-4">
-        {/* Header with toggle button */}
         <div className="flex items-center justify-between mb-6">
           {!sidebarCollapsed && (
             <h2 className="text-lg font-semibold text-gray-800">{getPortalTitle()}</h2>

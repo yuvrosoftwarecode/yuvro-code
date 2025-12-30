@@ -84,7 +84,6 @@ class RestApiAuthUtil extends RestApiUtil {
     private logout(): void {
         console.log('Logging out user due to authentication failure');
         this.clearAuthToken();
-        // Only redirect if we're not already on the login page
         if (!window.location.pathname.includes('/login')) {
             window.location.href = '/login';
         }
@@ -93,7 +92,6 @@ class RestApiAuthUtil extends RestApiUtil {
     protected async request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
         let authHeaders = this.getAuthHeaders() as Record<string, string>;
 
-        // If body is FormData, remove Content-Type to allow browser to set boundary
         if (options.body instanceof FormData) {
             delete authHeaders['Content-Type'];
         }
@@ -110,7 +108,6 @@ class RestApiAuthUtil extends RestApiUtil {
             return await super.request<T>(endpoint, optionsWithAuth);
         } catch (error) {
             if (error instanceof ApiError && error.status === 401) {
-                // Don't attempt token refresh for auth endpoints (login, register, etc.)
                 const isAuthEndpoint = endpoint.includes('/auth/login') ||
                     endpoint.includes('/auth/register') ||
                     endpoint.includes('/auth/token/refresh');
@@ -126,20 +123,16 @@ class RestApiAuthUtil extends RestApiUtil {
                         if (success && this.token) {
                             this.onRefreshed(this.token);
                         } else {
-                            // If refresh fails, clear queue. The refreshToken method handles logout.
                             this.refreshSubscribers = [];
                         }
                     });
                 }
 
-                // Return a promise that waits for the refresh to complete
                 return new Promise<T>((resolve) => {
                     this.addSubscriber((newToken) => {
-                        // Update headers with new token
                         const retryHeaders: HeadersInit = {
                             ...options.headers,
                             'Authorization': `Bearer ${newToken}`,
-                            // Ensure Content-Type is preserved if it was set in getAuthHeaders or options
                             ...((authHeaders as Record<string, string>)['Content-Type'] ? { 'Content-Type': (authHeaders as Record<string, string>)['Content-Type'] } : {})
                         };
 

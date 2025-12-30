@@ -1,4 +1,5 @@
 import restApiAuthUtil from '../utils/RestApiAuthUtil';
+import restApiUtil from '../utils/RestApiUtil';
 
 export interface Job {
     id: string;
@@ -16,7 +17,7 @@ export interface Job {
     skills: string[];
     notice_period?: number;
     education_level: 'high_school' | 'diploma' | 'bachelor' | 'master' | 'phd' | 'any';
-    status: 'draft' | 'active' | 'paused' | 'closed';
+    status: 'draft' | 'active' | 'paused' | 'closed' | 'rejected';
     posted_at?: string;
     expires_at?: string;
     created_at: string;
@@ -64,7 +65,7 @@ export const fetchJobs = async (): Promise<Job[]> => {
 };
 
 export interface CreateJobData {
-    company_id: string; // Company ID for selection
+    company_id: string;
     title: string;
     description: string;
     employment_type: 'full-time' | 'part-time' | 'contract' | 'internship';
@@ -78,7 +79,7 @@ export interface CreateJobData {
     skills?: string[];
     notice_period?: number;
     education_level?: 'high_school' | 'diploma' | 'bachelor' | 'master' | 'phd' | 'any';
-    status?: 'draft' | 'active' | 'paused' | 'closed';
+    status?: 'draft' | 'active' | 'paused' | 'closed' | 'rejected';
     posted_at?: string;
     expires_at?: string;
     screening_questions_config?: {
@@ -101,13 +102,13 @@ export interface JobFilterData {
     experience_min_years?: number;
     experience_max_years?: number;
     is_remote?: boolean;
-    company?: number; // Company ID for filtering
+    company?: number; 
     skills?: string[];
     min_salary?: number;
     max_salary?: number;
     currency?: 'INR' | 'USD' | 'EUR' | 'GBP';
     education_level?: 'high_school' | 'diploma' | 'bachelor' | 'master' | 'phd' | 'any';
-    status?: 'draft' | 'active' | 'paused' | 'closed';
+    status?: 'draft' | 'active' | 'paused' | 'closed' | 'rejected';
 }
 
 export const jobService = {
@@ -116,7 +117,7 @@ export const jobService = {
     },
 
     async getJob(jobId: string): Promise<Job> {
-        return restApiAuthUtil.get(`/jobs/${jobId}/`);
+        return restApiUtil.get(`/jobs/${jobId}/`);
     },
 
     async createJob(data: CreateJobData): Promise<Job> {
@@ -139,7 +140,6 @@ export const jobService = {
         return restApiAuthUtil.post(`/jobs/${jobId}/apply/`, applicationData || {});
     },
 
-    // Company related methods
     async getAllCompanies(): Promise<Company[]> {
         return restApiAuthUtil.get('/jobs/companies/');
     },
@@ -160,7 +160,6 @@ export const jobService = {
         return restApiAuthUtil.delete(`/jobs/companies/${companyId}/`);
     },
 
-    // Question management methods (similar to contest service)
     async getQuestion(questionId: number): Promise<Question> {
         return restApiAuthUtil.get(`/course/questions/${questionId}/`);
     },
@@ -202,6 +201,114 @@ export const jobService = {
         }
         return this.updateJob(jobId, { screening_questions_config: updatedQuestionsConfig });
     },
+
+    async getPendingJobs(): Promise<Job[]> {
+        return restApiAuthUtil.get('/jobs/pending-approval/');
+    },
+
+    async approveJob(jobId: string): Promise<{ message: string; job: Job }> {
+        return restApiAuthUtil.post(`/jobs/${jobId}/approve/`);
+    },
+
+    async rejectJob(jobId: string): Promise<{ message: string; job: Job }> {
+        return restApiAuthUtil.post(`/jobs/${jobId}/reject/`);
+    },
 };
 
 export default jobService;
+
+export interface JobApplication {
+    id: string;
+    job: Job;
+    job_id?: string;
+    applicant: string;
+    applicant_name: string;
+    applicant_email: string;
+    is_bookmarked: boolean;
+    is_applied: boolean;
+    cover_letter?: string;
+    resume_file?: string;
+    portfolio_url?: string;
+    status: 'under_review' | 'screening_test_completed' | 'shortlisted' | 'interview_scheduled' | 'interviewed' | 'selected' | 'rejected' | 'withdrawn';
+    applied_at?: string;
+    screening_responses?: any;
+    recruiter_notes?: string;
+    feedback?: string;
+    interview_scheduled_at?: string;
+    interview_feedback?: string;
+    expected_salary?: number;
+    expected_currency?: string;
+    available_from?: string;
+    notice_period_days?: number;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface JobApplicationListItem {
+    id: string;
+    applicant_name: string;
+    applicant_email: string;
+    job: Job;
+    status: 'under_review' | 'screening_test_completed' | 'shortlisted' | 'interview_scheduled' | 'interviewed' | 'selected' | 'rejected' | 'withdrawn';
+    applied_at?: string;
+    expected_salary?: number;
+    expected_currency?: string;
+}
+
+export interface JobApplicationData {
+    job_id: string;
+    cover_letter?: string;
+    portfolio_url?: string;
+    expected_salary?: number;
+    expected_currency?: string;
+    available_from?: string;
+    notice_period_days?: number;
+    screening_responses?: any;
+}
+
+export interface JobWithApplications extends Job {
+    applications_count: number;
+    recent_applications: JobApplication[];
+}
+
+export const applicationService = {
+    async getMyApplications(): Promise<JobApplicationListItem[]> {
+        return restApiAuthUtil.get('/jobs/applications/my-applications/');
+    },
+
+    async getBookmarkedJobs(): Promise<JobApplicationListItem[]> {
+        return restApiAuthUtil.get('/jobs/applications/bookmarked/');
+    },
+
+    async bookmarkJob(jobId: string): Promise<any> {
+        return restApiAuthUtil.post('/jobs/applications/bookmark/', { job_id: jobId });
+    },
+
+    async removeBookmark(jobId: string): Promise<any> {
+        return restApiAuthUtil.post('/jobs/applications/remove-bookmark/', { job_id: jobId });
+    },
+
+    async applyToJob(applicationData: JobApplicationData): Promise<any> {
+        return restApiAuthUtil.post('/jobs/applications/', applicationData);
+    },
+
+    async getJobApplications(jobId: string): Promise<any> {
+        return restApiAuthUtil.get(`/jobs/${jobId}/applications/`);
+    },
+
+    async getJobsWithApplications(): Promise<JobWithApplications[]> {
+        return restApiAuthUtil.get('/jobs/with-applications/');
+    },
+
+    async updateApplicationStatus(applicationId: string, status: string, notes?: string, feedback?: string): Promise<JobApplication> {
+        return restApiAuthUtil.patch(`/jobs/applications/${applicationId}/update-status/`, {
+            status,
+            recruiter_notes: notes,
+            feedback
+        });
+    },
+
+    async getApplication(applicationId: string): Promise<JobApplication> {
+        return restApiAuthUtil.get(`/jobs/applications/${applicationId}/`);
+    }
+};

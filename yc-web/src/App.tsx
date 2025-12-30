@@ -13,13 +13,14 @@ import ForgotPassword from './pages/common/ForgotPassword';
 import InstructorDashboard from './pages/instructor/Dashboard';
 import Courses from './pages/instructor/Courses';
 import CourseEdit from './components/instructor/courses/CourseEdit';
-import Jobs from './pages/instructor/Jobs';
+
 import Users from './pages/instructor/Users';
 import StudentDashboard from './pages/student/StudentDashboard';
 import CourseDetail from './components/student/CourseDetail';
 import SkillTest from './pages/student/SkillTest';
 import MockInterview from './pages/student/MockInterview';
 import StudentJobs from './pages/student/Jobs';
+import JobDetails from './pages/student/JobDetails';
 import Contest from './pages/student/Contest';
 import ContestAttempt from './pages/student/ContestAttempt';
 import CodePractice from './pages/student/CodePractice';
@@ -39,11 +40,13 @@ import MockInterviewForm from './components/instructor/mock-interviews/MockInter
 import SkillTestSubmissions from './pages/instructor/SkillTestSubmissions';
 import SubmissionAnalytics from './pages/instructor/SubmissionAnalytics';
 import RecruiterJobs from "./pages/recruiter/Jobs";
+import RecruiterJobsApproval from "./pages/recruiter/JobsApproval";
+import RecruiterJobApplicants from "./pages/recruiter/JobApplicants";
 import RecruiterCompanies from "./pages/recruiter/Companies";
 import RecruiterCompanyDetail from "./pages/recruiter/CompanyDetail";
 import RecruiterDashboard from "./pages/recruiter/Dashboard";
 import RecruiterProfile from "./pages/recruiter/Profile";
-// @ts-ignore
+import RecruiterCandidates from "./pages/recruiter/Candidates";
 import AddJob from "./components/student/AddJob";
 import ApplicationTracker from "@/components/student/jobs/ApplicationTracker";
 import CodeEditorTool from './pages/common/CodeEditorTool';
@@ -62,15 +65,12 @@ function App() {
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password/:uidb64/:token" element={<ResetPassword />} />
               <Route path="/dashboard" element={<DashboardRedirect />} />
-              <Route path="/student/jobs" element={<StudentJobs />} />
+              <Route path="/jobs/:jobId" element={<JobDetails />} />
               <Route path="/recruiter/jobs" element={<RecruiterJobs />} />
-              {/* <Route path="/" element={<JobList />} /> */}
               <Route path="/add-job" element={<AddJob />} />
               <Route path="/student/applications" element={<ApplicationTracker appliedJobs={[]} />} />
 
 
-              {/* Protected routes */}
-              {/* Student Routes */}
               <Route
                 path="/student/profile"
                 element={
@@ -171,6 +171,15 @@ function App() {
               />
 
               <Route
+                path="/student/jobs/:jobId"
+                element={
+                  <ProtectedRoute allowedRoles={["student"]}>
+                    <JobDetails />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
                 path="/student/contests"
                 element={
                   <ProtectedRoute allowedRoles={["student"]}>
@@ -242,11 +251,39 @@ function App() {
               <Route
                 path="/recruiter/jobs"
                 element={
-                  <ProtectedRoute allowedRoles={["recruiter"]}>
+                  <ProtectedRoute allowedRoles={["admin", "instructor", "recruiter"]}>
                     <RecruiterJobs />
                   </ProtectedRoute>
                 }
               />
+
+              <Route
+                path="/recruiter/jobs-approval"
+                element={
+                  <ProtectedRoute allowedEmails={["recruiter@yuvro.com", "recruiter_admin@yuvro.com", "admin@yuvro.com"]}>
+                    <RecruiterJobsApproval />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/recruiter/jobs/:jobId/applicants"
+                element={
+                  <ProtectedRoute allowedRoles={["admin", "instructor", "recruiter"]}>
+                    <RecruiterJobApplicants />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/recruiter/candidates"
+                element={
+                  <ProtectedRoute allowedRoles={["admin", "instructor", "recruiter"]}>
+                    <RecruiterCandidates />
+                  </ProtectedRoute>
+                }
+              />
+              
 
               <Route
                 path="/recruiter/jobs/companies"
@@ -295,14 +332,7 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-              <Route
-                path="/instructor/jobs"
-                element={
-                  <ProtectedRoute allowedRoles={["admin", "instructor", "recruiter"]}>
-                    <Jobs />
-                  </ProtectedRoute>
-                }
-              />
+
 
               <Route
                 path="/instructor/users"
@@ -484,7 +514,6 @@ function App() {
                 }
               />
 
-              {/* 404 route */}
               <Route path="/404" element={<NotFound />} />
               <Route path="*" element={<Navigate to="/404" replace />} />
             </Routes>

@@ -1,1 +1,1 @@
-# Management commands package for authentication app
+# Management commands

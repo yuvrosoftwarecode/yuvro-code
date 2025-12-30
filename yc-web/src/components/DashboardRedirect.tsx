@@ -8,12 +8,13 @@ const DashboardRedirect: React.FC = () => {
 
   useEffect(() => {
     if (!isLoading && isAuthenticated && user) {
-      // Redirect based on user role
       switch (user.role) {
         case 'admin':
         case 'instructor':
-        case 'recruiter':
           navigate('/instructor/dashboard', { replace: true });
+          break;
+        case 'recruiter':
+          navigate('/recruiter/dashboard', { replace: true });
           break;
         case 'student':
         default:

@@ -4,12 +4,13 @@ from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
 from django.db import models
 from authentication.models import Profile
+from job.models import SocialLinks, Skill, Experience, Project, Education, Certification
 
 User = get_user_model()
 
 
 class Command(BaseCommand):
-    help = "Create test users with different roles for development and testing"
+    help = "Create test users with different roles and comprehensive profile data for development and testing"
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -30,10 +31,9 @@ class Command(BaseCommand):
             User.objects.all().delete()
             self.stdout.write(self.style.SUCCESS("Existing test users cleared."))
 
-        self.stdout.write("Creating test users with different roles...")
+        self.stdout.write("Creating test users with comprehensive profile data...")
 
         try:
-            # Get the path to the JSON file
             current_dir = os.path.dirname(os.path.abspath(__file__))
             auth_app_dir = os.path.dirname(os.path.dirname(current_dir))
             json_file_path = os.path.join(auth_app_dir, options["file"])
@@ -44,13 +44,10 @@ class Command(BaseCommand):
                 )
                 return
 
-            # Load JSON data
             with open(json_file_path, "r", encoding="utf-8") as file:
                 data = json.load(file)
 
-            # Process each user
             for user_data in data["users"]:
-                # Check if user already exists by email or username
                 existing_user = User.objects.filter(
                     models.Q(email=user_data["email"])
                     | models.Q(username=user_data["username"])
@@ -68,7 +65,6 @@ class Command(BaseCommand):
                     user = existing_user
                     created = False
                 else:
-                    # Create new user
                     user = User.objects.create(
                         email=user_data["email"],
                         username=user_data["username"],
@@ -93,18 +89,66 @@ class Command(BaseCommand):
                         f'- {user_data["role"].title()} user already exists: {user.email}'
                     )
 
-                # Create or update profile
                 profile_data = user_data.get("profile", {})
+                
+                skills_data = profile_data.pop("skills", [])
+                experiences_data = profile_data.pop("experiences", [])
+                projects_data = profile_data.pop("projects", [])
+                education_data = profile_data.pop("education", [])
+                certifications_data = profile_data.pop("certifications", [])
+                social_links_data = profile_data.pop("social_links", {})
+                
                 profile, profile_created = Profile.objects.get_or_create(
                     user=user, defaults=profile_data
                 )
 
                 if profile_created and profile_data:
                     self.stdout.write(f"  ✓ Created profile for: {user.email}")
+                elif not profile_created and profile_data:
+                    for key, value in profile_data.items():
+                        setattr(profile, key, value)
+                    profile.save()
+                    self.stdout.write(f"  ✓ Updated profile for: {user.email}")
 
-            self.stdout.write(self.style.SUCCESS("\nSuccessfully created test users!"))
+                if social_links_data:
+                    social_links, _ = SocialLinks.objects.get_or_create(
+                        profile=profile,
+                        defaults=social_links_data
+                    )
+                    self.stdout.write(f"    ✓ Created social links for: {user.email}")
 
-            # Display summary
+                if skills_data:
+                    Skill.objects.filter(profile=profile).delete()
+                    for skill_data in skills_data:
+                        Skill.objects.create(profile=profile, **skill_data)
+                    self.stdout.write(f"    ✓ Created {len(skills_data)} skills for: {user.email}")
+
+                if experiences_data:
+                    Experience.objects.filter(profile=profile).delete()
+                    for exp_data in experiences_data:
+                        Experience.objects.create(profile=profile, **exp_data)
+                    self.stdout.write(f"    ✓ Created {len(experiences_data)} experiences for: {user.email}")
+
+                if projects_data:
+                    Project.objects.filter(profile=profile).delete()
+                    for project_data in projects_data:
+                        Project.objects.create(profile=profile, **project_data)
+                    self.stdout.write(f"    ✓ Created {len(projects_data)} projects for: {user.email}")
+
+                if education_data:
+                    Education.objects.filter(profile=profile).delete()
+                    for edu_data in education_data:
+                        Education.objects.create(profile=profile, **edu_data)
+                    self.stdout.write(f"    ✓ Created {len(education_data)} education records for: {user.email}")
+
+                if certifications_data:
+                    Certification.objects.filter(profile=profile).delete()
+                    for cert_data in certifications_data:
+                        Certification.objects.create(profile=profile, **cert_data)
+                    self.stdout.write(f"    ✓ Created {len(certifications_data)} certifications for: {user.email}")
+
+            self.stdout.write(self.style.SUCCESS("\nSuccessfully created test users with comprehensive profiles!"))
+
             admin_count = User.objects.filter(role="admin").count()
             instructor_count = User.objects.filter(role="instructor").count()
             recruiter_count = User.objects.filter(role="recruiter").count()
@@ -117,5 +161,16 @@ class Command(BaseCommand):
             self.stdout.write(f"- Students: {student_count}")
             self.stdout.write(f"- Total Users: {User.objects.count()}")
 
+            self.stdout.write(f"\nProfile Data Summary:")
+            self.stdout.write(f"- Profiles: {Profile.objects.count()}")
+            self.stdout.write(f"- Social Links: {SocialLinks.objects.count()}")
+            self.stdout.write(f"- Skills: {Skill.objects.count()}")
+            self.stdout.write(f"- Experiences: {Experience.objects.count()}")
+            self.stdout.write(f"- Projects: {Project.objects.count()}")
+            self.stdout.write(f"- Education Records: {Education.objects.count()}")
+            self.stdout.write(f"- Certifications: {Certification.objects.count()}")
+
         except Exception as e:
             self.stdout.write(self.style.ERROR(f"Error creating test users: {str(e)}"))
+            import traceback
+            self.stdout.write(self.style.ERROR(traceback.format_exc()))

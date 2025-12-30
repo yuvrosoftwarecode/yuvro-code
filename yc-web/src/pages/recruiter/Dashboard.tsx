@@ -35,7 +35,6 @@ const RecruiterDashboard: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // Mock data for recruiter dashboard
   const [dashboardData, setDashboardData] = useState({
     totalJobs: 24,
     activeJobs: 18,
@@ -143,6 +142,8 @@ const RecruiterDashboard: React.FC = () => {
         return 'bg-green-100 text-green-800';
       case 'closed':
         return 'bg-gray-100 text-gray-800';
+      case 'rejected':
+        return 'bg-red-100 text-red-800';
       case 'under review':
         return 'bg-yellow-100 text-yellow-800';
       case 'shortlisted':
@@ -194,7 +195,6 @@ const RecruiterDashboard: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Recent Job Postings */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100">
               <div className="p-6 border-b border-gray-100">
                 <div className="flex items-center justify-between">
@@ -206,6 +206,7 @@ const RecruiterDashboard: React.FC = () => {
                     <span>View All</span>
                     <ArrowRight className="h-4 w-4" />
                   </button>
+                  
                 </div>
               </div>
               <div className="p-6">
@@ -249,7 +250,6 @@ const RecruiterDashboard: React.FC = () => {
               </div>
             </div>
 
-            {/* Recent Applications */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100">
               <div className="p-6 border-b border-gray-100">
                 <div className="flex items-center justify-between">
@@ -297,7 +297,6 @@ const RecruiterDashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Quick Actions */}
           <div className="mt-8 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

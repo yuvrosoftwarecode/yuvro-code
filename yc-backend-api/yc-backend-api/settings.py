@@ -1,11 +1,7 @@
-"""
-Django settings for yc-backend-api project.
-"""
-
 from pathlib import Path
-from decouple import config # type: ignore
+from decouple import config 
 from datetime import timedelta
-import dj_database_url # type: ignore
+import dj_database_url 
 import os
 
 

@@ -44,6 +44,7 @@ const Navigation: React.FC = () => {
         recruiter: [
             { label: 'Dashboard', path: '/recruiter/dashboard' },
             { label: 'Jobs', path: '/recruiter/jobs' },
+            { label: 'Candidates', path: '/recruiter/candidates' },
             { label: 'Contests', path: '/instructor/contests' },
         ],
     };

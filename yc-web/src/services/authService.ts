@@ -79,7 +79,6 @@ class AuthService {
   async logoutUser(): Promise<void> {
     const refreshToken = localStorage.getItem('refresh');
     if (refreshToken) {
-      // Fire-and-forget backend logout
       restApiAuthUtil.post('/auth/logout/', { refresh: refreshToken }).catch(error => {
         console.warn('Logout error:', error);
       });

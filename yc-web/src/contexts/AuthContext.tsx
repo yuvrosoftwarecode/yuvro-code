@@ -88,17 +88,16 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
   }
 };
 
-// Initialize state from localStorage
 const getInitialState = (): AuthState => {
   const accessToken = localStorage.getItem('access');
   const storedUser = localStorage.getItem('user');
 
   if (accessToken) {
     return {
-      user: storedUser ? JSON.parse(storedUser) : null, // Load user from localStorage if available
+      user: storedUser ? JSON.parse(storedUser) : null, 
       token: accessToken,
-      isLoading: true, // Set to true while we fetch user data
-      isAuthenticated: true, // Trust the token from localStorage
+      isLoading: true, 
+      isAuthenticated: true, 
     };
   }
   return {
@@ -135,10 +134,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       authService.setAuthToken(accessToken);
       authService.initializeFromStorage();
 
-      // Try to fetch current user data, but don't fail authentication if it fails
       authService.getCurrentUser()
         .then((user) => {
-          // Get the potentially refreshed token
           const currentToken = authService.getAuthToken() || accessToken;
           dispatch({
             type: 'LOGIN_SUCCESS',
@@ -147,15 +144,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         })
         .catch((error) => {
           console.error('Failed to get current user:', error);
-          // Only clear tokens if we get a definitive 401 after token refresh
           if (error.status === 401 && error.message?.includes('Session expired')) {
-            // Authentication failed even after token refresh attempt
             localStorage.removeItem('access');
             localStorage.removeItem('refresh');
             dispatch({ type: 'LOGIN_FAILURE' });
           } else {
-            // For any other error (network, server error, etc.), keep the authentication
-            // but just stop loading. The user can still access the app.
             console.warn('Could not fetch user data, but keeping authentication');
             dispatch({ type: 'SET_LOADING', payload: false });
           }
@@ -163,13 +156,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, []);
 
-  // -- Login --
+
   const login = async (email: string, password: string): Promise<void> => {
     dispatch({ type: 'LOGIN_START' });
     try {
       const response = await authService.login(email, password);
 
-      // Store user data in localStorage for persistence
       localStorage.setItem('user', JSON.stringify(response.user));
 
       dispatch({
@@ -207,7 +199,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         password_confirm: password
       });
 
-      // Store user data in localStorage for persistence
       localStorage.setItem('user', JSON.stringify(response.user));
 
       dispatch({
@@ -222,7 +213,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = (): void => {
     authService.logoutUser().finally(() => {
-      // Clear all user data and cached responses from localStorage
       localStorage.clear();
       dispatch({ type: 'LOGOUT' });
     });

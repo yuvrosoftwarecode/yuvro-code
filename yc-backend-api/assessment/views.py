@@ -11,6 +11,9 @@ import requests
 import json
 from pypdf import PdfReader
 from io import BytesIO
+import traceback
+import logging
+
 from ai_assistant.models import AIAgent, ChatSession, ChatMessage
 from authentication.models import Profile
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -30,6 +33,8 @@ from authentication.permissions import IsOwnerOrInstructorOrAdmin
 from .mixins import ProctoringMixin
 from django.core.mail import send_mail
 from django.conf import settings
+
+logger = logging.getLogger(__name__)
 
 
 class ContestViewSet(ProctoringMixin, viewsets.ModelViewSet):
@@ -112,7 +117,7 @@ class ContestViewSet(ProctoringMixin, viewsets.ModelViewSet):
             )
 
         except Exception as e:
-            print(f"Failed to send email: {str(e)}")
+            logger.warning(f"Failed to send email: {str(e)}")
 
         return Response({'status': 'Registered'}, status=status.HTTP_201_CREATED)
 
@@ -524,7 +529,7 @@ class MockInterviewViewSet(viewsets.ModelViewSet):
                             if text:
                                 context_text += text + "\n"
                     except Exception as e:
-                        print(f"Error parsing resume: {e}")
+                        logger.warning(f"Error parsing resume: {e}")
                 
                 # If no resume text, fetch profile data
                 if not context_text.strip():
@@ -557,7 +562,7 @@ class MockInterviewViewSet(viewsets.ModelViewSet):
                                 for edu in educations:
                                     context_text += f"- {edu.degree} in {edu.field} from {edu.institution}\n"
                     except Exception as e:
-                        print(f"Error fetching profile: {e}")
+                        logger.warning(f"Error fetching profile: {e}")
                 
                 # If still empty, use fallback
                 if not context_text.strip():
@@ -645,7 +650,6 @@ Begin by greeting the candidate politely (e.g., "Hello {user_first_name}, welcom
                 }
             })
         except Exception as e:
-            import traceback
             traceback.print_exc()
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

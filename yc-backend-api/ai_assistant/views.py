@@ -348,7 +348,7 @@ class ChatViewSet(viewsets.ViewSet):
                     {"ai_agent_id": ["This field is required for quick chat."]},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-            
+
             message_content = validated_data["message"]
             page_content = validated_data.get("page_content")
 

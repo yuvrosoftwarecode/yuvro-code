@@ -9,7 +9,9 @@ from decouple import config
 logger = logging.getLogger(__name__)
 
 
-def _apply_page_content_grounding(messages: List[Dict[str, str]], kwargs: Dict[str, Any]) -> List[Dict[str, str]]:
+def _apply_page_content_grounding(
+    messages: List[Dict[str, str]], kwargs: Dict[str, Any]
+) -> List[Dict[str, str]]:
     """If `page_content` is provided in kwargs, prepend a strict system prompt
     that instructs the model to only use the provided SOURCE. This modifies
     messages in-place (and removes page_content from kwargs).
@@ -29,8 +31,7 @@ def _apply_page_content_grounding(messages: List[Dict[str, str]], kwargs: Dict[s
             "If the answer is not in the SOURCE, you may politely use your general knowledge to help, "
             "but please mention that this information isn't explicitly on the current page.\n"
             "Keep your tone encouraging and educational.\n\n"
-            "SOURCE:\n"
-            + snippet
+            "SOURCE:\n" + snippet
         )
 
         # Prepend system message
@@ -112,7 +113,7 @@ class OpenAIService(BaseAIService):
                 temperature=temperature,
                 max_tokens=max_tokens,
                 **kwargs,
-            ) # type: ignore
+            )  # type: ignore
 
             end_time = time.time()
             response_time_ms = int((end_time - start_time) * 1000)

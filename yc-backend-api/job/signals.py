@@ -13,7 +13,9 @@ def invalidate_job_application_cache_on_save(sender, instance, **kwargs):
     if instance.job_id:
         cache_key = f"job_applications_count_{instance.job_id}"
         cache.delete(cache_key)
-        logger.info(f"Invalidated cache for job {instance.job_id} after application save")
+        logger.info(
+            f"Invalidated cache for job {instance.job_id} after application save"
+        )
 
 
 @receiver(post_delete, sender=JobApplication)
@@ -22,4 +24,6 @@ def invalidate_job_application_cache_on_delete(sender, instance, **kwargs):
     if instance.job_id:
         cache_key = f"job_applications_count_{instance.job_id}"
         cache.delete(cache_key)
-        logger.info(f"Invalidated cache for job {instance.job_id} after application delete")
+        logger.info(
+            f"Invalidated cache for job {instance.job_id} after application delete"
+        )

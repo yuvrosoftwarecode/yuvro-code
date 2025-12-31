@@ -19,6 +19,7 @@ export interface CodeSubmission {
   plagiarism_details: any;
   created_at: string;
   updated_at: string;
+  question_difficulty?: string;
 }
 
 export interface CodeExecutionRequest {
@@ -150,7 +151,7 @@ class CodeEditorService {
     try {
       const submissionType = request.submissionType || 'practice';
       let endpoint = '';
-      
+
       const payload = {
         subtopic_id: request.subtopic_id,
         question_id: request.question_id,
@@ -223,12 +224,15 @@ class CodeEditorService {
   }
 
   async executeCode(request: CodeExecutionRequest & { test_cases: any[] }): Promise<ExecutionResult> {
-    return this.submitSolution(request);
+    return this.submitSolution({
+      ...request,
+      question_id: request.coding_problem_id
+    });
   }
 
   async getSubmissions(codingProblemId?: string, submissionType: string = 'code_practice'): Promise<CodeSubmission[]> {
     const params = codingProblemId ? { coding_problem_id: codingProblemId } : undefined;
-    
+
     let endpoint = '';
     switch (submissionType) {
       case 'code_practice':
@@ -244,7 +248,7 @@ class CodeEditorService {
         endpoint = '/assessment/mock-interviews/submissions/';
         break;
     }
-    
+
     return restApiAuthUtil.get(endpoint, { params });
   }
 
@@ -266,7 +270,7 @@ class CodeEditorService {
       default:
         endpoint = `/course/student-code-practices/${id}/`;
     }
-    
+
     return restApiAuthUtil.get(endpoint);
   }
 

@@ -24,6 +24,8 @@ interface BackendTopic {
   id: string;
   name: string;
   order_index: number;
+  total_problems?: number;
+  progress_percentage?: number;
 }
 
 const TopicSelection = ({
@@ -47,35 +49,17 @@ const TopicSelection = ({
       try {
         const fetchedTopics = await fetchTopicsByCourse(course.id);
 
-        // Get problem counts for each topic
-        const topicsWithCounts = await Promise.all(
-          fetchedTopics.map(async (topic: BackendTopic) => {
-            try {
-              const questions = await fetchQuestions({
-                topic: topic.id,
-                categories: 'practice',
-                type: 'coding'
-              });
-              return {
-                id: topic.id,
-                name: topic.name,
-                problemCount: questions.length,
-                order_index: topic.order_index,
-              };
-            } catch (error) {
-              console.error(`Failed to load problem count for topic ${topic.id}:`, error);
-              return {
-                id: topic.id,
-                name: topic.name,
-                problemCount: 0,
-                order_index: topic.order_index,
-              };
-            }
-          })
-        );
+
+        const topicsWithCounts = fetchedTopics.map((topic: BackendTopic) => ({
+          id: topic.id,
+          name: topic.name,
+          problemCount: topic.total_problems || 0,
+          order_index: topic.order_index,
+          progress: Math.round(topic.progress_percentage || 0)
+        }));
 
         setTopics(
-          topicsWithCounts.sort((a, b) => a.order_index - b.order_index)
+          topicsWithCounts.sort((a: any, b: any) => a.order_index - b.order_index)
         );
       } catch (error) {
         toast.error('Failed to load topics');
@@ -157,8 +141,7 @@ const TopicSelection = ({
       id: t.id,
       name: t.name,
       problemCount: t.problemCount,
-      // progress is typically 0 here since this is practice mode, or we could calculate if needed
-      progress: 0
+      progress: t.progress
     }))
   };
 
@@ -175,6 +158,7 @@ const TopicSelection = ({
         isOpen={sidebarOpen}
         onToggle={() => setSidebarOpen(!sidebarOpen)}
         showProgress={true}
+        overallProgress={course.progress}
       />
 
       {/* Main Content Area */}

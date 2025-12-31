@@ -50,9 +50,11 @@ const CourseDashboard = ({ onCourseSelect, onViewAnalytics }: CourseDashboardPro
           id: course.id.toString(),
           name: course.name || course.title || 'Untitled Course',
           icon: course.category,
-          progress: Math.floor(Math.random() * 100),
-          totalProblems: Math.floor(Math.random() * 50) + 20,
-          solvedProblems: Math.floor(Math.random() * 30) + 5,
+          progress: Math.round(course.progress_percentage || 0),
+          totalProblems: course.total_problems || 0,
+          solvedProblems: course.solved_problems || 0,
+          totalScore: course.total_score || 0,
+          aiHelpUsed: course.ai_help_used || 0,
           iconColor: getIconColor(course.category),
           category: course.category,
         }));
@@ -132,7 +134,9 @@ const CourseDashboard = ({ onCourseSelect, onViewAnalytics }: CourseDashboardPro
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Total Score</p>
-                  <p className="text-3xl font-bold text-gray-900">1,580</p>
+                  <p className="text-3xl font-bold text-gray-900">
+                    {courses.reduce((sum, c) => sum + (c.totalScore || 0), 0)}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -147,7 +151,9 @@ const CourseDashboard = ({ onCourseSelect, onViewAnalytics }: CourseDashboardPro
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">AI Help Used</p>
-                  <p className="text-3xl font-bold text-gray-900">23</p>
+                  <p className="text-3xl font-bold text-gray-900">
+                    {courses.reduce((sum, c) => sum + (c.aiHelpUsed || 0), 0)}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -180,7 +186,7 @@ const CourseDashboard = ({ onCourseSelect, onViewAnalytics }: CourseDashboardPro
             return (
               <Card
                 key={course.id}
-                className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition hover:-translate-y-1 flex flex-col"
+                className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition hover:-translate-y-1 flex flex-col"
               >
                 {/* Icon Section */}
                 <div className="p-6 pb-4 bg-gray-50">

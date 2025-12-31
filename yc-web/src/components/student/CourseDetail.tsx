@@ -233,18 +233,18 @@ const CourseDetail: React.FC = () => {
 
   const loadProgress = async () => {
     if (!courseId || loadingProgressRef.current) return;
-    
+
     // Prevent API calls within 1 second of the last call
     const now = Date.now();
     if (now - lastProgressFetchRef.current < 1000) {
       console.log('Skipping loadProgress - too soon after last call');
       return;
     }
-    
+
     loadingProgressRef.current = true;
     lastProgressFetchRef.current = now;
     console.log('loadProgress called for course:', courseId);
-    
+
     try {
       const progressData = await fetchUserCourseProgress(courseId) as any;
       // console.log("Progress Data", progressData);
@@ -451,13 +451,27 @@ const CourseDetail: React.FC = () => {
                                     setRightTab("videos");
                                   }}
                                 >
-                                  <div className="flex items-center gap-3">
-                                    <div className={`w-1.5 h-1.5 rounded-full ${selectedSubtopic?.id === s.id ? 'bg-blue-500' : 'bg-gray-300 group-hover:bg-gray-400'}`} />
-                                    <span className="font-medium text-sm">{s.name}</span>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center justify-between">
+                                      <span className="font-medium text-sm truncate">{s.name}</span>
+                                      {readMap[s.id] && (
+                                        <Check className="text-green-500 w-4 h-4 flex-shrink-0 ml-2" />
+                                      )}
+                                    </div>
+                                    {!readMap[s.id] && (progressMap[s.id] || 0) > 0 && (progressMap[s.id] || 0) < 100 && (
+                                      <div className="mt-1.5 w-full pr-1">
+                                        <div className="flex items-center justify-between text-[10px] text-gray-400 mb-0.5">
+                                          <span>{Math.round(progressMap[s.id] || 0)}%</span>
+                                        </div>
+                                        <ProgressBar
+                                          value={progressMap[s.id] || 0}
+                                          height={3}
+                                          trackClassName="bg-gray-100 rounded-full"
+                                          barClassName="bg-blue-500 rounded-full"
+                                        />
+                                      </div>
+                                    )}
                                   </div>
-                                  {readMap[s.id] && (
-                                    <Check className="text-green-500 w-4 h-4" />
-                                  )}
                                 </div>
                               ))}
                             </div>
@@ -611,7 +625,7 @@ const CourseDetail: React.FC = () => {
             )}
           </div>
         </div>
-      </div>
+      </div >
     </div >
   );
 };

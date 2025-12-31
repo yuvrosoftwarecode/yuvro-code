@@ -533,6 +533,7 @@ class StudentCodePractice(BaseTimestampedModel):
     )
     
     answer_attempt_count = models.IntegerField(default=0, help_text="Number of times answer was modified")
+    ai_help_count = models.IntegerField(default=0, help_text="Number of times AI help was used")
     
     execution_output = models.TextField(blank=True, help_text="Code execution output")
   

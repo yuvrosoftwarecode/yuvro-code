@@ -48,12 +48,24 @@ const ScoreAnalytics = ({ onBack, onViewInsights }: ScoreAnalyticsProps) => {
           languageDistribution[s.language] = (languageDistribution[s.language] || 0) + 1;
         });
 
-        // Mock difficulty breakdown (since we don't have difficulty in submissions)
-        const difficultyBreakdown = {
-          Easy: { solved: Math.floor(successfulSubmissions * 0.5), total: Math.floor(totalSubmissions * 0.4) },
-          Medium: { solved: Math.floor(successfulSubmissions * 0.3), total: Math.floor(totalSubmissions * 0.4) },
-          Hard: { solved: Math.floor(successfulSubmissions * 0.2), total: Math.floor(totalSubmissions * 0.2) },
+        // Calculate difficulty breakdown
+        const difficultyBreakdown: Record<string, { solved: number; total: number }> = {
+          Easy: { solved: 0, total: 0 },
+          Medium: { solved: 0, total: 0 },
+          Hard: { solved: 0, total: 0 },
         };
+
+        submissions.forEach(s => {
+          const difficulty = s.question_difficulty || 'Medium'; // Default to Medium if unknown
+          const diffKey = difficulty.charAt(0).toUpperCase() + difficulty.slice(1).toLowerCase(); // Normalize case like 'Easy', 'Medium'
+
+          if (difficultyBreakdown[diffKey]) {
+            difficultyBreakdown[diffKey].total += 1;
+            if (s.status === 'completed') {
+              difficultyBreakdown[diffKey].solved += 1;
+            }
+          }
+        });
 
         const recentSubmissions = submissions
           .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import PermissionDialog from '../PermissionDialog';
+import PermissionDialog from '@/components/student/mock_interview/PermissionDialog';
 import {
   ArrowLeft,
   Clock,

@@ -1,7 +1,7 @@
 from pathlib import Path
-from decouple import config 
+from decouple import config
 from datetime import timedelta
-import dj_database_url 
+import dj_database_url
 import os
 
 
@@ -168,19 +168,19 @@ SIMPLE_JWT = {
 CORS_ALLOWED_ORIGINS = config("CORS_ALLOWED_ORIGINS", default="").split(",")
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = [
-    'accept',
-    'accept-encoding',
-    'authorization',
-    'content-type',
-    'dnt',
-    'origin',
-    'user-agent',
-    'x-csrftoken',
-    'x-requested-with',
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
     # OpenTelemetry headers
-    'traceparent',
-    'tracestate',
-    'baggage',
+    "traceparent",
+    "tracestate",
+    "baggage",
 ]
 
 # Django Allauth Settings
@@ -264,6 +264,7 @@ SPECTACULAR_SETTINGS = {
 if not DEBUG or config("ENABLE_TRACING", default=True, cast=bool):
     try:
         from observability import setup_telemetry
+
         setup_telemetry()
     except ImportError:
         pass

@@ -4,7 +4,6 @@ from django.db import models
 
 
 class User(AbstractUser):
-
     ROLE_CHOICES = [
         ("student", "Student"),
         ("instructor", "Instructor"),
@@ -48,7 +47,6 @@ class User(AbstractUser):
 
 
 class Profile(models.Model):
-
     GENDER_CHOICES = [
         ("male", "Male"),
         ("female", "Female"),

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import MockInterviewLibrary from '@/components/student/MockInterviewLibrary';
+import MockInterviewLibrary from '@/components/student/mock_interview/MockInterviewLibrary';
 
 const StudentMockInterview = () => {
   const navigate = useNavigate();

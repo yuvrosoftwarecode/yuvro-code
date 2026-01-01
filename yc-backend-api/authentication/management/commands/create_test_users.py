@@ -90,14 +90,14 @@ class Command(BaseCommand):
                     )
 
                 profile_data = user_data.get("profile", {})
-                
+
                 skills_data = profile_data.pop("skills", [])
                 experiences_data = profile_data.pop("experiences", [])
                 projects_data = profile_data.pop("projects", [])
                 education_data = profile_data.pop("education", [])
                 certifications_data = profile_data.pop("certifications", [])
                 social_links_data = profile_data.pop("social_links", {})
-                
+
                 profile, profile_created = Profile.objects.get_or_create(
                     user=user, defaults=profile_data
                 )
@@ -112,8 +112,7 @@ class Command(BaseCommand):
 
                 if social_links_data:
                     social_links, _ = SocialLinks.objects.get_or_create(
-                        profile=profile,
-                        defaults=social_links_data
+                        profile=profile, defaults=social_links_data
                     )
                     self.stdout.write(f"    ✓ Created social links for: {user.email}")
 
@@ -121,33 +120,47 @@ class Command(BaseCommand):
                     Skill.objects.filter(profile=profile).delete()
                     for skill_data in skills_data:
                         Skill.objects.create(profile=profile, **skill_data)
-                    self.stdout.write(f"    ✓ Created {len(skills_data)} skills for: {user.email}")
+                    self.stdout.write(
+                        f"    ✓ Created {len(skills_data)} skills for: {user.email}"
+                    )
 
                 if experiences_data:
                     Experience.objects.filter(profile=profile).delete()
                     for exp_data in experiences_data:
                         Experience.objects.create(profile=profile, **exp_data)
-                    self.stdout.write(f"    ✓ Created {len(experiences_data)} experiences for: {user.email}")
+                    self.stdout.write(
+                        f"    ✓ Created {len(experiences_data)} experiences for: {user.email}"
+                    )
 
                 if projects_data:
                     Project.objects.filter(profile=profile).delete()
                     for project_data in projects_data:
                         Project.objects.create(profile=profile, **project_data)
-                    self.stdout.write(f"    ✓ Created {len(projects_data)} projects for: {user.email}")
+                    self.stdout.write(
+                        f"    ✓ Created {len(projects_data)} projects for: {user.email}"
+                    )
 
                 if education_data:
                     Education.objects.filter(profile=profile).delete()
                     for edu_data in education_data:
                         Education.objects.create(profile=profile, **edu_data)
-                    self.stdout.write(f"    ✓ Created {len(education_data)} education records for: {user.email}")
+                    self.stdout.write(
+                        f"    ✓ Created {len(education_data)} education records for: {user.email}"
+                    )
 
                 if certifications_data:
                     Certification.objects.filter(profile=profile).delete()
                     for cert_data in certifications_data:
                         Certification.objects.create(profile=profile, **cert_data)
-                    self.stdout.write(f"    ✓ Created {len(certifications_data)} certifications for: {user.email}")
+                    self.stdout.write(
+                        f"    ✓ Created {len(certifications_data)} certifications for: {user.email}"
+                    )
 
-            self.stdout.write(self.style.SUCCESS("\nSuccessfully created test users with comprehensive profiles!"))
+            self.stdout.write(
+                self.style.SUCCESS(
+                    "\nSuccessfully created test users with comprehensive profiles!"
+                )
+            )
 
             admin_count = User.objects.filter(role="admin").count()
             instructor_count = User.objects.filter(role="instructor").count()
@@ -173,4 +186,5 @@ class Command(BaseCommand):
         except Exception as e:
             self.stdout.write(self.style.ERROR(f"Error creating test users: {str(e)}"))
             import traceback
+
             self.stdout.write(self.style.ERROR(traceback.format_exc()))

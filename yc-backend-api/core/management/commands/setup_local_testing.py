@@ -59,22 +59,15 @@ class Command(BaseCommand):
                 call_command("load_sample_assessment_tests", verbosity=1)
             self.stdout.write("")
 
-
             self.stdout.write(
-                self.style.SUCCESS("🎉 Local testing environment setup completed successfully!")
+                self.style.SUCCESS(
+                    "🎉 Local testing environment setup completed successfully!"
+                )
             )
-            self.stdout.write(
-                self.style.SUCCESS("✓ Test users created")
-            )
-            self.stdout.write(
-                self.style.SUCCESS("✓ Sample courses loaded")
-            )
-            self.stdout.write(
-                self.style.SUCCESS("✓ Sample companies and jobs loaded")
-            )
-            self.stdout.write(
-                self.style.SUCCESS("✓ Sample assessment tests loaded")
-            )
+            self.stdout.write(self.style.SUCCESS("✓ Test users created"))
+            self.stdout.write(self.style.SUCCESS("✓ Sample courses loaded"))
+            self.stdout.write(self.style.SUCCESS("✓ Sample companies and jobs loaded"))
+            self.stdout.write(self.style.SUCCESS("✓ Sample assessment tests loaded"))
             self.stdout.write("")
             self.stdout.write("🚀 You can now start testing the application!")
 

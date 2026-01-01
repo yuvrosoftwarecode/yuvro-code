@@ -43,7 +43,11 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
-from authentication.permissions import IsAdminUser, IsAuthenticatedUser, IsInstructorOrAdmin
+from authentication.permissions import (
+    IsAdminUser,
+    IsAuthenticatedUser,
+    IsInstructorOrAdmin,
+)
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -80,12 +84,11 @@ def login_view(request):
             "access": str(refresh.access_token),
         }
     )
-    
+
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserRegistrationView(generics.CreateAPIView):
-
     queryset = User.objects.all()
     serializer_class = UserRegistrationSerializer
     permission_classes = [permissions.AllowAny]
@@ -166,7 +169,6 @@ def logout_view(request):
 
 
 class CustomTokenRefreshView(TokenRefreshView):
-
     def post(self, request, *args, **kwargs):
         try:
             return super().post(request, *args, **kwargs)
@@ -262,6 +264,7 @@ from rest_framework import generics, filters
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from django.db.models import Q
+
 try:
     from django_filters.rest_framework import DjangoFilterBackend
 except ImportError:
@@ -272,26 +275,30 @@ User = get_user_model()
 
 class UsersPagination(PageNumberPagination):
     page_size = 20
-    page_size_query_param = 'page_size'
+    page_size_query_param = "page_size"
     max_page_size = 100
 
 
 class UsersListCreateView(generics.ListCreateAPIView):
-    
-    queryset = User.objects.all().order_by('-date_joined')
+    queryset = User.objects.all().order_by("-date_joined")
     serializer_class = UserSerializer
     pagination_class = UsersPagination
-    filter_backends = [filters.SearchFilter, filters.OrderingFilter] + ([DjangoFilterBackend] if DjangoFilterBackend else [])
-    filterset_fields = ['role', 'is_active']
-    search_fields = ['username', 'email', 'first_name', 'last_name']
-    ordering_fields = ['date_joined', 'last_login', 'username', 'email']
-    ordering = ['-date_joined']
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter] + (
+        [DjangoFilterBackend] if DjangoFilterBackend else []
+    )
+    filterset_fields = ["role", "is_active"]
+    search_fields = ["username", "email", "first_name", "last_name"]
+    ordering_fields = ["date_joined", "last_login", "username", "email"]
+    ordering = ["-date_joined"]
 
     def get_permissions(self):
-
-        if self.request.method == 'GET':
-            role_filter = self.request.query_params.get('role', None)
-            if role_filter == 'instructor' and self.request.user.is_authenticated and self.request.user.is_instructor():
+        if self.request.method == "GET":
+            role_filter = self.request.query_params.get("role", None)
+            if (
+                role_filter == "instructor"
+                and self.request.user.is_authenticated
+                and self.request.user.is_instructor()
+            ):
                 return [IsInstructorOrAdmin()]
             else:
                 return [IsAdminUser()]
@@ -300,38 +307,36 @@ class UsersListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        
-        role = self.request.query_params.get('role', None)
+
+        role = self.request.query_params.get("role", None)
         if role:
             queryset = queryset.filter(role=role)
-            
-        is_active = self.request.query_params.get('is_active', None)
+
+        is_active = self.request.query_params.get("is_active", None)
         if is_active is not None:
-            queryset = queryset.filter(is_active=is_active.lower() == 'true')
-            
-        search = self.request.query_params.get('search', None)
+            queryset = queryset.filter(is_active=is_active.lower() == "true")
+
+        search = self.request.query_params.get("search", None)
         if search:
             queryset = queryset.filter(
-                Q(username__icontains=search) |
-                Q(email__icontains=search) |
-                Q(first_name__icontains=search) |
-                Q(last_name__icontains=search)
+                Q(username__icontains=search)
+                | Q(email__icontains=search)
+                | Q(first_name__icontains=search)
+                | Q(last_name__icontains=search)
             )
-        
+
         return queryset
 
 
 class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
-
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsAdminUser]
 
 
 class UserToggleStatusView(APIView):
-
     permission_classes = [IsAdminUser]
-    
+
     def patch(self, request, pk):
         try:
             user = User.objects.get(pk=pk)
@@ -341,8 +346,7 @@ class UserToggleStatusView(APIView):
             return Response(serializer.data)
         except User.DoesNotExist:
             return Response(
-                {"error": "User not found"}, 
-                status=status.HTTP_404_NOT_FOUND
+                {"error": "User not found"}, status=status.HTTP_404_NOT_FOUND
             )
 
 

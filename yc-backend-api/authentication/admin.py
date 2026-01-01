@@ -8,7 +8,6 @@ from .models import (
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
-
     list_display = (
         "email",
         "username",
@@ -55,7 +54,6 @@ class UserAdmin(BaseUserAdmin):
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
-
     list_display = ("user", "full_name", "title", "location", "gender", "created_at")
     search_fields = ("user__email", "user__username", "full_name", "title", "location")
     readonly_fields = ("created_at", "updated_at")

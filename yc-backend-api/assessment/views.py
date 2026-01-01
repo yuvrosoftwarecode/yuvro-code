@@ -11,6 +11,9 @@ import requests
 import json
 from pypdf import PdfReader
 from io import BytesIO
+import traceback
+import logging
+
 from ai_assistant.models import AIAgent, ChatSession, ChatMessage
 from authentication.models import Profile
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -30,6 +33,8 @@ from authentication.permissions import IsOwnerOrInstructorOrAdmin
 from .mixins import ProctoringMixin
 from django.core.mail import send_mail
 from django.conf import settings
+
+logger = logging.getLogger(__name__)
 
 
 class ContestViewSet(ProctoringMixin, viewsets.ModelViewSet):
@@ -112,7 +117,7 @@ class ContestViewSet(ProctoringMixin, viewsets.ModelViewSet):
             )
 
         except Exception as e:
-            print(f"Failed to send email: {str(e)}")
+            logger.warning(f"Failed to send email: {str(e)}")
 
         return Response({'status': 'Registered'}, status=status.HTTP_201_CREATED)
 
@@ -524,7 +529,7 @@ class MockInterviewViewSet(viewsets.ModelViewSet):
                             if text:
                                 context_text += text + "\n"
                     except Exception as e:
-                        print(f"Error parsing resume: {e}")
+                        logger.warning(f"Error parsing resume: {e}")
                 
                 # If no resume text, fetch profile data
                 if not context_text.strip():
@@ -557,7 +562,7 @@ class MockInterviewViewSet(viewsets.ModelViewSet):
                                 for edu in educations:
                                     context_text += f"- {edu.degree} in {edu.field} from {edu.institution}\n"
                     except Exception as e:
-                        print(f"Error fetching profile: {e}")
+                        logger.warning(f"Error fetching profile: {e}")
                 
                 # If still empty, use fallback
                 if not context_text.strip():
@@ -582,24 +587,33 @@ class MockInterviewViewSet(viewsets.ModelViewSet):
                         )
                         
                         # Create System Prompt
-                        system_prompt = f"""You are an expert technical interviewer named {mock_interview.interviewer_name}.
-You are conducting a mock interview for the "{mock_interview.title}".
-Description: {mock_interview.description}
-Instructions: {mock_interview.instructions}
+                        system_prompt = f"""You are {mock_interview.interviewer_name}, an expert technical interviewer conducting a mock interview.
+ROLE & PERSONA:
+- You are professional yet conversational. Avoid robotic or standard "textbook" phrasing.
+- Speak naturally, like a human interviewer. Use phrases like "That's interesting, tell me more about...", "Let's pivot to...", or "I see, but considering...".
+- Do NOT say "Next question" or "Moving on". Transition naturally between topics.
 
-Candidate Context (Resume/Profile):
+INTERVIEW CONTEXT:
+- Title: {mock_interview.title}
+- Description: {mock_interview.description}
+- Instructions: {mock_interview.instructions}
+
+CANDIDATE INFO:
 {context_text}
 
-Your Goal:
-1. Conduct a professional and adaptive interview.
-2. Ask questions based on the candidate's experience and the interview requirements.
-3. Determine the next question based on the candidate's previous answer.
-4. If the candidate answers poorly, ask easier follow-up questions or clarify.
-5. If the candidate answers well, increase the difficulty.
-6. Keep your responses concise and conversational (as if speaking).
-7. Do not just list questions. Engage in a dialogue.
+CRITICAL RULES:
+1. NO DEFINITIONAL QUESTIONS: Never ask "What is X?" or "Define Y". These are strictly forbidden.
+2. SCENARIO-BASED ONLY: All questions must be practical scenarios or problem-solving challenges.
+   - Bad: "What is a deadlock?"
+   - Good: "You have two threads waiting on each other's resources, causing the application to freeze. How would you detect this in production and fix it?"
+3. ADAPTIVE DIFFICULTY:
+   - If the candidate answers well: Increase complexity. Add constraints (e.g., "Now assume we have limited memory", "What if the network is unreliable?").
+   - If the candidate struggles: De-escalate. Ask a guiding follow-up or a simpler foundational question to help them regain confidence.
+   - If the answer is vague: Ask for specific examples or deeper technical reasoning.
+4. FOCUS: Test depth of understanding, not memorization. Ask "Why" and "How", not "What".
 
-Begin by greeting the candidate politely (e.g., "Hello {user_first_name}, welcome to the interview..."), introducing yourself, and then asking the first question.
+START:
+Greet {user_first_name} warmly, introduce yourself, and immediately present the first scenario or problem statement based on the interview context and candidate's background.
 """
                         ChatMessage.objects.create(
                             chat_session=chat_session,
@@ -645,7 +659,6 @@ Begin by greeting the candidate politely (e.g., "Hello {user_first_name}, welcom
                 }
             })
         except Exception as e:
-            import traceback
             traceback.print_exc()
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

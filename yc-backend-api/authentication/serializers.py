@@ -7,7 +7,6 @@ from .models import (
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
-
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
@@ -23,7 +22,6 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    
     class Meta:
         model = User
         fields = [
@@ -41,7 +39,6 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class UserLoginSerializer(serializers.Serializer):
-
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
 
@@ -65,7 +62,6 @@ class UserLoginSerializer(serializers.Serializer):
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
-
     password = serializers.CharField(write_only=True, min_length=8)
     password_confirm = serializers.CharField(write_only=True)
 
@@ -87,7 +83,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return attrs
 
     def validate_role(self, value):
-        allowed_roles = ["student"]  
+        allowed_roles = ["student"]
         if value not in allowed_roles:
             raise serializers.ValidationError(
                 f"Invalid role. Allowed roles for registration: {', '.join(allowed_roles)}"
@@ -102,7 +98,6 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
 
 class UserUpdateSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = User
         fields = ["username", "email", "first_name", "last_name", "role"]

@@ -1,7 +1,7 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { FileText, History, Table } from "lucide-react";
-import type { Stats } from "../LearnCertify/types";
+import type { Stats } from "../Learn/types";
 
 const StatsGrid: React.FC<{ stats: Stats }> = ({ stats }) => {
   return (

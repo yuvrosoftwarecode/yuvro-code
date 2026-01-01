@@ -18,6 +18,11 @@ interface CustomTestCase {
 }
 
 interface CodeEditorProps {
+  // Controlled props
+  value?: string;
+  onChange?: (code: string) => void;
+  language?: string;
+  // Uncontrolled / Hybrid props
   initialCode?: string;
   onCodeChange?: (code: string) => void;
   onLanguageChange?: (language: string) => void;
@@ -43,11 +48,13 @@ interface CodeEditorProps {
   className?: string;
   showFullscreenButton?: boolean;
   showExamplesButton?: boolean;
+  onShowExamples?: () => void;
   onToggleAiChat?: () => void;
   isAiChatOpen?: boolean;
   onFullscreenChange?: (isFullscreen: boolean) => void;
   isFullscreen?: boolean;
   templates?: Record<string, string>;
+  height?: string;
 }
 
 export interface CodeEditorHandle {
@@ -58,6 +65,9 @@ export interface CodeEditorHandle {
 }
 
 const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(({
+  value,
+  onChange,
+  language: controlledLanguage,
   initialCode = '',
   onCodeChange,
   onLanguageChange,
@@ -79,15 +89,39 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(({
   className = '',
   showFullscreenButton = true,
   showExamplesButton = true,
+  onShowExamples,
   onToggleAiChat,
   isAiChatOpen = false,
   onFullscreenChange,
   isFullscreen: controlledFullscreen,
-  templates
+  templates,
+  height = '100%'
 }, ref) => {
   // Editor & code state
-  const [code, setCode] = useState(initialCode);
+  // If value is provided, we use it as initial state, but we also sync it via useEffect
+  const [code, setCode] = useState(value !== undefined ? value : initialCode);
   const [language, setLanguage] = useState(initialLanguage);
+
+  // Sync value prop to internal state (Controlled mode support)
+  useEffect(() => {
+    if (value !== undefined && value !== code) {
+      setCode(value);
+    }
+  }, [value]);
+
+  // Sync language prop to internal state
+  useEffect(() => {
+    if (controlledLanguage !== undefined && controlledLanguage !== language) {
+      setLanguage(controlledLanguage);
+    }
+  }, [controlledLanguage]);
+
+  // Handle onChange callback
+  const handleChange = (newCode: string) => {
+    setCode(newCode);
+    onChange?.(newCode);
+    onCodeChange?.(newCode);
+  };
 
   // Execution state
   const [output, setOutput] = useState('');
@@ -310,14 +344,14 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(({
 
     try {
       let res;
-      
+
       if (codeSubmissionType === 'learn') {
         console.log('Learn mode: submitting to student-course-progress');
-        
+
         res = await codeEditorService.submitSolution({
           code,
           language,
-          subtopic_id: subtopicId || null,
+          subtopic_id: subtopicId || undefined,
           question_id: problemId,
           course_id: courseId,
           topic_id: topicId,
@@ -369,7 +403,7 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(({
       const passed = res.test_cases_passed ?? 0;
       const total = res.total_test_cases ?? 0;
       const passRate = total ? ((passed / total) * 100).toFixed(1) : '0.0';
-      
+
       if (passed === total && total > 0) {
         toast.success(`Solution submitted: All ${total} test cases passed (100%)`);
       } else if (total > 0) {
@@ -420,11 +454,11 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(({
               <div className="h-full bg-white">
                 <MonacoCodeEditor
                   value={code}
-                  onChange={setCode}
+                  onChange={handleChange}
                   language={language}
                   onLanguageChange={setLanguage}
-                  height="100%"
-                  onShowExamples={showExamplesButton ? () => setShowExamples(true) : undefined}
+                  height={height}
+                  onShowExamples={showExamplesButton ? (onShowExamples || (() => setShowExamples(true))) : undefined}
                   onToggleAiChat={onToggleAiChat}
                   onToggleFullscreen={showFullscreenButton ? handleToggleFullscreen : undefined}
                   isAiChatOpen={isAiChatOpen}
@@ -578,12 +612,12 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(({
                                       })
                                       .filter((output: string) => output)
                                       .join('\n\n');
-                                    
+
                                     if (consoleOutputs) {
                                       return consoleOutputs;
                                     }
                                   }
-                                  
+
                                   // Fallback to original output if no console outputs from test cases
                                   return output || 'No console output available';
                                 })()}
@@ -609,26 +643,24 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(({
                               {testResults.results.map((result: any, idx: number) => {
                                 const isHidden = result.is_hidden || false;
                                 const testCaseNumber = result.test_case_number || idx + 1;
-                                
+
                                 return (
-                                  <div key={idx} className={`border-2 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow ${
-                                    isHidden 
-                                      ? result.passed 
-                                        ? 'border-blue-200 bg-gradient-to-br from-blue-50/50 to-blue-100/30' 
-                                        : 'border-purple-200 bg-gradient-to-br from-purple-50/50 to-purple-100/30'
-                                      : result.passed 
-                                        ? 'border-green-200 bg-gradient-to-br from-green-50/50 to-green-100/30' 
-                                        : 'border-red-200 bg-gradient-to-br from-red-50/50 to-red-100/30'
-                                  }`}>
-                                    <div className={`px-6 py-4 border-b-2 flex justify-between items-center ${
-                                      isHidden
-                                        ? result.passed 
-                                          ? 'bg-blue-100/60 border-blue-200' 
-                                          : 'bg-purple-100/60 border-purple-200'
-                                        : result.passed 
-                                          ? 'bg-green-100/60 border-green-200' 
-                                          : 'bg-red-100/60 border-red-200'
+                                  <div key={idx} className={`border-2 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow ${isHidden
+                                    ? result.passed
+                                      ? 'border-blue-200 bg-gradient-to-br from-blue-50/50 to-blue-100/30'
+                                      : 'border-purple-200 bg-gradient-to-br from-purple-50/50 to-purple-100/30'
+                                    : result.passed
+                                      ? 'border-green-200 bg-gradient-to-br from-green-50/50 to-green-100/30'
+                                      : 'border-red-200 bg-gradient-to-br from-red-50/50 to-red-100/30'
                                     }`}>
+                                    <div className={`px-6 py-4 border-b-2 flex justify-between items-center ${isHidden
+                                      ? result.passed
+                                        ? 'bg-blue-100/60 border-blue-200'
+                                        : 'bg-purple-100/60 border-purple-200'
+                                      : result.passed
+                                        ? 'bg-green-100/60 border-green-200'
+                                        : 'bg-red-100/60 border-red-200'
+                                      }`}>
                                       <div className="flex items-center gap-3">
                                         {result.passed ? <CheckCircle2 className="h-5 w-5 text-green-600" /> : <XCircle className="h-5 w-5 text-red-600" />}
                                         <span className="font-bold text-lg text-gray-800">
@@ -640,11 +672,10 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(({
                                           )}
                                         </span>
                                       </div>
-                                      <span className={`text-sm font-bold px-4 py-2 rounded-full ${
-                                        result.passed 
-                                          ? 'bg-green-200 text-green-800' 
-                                          : 'bg-red-200 text-red-800'
-                                      }`}>
+                                      <span className={`text-sm font-bold px-4 py-2 rounded-full ${result.passed
+                                        ? 'bg-green-200 text-green-800'
+                                        : 'bg-red-200 text-red-800'
+                                        }`}>
                                         {result.passed ? '✓ PASSED' : '✗ FAILED'}
                                       </span>
                                     </div>
@@ -653,11 +684,10 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(({
                                         <div className="text-xs text-gray-500 font-semibold uppercase tracking-wider">
                                           Input {isHidden && <span className="text-gray-400">(Partially Hidden)</span>}
                                         </div>
-                                        <pre className={`text-sm p-4 border rounded-lg font-mono overflow-x-auto shadow-sm ${
-                                          isHidden 
-                                            ? 'bg-gray-100 border-gray-300 text-gray-600' 
-                                            : 'bg-gray-50 border-gray-200 text-gray-800'
-                                        }`}>
+                                        <pre className={`text-sm p-4 border rounded-lg font-mono overflow-x-auto shadow-sm ${isHidden
+                                          ? 'bg-gray-100 border-gray-300 text-gray-600'
+                                          : 'bg-gray-50 border-gray-200 text-gray-800'
+                                          }`}>
                                           {result.input}
                                         </pre>
                                       </div>
@@ -665,11 +695,10 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(({
                                         <div className="text-xs text-gray-500 font-semibold uppercase tracking-wider">
                                           Expected Output {isHidden && <span className="text-gray-400">(Partially Hidden)</span>}
                                         </div>
-                                        <pre className={`text-sm p-4 border rounded-lg font-mono overflow-x-auto shadow-sm ${
-                                          isHidden 
-                                            ? 'bg-gray-100 border-gray-300 text-gray-600' 
-                                            : 'bg-gray-50 border-gray-200 text-gray-800'
-                                        }`}>
+                                        <pre className={`text-sm p-4 border rounded-lg font-mono overflow-x-auto shadow-sm ${isHidden
+                                          ? 'bg-gray-100 border-gray-300 text-gray-600'
+                                          : 'bg-gray-50 border-gray-200 text-gray-800'
+                                          }`}>
                                           {result.expected_output}
                                         </pre>
                                       </div>
@@ -677,11 +706,10 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(({
                                         <div className="text-xs text-gray-500 font-semibold uppercase tracking-wider">
                                           Actual Output {isHidden && result.actual_output === '***' && <span className="text-gray-400">(Hidden)</span>}
                                         </div>
-                                        <pre className={`text-sm p-4 border rounded-lg font-mono overflow-x-auto shadow-sm ${
-                                          result.passed
-                                            ? 'bg-green-50 border-green-200 text-green-800'
-                                            : 'bg-red-50 border-red-200 text-red-800'
-                                        }`}>
+                                        <pre className={`text-sm p-4 border rounded-lg font-mono overflow-x-auto shadow-sm ${result.passed
+                                          ? 'bg-green-50 border-green-200 text-green-800'
+                                          : 'bg-red-50 border-red-200 text-red-800'
+                                          }`}>
                                           {result.actual_output}
                                         </pre>
                                       </div>

@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Flame, ArrowRight, BookOpen } from "lucide-react";
-import type { ContinueProgress } from "../LearnCertify/types";
+import type { ContinueProgress } from "../Learn/types";
 
 interface Props {
     continueProgress: ContinueProgress;

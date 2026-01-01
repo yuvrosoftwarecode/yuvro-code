@@ -1,20 +1,20 @@
-// src/features/LearnCertify/LearnCertifyDashboard.tsx
+// src/features/Learn/LearnDashboard.tsx
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import restApiAuthUtil from "../../utils/RestApiAuthUtil";
 import { fetchTopicsByCourse } from '@/services/courseService';
 
-import ContinueLearningBanner from "@/components/student/LearnCertify/ContinueLearningBanner";
-import StatsGrid from "@/components/student/LearnCertify/StatsGrid";
+import ContinueLearningBanner from "@/components/student/Learn/ContinueLearningBanner";
+import StatsGrid from "@/components/student/Learn/StatsGrid";
 import SearchBar from "@/components/common/SearchBar";
-import CategorySection from "@/components/student/LearnCertify/CatergorySection";
-import AIChatContainer from '@/components/student/LearnCertify/AIChatWidget/AIChatContainer';
+import CategorySection from "@/components/student/Learn/CatergorySection";
+import AIChatContainer from '@/components/student/Learn/AIChatWidget/AIChatContainer';
 
 import { Binary, Code, Database, Sparkles, FileText, Flame, Award, X } from "lucide-react";
 
-import type { Course, Stats, ContinueProgress, CourseProgressMap } from "@/components/student/LearnCertify/types";
+import type { Course, Stats, ContinueProgress, CourseProgressMap } from "@/components/student/Learn/types";
 
-const LearnCertifyDashboard: React.FC = () => {
+const LearnDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [showChat, setShowChat] = useState(false);
   const [courses, setCourses] = useState<Course[]>([]);
@@ -314,4 +314,4 @@ const LearnCertifyDashboard: React.FC = () => {
   );
 };
 
-export default LearnCertifyDashboard;
+export default LearnDashboard;

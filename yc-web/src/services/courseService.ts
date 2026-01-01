@@ -15,6 +15,9 @@ export interface TopicBasic {
   name: string;
   order_index: number;
   created_at: string;
+  total_problems?: number;
+  solved_problems?: number;
+  progress_percentage?: number;
 }
 
 export interface TopicWithSubtopics extends TopicBasic {
@@ -43,6 +46,11 @@ export interface Course {
   created_at: string;
   updated_at: string;
   topics: TopicBasic[];
+  total_problems?: number;
+  solved_problems?: number;
+  progress_percentage?: number;
+  total_score?: number;
+  ai_help_used?: number;
 }
 
 export interface CodingProblem {
@@ -285,6 +293,7 @@ export interface Note {
   topic?: string;
   created_at?: string;
   updated_at?: string;
+  user?: number | string;
 }
 
 export async function fetchNotesBySubtopic(subtopicId: string) {
@@ -326,7 +335,7 @@ export async function submitQuiz(subtopicId: string, answers: any, scorePercent:
 }
 
 export async function submitCoding(
-  subtopicId: string, 
+  subtopicId: string,
   codingStatus: Record<string, boolean>,
   submissionDetails?: {
     questionId: string;
@@ -340,7 +349,7 @@ export async function submitCoding(
     subtopic_id: subtopicId,
     coding_status: codingStatus
   };
-  
+
   // Add detailed submission data if provided
   if (submissionDetails) {
     payload.question_id = submissionDetails.questionId;
@@ -349,7 +358,7 @@ export async function submitCoding(
     payload.test_results = submissionDetails.testResults;
     payload.execution_output = submissionDetails.executionOutput;
   }
-  
+
   return restApiAuthUtil.post('/course/student-course-progress/submit_coding/', payload);
 }
 

@@ -47,8 +47,12 @@ class TopicSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Topic
-        fields = ["id", "course", "name", "order_index", "created_at", "subtopics"]
+        fields = ["id", "course", "name", "order_index", "created_at", "subtopics", "total_problems", "solved_problems", "progress_percentage"]
         read_only_fields = ["id", "created_at"]
+
+    total_problems = serializers.IntegerField(read_only=True)
+    solved_problems = serializers.IntegerField(read_only=True)
+    progress_percentage = serializers.FloatField(read_only=True)
 
 
 class TopicBasicSerializer(serializers.ModelSerializer):
@@ -58,8 +62,12 @@ class TopicBasicSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Topic
-        fields = ["id", "course", "name", "order_index", "created_at"]
+        fields = ["id", "course", "name", "order_index", "created_at", "total_problems", "solved_problems", "progress_percentage"]
         read_only_fields = ["id", "created_at"]
+
+    total_problems = serializers.IntegerField(read_only=True)
+    solved_problems = serializers.IntegerField(read_only=True)
+    progress_percentage = serializers.FloatField(read_only=True)
 
 
 class CourseInstructorSerializer(serializers.ModelSerializer):
@@ -89,8 +97,15 @@ class CourseSerializer(serializers.ModelSerializer):
             "updated_at",
             "topics",
             "instructors",
+            "total_problems",
+            "solved_problems",
+            "progress_percentage",
         ]
         read_only_fields = ["id", "created_at", "updated_at"]
+
+    total_problems = serializers.IntegerField(read_only=True)
+    solved_problems = serializers.IntegerField(read_only=True)
+    progress_percentage = serializers.FloatField(read_only=True)
 
     def get_instructors(self, obj):
         mappings = CourseInstructor.objects.filter(course=obj).select_related(
@@ -135,7 +150,18 @@ class CourseBasicSerializer(serializers.ModelSerializer):
             "category",
             "created_at",
             "updated_at",
+            "total_problems",
+            "solved_problems",
+            "progress_percentage",
+            "total_score",
+            "ai_help_used",
         ]
+
+    total_problems = serializers.IntegerField(read_only=True)
+    solved_problems = serializers.IntegerField(read_only=True)
+    progress_percentage = serializers.FloatField(read_only=True)
+    total_score = serializers.FloatField(read_only=True)
+    ai_help_used = serializers.IntegerField(read_only=True)
 
 
 class VideoSerializer(serializers.ModelSerializer):
@@ -378,7 +404,8 @@ class StudentCodePracticeSerializer(serializers.ModelSerializer):
     question = serializers.StringRelatedField(read_only=True)
     course = serializers.StringRelatedField(read_only=True)
     topic = serializers.StringRelatedField(read_only=True)
-
+    question_difficulty = serializers.SerializerMethodField()
+    
     class Meta:
         model = StudentCodePractice
         fields = [
@@ -395,11 +422,16 @@ class StudentCodePracticeSerializer(serializers.ModelSerializer):
             "plagiarism_data",
             "evaluation_results",
             "marks_obtained",
+            "ai_help_count",
+            "question_difficulty",
             "created_at",
             "updated_at",
         ]
         read_only_fields = ["id", "user", "created_at", "updated_at"]
 
+    def get_question_difficulty(self, obj):
+        return obj.question.difficulty if obj.question else None
+        
     def validate_status(self, value):
         """
         Validate status is one of the allowed choices

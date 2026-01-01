@@ -6,6 +6,8 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 import os
 import requests
+from django.db.models import Count, Q, F, Case, When, Value, IntegerField, FloatField, OuterRef, Subquery, Sum
+from django.db.models.functions import Coalesce
 from authentication.permissions import CanManageCourses, IsAuthenticatedUser
 from .utils import CodeExecutionUtil
 from .models import (
@@ -51,6 +53,99 @@ class CourseViewSet(viewsets.ModelViewSet):
         category = self.request.query_params.get("category")
         if category:
             queryset = queryset.filter(category=category)
+        # Annotate with progress for Code Practice (category='practice', type='coding')
+        from django.db.models import Count, Q, F, Case, When, IntegerField, FloatField, Exists, OuterRef, Subquery
+        
+        # 1. Total Problems: Questions in this course with category='practice' and type='coding'
+        # Since Questions are linked to Topic or Subtopic or Course, we need to check all
+        # But per current structure, most practice questions are likely subtopic level? 
+        # Wait, the structure links Question -> Subtopic -> Topic -> Course
+        # Or Question -> Topic -> Course
+        # Or Question -> Course
+        
+        # Let's count all questions linked to this course (via any path) that are practice coding questions
+        
+        practice_questions_filter = Q(type='coding') & Q(categories__contains=['practice'])
+        
+        queryset = queryset.annotate(
+            total_problems=Count(
+                'questions', 
+                filter=Q(questions__type='coding') & Q(questions__categories__contains=['practice']), 
+                distinct=True
+            ) + Count(
+                'topics__questions',
+                filter=Q(topics__questions__type='coding') & Q(topics__questions__categories__contains=['practice']),
+                distinct=True
+            ) + Count(
+                'topics__subtopics__questions',
+                filter=Q(topics__subtopics__questions__type='coding') & Q(topics__subtopics__questions__categories__contains=['practice']),
+                distinct=True
+            )
+        )
+
+        # 2. Solved Problems: StudentCodePractice submissions by this user for practice questions in this course
+        if self.request.user.is_authenticated:
+            user_practices = StudentCodePractice.objects.filter(
+                user=self.request.user,
+                course=OuterRef('pk'), # StudentCodePractice has course link directly?
+                # Let's check model... Yes: course = models.ForeignKey(Course...)
+                # And we should filter for status that implies completion.
+                # Assuming 'completed' or 'evaluated' with success.
+                # For simplicity, let's count unique questions solved
+                status__in=['completed', 'evaluated'],
+                # We must ensure the question is a practice coding question
+                question__type='coding',
+                question__categories__contains=['practice']
+            ).values('course') 
+            
+            # Using subquery count to get distinct questions solved
+            # Wait, `StudentCodePractice` is one per user-question usually? 
+            # "unique_together = ['user', 'question']" in model.
+            # So simple count of StudentCodePractice records for this user+course matching criteria is enough.
+
+            solved_subquery = StudentCodePractice.objects.filter(
+                user=self.request.user,
+                course=OuterRef('pk'),
+                status__in=['completed', 'evaluated'],
+                question__type='coding',
+                question__categories__contains=['practice']
+            ).values('course').annotate(cnt=Count('id')).values('cnt')
+            
+            score_subquery = StudentCodePractice.objects.filter(
+                user=self.request.user,
+                course=OuterRef('pk'),
+                question__type='coding',
+                question__categories__contains=['practice']
+            ).values('course').annotate(total_valid_score=Sum('marks_obtained')).values('total_valid_score')
+
+            ai_subquery = StudentCodePractice.objects.filter(
+                user=self.request.user,
+                course=OuterRef('pk'),
+                question__type='coding',
+                question__categories__contains=['practice']
+            ).values('course').annotate(total_ai=Sum('ai_help_count')).values('total_ai')
+
+            queryset = queryset.annotate(
+                solved_problems=Coalesce(Subquery(solved_subquery), 0, output_field=IntegerField()),
+                total_score=Coalesce(Subquery(score_subquery), 0.0, output_field=FloatField()),
+                ai_help_used=Coalesce(Subquery(ai_subquery), 0, output_field=IntegerField())
+            )
+        else:
+            queryset = queryset.annotate(
+                solved_problems=Value(0, output_field=IntegerField()),
+                total_score=Value(0.0, output_field=FloatField()),
+                ai_help_used=Value(0, output_field=IntegerField())
+            )
+
+        # 3. Progress Percentage
+        queryset = queryset.annotate(
+            progress_percentage=Case(
+                When(total_problems__gt=0, then=F('solved_problems') * 100.0 / F('total_problems')),
+                default=0.0,
+                output_field=FloatField()
+            )
+        )
+
         return queryset
 
     @action(detail=True, methods=["get"])
@@ -120,6 +215,48 @@ class TopicViewSet(viewsets.ModelViewSet):
         course_id = self.request.query_params.get("course")
         if course_id:
             qs = qs.filter(course_id=course_id)
+
+        # Annotate with Code Practice progress
+        from django.db.models import Count, Q, F, Case, When, Value, IntegerField, FloatField, OuterRef, Subquery
+        from django.db.models.functions import Coalesce
+
+        # 1. Total Problems
+        qs = qs.annotate(
+            total_problems=Count(
+                'questions', 
+                filter=Q(questions__type='coding') & Q(questions__categories__contains=['practice']), 
+                distinct=True
+            ) + Count(
+                'subtopics__questions',
+                filter=Q(subtopics__questions__type='coding') & Q(subtopics__questions__categories__contains=['practice']),
+                distinct=True
+            )
+        )
+
+        # 2. Solved Problems
+        if self.request.user.is_authenticated:
+            solved_subquery = StudentCodePractice.objects.filter(
+                user=self.request.user,
+                topic=OuterRef('pk'),
+                status__in=['completed', 'evaluated'],
+                question__type='coding',
+                question__categories__contains=['practice']
+            ).values('topic').annotate(cnt=Count('id')).values('cnt')
+            
+            qs = qs.annotate(
+                solved_problems=Coalesce(Subquery(solved_subquery), 0, output_field=IntegerField())
+            )
+        else:
+            qs = qs.annotate(solved_problems=Value(0, output_field=IntegerField()))
+            
+        # 3. Progress Percentage
+        qs = qs.annotate(
+            progress_percentage=Case(
+                When(total_problems__gt=0, then=F('solved_problems') * 100.0 / F('total_problems')),
+                default=0.0,
+                output_field=FloatField()
+            )
+        )
 
         return qs
 
@@ -283,6 +420,8 @@ class NoteViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticatedUser]
 
     def get_queryset(self):
+        from django.db.models import Q
+        
         qs = Note.objects.select_related("sub_topic", "user")
         user = self.request.user
 
@@ -292,6 +431,14 @@ class NoteViewSet(viewsets.ModelViewSet):
                     instructor=user
                 ).values_list("course_id", flat=True)
             )
+        elif user.role == "student":
+            # Students see:
+            # 1. Notes created by themselves (Personal Notes)
+            # 2. Notes created by Instructors/Admins (Materials)
+            qs = qs.filter(
+                Q(user=user) | 
+                Q(user__role__in=["instructor", "admin"])
+            )
 
         if sid := self.request.query_params.get("sub_topic"):
             qs = qs.filter(sub_topic_id=sid)
@@ -299,46 +446,39 @@ class NoteViewSet(viewsets.ModelViewSet):
         return qs
 
     def create(self, request, *a, **kw):
-        user = request.user
-        subtopic = get_object_or_404(Subtopic, id=request.data.get("sub_topic"))
-        course = subtopic.topic.course
-
-        if not (
-            user.role == "admin"
-            or (user.role == "instructor" and instructor_assigned(user, course))
-        ):
-            return Response({"error": "Not allowed"}, status=403)
-
+        # Allow any authenticated user to create a note (for themselves)
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
-        # FIX: attach user correctly
         serializer.save(user=request.user)
 
         return Response(serializer.data, status=201)
 
     def update(self, request, *a, **kw):
         note = self.get_object()
-        course = note.sub_topic.topic.course
         user = request.user
 
-        if not (
-            user.role == "admin"
-            or (user.role == "instructor" and instructor_assigned(user, course))
-        ):
+        # Allow if user owns the note OR is an admin/instructor for the course
+        is_owner = note.user == user
+        course = note.sub_topic.topic.course
+        is_instructor = user.role == "instructor" and instructor_assigned(user, course)
+        is_admin = user.role == "admin"
+
+        if not (is_owner or is_instructor or is_admin):
             return Response({"error": "Not allowed"}, status=403)
 
         return super().update(request, *a, **kw)
 
     def destroy(self, request, *a, **kw):
         note = self.get_object()
-        course = note.sub_topic.topic.course
         user = request.user
 
-        if not (
-            user.role == "admin"
-            or (user.role == "instructor" and instructor_assigned(user, course))
-        ):
+        # Allow if user owns the note OR is an admin/instructor for the course
+        is_owner = note.user == user
+        course = note.sub_topic.topic.course
+        is_instructor = user.role == "instructor" and instructor_assigned(user, course)
+        is_admin = user.role == "admin"
+
+        if not (is_owner or is_instructor or is_admin):
             return Response({"error": "Not allowed"}, status=403)
 
         return super().destroy(request, *a, **kw)

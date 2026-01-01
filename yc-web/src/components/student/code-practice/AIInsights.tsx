@@ -131,10 +131,10 @@ const AIInsights = ({ onBack, onGeneratePracticeSet }: AIInsightsProps) => {
 
     // Simulate AI practice set generation
     setTimeout(() => {
-      toast.success('AI-powered practice set generated! Redirecting to topics...');
+      toast.info('AI Practice Set generation is coming soon!');
       setGeneratingPractice(false);
-      onGeneratePracticeSet();
-    }, 2000);
+      // onGeneratePracticeSet();
+    }, 1000);
   };
 
   const getInsightTypeInfo = (type: string) => {

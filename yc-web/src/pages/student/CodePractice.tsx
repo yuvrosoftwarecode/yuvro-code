@@ -22,6 +22,8 @@ export interface Course {
   solvedProblems: number;
   iconColor?: string;
   category: string;
+  totalScore?: number;
+  aiHelpUsed?: number;
 }
 
 export interface Topic {
@@ -29,6 +31,7 @@ export interface Topic {
   name: string;
   problemCount: number;
   order_index: number;
+  progress: number;
 }
 
 export interface CodingProblem {
@@ -89,11 +92,13 @@ const CodePractice = () => {
           id: course.id.toString(),
           name: course.name || course.title || 'Untitled Course',
           icon: course.category,
-          progress: Math.floor(Math.random() * 100),
-          totalProblems: 0, // Will be updated if needed
-          solvedProblems: 0,
+          progress: Math.round(course.progress_percentage || 0),
+          totalProblems: course.total_problems || 0,
+          solvedProblems: course.solved_problems || 0,
           category: course.category,
           iconColor: getIconColor(course.category),
+          totalScore: course.total_score || 0,
+          aiHelpUsed: course.ai_help_used || 0,
         };
         setSelectedCourse(transformedCourse);
       }
@@ -106,8 +111,9 @@ const CodePractice = () => {
           setSelectedTopic({
             id: topic.id,
             name: topic.name,
-            problemCount: 0,
+            problemCount: topic.total_problems || 0,
             order_index: topic.order_index,
+            progress: Math.round(topic.progress_percentage || 0),
           });
         }
       }

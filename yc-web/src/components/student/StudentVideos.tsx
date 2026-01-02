@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { fetchVideosBySubtopic } from "@/services/courseService";
 // Removed unused imports
 import { CodeEditor } from "@/components/code-editor";
-import AIChatContainer from "./LearnCertify/AIChatWidget/AIChatContainer";
+import AIChatContainer from "./Learn/AIChatWidget/AIChatContainer";
 import ExampleCodeGallery from "@/components/code-editor/ExampleCodeGallery";
 import { Sparkles, Code, Video as VideoIcon } from "lucide-react";
 

@@ -4,12 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ChevronLeft, Play, Send, Maximize2, Minimize2, Plus, Trash2, Clock, CheckCircle2, XCircle, Zap, MemoryStick, Activity, Shield, Sparkles, X, FlaskConical, Terminal, BookOpen } from 'lucide-react';
 import { CodeExecutionPanel } from '@/components/code-editor';
+import CodeEditor from '@/components/code-editor/CodeEditor';
 import codeEditorService from '@/services/codeEditorService';
 import ExampleCodeGallery from '@/components/code-editor/ExampleCodeGallery';
 import type { Course, Topic, CodingProblem } from '@/pages/student/CodePractice';
 import { ResizablePanel, ResizablePanelGroup, ResizableHandle } from '@/components/ui/resizable';
 import { toast } from 'sonner';
-import AIChatContainer from '@/components/student/LearnCertify/AIChatWidget/AIChatContainer';
+import AIChatContainer from '@/components/student/Learn/AIChatWidget/AIChatContainer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -379,8 +380,17 @@ int main() {
       const res = await codeEditorService.submitSolution({
         code,
         language,
-        coding_problem_id: problem.id,
-        test_cases: all,
+        question_id: problem.id,
+        test_cases_basic: (problem.test_cases_basic || []).map((t: any) => ({
+          input: typeof t.input === 'string' ? t.input : JSON.stringify(t.input),
+          expected_output: typeof t.expected_output === 'string' ? t.expected_output : JSON.stringify(t.expected_output),
+          weight: t.weight || 1,
+        })),
+        test_cases_advanced: (problem.test_cases_advanced || []).map((t: any) => ({
+          input: typeof t.input === 'string' ? t.input : JSON.stringify(t.input),
+          expected_output: typeof t.expected_output === 'string' ? t.expected_output : JSON.stringify(t.expected_output),
+          weight: t.weight || 1,
+        })),
       });
 
       setTestResults(res.test_results ?? null);
@@ -697,7 +707,7 @@ ${code}
                         height="100%"
                         onShowExamples={() => setShowExamples(true)}
                         onToggleAiChat={handleToggleAiChat}
-                        onToggleFullscreen={() => setIsEditorFullscreen(true)}
+                        onFullscreenChange={setIsEditorFullscreen}
                         isAiChatOpen={showAiChat}
                         isFullscreen={false}
                       />
@@ -1043,337 +1053,337 @@ ${code}
               </div>
             </ResizablePanel>
 
-          {/* AI Chat Sidebar in Split View */}
-          {showAiChat && (
-            <>
-              <ResizableHandle className="w-1.5 bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors">
-                <div className="flex flex-col gap-1.5">
-                  <span className="block w-1 h-1 bg-purple-400 rounded-full" />
-                  <span className="block w-1 h-1 bg-purple-400 rounded-full" />
-                  <span className="block w-1 h-1 bg-purple-400 rounded-full" />
-                </div>
-              </ResizableHandle>
-              <ResizablePanel defaultSize={25} minSize={20} maxSize={40}>
-                <div className="h-full border-l border-gray-200 bg-white shadow-lg overflow-hidden flex flex-col">
-                  <AIChatContainer
-                    className="w-full flex-1"
-                    contextGetter={getProblemContext}
-                    welcomeMessage={`Hi! I'm your AI Buddy. Ready to help you with "${problem.title}". Ask me anything!`}
-                    persistenceKey={chatSessionId}
-                    chatTitle={`${problem.title} - AI Buddy`}
-                    onNewChat={() => setChatSessionId(`chat-${problem.id}-${crypto.randomUUID()}`)}
-                  />
-                </div>
-              </ResizablePanel>
-            </>
-          )}
-        </ResizablePanelGroup>
-        </div>
-        )}
-
-        {/* 3) Fullscreen editor mode */}
-        {isEditorFullscreen && (
-    <div className={`${isEmbedded ? 'absolute inset-0 z-10' : 'fixed inset-0 z-[9999]'} bg-white flex flex-col overflow-hidden`}>
-      {/* Fullscreen Header - Hidden if embedded since the page has its own header */}
-      {!isEmbedded && (
-        <div className="bg-white border-b border-gray-200 px-6 h-16 flex items-center justify-between shadow-md shrink-0 relative z-[50]">
-          <div className="flex items-center gap-4 min-w-0 flex-1">
-            <h2 className="text-xl font-bold text-gray-900 truncate">{problem.title}</h2>
-            <Badge className={`px-3 py-1 rounded shrink-0 hidden md:inline-flex ${difficultyBadgeClass}`}>
-              {problem.difficulty}
-            </Badge>
-          </div>
-        </div>
-      )}
-
-      <div className="flex-1 flex flex-col overflow-hidden h-full">
-        {/* Fullscreen Resizable Panels */}
-        <ResizablePanelGroup direction="horizontal" className="flex-1 overflow-hidden">
-          {/* Main Area (Editor + Output) */}
-          <ResizablePanel defaultSize={showAiChat ? 70 : 100} minSize={30}>
-            <div className="h-full flex flex-col overflow-hidden">
-              <ResizablePanelGroup direction="vertical" className="flex-1 overflow-hidden">
-                {/* Editor Panel */}
-                <ResizablePanel defaultSize={showOutput ? 60 : 100} minSize={30}>
-                  <div className="h-full bg-white">
-                    <CodeEditor
-                      value={code}
-                      onChange={setCode}
-                      language={language}
-                      onLanguageChange={setLanguage}
-                      height="100%"
-                      onShowExamples={() => setShowExamples(true)}
-                      onToggleAiChat={handleToggleAiChat}
-                      onToggleFullscreen={() => setIsEditorFullscreen(false)}
-                      isAiChatOpen={showAiChat}
-                      isFullscreen={true}
+            {/* AI Chat Sidebar in Split View */}
+            {showAiChat && (
+              <>
+                <ResizableHandle className="w-1.5 bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors">
+                  <div className="flex flex-col gap-1.5">
+                    <span className="block w-1 h-1 bg-purple-400 rounded-full" />
+                    <span className="block w-1 h-1 bg-purple-400 rounded-full" />
+                    <span className="block w-1 h-1 bg-purple-400 rounded-full" />
+                  </div>
+                </ResizableHandle>
+                <ResizablePanel defaultSize={25} minSize={20} maxSize={40}>
+                  <div className="h-full border-l border-gray-200 bg-white shadow-lg overflow-hidden flex flex-col">
+                    <AIChatContainer
+                      className="w-full flex-1"
+                      contextGetter={getProblemContext}
+                      welcomeMessage={`Hi! I'm your AI Buddy. Ready to help you with "${problem.title}". Ask me anything!`}
+                      persistenceKey={chatSessionId}
+                      chatTitle={`${problem.title} - AI Buddy`}
+                      onNewChat={() => setChatSessionId(`chat-${problem.id}-${crypto.randomUUID()}`)}
                     />
                   </div>
                 </ResizablePanel>
+              </>
+            )}
+          </ResizablePanelGroup>
+        </div>
+      )}
 
-                {/* Divider */}
-                {showOutput && (
-                  <ResizableHandle className="h-2 bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors">
-                    <div className="w-12 h-1 bg-gray-300 rounded-full" />
-                  </ResizableHandle>
-                )}
-
-                {/* Output Panel */}
-                {showOutput && (
-                  <ResizablePanel defaultSize={40} minSize={20}>
-                    <div className="h-full bg-white flex flex-col overflow-hidden border-t">
-                      <Tabs value={activeBottomTab} onValueChange={(v: any) => setActiveBottomTab(v)} className="h-full flex flex-col">
-                        <TabsList className="flex-shrink-0 justify-between h-12 bg-gray-50 border-b px-6">
-                          <div className="flex items-center gap-4">
-                            <TabsTrigger value="output" className="h-9 px-4 text-sm flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm font-bold uppercase tracking-wide">
-                              <Terminal className="h-4 w-4" /> Console Output
-                            </TabsTrigger>
-                            <TabsTrigger value="testcases" className="h-9 px-4 text-sm flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm font-bold uppercase tracking-wide">
-                              <FlaskConical className="h-4 w-4" /> Test Cases
-                            </TabsTrigger>
-                          </div>
-                          <div className="flex items-center gap-4">
-                            <Button
-                              onClick={() => {
-                                setShowOutput(true);
-                                setActiveBottomTab('output');
-                                runCode();
-                              }}
-                              disabled={isRunning || isSubmitting}
-                              size="default"
-                              variant="outline"
-                              className="h-9 border-gray-300 text-gray-800 text-xs font-bold px-5 uppercase"
-                            >
-                              <Play className="h-4 w-4 mr-2" /> Run
-                            </Button>
-                            <Button
-                              onClick={() => {
-                                setShowOutput(true);
-                                setActiveBottomTab('output');
-                                submitSolution();
-                              }}
-                              disabled={isRunning || isSubmitting}
-                              size="default"
-                              className="h-9 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-5 uppercase"
-                            >
-                              <Send className="h-4 w-4 mr-2" /> Submit
-                            </Button>
-                            <div className="w-px h-6 bg-gray-200 mx-2" />
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => setShowOutput(false)}
-                              className="h-9 w-9 text-gray-400 hover:text-gray-900 hover:bg-gray-100"
-                            >
-                              <X className="h-5 w-5" />
-                            </Button>
-                          </div>
-                        </TabsList>
-                        <TabsContent value="output" className="flex-1 overflow-auto p-6 m-0">
-                          <div className="max-w-5xl mx-auto space-y-8 pb-12">
-                            {executionMetrics && (
-                              <div>
-                                <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                                  <Zap className="h-4 w-4 text-amber-500" />
-                                  Execution Metrics
-                                </h4>
-                                <div className="grid grid-cols-4 gap-4">
-                                  {executionMetrics.execution_time !== undefined && (
-                                    <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100 shadow-sm">
-                                      <div className="text-xs font-medium text-blue-600 uppercase mb-1">Time</div>
-                                      <div className="text-xl font-bold text-gray-900">{typeof executionMetrics.execution_time === 'number' ? executionMetrics.execution_time.toFixed(4) : executionMetrics.execution_time} ms</div>
-                                    </div>
-                                  )}
-                                  {executionMetrics.memory_usage !== undefined && (
-                                    <div className="bg-purple-50/50 p-4 rounded-xl border border-purple-100 shadow-sm">
-                                      <div className="text-xs font-medium text-purple-600 uppercase mb-1">Memory</div>
-                                      <div className="text-xl font-bold text-gray-900">{(executionMetrics.memory_usage / 1024).toFixed(4)} KB</div>
-                                    </div>
-                                  )}
-                                  {executionMetrics.status && (
-                                    <div className={`p-4 rounded-xl border shadow-sm ${executionMetrics.status === 'completed'
-                                      ? 'bg-green-50/50 border-green-100'
-                                      : 'bg-amber-50/50 border-amber-100'
-                                      }`}>
-                                      <div className={`text-xs font-medium uppercase mb-1 ${executionMetrics.status === 'completed' ? 'text-green-600' : 'text-amber-600'}`}>Status</div>
-                                      <div className={`text-xl font-bold capitalize ${executionMetrics.status === 'completed' ? 'text-green-900' : 'text-amber-900'}`}>{executionMetrics.status}</div>
-                                    </div>
-                                  )}
-                                  {executionMetrics.plagiarism_score !== undefined && (
-                                    <div className={`p-4 rounded-xl border shadow-sm ${executionMetrics.plagiarism_score > 0.7
-                                      ? 'bg-red-50/50 border-red-100'
-                                      : 'bg-teal-50/50 border-teal-100'
-                                      }`}>
-                                      <div className={`text-xs font-medium uppercase mb-1 ${executionMetrics.plagiarism_score > 0.7 ? 'text-red-600' : 'text-teal-600'}`}>Plagiarism</div>
-                                      <div className="text-xl font-bold text-gray-900">
-                                        {(executionMetrics.plagiarism_score * 100).toFixed(0)}%
-                                        <span className={`text-xs font-medium ml-2 ${executionMetrics.plagiarism_score > 0.7 ? 'text-red-500' : 'text-teal-500'}`}>
-                                          {executionMetrics.plagiarism_score > 0.7 ? 'Flagged' : 'Clear'}
-                                        </span>
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-
-                              </div>
-                            )}
-
-                            {testResults && Array.isArray(testResults.results) && (
-                              <div>
-                                <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                                  <CheckCircle2 className="h-4 w-4 text-gray-600" />
-                                  Test Results ({testResults.passed}/{testResults.total})
-                                </h4>
-                                <div className="grid grid-cols-1 gap-4">
-                                  {testResults.results.map((result: any, idx: number) => (
-                                    <div key={idx} className={`border rounded-xl overflow-hidden shadow-sm ${result.passed ? 'border-green-100 bg-green-50/20' : 'border-red-100 bg-red-50/20'}`}>
-                                      <div className={`px-4 py-2 border-b flex justify-between items-center ${result.passed ? 'bg-green-50/50 border-green-100' : 'bg-red-50/50 border-red-100'}`}>
-                                        <div className="flex items-center gap-2">
-                                          {result.passed ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <XCircle className="h-4 w-4 text-red-500" />}
-                                          <span className="font-bold text-sm">Case #{idx + 1}</span>
-                                        </div>
-                                        <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${result.passed ? 'bg-green-200 text-green-700' : 'bg-red-200 text-red-700'}`}>
-                                          {result.passed ? 'Passed' : 'Failed'}
-                                        </span>
-                                      </div>
-                                      <div className="p-4 grid grid-cols-2 gap-4 bg-white">
-                                        <div className="space-y-1">
-                                          <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Input</div>
-                                          <pre className="text-xs bg-white p-2 border rounded font-mono text-gray-700 overflow-x-auto shadow-inner">{result.input}</pre>
-                                        </div>
-                                        <div className="space-y-1">
-                                          <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Expected</div>
-                                          <pre className="text-xs bg-white p-2 border rounded font-mono text-gray-700 overflow-x-auto shadow-inner">{result.expected_output}</pre>
-                                        </div>
-                                        <div className="space-y-1 col-span-2">
-                                          <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Actual Output</div>
-                                          <pre className={`text-xs p-2 border rounded font-mono overflow-x-auto shadow-inner ${result.passed
-                                            ? 'bg-white text-gray-700'
-                                            : 'bg-red-50/30 border-red-100 text-red-700'
-                                            }`}>
-                                            {result.actual_output}
-                                          </pre>
-                                        </div>
-
-                                        {/* Error Message (only if present) */}
-                                        {result.error_message && result.error_message !== 'N/A' && (
-                                          <div className="col-span-2">
-                                            <div className="text-xs font-medium text-red-500 uppercase tracking-wide mb-1.5 flex items-center gap-1">
-                                              <span className="w-1.5 h-1.5 rounded-full bg-red-400"></span>
-                                              Error Message
-                                            </div>
-                                            <pre className="bg-red-50 p-3 rounded-lg text-sm whitespace-pre-wrap overflow-x-auto border border-red-200 font-mono text-red-700">
-                                              {result.error_message}
-                                            </pre>
-                                          </div>
-                                        )}
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </TabsContent>
-                        <TabsContent value="testcases" className="flex-1 overflow-auto p-6 m-0">
-                          <div className="max-w-5xl mx-auto">
-                            <CustomTestCaseManager
-                              customTestCases={customTestCases}
-                              onTestCasesChange={setCustomTestCases}
-                            />
-                          </div>
-                        </TabsContent>
-                      </Tabs>
-                    </div>
-                  </ResizablePanel>
-                )}
-              </ResizablePanelGroup>
-
-              {/* Minimal Console Bar for Fullscreen when collapsed */}
-              {!showOutput && (
-                <div className="flex-shrink-0 h-14 bg-gray-50 border-t flex items-center justify-between px-10 shadow-inner">
-                  <Button
-                    variant="ghost"
-                    className="h-10 text-sm font-bold text-gray-500 flex items-center gap-3 hover:bg-gray-100 uppercase tracking-widest"
-                    onClick={() => {
-                      setShowOutput(true);
-                      setActiveBottomTab('output');
-                    }}
-                  >
-                    <Terminal className="h-5 w-5" />
-                    Console Output
-                  </Button>
-                  <div className="flex items-center gap-6">
-                    <Button
-                      onClick={() => {
-                        setShowOutput(true);
-                        setActiveBottomTab('testcases');
-                      }}
-                      variant="ghost"
-                      className="h-10 text-sm font-bold text-gray-500 flex items-center gap-3 hover:bg-gray-100 uppercase tracking-widest"
-                    >
-                      <FlaskConical className="h-5 w-5" />
-                      Test Cases
-                    </Button>
-                    <div className="w-px h-8 bg-gray-200 mx-2" />
-                    <Button
-                      onClick={() => {
-                        setShowOutput(true);
-                        setActiveBottomTab('output');
-                        runCode();
-                      }}
-                      disabled={isRunning || isSubmitting}
-                      size="default"
-                      variant="outline"
-                      className="h-10 border-gray-300 text-sm font-bold px-8 uppercase text-gray-800 hover:bg-white"
-                    >
-                      <Play className="h-5 w-5 mr-2" /> Run
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        setShowOutput(true);
-                        setActiveBottomTab('output');
-                        submitSolution();
-                      }}
-                      disabled={isRunning || isSubmitting}
-                      size="default"
-                      className="h-10 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold px-8 uppercase shadow-lg transition-all active:scale-95"
-                    >
-                      <Send className="h-5 w-5 mr-2" /> Submit
-                    </Button>
-                  </div>
-                </div>
-              )}
+      {/* 3) Fullscreen editor mode */}
+      {isEditorFullscreen && (
+        <div className={`${isEmbedded ? 'absolute inset-0 z-10' : 'fixed inset-0 z-[9999]'} bg-white flex flex-col overflow-hidden`}>
+          {/* Fullscreen Header - Hidden if embedded since the page has its own header */}
+          {!isEmbedded && (
+            <div className="bg-white border-b border-gray-200 px-6 h-16 flex items-center justify-between shadow-md shrink-0 relative z-[50]">
+              <div className="flex items-center gap-4 min-w-0 flex-1">
+                <h2 className="text-xl font-bold text-gray-900 truncate">{problem.title}</h2>
+                <Badge className={`px-3 py-1 rounded shrink-0 hidden md:inline-flex ${difficultyBadgeClass}`}>
+                  {problem.difficulty}
+                </Badge>
+              </div>
             </div>
-          </ResizablePanel>
+          )}
 
-          {/* AI Chat Sidebar in Fullscreen */}
-          {showAiChat && (
-            <>
-              <ResizableHandle className="w-1.5 bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors">
-                <div className="flex flex-col gap-1">
-                  <span className="w-1 h-1 bg-gray-400 rounded-full" />
-                  <span className="w-1 h-1 bg-gray-400 rounded-full" />
-                </div>
-              </ResizableHandle>
-              <ResizablePanel defaultSize={30} minSize={20}>
-                <div className="h-full bg-white border-l border-gray-100 overflow-hidden">
-                  <AIChatContainer
-                    className="w-full h-full"
-                    contextGetter={getProblemContext}
-                    welcomeMessage="I'm active in fullscreen mode! Ask any questions about the problem or your code."
-                    persistenceKey={chatSessionId}
-                    chatTitle={`${problem.title} - AI Buddy`}
-                    onNewChat={() => setChatSessionId(`chat-${problem.id}-${crypto.randomUUID()}`)}
-                  />
+          <div className="flex-1 flex flex-col overflow-hidden h-full">
+            {/* Fullscreen Resizable Panels */}
+            <ResizablePanelGroup direction="horizontal" className="flex-1 overflow-hidden">
+              {/* Main Area (Editor + Output) */}
+              <ResizablePanel defaultSize={showAiChat ? 70 : 100} minSize={30}>
+                <div className="h-full flex flex-col overflow-hidden">
+                  <ResizablePanelGroup direction="vertical" className="flex-1 overflow-hidden">
+                    {/* Editor Panel */}
+                    <ResizablePanel defaultSize={showOutput ? 60 : 100} minSize={30}>
+                      <div className="h-full bg-white">
+                        <CodeEditor
+                          value={code}
+                          onChange={setCode}
+                          language={language}
+                          onLanguageChange={setLanguage}
+                          height="100%"
+                          onShowExamples={() => setShowExamples(true)}
+                          onToggleAiChat={handleToggleAiChat}
+                          onFullscreenChange={setIsEditorFullscreen}
+                          isAiChatOpen={showAiChat}
+                          isFullscreen={true}
+                        />
+                      </div>
+                    </ResizablePanel>
+
+                    {/* Divider */}
+                    {showOutput && (
+                      <ResizableHandle className="h-2 bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors">
+                        <div className="w-12 h-1 bg-gray-300 rounded-full" />
+                      </ResizableHandle>
+                    )}
+
+                    {/* Output Panel */}
+                    {showOutput && (
+                      <ResizablePanel defaultSize={40} minSize={20}>
+                        <div className="h-full bg-white flex flex-col overflow-hidden border-t">
+                          <Tabs value={activeBottomTab} onValueChange={(v: any) => setActiveBottomTab(v)} className="h-full flex flex-col">
+                            <TabsList className="flex-shrink-0 justify-between h-12 bg-gray-50 border-b px-6">
+                              <div className="flex items-center gap-4">
+                                <TabsTrigger value="output" className="h-9 px-4 text-sm flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm font-bold uppercase tracking-wide">
+                                  <Terminal className="h-4 w-4" /> Console Output
+                                </TabsTrigger>
+                                <TabsTrigger value="testcases" className="h-9 px-4 text-sm flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm font-bold uppercase tracking-wide">
+                                  <FlaskConical className="h-4 w-4" /> Test Cases
+                                </TabsTrigger>
+                              </div>
+                              <div className="flex items-center gap-4">
+                                <Button
+                                  onClick={() => {
+                                    setShowOutput(true);
+                                    setActiveBottomTab('output');
+                                    runCode();
+                                  }}
+                                  disabled={isRunning || isSubmitting}
+                                  size="default"
+                                  variant="outline"
+                                  className="h-9 border-gray-300 text-gray-800 text-xs font-bold px-5 uppercase"
+                                >
+                                  <Play className="h-4 w-4 mr-2" /> Run
+                                </Button>
+                                <Button
+                                  onClick={() => {
+                                    setShowOutput(true);
+                                    setActiveBottomTab('output');
+                                    submitSolution();
+                                  }}
+                                  disabled={isRunning || isSubmitting}
+                                  size="default"
+                                  className="h-9 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-5 uppercase"
+                                >
+                                  <Send className="h-4 w-4 mr-2" /> Submit
+                                </Button>
+                                <div className="w-px h-6 bg-gray-200 mx-2" />
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => setShowOutput(false)}
+                                  className="h-9 w-9 text-gray-400 hover:text-gray-900 hover:bg-gray-100"
+                                >
+                                  <X className="h-5 w-5" />
+                                </Button>
+                              </div>
+                            </TabsList>
+                            <TabsContent value="output" className="flex-1 overflow-auto p-6 m-0">
+                              <div className="max-w-5xl mx-auto space-y-8 pb-12">
+                                {executionMetrics && (
+                                  <div>
+                                    <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                      <Zap className="h-4 w-4 text-amber-500" />
+                                      Execution Metrics
+                                    </h4>
+                                    <div className="grid grid-cols-4 gap-4">
+                                      {executionMetrics.execution_time !== undefined && (
+                                        <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100 shadow-sm">
+                                          <div className="text-xs font-medium text-blue-600 uppercase mb-1">Time</div>
+                                          <div className="text-xl font-bold text-gray-900">{typeof executionMetrics.execution_time === 'number' ? executionMetrics.execution_time.toFixed(4) : executionMetrics.execution_time} ms</div>
+                                        </div>
+                                      )}
+                                      {executionMetrics.memory_usage !== undefined && (
+                                        <div className="bg-purple-50/50 p-4 rounded-xl border border-purple-100 shadow-sm">
+                                          <div className="text-xs font-medium text-purple-600 uppercase mb-1">Memory</div>
+                                          <div className="text-xl font-bold text-gray-900">{(executionMetrics.memory_usage / 1024).toFixed(4)} KB</div>
+                                        </div>
+                                      )}
+                                      {executionMetrics.status && (
+                                        <div className={`p-4 rounded-xl border shadow-sm ${executionMetrics.status === 'completed'
+                                          ? 'bg-green-50/50 border-green-100'
+                                          : 'bg-amber-50/50 border-amber-100'
+                                          }`}>
+                                          <div className={`text-xs font-medium uppercase mb-1 ${executionMetrics.status === 'completed' ? 'text-green-600' : 'text-amber-600'}`}>Status</div>
+                                          <div className={`text-xl font-bold capitalize ${executionMetrics.status === 'completed' ? 'text-green-900' : 'text-amber-900'}`}>{executionMetrics.status}</div>
+                                        </div>
+                                      )}
+                                      {executionMetrics.plagiarism_score !== undefined && (
+                                        <div className={`p-4 rounded-xl border shadow-sm ${executionMetrics.plagiarism_score > 0.7
+                                          ? 'bg-red-50/50 border-red-100'
+                                          : 'bg-teal-50/50 border-teal-100'
+                                          }`}>
+                                          <div className={`text-xs font-medium uppercase mb-1 ${executionMetrics.plagiarism_score > 0.7 ? 'text-red-600' : 'text-teal-600'}`}>Plagiarism</div>
+                                          <div className="text-xl font-bold text-gray-900">
+                                            {(executionMetrics.plagiarism_score * 100).toFixed(0)}%
+                                            <span className={`text-xs font-medium ml-2 ${executionMetrics.plagiarism_score > 0.7 ? 'text-red-500' : 'text-teal-500'}`}>
+                                              {executionMetrics.plagiarism_score > 0.7 ? 'Flagged' : 'Clear'}
+                                            </span>
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+
+                                  </div>
+                                )}
+
+                                {testResults && Array.isArray(testResults.results) && (
+                                  <div>
+                                    <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                      <CheckCircle2 className="h-4 w-4 text-gray-600" />
+                                      Test Results ({testResults.passed}/{testResults.total})
+                                    </h4>
+                                    <div className="grid grid-cols-1 gap-4">
+                                      {testResults.results.map((result: any, idx: number) => (
+                                        <div key={idx} className={`border rounded-xl overflow-hidden shadow-sm ${result.passed ? 'border-green-100 bg-green-50/20' : 'border-red-100 bg-red-50/20'}`}>
+                                          <div className={`px-4 py-2 border-b flex justify-between items-center ${result.passed ? 'bg-green-50/50 border-green-100' : 'bg-red-50/50 border-red-100'}`}>
+                                            <div className="flex items-center gap-2">
+                                              {result.passed ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <XCircle className="h-4 w-4 text-red-500" />}
+                                              <span className="font-bold text-sm">Case #{idx + 1}</span>
+                                            </div>
+                                            <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${result.passed ? 'bg-green-200 text-green-700' : 'bg-red-200 text-red-700'}`}>
+                                              {result.passed ? 'Passed' : 'Failed'}
+                                            </span>
+                                          </div>
+                                          <div className="p-4 grid grid-cols-2 gap-4 bg-white">
+                                            <div className="space-y-1">
+                                              <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Input</div>
+                                              <pre className="text-xs bg-white p-2 border rounded font-mono text-gray-700 overflow-x-auto shadow-inner">{result.input}</pre>
+                                            </div>
+                                            <div className="space-y-1">
+                                              <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Expected</div>
+                                              <pre className="text-xs bg-white p-2 border rounded font-mono text-gray-700 overflow-x-auto shadow-inner">{result.expected_output}</pre>
+                                            </div>
+                                            <div className="space-y-1 col-span-2">
+                                              <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Actual Output</div>
+                                              <pre className={`text-xs p-2 border rounded font-mono overflow-x-auto shadow-inner ${result.passed
+                                                ? 'bg-white text-gray-700'
+                                                : 'bg-red-50/30 border-red-100 text-red-700'
+                                                }`}>
+                                                {result.actual_output}
+                                              </pre>
+                                            </div>
+
+                                            {/* Error Message (only if present) */}
+                                            {result.error_message && result.error_message !== 'N/A' && (
+                                              <div className="col-span-2">
+                                                <div className="text-xs font-medium text-red-500 uppercase tracking-wide mb-1.5 flex items-center gap-1">
+                                                  <span className="w-1.5 h-1.5 rounded-full bg-red-400"></span>
+                                                  Error Message
+                                                </div>
+                                                <pre className="bg-red-50 p-3 rounded-lg text-sm whitespace-pre-wrap overflow-x-auto border border-red-200 font-mono text-red-700">
+                                                  {result.error_message}
+                                                </pre>
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </TabsContent>
+                            <TabsContent value="testcases" className="flex-1 overflow-auto p-6 m-0">
+                              <div className="max-w-5xl mx-auto">
+                                <CustomTestCaseManager
+                                  customTestCases={customTestCases}
+                                  onTestCasesChange={setCustomTestCases}
+                                />
+                              </div>
+                            </TabsContent>
+                          </Tabs>
+                        </div>
+                      </ResizablePanel>
+                    )}
+                  </ResizablePanelGroup>
+
+                  {/* Minimal Console Bar for Fullscreen when collapsed */}
+                  {!showOutput && (
+                    <div className="flex-shrink-0 h-14 bg-gray-50 border-t flex items-center justify-between px-10 shadow-inner">
+                      <Button
+                        variant="ghost"
+                        className="h-10 text-sm font-bold text-gray-500 flex items-center gap-3 hover:bg-gray-100 uppercase tracking-widest"
+                        onClick={() => {
+                          setShowOutput(true);
+                          setActiveBottomTab('output');
+                        }}
+                      >
+                        <Terminal className="h-5 w-5" />
+                        Console Output
+                      </Button>
+                      <div className="flex items-center gap-6">
+                        <Button
+                          onClick={() => {
+                            setShowOutput(true);
+                            setActiveBottomTab('testcases');
+                          }}
+                          variant="ghost"
+                          className="h-10 text-sm font-bold text-gray-500 flex items-center gap-3 hover:bg-gray-100 uppercase tracking-widest"
+                        >
+                          <FlaskConical className="h-5 w-5" />
+                          Test Cases
+                        </Button>
+                        <div className="w-px h-8 bg-gray-200 mx-2" />
+                        <Button
+                          onClick={() => {
+                            setShowOutput(true);
+                            setActiveBottomTab('output');
+                            runCode();
+                          }}
+                          disabled={isRunning || isSubmitting}
+                          size="default"
+                          variant="outline"
+                          className="h-10 border-gray-300 text-sm font-bold px-8 uppercase text-gray-800 hover:bg-white"
+                        >
+                          <Play className="h-5 w-5 mr-2" /> Run
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            setShowOutput(true);
+                            setActiveBottomTab('output');
+                            submitSolution();
+                          }}
+                          disabled={isRunning || isSubmitting}
+                          size="default"
+                          className="h-10 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold px-8 uppercase shadow-lg transition-all active:scale-95"
+                        >
+                          <Send className="h-5 w-5 mr-2" /> Submit
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </ResizablePanel>
-            </>
-          )}
-        </ResizablePanelGroup>
-      </div>
-    </div>
-  )}
+
+              {/* AI Chat Sidebar in Fullscreen */}
+              {showAiChat && (
+                <>
+                  <ResizableHandle className="w-1.5 bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors">
+                    <div className="flex flex-col gap-1">
+                      <span className="w-1 h-1 bg-gray-400 rounded-full" />
+                      <span className="w-1 h-1 bg-gray-400 rounded-full" />
+                    </div>
+                  </ResizableHandle>
+                  <ResizablePanel defaultSize={30} minSize={20}>
+                    <div className="h-full bg-white border-l border-gray-100 overflow-hidden">
+                      <AIChatContainer
+                        className="w-full h-full"
+                        contextGetter={getProblemContext}
+                        welcomeMessage="I'm active in fullscreen mode! Ask any questions about the problem or your code."
+                        persistenceKey={chatSessionId}
+                        chatTitle={`${problem.title} - AI Buddy`}
+                        onNewChat={() => setChatSessionId(`chat-${problem.id}-${crypto.randomUUID()}`)}
+                      />
+                    </div>
+                  </ResizablePanel>
+                </>
+              )}
+            </ResizablePanelGroup>
+          </div>
+        </div>
+      )}
 
       {/* Example Code Gallery */}
       {showExamples && (

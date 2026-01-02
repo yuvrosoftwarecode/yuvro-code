@@ -1,6 +1,6 @@
 import React from "react";
 import CourseCard from "./CourseCard";
-import type { Course } from "../LearnCertify/types";
+import type { Course } from "../Learn/types";
 
 interface Props {
   title: string;

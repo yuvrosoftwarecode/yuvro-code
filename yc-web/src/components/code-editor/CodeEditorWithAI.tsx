@@ -8,7 +8,7 @@ import { ChevronLeft } from 'lucide-react';
 import CodeEditor, { CodeEditorHandle } from './CodeEditor';
 import type { Course, Topic, CodingProblem } from '@/pages/student/CodePractice';
 import { ResizablePanel, ResizablePanelGroup, ResizableHandle } from '@/components/ui/resizable';
-import AIChatContainer from '@/components/student/LearnCertify/AIChatWidget/AIChatContainer';
+import AIChatContainer from '@/components/student/Learn/AIChatWidget/AIChatContainer';
 import codeEditorService from '@/services/codeEditorService';
 
 interface CodeEditorWithAIProps {

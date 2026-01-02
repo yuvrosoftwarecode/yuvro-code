@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import Navigation from "@/components/common/Navigation";
+import restApiAuthUtil from "@/utils/RestApiAuthUtil";
 
 import profileService, {
   Profile as ProfileType,
@@ -202,10 +203,22 @@ const Profile = () => {
   const [editingCertification, setEditingCertification] =
     useState<Certification | null>(null);
 
+  const [gamificationStats, setGamificationStats] = useState<any>(null);
+
   // Fetch profile
   useEffect(() => {
     loadProfile();
+    loadGamificationStats();
   }, []);
+
+  const loadGamificationStats = async () => {
+    try {
+      const stats = await restApiAuthUtil.get("/course/student-course-progress/stats/");
+      setGamificationStats(stats);
+    } catch (err) {
+      console.error("Failed to load gamification stats", err);
+    }
+  };
 
   const loadProfile = async () => {
     try {

@@ -229,7 +229,7 @@ function App() {
                 }
               />
               <Route
-                path="/student/code-practice/courses/:courseId/topics/:topicId/questions/:problemId"
+                path="/student/code-practice/courses/:courseId/topics/:topicId/questions/:questionId"
                 element={
                   <ProtectedRoute allowedRoles={["student"]}>
                     <CodePractice />

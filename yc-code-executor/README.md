@@ -1,317 +1,216 @@
-# Code Executor FastAPI Service
+# Code Executor Tests
 
-A high-performance, lightweight FastAPI service for executing code in multiple programming languages with built-in test case validation and plagiarism detection.
+This directory contains comprehensive tests for the code executor service, specifically testing the "maximum element in array" problem with multiple programming languages and plagiarism detection.
 
-## Features
+## Test Coverage
 
-### 🚀 Multi-Language Support
-- **Python** - Direct interpretation with Python 3.x
-- **JavaScript** - Node.js runtime execution
-- **Java** - Compile and run with OpenJDK
-- **C++** - GCC compilation and execution
-- **C** - GCC compilation and execution
+### Languages Tested
+- **Python**: Using built-in `max()` function and manual iteration
+- **C**: Manual iteration with malloc/free memory management
+- **C++**: Using STL `max_element` algorithm
+- **Java**: Manual iteration with Scanner input
 
-### ⚡ Performance Optimized
-- Asynchronous code execution
-- Configurable timeouts and resource limits
-- Memory usage monitoring
-- Fast compilation and execution
+### Test Categories
+- **Basic Test Cases**: Simple arrays with positive numbers
+- **Advanced Test Cases**: Negative numbers, larger arrays, edge cases
+- **Custom Test Cases**: Hidden test cases for final evaluation
+- **Plagiarism Detection**: Tests similarity detection between submissions
+- **Error Handling**: Compilation errors and runtime failures
 
-### 🧪 Test Case Management
-- Run multiple test cases against code
-- Compare expected vs actual output
-- Detailed test results with timing
-- Weighted test case support
+## Running Tests
 
-### 🔍 Plagiarism Detection
-- Code similarity analysis
-- Normalized code comparison
-- Configurable similarity thresholds
-- Automatic flagging of suspicious submissions
+### Prerequisites
+1. Start the code executor service:
+   ```bash
+   cd yc-code-executor
+   python main.py
+   ```
 
-### 🔒 Security Features
-- Isolated execution environment
-- Resource limits (CPU, memory, time)
-- Input sanitization
-- Secure temporary file handling
+2. Install test dependencies:
+   ```bash
+   pip install -r requirements_test.txt
+   ```
 
-## API Endpoints
-
-### Health Check
+### Option 1: Manual Test Runner (Recommended)
+```bash
+python run_tests.py
 ```
-GET /health
-```
-Returns service health status.
 
-### Supported Languages
-```
-GET /supported-languages
-```
-Returns list of supported programming languages and their configurations.
+This will run all tests and provide detailed output including:
+- Execution results for each language
+- Plagiarism detection scores
+- Performance metrics (runtime, memory)
+- Error handling verification
 
-### Execute Code
+### Option 2: Pytest
+```bash
+pytest tests/test_max_element.py -v
 ```
-POST /execute
-```
-Execute code and return basic results.
 
-**Request Body:**
+## Test Cases
+
+### Basic Test Cases
 ```json
-{
-  "code": "print('Hello World')",
-  "language": "python",
-  "input": "",
-  "timeout": 10
-}
+[
+  {"input": "[1, 3, 2, 5, 4]", "expected_output": "5", "weight": 1},
+  {"input": "[10, 20, 30, 5]", "expected_output": "30", "weight": 1},
+  {"input": "[7]", "expected_output": "7", "weight": 1}
+]
 ```
 
-**Response:**
+### Advanced Test Cases
 ```json
-{
-  "success": true,
-  "output": "Hello World",
-  "error": "",
-  "execution_time": 0.123,
-  "memory_usage": 12.5,
-  "status": "completed"
-}
+[
+  {"input": "[-1, -5, -3, -2]", "expected_output": "-1", "weight": 2},
+  {"input": "[100, 200, 150, 300, 250]", "expected_output": "300", "weight": 2},
+  {"input": "[0, 0, 0, 1, 0]", "expected_output": "1", "weight": 3}
+]
 ```
 
-### Execute with Test Cases
-```
-POST /execute-with-tests
-```
-Execute code against multiple test cases.
-
-**Request Body:**
+### Custom Test Cases
 ```json
-{
-  "code": "n = int(input())\nprint(n * 2)",
-  "language": "python",
-  "test_cases": [
-    {
-      "input": "5",
-      "expected_output": "10",
-      "weight": 1
-    }
-  ],
-  "timeout": 10
-}
+[
+  {"input": "[999, 1000, 998]", "expected_output": "1000", "weight": 1}
+]
 ```
 
-**Response:**
-```json
-{
-  "execution_result": {
-    "success": true,
-    "output": "10",
-    "error": "",
-    "execution_time": 0.045,
-    "memory_usage": 8.2,
-    "status": "completed"
-  },
-  "test_results": [
-    {
-      "passed": true,
-      "input": "5",
-      "expected_output": "10",
-      "actual_output": "10",
-      "error": "",
-      "execution_time": 0.045
-    }
-  ],
-  "total_passed": 1,
-  "total_tests": 1,
-  "plagiarism_score": 0.0
-}
+## Expected Results
+
+### Successful Execution
+- **Status**: `success`
+- **Score**: `100.0%` (all test cases pass)
+- **Test Results**: All test cases marked as `passed`
+- **Plagiarism**: Varies based on peer submissions
+
+### Plagiarism Detection
+- **Low Similarity** (< 0.5): Different algorithmic approaches
+- **Medium Similarity** (0.5-0.8): Similar structure, different variable names
+- **High Similarity** (> 0.8): Nearly identical code, flagged for review
+
+### Performance Expectations
+- **Python**: ~10-50ms execution time
+- **C/C++**: ~5-30ms execution time (after compilation)
+- **Java**: ~50-200ms execution time (including JVM startup)
+
+## Sample Output
+
 ```
+🚀 Starting Code Executor Tests
+==================================================
+✅ Code executor service is running
 
-### Plagiarism Check
+🧪 Testing PYTHON solution...
+✅ PYTHON test PASSED!
+   Status: success
+   Passed tests: 7/7
+   Score: 100.0%
+   Runtime: 25ms
+   Memory: 512KB
+   Plagiarism flagged: False
+   Max similarity: 0.65
+
+🧪 Testing C solution...
+✅ C test PASSED!
+   Status: success
+   Passed tests: 7/7
+   Score: 100.0%
+   Runtime: 15ms
+   Memory: 640KB
+   Plagiarism flagged: True
+   Max similarity: 0.85
+   Matches found: 1
+
+==================================================
+📊 TEST SUMMARY
+==================================================
+PYTHON               ✅ PASS
+C                    ✅ PASS
+CPP                  ✅ PASS
+JAVA                 ✅ PASS
+PLAGIARISM           ✅ PASS
+COMPILATION_ERROR    ✅ PASS
+--------------------------------------------------
+TOTAL: 6/6 tests passed
+🎉 All tests passed!
 ```
-POST /plagiarism-check
-```
-Check similarity between two code snippets.
-
-**Request Body:**
-```json
-{
-  "code1": "def hello(): return 'Hello'",
-  "code2": "def greet(): return 'Hello'",
-  "language": "python"
-}
-```
-
-**Response:**
-```json
-{
-  "similarity_score": 0.85,
-  "flagged": true
-}
-```
-
-## Installation & Setup
-
-### Local Development
-
-1. **Install Dependencies**
-```bash
-cd yc-code-executor
-pip install -r requirements.txt
-```
-
-2. **Install Language Runtimes**
-```bash
-# Ubuntu/Debian
-sudo apt-get update
-sudo apt-get install -y python3 nodejs npm default-jdk gcc g++
-
-# macOS
-brew install python3 node openjdk gcc
-```
-
-3. **Run the Service**
-```bash
-python run_server.py
-```
-
-The service will be available at `http://localhost:8002`
-
-### Docker Deployment
-
-1. **Build the Image**
-```bash
-docker build -t yc-code-executor .
-```
-
-2. **Run the Container**
-```bash
-docker run -p 8002:8002 yc-code-executor
-```
-
-### Docker Compose
-
-The service is included in the main docker-compose.yml:
-
-```bash
-docker-compose up code-executor
-```
-
-## Testing
-
-Run the test script to verify all functionality:
-
-```bash
-python test_service.py
-```
-
-This will test:
-- Health check endpoint
-- Language support
-- Python code execution
-- Java code execution
-- Test case validation
-- Plagiarism detection
-
-## Configuration
-
-### Environment Variables
-
-- `SERVICE_PORT` - Port to run the service (default: 8002)
-- `DEBUG` - Enable debug mode (default: false)
-- `DEFAULT_TIMEOUT` - Default execution timeout in seconds (default: 10)
-- `MAX_TIMEOUT` - Maximum allowed timeout (default: 30)
-- `MAX_MEMORY_MB` - Maximum memory usage in MB (default: 256)
-
-### Language Timeouts
-
-- Python/JavaScript: 10 seconds
-- Java/C++/C: 15 seconds (includes compilation time)
-
-## Integration
-
-### Frontend Integration
-
-The service integrates seamlessly with the React frontend:
-
-```typescript
-const response = await fetch('http://localhost:8002/execute-with-tests', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    code: userCode,
-    language: selectedLanguage,
-    test_cases: testCases,
-    input: "",
-    timeout: 15
-  })
-});
-```
-
-### Backend Integration
-
-Can be used alongside the Django backend for:
-- Storing submission results
-- User management
-- Course integration
-- Historical data
-
-## Performance
-
-### Benchmarks
-- Python execution: ~50ms average
-- JavaScript execution: ~60ms average  
-- Java compilation + execution: ~800ms average
-- C++ compilation + execution: ~400ms average
-- C compilation + execution: ~300ms average
-
-### Scalability
-- Handles concurrent executions
-- Automatic resource cleanup
-- Memory-efficient temporary file handling
-- Asynchronous processing
-
-## Security Considerations
-
-1. **Isolation**: Each code execution runs in a separate process
-2. **Timeouts**: Prevents infinite loops and long-running processes
-3. **Resource Limits**: Memory and CPU usage monitoring
-4. **Input Validation**: All inputs are validated and sanitized
-5. **Temporary Files**: Secure creation and cleanup of temporary files
 
 ## Troubleshooting
 
-### Common Issues
+### Service Not Running
+```
+❌ Cannot connect to code executor service!
+   Error: ConnectError
+   Please start the service with: python main.py
+```
+**Solution**: Start the code executor service first.
 
-1. **Language Runtime Not Found**
-   - Ensure all required runtimes are installed
-   - Check PATH environment variable
+### Compilation Errors
+If C/C++/Java tests fail, ensure you have the required compilers:
+- **C**: `gcc` compiler
+- **C++**: `g++` compiler  
+- **Java**: `javac` and `java` (JDK 8+)
 
-2. **Permission Denied**
-   - Verify write permissions for temporary directories
-   - Check executable permissions for compiled binaries
+### Timeout Issues
+If tests timeout, increase the timeout values in the test configuration or check system performance.
 
-3. **Timeout Errors**
-   - Increase timeout values for complex code
-   - Optimize code for better performance
+## Adding New Test Cases
 
-4. **Memory Issues**
-   - Monitor system memory usage
-   - Adjust MAX_MEMORY_MB setting
+To add new test cases, modify the `create_test_cases()` function in `run_tests.py`:
 
-### Logs
-
-Enable debug mode to see detailed execution logs:
-```bash
-DEBUG=true python run_server.py
+```python
+def create_test_cases():
+    return {
+        "basic": [
+            {"input": "[your_input]", "expected_output": "expected", "weight": 1}
+        ],
+        "advanced": [
+            {"input": "[complex_input]", "expected_output": "expected", "weight": 2}
+        ],
+        "custom": [
+            {"input": "[hidden_input]", "expected_output": "expected", "weight": 1}
+        ]
+    }
 ```
 
-## Contributing
+## API Endpoint
 
-1. Fork the repository
-2. Create a feature branch
-3. Add tests for new functionality
-4. Submit a pull request
+The tests use the following endpoint:
+```
+POST /execute-code-with-plagiarism-checks
+```
 
-## License
+Request format:
+```json
+{
+  "code": "solution code",
+  "language": "python|c|cpp|java",
+  "test_cases_basic": [...],
+  "test_cases_advanced": [...],
+  "test_cases_custom": [...],
+  "peer_submissions": [...],
+  "timeout": 10
+}
+```
 
-This project is part of the YC Learning Management System.
+Response format:
+```json
+{
+  "status": "success|failed|error",
+  "language": "python",
+  "test_cases_basic": [...],
+  "test_cases_advanced": [...],
+  "test_cases_custom": [...],
+  "execution_summary": {
+    "runtime_ms": 25,
+    "peak_memory_kb": 512,
+    "passed_test_cases": 7,
+    "total_test_cases": 7,
+    "score_percent": 100.0
+  },
+  "plagiarism_report": {
+    "flagged": false,
+    "max_similarity": 0.65,
+    "matches": []
+  }
+}
+```

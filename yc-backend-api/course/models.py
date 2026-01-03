@@ -265,7 +265,16 @@ class UserCourseProgress(BaseTimestampedModel):
     )
 
     completed_at = models.DateTimeField(null=True, blank=True)
-
+    
+    # Code submission reference for coding questions
+    code_submission = models.ForeignKey(
+        'code_editor.CodeSubmission',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='user_course_progress'
+    )
+    
     class Meta:
         unique_together = ("user", "subtopic")
         ordering = ["-updated_at"]
@@ -574,7 +583,16 @@ class StudentCodePractice(BaseTimestampedModel):
         default=dict, blank=True, help_text="Detailed test case results"
     )
     marks_obtained = models.FloatField(null=True, blank=True)
-
+    
+    # TODO: Add code_submission foreign key after migration
+    # code_submission = models.ForeignKey(
+    #     'code_editor.CodeSubmission',
+    #     on_delete=models.SET_NULL,
+    #     null=True,
+    #     blank=True,
+    #     related_name='student_code_practices'
+    # )
+       
     class Meta:
         ordering = ["-created_at"]
         unique_together = ["user", "question"]

@@ -28,7 +28,7 @@ interface CodeEditorProps {
   onLanguageChange?: (language: string) => void;
   initialLanguage?: string;
   problemTitle?: string;
-  problemId?: string;
+  questionId?: string;
   courseId?: string;
   topicId?: string;
   subtopicId?: string;
@@ -73,7 +73,7 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(({
   onLanguageChange,
   initialLanguage = 'python',
   problemTitle = 'Code Practice',
-  problemId = 'practice',
+  questionId = 'practice',
   courseId,
   topicId,
   subtopicId,
@@ -272,8 +272,12 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(({
     return () => window.removeEventListener('keydown', handler);
   }, [isFullscreen, controlledFullscreen, onFullscreenChange]);
 
+  // Run Code - calls code executor service directly for quick testing
   const runCode = async () => {
-    if (!code.trim()) return toast.error('Please write some code first');
+    if (!code.trim()) {
+      toast.error('Please write some code first');
+      return;
+    }
 
     const basicTestCases = testCases.map((t: any) => ({
       input: typeof t.input === 'string' ? t.input : JSON.stringify(t.input),
@@ -302,6 +306,7 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(({
     setActiveBottomTab('output');
 
     try {
+      // Call code executor service directly (no database storage)
       const res = await codeEditorService.runCode({
         code,
         language,
@@ -322,7 +327,7 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(({
       if (res.status === 'completed') {
         const passed = res.test_results?.passed ?? 0;
         const total = res.test_results?.total ?? 0;
-        toast.success(`Passed ${passed} of ${total} tests`);
+        toast.success(`Code executed: ${passed}/${total} test cases passed`);
       } else {
         toast.error('Code execution failed');
       }
@@ -336,62 +341,42 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(({
     }
   };
 
+  // Submit Solution - calls Django backend with question_id for storage and tracking
   const submitSolution = async () => {
-    if (!code.trim()) return toast.error('Please write some code first');
+    if (!code.trim()) {
+      toast.error('Please write some code first');
+      return;
+    }
+
     setIsSubmitting(true);
+    setOutput('');
+    setTestResults(null);
+    setExecutionMetrics(null);
     setShowOutput(true);
     setActiveBottomTab('output');
 
     try {
-      let res;
+      // Call Django backend code editor submit endpoint
+      const res = await codeEditorService.submitCodeToEditor({
+        code,
+        language,
+        question_id: questionId,
+        question_submission_type: codeSubmissionType || 'practice',
+        test_cases_basic: testCases.map(tc => ({
+          input: typeof tc.input === 'string' ? tc.input : JSON.stringify(tc.input),
+          expected_output: typeof tc.expected_output === 'string' ? tc.expected_output : JSON.stringify(tc.expected_output),
+          weight: tc.weight || 1
+        })),
+        test_cases_advanced: [], // Can be added if needed
+        test_cases_custom: customTestCases.map(tc => ({
+          input: tc.input,
+          expected_output: tc.expected_output,
+          weight: 1
+        })),
+        timeout: 10
+      });
 
-      if (codeSubmissionType === 'learn') {
-        console.log('Learn mode: submitting to student-course-progress');
-
-        res = await codeEditorService.submitSolution({
-          code,
-          language,
-          subtopic_id: subtopicId || undefined,
-          question_id: problemId,
-          course_id: courseId,
-          topic_id: topicId,
-          submissionType: 'learn',
-          test_cases_basic: testCases.map(tc => ({
-            input: typeof tc.input === 'string' ? tc.input : JSON.stringify(tc.input),
-            expected_output: typeof tc.expected_output === 'string' ? tc.expected_output : JSON.stringify(tc.expected_output),
-            weight: tc.weight || 1
-          })),
-          test_cases_custom: customTestCases.map(tc => ({
-            input: tc.input,
-            expected_output: tc.expected_output
-          }))
-        });
-      } else {
-        console.log('Practice mode: submitting to student-code-practices');
-        res = await codeEditorService.submitSolution({
-          code,
-          language,
-          question_id: problemId,
-          course_id: courseId,
-          topic_id: topicId,
-          subtopic_id: subtopicId,
-          submissionType: 'practice',
-          submission_id: submissionId,
-          contest_id: contestId,
-          skill_test_id: skillTestId,
-          mock_interview_id: mockInterviewId,
-          test_cases_basic: testCases.map(tc => ({
-            input: typeof tc.input === 'string' ? tc.input : JSON.stringify(tc.input),
-            expected_output: typeof tc.expected_output === 'string' ? tc.expected_output : JSON.stringify(tc.expected_output),
-            weight: tc.weight || 1
-          })),
-          test_cases_custom: customTestCases.map(tc => ({
-            input: tc.input,
-            expected_output: tc.expected_output
-          }))
-        });
-      }
-
+      setOutput(res.output || res.error_message || '');
       setTestResults(res.test_results ?? null);
       setExecutionMetrics({
         execution_time: res.execution_time,
@@ -412,10 +397,13 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(({
         toast.success('Solution submitted successfully');
       }
 
+      // Call the completion callback if provided
       onSubmissionComplete?.(res);
     } catch (err) {
       console.error('submitSolution error', err);
       toast.error('Error submitting solution');
+      setOutput(typeof err === 'string' ? err : err instanceof Error ? err.message : 'Unknown error');
+      setShowOutput(true);
     } finally {
       setIsSubmitting(false);
     }

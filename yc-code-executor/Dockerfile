@@ -31,5 +31,5 @@ COPY . .
 # Expose port
 EXPOSE 8002
 
-# Run the application
-CMD ["python", "run_server.py"]
+# Run the application with hot reloading in development
+CMD ["python", "main.py"]

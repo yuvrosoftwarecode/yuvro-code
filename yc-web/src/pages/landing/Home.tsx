@@ -35,7 +35,7 @@ const Home: React.FC = () => {
     student: {
       title: "For Students",
       subtitle: "Master your skills and land your dream job",
-      color: "from-blue-600 to-indigo-600",
+      color: "from-cyan-600 to-blue-600",
       icon: BookOpen,
       features: [
         {
@@ -73,7 +73,7 @@ const Home: React.FC = () => {
     recruiter: {
       title: "For Recruiters",
       subtitle: "Find and hire the best talent efficiently",
-      color: "from-purple-600 to-pink-600",
+      color: "from-slate-600 to-gray-600",
       icon: Building2,
       features: [
         {
@@ -123,14 +123,14 @@ const Home: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-6">
           <div className="flex justify-start lg:w-0 lg:flex-1">
-            <span className="text-2xl font-bold text-indigo-600">Yuvro Code</span>
+            <span className="text-2xl font-bold text-cyan-600">Yuvro Code</span>
           </div>
 
           <div className="hidden md:flex items-center justify-end md:flex-1 lg:w-0">
             {isAuthenticated ? (
               <button
                 onClick={handleDashboardClick}
-                className="ml-8 whitespace-nowrap inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
+                className="ml-8 whitespace-nowrap inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-cyan-600 hover:bg-cyan-700 transition-colors"
               >
                 Go to Dashboard
               </button>
@@ -144,7 +144,7 @@ const Home: React.FC = () => {
                 </Link>
                 <Link
                   to="/register"
-                  className="ml-8 whitespace-nowrap inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
+                  className="ml-8 whitespace-nowrap inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-cyan-600 hover:bg-cyan-700 transition-colors"
                 >
                   Sign up
                 </Link>
@@ -155,12 +155,12 @@ const Home: React.FC = () => {
       </div>
 
       {/* Hero Section */}
-      <div className="relative bg-gradient-to-br from-indigo-50 via-white to-purple-50">
+      <div className="relative bg-gradient-to-br from-cyan-50 via-white to-blue-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <div className="text-center">
             <h1 className="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
               <span className="block">Master Coding Skills</span>
-              <span className="block bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+              <span className="block bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent">
                 Land Your Dream Job
               </span>
             </h1>
@@ -173,7 +173,7 @@ const Home: React.FC = () => {
                 <>
                   <Link
                     to="/register"
-                    className="inline-flex items-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
+                    className="inline-flex items-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-cyan-600 hover:bg-cyan-700 transition-colors"
                   >
                     Get Started Free
                     <ArrowRight className="ml-2 w-5 h-5" />
@@ -183,7 +183,7 @@ const Home: React.FC = () => {
                     className="inline-flex items-center px-8 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors"
                   >
                     <Play className="mr-2 w-5 h-5" />
-                    Watch Demo
+                    Learn Courses
                   </Link>
                 </>
               )}
@@ -193,16 +193,16 @@ const Home: React.FC = () => {
       </div>
 
       {/* Stats Section */}
-      <div className="bg-indigo-600">
+      <div className="bg-cyan-600">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {stats.map((stat, index) => (
               <div key={index} className="text-center">
                 <div className="flex justify-center mb-2">
-                  {React.createElement(stat.icon, { className: "w-8 h-8 text-indigo-200" })}
+                  {React.createElement(stat.icon, { className: "w-8 h-8 text-cyan-200" })}
                 </div>
                 <div className="text-2xl font-bold text-white">{stat.value}</div>
-                <div className="text-indigo-200">{stat.label}</div>
+                <div className="text-cyan-200">{stat.label}</div>
               </div>
             ))}
           </div>
@@ -286,8 +286,8 @@ const Home: React.FC = () => {
           </div>
           
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center p-8 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50">
-              <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
+            <div className="text-center p-8 rounded-xl bg-gradient-to-br from-cyan-50 to-blue-50">
+              <div className="w-16 h-16 bg-cyan-600 rounded-full flex items-center justify-center mx-auto mb-6">
                 <Zap className="w-8 h-8 text-white" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-4">Real-time Code Execution</h3>
@@ -306,8 +306,8 @@ const Home: React.FC = () => {
               </p>
             </div>
             
-            <div className="text-center p-8 rounded-xl bg-gradient-to-br from-purple-50 to-pink-50">
-              <div className="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-6">
+            <div className="text-center p-8 rounded-xl bg-gradient-to-br from-blue-50 to-slate-50">
+              <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
                 <Clock className="w-8 h-8 text-white" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-4">24/7 Learning Platform</h3>
@@ -320,27 +320,27 @@ const Home: React.FC = () => {
       </div>
 
       {/* CTA Section */}
-      <div className="bg-gradient-to-r from-indigo-600 to-purple-600">
+      <div className="bg-gradient-to-r from-cyan-600 to-blue-600">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="text-center">
             <h2 className="text-3xl font-extrabold text-white sm:text-4xl">
               Ready to Start Your Journey?
             </h2>
-            <p className="mt-4 text-xl text-indigo-100">
+            <p className="mt-4 text-xl text-cyan-100">
               Join thousands of students and professionals advancing their careers
             </p>
             {!isAuthenticated && (
               <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
                 <Link
                   to="/register"
-                  className="inline-flex items-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-indigo-600 bg-white hover:bg-gray-50 transition-colors"
+                  className="inline-flex items-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-cyan-600 bg-white hover:bg-gray-50 transition-colors"
                 >
                   Start Learning Today
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Link>
                 <Link
                   to="/login"
-                  className="inline-flex items-center px-8 py-3 border-2 border-white text-base font-medium rounded-md text-white hover:bg-white hover:text-indigo-600 transition-colors"
+                  className="inline-flex items-center px-8 py-3 border-2 border-white text-base font-medium rounded-md text-white hover:bg-white hover:text-cyan-600 transition-colors"
                 >
                   Sign In
                 </Link>

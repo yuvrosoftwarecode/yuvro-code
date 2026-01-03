@@ -107,11 +107,11 @@ const StudentCodingEmbed = ({ subtopicId, onComplete, codeSubmissionType = 'prac
     setSelectedQuestion(null);
   };
 
-  const handleSubmissionComplete = async (problemId: string, success: boolean, submissionResult?: any) => {
-    console.log('handleSubmissionComplete called:', { problemId, success, submissionResult });
+  const handleSubmissionComplete = async (questionId: string, success: boolean, submissionResult?: any) => {
+    console.log('handleSubmissionComplete called:', { questionId, success, submissionResult });
     
     if (success) {
-      const submissionKey = `${problemId}-${success}`;
+      const submissionKey = `${questionId}-${success}`;
       
       if (processedSubmissions.current.has(submissionKey)) {
         console.log('Submission already processed, skipping API call');
@@ -119,7 +119,7 @@ const StudentCodingEmbed = ({ subtopicId, onComplete, codeSubmissionType = 'prac
       }
       
       // Update local state regardless of submission type
-      const newSolvedMap = { ...solvedMap, [problemId]: true };
+      const newSolvedMap = { ...solvedMap, [questionId]: true };
       setSolvedMap(newSolvedMap);
       
       // Only call progress API for learn mode
@@ -139,7 +139,7 @@ const StudentCodingEmbed = ({ subtopicId, onComplete, codeSubmissionType = 'prac
           const submissionDetails = {
             subtopic_id: subtopicId,
             coding_status: {}, // Empty for detailed submissions
-            question_id: problemId,
+            question_id: questionId,
             language: submissionResult.language || 'python',
             code: submissionResult.code || '',
             test_results: submissionResult.test_results || {},
@@ -165,7 +165,7 @@ const StudentCodingEmbed = ({ subtopicId, onComplete, codeSubmissionType = 'prac
         }
       } else {
         // For practice mode, just update UI state
-        console.log('Practice mode: Updated local solved state for question', problemId);
+        console.log('Practice mode: Updated local solved state for question', questionId);
       }
     }
   };

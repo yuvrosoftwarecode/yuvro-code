@@ -34,6 +34,7 @@ urlpatterns = [
     path("accounts/", include("allauth.urls")),
     path("api/jobs/", include("job.urls")),
     path("api/", include("assessment.urls")),
+    path("api/code-editor/", include("code_editor.urls")),
     path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
 ]

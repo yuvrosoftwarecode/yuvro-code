@@ -61,7 +61,7 @@ export interface CodingProblem {
 
 const CodePractice = () => {
   const navigate = useNavigate();
-  const { courseId, topicId, problemId } = useParams<{ courseId: string; topicId: string; problemId: string }>();
+  const { courseId, topicId, questionId } = useParams<{ courseId: string; topicId: string; questionId: string }>();
 
   const [currentView, setCurrentView] = useState<ViewType>('dashboard');
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
@@ -119,8 +119,8 @@ const CodePractice = () => {
       }
 
       // 3. Fetch Problem
-      if (problemId && (!selectedProblem || selectedProblem.id !== problemId)) {
-        const q = await fetchQuestionById(problemId);
+      if (questionId && (!selectedProblem || selectedProblem.id !== questionId)) {
+        const q = await fetchQuestionById(questionId);
         const transformedProblem: CodingProblem = {
           id: q.id,
           title: q.title,
@@ -152,15 +152,15 @@ const CodePractice = () => {
     } finally {
       setIsHydrating(false);
     }
-  }, [courseId, topicId, problemId, selectedCourse, selectedTopic, selectedProblem]);
+  }, [courseId, topicId, questionId, selectedCourse, selectedTopic, selectedProblem]);
 
   // Sync view and state with URL parameters
   useEffect(() => {
-    if (courseId || topicId || problemId) {
+    if (courseId || topicId || questionId) {
       // If we have IDs in URL but missing state, hydrate
-      if ((courseId && !selectedCourse) || (topicId && !selectedTopic) || (problemId && !selectedProblem)) {
+      if ((courseId && !selectedCourse) || (topicId && !selectedTopic) || (questionId && !selectedProblem)) {
         hydrateStateFromUrl();
-      } else if (problemId) {
+      } else if (questionId) {
         setCurrentView('problem');
       } else if (courseId) {
         setCurrentView('topics');
@@ -168,7 +168,7 @@ const CodePractice = () => {
     } else {
       setCurrentView('dashboard');
     }
-  }, [courseId, topicId, problemId, hydrateStateFromUrl, selectedCourse, selectedTopic, selectedProblem]);
+  }, [courseId, topicId, questionId, hydrateStateFromUrl, selectedCourse, selectedTopic, selectedProblem]);
 
   const handleCourseSelect = (course: Course) => {
     setSelectedCourse(course);

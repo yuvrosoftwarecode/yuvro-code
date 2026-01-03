@@ -234,7 +234,7 @@ const StudentVideos = ({
     <PaneWrapper>
       <CodeEditor
         problemTitle="Practice Coding"
-        problemId={`video-coding-${subtopicId}`}
+        questionId={`video-coding-${subtopicId}`}
         initialCode="# Write your solution here\n"
         testCases={[]}
         showTestCases={true}

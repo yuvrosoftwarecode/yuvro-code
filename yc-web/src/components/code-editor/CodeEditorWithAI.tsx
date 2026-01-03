@@ -27,7 +27,7 @@ interface CodeEditorWithAIProps {
   showAiBuddy?: boolean;
   showProblemDescription?: boolean;
   codeSubmissionType?: 'learn' | 'practice';
-  onSubmissionComplete?: (problemId: string, success: boolean, submissionResult?: any) => void;
+  onSubmissionComplete?: (questionId: string, success: boolean, submissionResult?: any) => void;
 }
 
 export interface CodeEditorWithAIHandle {
@@ -421,7 +421,7 @@ ${codeEditorRef.current?.getCode() || ''}
                   initialLanguage={language}
                   onLanguageChange={setLanguage}
                   problemTitle={problem.title}
-                  problemId={problem.id}
+                  questionId={problem.id}
                   courseId={course.id}
                   topicId={topic.id}
                   subtopicId={subtopicId}
@@ -514,7 +514,7 @@ ${codeEditorRef.current?.getCode() || ''}
                     initialLanguage={language}
                     onLanguageChange={setLanguage}
                     problemTitle={problem.title}
-                    problemId={problem.id}
+                    questionId={problem.id}
                     courseId={course.id}
                     topicId={topic.id}
                     subtopicId={subtopicId}

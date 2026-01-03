@@ -389,7 +389,14 @@ class JobTestSubmission(BaseUserSubmission):
         return f"{self.user.username} - {self.job_test.title}"
 
 
-class BaseQuestionActivity(BaseTimestampedModel):
+class BaseQuestionActivity(BaseTimestampedModel):    
+    QUESTION_TYPES = [
+        ("mcq_single", "MCQ - Single Answer"),
+        ("mcq_multiple", "MCQ - Multiple Answers"),
+        ("coding", "Coding Problem"),
+        ("descriptive", "Descriptive Question"),
+    ]
+    
     QUESTION_ACTIVITY_TYPES = [
         ("question_viewed", "Question Viewed"),
         ("answer_started", "Answer Started"),
@@ -449,14 +456,20 @@ class BaseQuestionActivity(BaseTimestampedModel):
         ("high", "High Priority"),
         ("critical", "Critical Priority"),
     ]
-
-    user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="%(class)s_question_activities"
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='%(class)s_question_activities')
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='%(class)s_question_activities')
+    question_type = models.CharField(max_length=20, choices=QUESTION_TYPES, default='mcq_single')
+    
+    code_submission = models.ForeignKey(
+        'code_editor.CodeSubmission',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='%(class)s_question_activities',
+        help_text="Code submission for coding questions only"
     )
-    question = models.ForeignKey(
-        Question, on_delete=models.CASCADE, related_name="%(class)s_question_activities"
-    )
-
+    
     question_activities = models.JSONField(
         default=list,
         blank=True,
@@ -499,20 +512,9 @@ class BaseQuestionActivity(BaseTimestampedModel):
         blank=True,
         help_text="Answer change history: [{'timestamp': '2024-12-14T10:05:00Z', 'answer_data': {...}, 'is_auto_save': true}]",
     )
-
-    is_final_answer = models.BooleanField(
-        default=False, help_text="Whether the current answer is final/submitted"
-    )
-    answer_attempt_count = models.IntegerField(
-        default=0, help_text="Number of times answer was modified"
-    )
-
-    plagiarism_data = models.JSONField(
-        default=dict,
-        blank=True,
-        help_text="Plagiarism check results: {'is_plagiarized': true, 'similarity_score': 0.95, 'matched_with': 'submission_id'}",
-    )
-
+    
+    answer_attempt_count = models.IntegerField(default=0, help_text="Number of times answer was modified")
+    
     marks_obtained = models.FloatField(null=True, blank=True)
     is_correct = models.BooleanField(null=True, blank=True)
     auto_graded = models.BooleanField(default=False)

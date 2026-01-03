@@ -302,14 +302,19 @@ int main() {
           ? 'bg-red-50 text-red-700 border border-red-200'
           : 'bg-gray-50 text-gray-700 border border-gray-200';
 
+  // Run Code - calls code executor service directly for quick testing
   const runCode = async () => {
-    if (!code.trim()) return toast.error('Please write some code first');
+    if (!code.trim()) {
+      toast.error('Please write some code first');
+      return;
+    }
+
     setIsRunning(true);
     setOutput('');
     setTestResults(null);
     setExecutionMetrics(null);
-    setShowOutput(true); // show output area while running
-    setActiveBottomTab('output'); // auto-switch to output tab
+    setShowOutput(true);
+    setActiveBottomTab('output');
 
     try {
       const basicTestCases = (problem.test_cases_basic || []).map((t: any) => ({
@@ -324,8 +329,7 @@ int main() {
         weight: 1,
       }));
 
-      const transformed = [...basicTestCases, ...customMapped];
-
+      // Call code executor service directly (no database storage)
       const res = await codeEditorService.runCode({
         code,
         language,
@@ -343,11 +347,10 @@ int main() {
         plagiarism_score: res.plagiarism_score,
       });
 
-
       if (res.status === 'completed') {
         const passed = res.test_results?.passed ?? 0;
         const total = res.test_results?.total ?? 0;
-        toast.success(`Passed ${passed} of ${total} tests`);
+        toast.success(`Code executed: ${passed}/${total} test cases passed`);
       } else {
         toast.error('Code execution failed');
       }
@@ -361,23 +364,41 @@ int main() {
     }
   };
 
+  // Submit Solution - calls Django backend with question_id for storage and tracking
   const submitSolution = async () => {
-    if (!code.trim()) return toast.error('Please write some code first');
+    if (!code.trim()) {
+      toast.error('Please write some code first');
+      return;
+    }
+
     setIsSubmitting(true);
+    setOutput('');
+    setTestResults(null);
+    setExecutionMetrics(null);
     setShowOutput(true);
-    setActiveBottomTab('output'); // auto-switch to output tab
+    setActiveBottomTab('output');
 
     try {
-      const all = [
-        ...(problem.test_cases_basic || []),
-        ...(problem.test_cases_advanced || []),
-      ].map((t: any) => ({
+      const basicTestCases = (problem.test_cases_basic || []).map((t: any) => ({
         input: typeof t.input === 'string' ? t.input : JSON.stringify(t.input),
         expected_output: typeof t.expected_output === 'string' ? t.expected_output : JSON.stringify(t.expected_output),
         weight: t.weight || 1,
       }));
 
-      const res = await codeEditorService.submitSolution({
+      const advancedTestCases = (problem.test_cases_advanced || []).map((t: any) => ({
+        input: typeof t.input === 'string' ? t.input : JSON.stringify(t.input),
+        expected_output: typeof t.expected_output === 'string' ? t.expected_output : JSON.stringify(t.expected_output),
+        weight: t.weight || 1,
+      }));
+
+      const customMapped = customTestCases.map(tc => ({
+        input: tc.input,
+        expected_output: tc.expected_output,
+        weight: 1,
+      }));
+
+      // Call Django backend code editor submit endpoint
+      const res = await codeEditorService.submitCodeToEditor({
         code,
         language,
         question_id: problem.id,
@@ -401,18 +422,22 @@ int main() {
         plagiarism_score: res.plagiarism_score,
       });
 
-
-      if (res.status === 'completed') {
-        const passed = res.test_results?.passed ?? 0;
-        const total = res.test_results?.total ?? 0;
-        const passRate = total ? ((passed / total) * 100).toFixed(1) : '0.0';
-        toast.success(`Solution submitted: ${passed}/${total} passed (${passRate}%)`);
+      const passed = res.test_cases_passed ?? 0;
+      const total = res.total_test_cases ?? 0;
+      const passRate = total ? ((passed / total) * 100).toFixed(1) : '0.0';
+      
+      if (passed === total && total > 0) {
+        toast.success(`Solution submitted: All ${total} test cases passed (100%)`);
+      } else if (total > 0) {
+        toast.success(`Solution submitted: ${passed}/${total} test cases passed (${passRate}%)`);
       } else {
-        toast.error('Submission failed');
+        toast.success('Solution submitted successfully');
       }
     } catch (err) {
       console.error('submitSolution error', err);
       toast.error('Error submitting solution');
+      setOutput(typeof err === 'string' ? err : err instanceof Error ? err.message : 'Unknown error');
+      setShowOutput(true);
     } finally {
       setIsSubmitting(false);
     }
@@ -699,7 +724,7 @@ ${code}
                   {/* EDITOR PANEL */}
                   <ResizablePanel defaultSize={showOutput ? 65 : 100} minSize={30} maxSize={100}>
                     <div className="h-full flex flex-col overflow-hidden">
-                      <CodeEditor
+                      <MonacoCodeEditor
                         value={code}
                         onChange={setCode}
                         language={language}

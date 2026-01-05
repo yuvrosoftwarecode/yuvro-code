@@ -3,6 +3,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from .models import (
     User,
+    Profile,
 )
 
 
@@ -12,7 +13,6 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def get_token(cls, user):
         token = super().get_token(user)
 
-        # Add custom claims
         token["role"] = user.role
         token["username"] = user.username
         token["email"] = user.email
@@ -116,3 +116,23 @@ class UserUpdateSerializer(serializers.ModelSerializer):
                         "You don't have permission to change user roles."
                     )
         return value
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = Profile
+        fields = [
+            "id",
+            "profile_image",
+            "cover_image", 
+            "full_name",
+            "title",
+            "location",
+            "google_id",
+            "about",
+            "gender",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]

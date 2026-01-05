@@ -1,0 +1,20 @@
+from django.db import migrations, models
+
+
+class Migration(migrations.Migration):
+    dependencies = [
+        ("authentication", "0003_remove_certification_profile_and_more"),
+    ]
+
+    operations = [
+        migrations.AddField(
+            model_name="profile",
+            name="resume_config",
+            field=models.JSONField(
+                blank=True,
+                default=dict,
+                help_text="Resume builder configuration: template, typography, colors, section order, etc.",
+                null=True,
+            ),
+        ),
+    ]

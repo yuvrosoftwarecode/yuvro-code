@@ -59,7 +59,7 @@ ROOT_URLCONF = "yc-backend-api.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -177,7 +177,6 @@ CORS_ALLOW_HEADERS = [
     'user-agent',
     'x-csrftoken',
     'x-requested-with',
-    # OpenTelemetry headers
     'traceparent',
     'tracestate',
     'baggage',

@@ -25,4 +25,8 @@ urlpatterns = [
     path("users/", views.UsersListCreateView.as_view(), name="users_list"),
     path("users/<uuid:pk>/", views.UserDetailView.as_view(), name="user_detail"),
     path("users/<uuid:pk>/toggle-status/", views.UserToggleStatusView.as_view(), name="user_toggle_status"),
+    
+    path("resume/generate-pdf/", views.generate_resume_pdf, name="generate_resume_pdf"),
+    path("resume/templates/", views.get_resume_templates, name="get_resume_templates"),
+    path("resume/config/", views.resume_config_view, name="resume_config"),
 ]

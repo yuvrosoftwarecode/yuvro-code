@@ -71,6 +71,12 @@ class Profile(models.Model):
     gender = models.CharField(
         max_length=20, choices=GENDER_CHOICES, blank=True, null=True
     )
+    resume_config = models.JSONField(
+        default=dict,
+        blank=True,
+        null=True,
+        help_text="Resume builder configuration: template, typography, colors, section order, etc."
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

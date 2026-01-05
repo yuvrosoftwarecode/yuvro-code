@@ -1,4 +1,3 @@
-
 import("@opentelemetry/sdk-trace-web")
 import { WebTracerProvider } from '@opentelemetry/sdk-trace-web';
 import { getWebAutoInstrumentations } from '@opentelemetry/auto-instrumentations-web';
@@ -50,6 +49,7 @@ if (isOtelEnabled) {
           propagateTraceHeaderCorsUrls: [
             /^http:\/\/localhost:8001\/.*$/,
             /^http:\/\/localhost:8002\/.*$/,
+            /^http:\/\/localhost:8003\/.*$/,
           ],
         },
         '@opentelemetry/instrumentation-xml-http-request': {
@@ -57,6 +57,7 @@ if (isOtelEnabled) {
           propagateTraceHeaderCorsUrls: [
             /^http:\/\/localhost:8001\/.*$/,
             /^http:\/\/localhost:8002\/.*$/,
+            /^http:\/\/localhost:8003\/.*$/,
           ],
         },
       }),

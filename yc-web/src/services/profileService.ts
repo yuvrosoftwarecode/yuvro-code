@@ -56,6 +56,7 @@ export interface Certification {
 
 export interface Profile {
   id: string;
+  name?: string; // Added for compatibility
   full_name: string | null;
   title: string | null;
   location: string | null;

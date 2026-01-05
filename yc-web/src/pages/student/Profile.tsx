@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import Navigation from "@/components/common/Navigation";
+import { FileText } from "lucide-react";
 
 import profileService, {
   Profile as ProfileType,
@@ -54,7 +55,10 @@ import AddCertificationDialog, {
   CertificationForm,
 } from "@/components/student/profile/AddCertificationDialog";
 
-// Local form shapes (must match dialog shapes)
+import { generateResumePDF } from "../../utils/resumeGenerator";
+import resumeService from "../../services/resumeService";
+import { toast } from "sonner";
+
 type SkillForm = {
   name: string;
   level: string;
@@ -78,34 +82,24 @@ type EducationForm = {
   cgpa?: string;
 };
 
-// --------------------------------------------
-// PROFILE STRENGTH CALCULATOR
-// --------------------------------------------
 const calculateProfileStrength = (profile: ProfileType) => {
   let score = 0;
 
-  // 1. Basic Info - 20%
   if (profile.full_name) score += 5;
   if (profile.title) score += 5;
   if (profile.about) score += 5;
   if (profile.location) score += 5;
 
-  // 2. Education - 15%
   if (profile.education.length > 0) score += 15;
 
-  // 3. Skills - 15%
   if (profile.skills.length > 0) score += 15;
 
-  // 4. Experience - 15%
   if (profile.experiences.length > 0) score += 15;
 
-  // 5. Projects - 15%
   if (profile.projects.length > 0) score += 15;
 
-  // 6. Certifications - 10%
   if (profile.certifications.length > 0) score += 10;
 
-  // 7. Social Links - 5%
   const anySocial =
     profile.links.github ||
     profile.links.linkedin ||
@@ -114,16 +108,12 @@ const calculateProfileStrength = (profile: ProfileType) => {
 
   if (anySocial) score += 5;
 
-  // 8. Images - 5%
   if (profile.profile_image) score += 3;
   if (profile.cover_image) score += 2;
 
   return score;
 };
 
-// --------------------------------------------
-// PROFILE IMPROVEMENT SUGGESTIONS
-// --------------------------------------------
 const generateSuggestions = (profile: ProfileType) => {
   const suggestions: { text: string; boost: number }[] = [];
 
@@ -176,12 +166,11 @@ const Profile = () => {
   const navigate = useNavigate();
 
   const [profile, setProfile] = useState<ProfileType | null>(null);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
-  // Images (preview only)
   const [profilePic, setProfilePic] = useState<string>("");
   const [coverPic, setCoverPic] = useState<string>("");
 
-  // Dialog states
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [skillDialogOpen, setSkillDialogOpen] = useState(false);
   const [experienceDialogOpen, setExperienceDialogOpen] = useState(false);
@@ -191,7 +180,6 @@ const Profile = () => {
   const [certificationDialogOpen, setCertificationDialogOpen] =
     useState(false);
 
-  // Editing states
   const [editingSkill, setEditingSkill] = useState<Skill | null>(null);
   const [experienceEditData, setExperienceEditData] =
     useState<Experience | null>(null);
@@ -202,7 +190,6 @@ const Profile = () => {
   const [editingCertification, setEditingCertification] =
     useState<Certification | null>(null);
 
-  // Fetch profile
   useEffect(() => {
     loadProfile();
   }, []);
@@ -230,10 +217,6 @@ const Profile = () => {
   const suggestions = generateSuggestions(profile);
 
 
-
-  /* -------------------------------------------- *
-   * IMAGE HANDLERS
-   * -------------------------------------------- */
   const handleProfilePicUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -250,9 +233,7 @@ const Profile = () => {
     reader.readAsDataURL(file);
   };
 
-  /* -------------------------------------------- *
-   * EXPERIENCE HANDLERS
-   * -------------------------------------------- */
+
   const handleAddExperience = async (exp: ExperienceForm) => {
     await profileService.addExperience(exp);
     await loadProfile();
@@ -270,9 +251,7 @@ const Profile = () => {
     await loadProfile();
   };
 
-  /* -------------------------------------------- *
-   * SKILL HANDLERS
-   * -------------------------------------------- */
+
   const handleSaveSkill = async (data: SkillForm) => {
     if (editingSkill) {
       await profileService.updateSkill(editingSkill.id, data);
@@ -288,9 +267,7 @@ const Profile = () => {
     await loadProfile();
   };
 
-  /* -------------------------------------------- *
-   * PROJECT HANDLERS
-   * -------------------------------------------- */
+
   const handleSaveProject = async (form: ProjectForm) => {
     const payload = {
       title: form.title,
@@ -315,9 +292,7 @@ const Profile = () => {
     await loadProfile();
   };
 
-  /* -------------------------------------------- *
-   * EDUCATION HANDLERS
-   * -------------------------------------------- */
+
   const handleSaveEducation = async (form: EducationForm) => {
     if (editingEducation) {
       await profileService.updateEducation(editingEducation.id, form);
@@ -333,9 +308,7 @@ const Profile = () => {
     await loadProfile();
   };
 
-  /* -------------------------------------------- *
-   * CERTIFICATION HANDLERS
-   * -------------------------------------------- */
+
   const handleSaveCertification = async (data: CertificationForm) => {
     if (editingCertification) {
       await profileService.updateCertification(editingCertification.id, data);
@@ -351,9 +324,27 @@ const Profile = () => {
     await loadProfile();
   };
 
-  /* -------------------------------------------- *
-   * MAIN RENDER
-   * -------------------------------------------- */
+
+  const handleDownloadResume = async () => {
+    if (!profile) {
+      toast.error("Profile data not available");
+      return;
+    }
+
+    try {
+      setIsGeneratingPDF(true);
+      toast.info("Generating your resume PDF...");
+      
+      await generateResumePDF(profile);
+      
+      toast.success("Resume downloaded successfully!");
+    } catch (error) {
+      console.error("Error generating resume:", error);
+      toast.error("Failed to generate resume. Please try again.");
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -432,9 +423,25 @@ const Profile = () => {
                     </p>
                   </div>
 
-                  <Button onClick={() => setEditDialogOpen(true)}>
-                    <Edit className="h-4 w-4 mr-2" /> Edit Profile
-                  </Button>
+                    <div className="flex gap-2">
+                    <Button
+                      onClick={() => navigate('/student/resume-builder')}
+                    className="bg-violet-600 hover:bg-violet-700 text-white shadow-md hover:shadow-lg transition"
+                    >
+                      <FileText className="h-4 w-4 mr-2" />
+                      Resume Builder
+                    </Button>
+
+                    <Button
+                      onClick={() => setEditDialogOpen(true)}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                    >
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit Profile
+                    </Button>
+                  </div>
+
+
                 </div>
               </CardContent>
             </Card>
@@ -1044,10 +1051,6 @@ const Profile = () => {
           </div>
         </div>
       </div>
-
-      {/* ============================================ */}
-      {/* DIALOGS BELOW */}
-      {/* ============================================ */}
 
       {/* UPDATE PROFILE */}
       <EditProfileDialog

@@ -24,6 +24,7 @@ const Navigation: React.FC = () => {
             { label: 'Mock Interview', path: '/student/mock-interview' },
             { label: 'Jobs', path: '/student/jobs' },
             { label: 'Contests', path: '/student/contests' },
+            { label: 'Certify', path: '/student/certifications' },
         ],
         admin: [
             { label: 'Dashboard', path: '/instructor/dashboard' },
@@ -33,6 +34,7 @@ const Navigation: React.FC = () => {
             { label: 'Mock Interview', path: '/instructor/mock-interview' },
             { label: 'Jobs', path: '/instructor/jobs' },
             { label: 'Contests', path: '/instructor/contests' },
+            { label: 'Certify', path: '/instructor/certifications' },
         ],
         instructor: [
             { label: 'Dashboard', path: '/instructor/dashboard' },
@@ -61,7 +63,6 @@ const Navigation: React.FC = () => {
         ],
         instructor: [
             { label: 'Profile', path: '/instructor/profile', icon: 'profile' },
-            { label: 'Analytics', path: '/instructor/analytics', icon: 'analytics' },
             { label: 'Settings', path: '/instructor/settings', icon: 'settings' },
         ],
         recruiter: [

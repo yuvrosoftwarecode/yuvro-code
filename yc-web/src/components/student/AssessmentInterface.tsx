@@ -62,12 +62,15 @@ interface Question {
   test_cases_advanced?: any;
 }
 
+
 interface AssessmentInterfaceProps {
   assessment: Assessment;
   questions: Question[];
   submissionId: string;
   onComplete: (stats?: { answeredCount: number; totalQuestions: number; timeSpent: number }) => void;
   onBack: () => void;
+  onSubmit?: (assessmentId: string, submissionId: string, answers: any, explanations: any, q_ids: string[]) => Promise<any>;
+  assessmentType?: 'skill-tests' | 'certification-exams' | 'contests' | 'mock-interviews';
 }
 
 const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
@@ -75,7 +78,9 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
   questions: propQuestions,
   submissionId,
   onComplete,
-  onBack
+  onBack,
+  onSubmit,
+  assessmentType = 'skill-tests'
 }) => {
   const [questions, setQuestions] = useState<Question[]>(() => {
     const order: Record<string, number> = {
@@ -120,14 +125,14 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
 
   useProctoring({
     assessmentId: assessment.id,
-    assessmentType: 'skill-tests',
+    assessmentType: assessmentType,
     enabled: true,
     questionId: undefined
   });
 
   useProctoring({
     assessmentId: assessment.id,
-    assessmentType: 'skill-tests',
+    assessmentType: assessmentType,
     enabled: isCodingQuestion,
     questionId: proctoringQuestionId
   });
@@ -230,7 +235,7 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
       console.log('beforeunload event - cleaning up camera');
       cleanupCamera();
-      
+
       // Show confirmation dialog
       event.preventDefault();
       event.returnValue = '';
@@ -303,7 +308,12 @@ const AssessmentInterface: React.FC<AssessmentInterfaceProps> = ({
     try {
       const loadingToast = toast.loading("Submitting assessment...");
 
-      await submitSkillTest(assessment.id, submissionId, answers, explanations, q_ids);
+      if (onSubmit) {
+        await onSubmit(assessment.id, submissionId, answers, explanations, q_ids);
+      } else {
+        await submitSkillTest(assessment.id, submissionId, answers, explanations, q_ids);
+      }
+
       toast.dismiss(loadingToast);
       toast.success("Assessment submitted successfully!");
 

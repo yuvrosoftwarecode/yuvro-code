@@ -45,9 +45,9 @@ services:
       - "9002:9002"  # Prometheus metrics
     env_file:
       - ./yc-code-executor/.env
-
     volumes:
       - ./yc-code-executor:/app
+    command: python main.py  # Use main.py with hot reloading enabled via DEBUG=true
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
       interval: 30s

@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "ai_assistant",
     "job",
     "assessment",
+    "code_editor",
 ]
 
 MIDDLEWARE = [

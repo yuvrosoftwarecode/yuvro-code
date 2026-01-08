@@ -3,7 +3,7 @@ import restApiUtilCodeExecuter from '../utils/RestApiUtilCodeExecuter';
 
 export interface CodeSubmission {
   id: number;
-  coding_problem: string;
+  question: string;
   problem_title: string;
   problem_description: string;
   code: string;
@@ -25,7 +25,7 @@ export interface CodeSubmission {
 export interface CodeExecutionRequest {
   code: string;
   language: string;
-  coding_problem_id: string;
+  question_id: string;
   course_id?: string;
   topic_id?: string;
   submission_type?: 'code_practice' | 'skill_test' | 'contest' | 'mock_interview';
@@ -64,15 +64,17 @@ export interface ExecutionResult extends CodeSubmission {
 }
 
 class CodeEditorService {
+  // Run Code - calls code executor service directly for quick testing (no database storage)
   async runCode(request: {
     code: string;
     language: string;
     test_cases: any[];
     test_cases_custom?: any[];
-    problem_title?: string
+    problem_title?: string;
   }): Promise<ExecutionResult> {
     try {
-      const data: any = await restApiUtilCodeExecuter.post('/execute-with-tests', {
+      // Call code executor service directly
+      const data: any = await restApiUtilCodeExecuter.post('/execute-code-with-plagiarism-checks', {
         code: request.code,
         language: request.language,
         test_cases_basic: (request.test_cases || []).map(tc => ({
@@ -86,45 +88,57 @@ class CodeEditorService {
           expected_output: tc.expected_output || '',
           weight: 1
         })),
+        peer_submissions: [], // No peer submissions for quick run
         timeout: 10
       });
 
-      const executionResult = data.execution_result || {};
-      const testResults = data.test_results || [];
+      const executionSummary = data.execution_summary || {};
+      const plagiarismReport = data.plagiarism_report || {};
 
       return {
         id: 0,
-        coding_problem: '',
+        question: '',
         problem_title: request.problem_title || 'Quick Run',
         problem_description: '',
         code: request.code,
         language: request.language,
-        status: executionResult.success ? 'completed' : 'error',
-        output: executionResult.output || '',
-        error_message: executionResult.error || '',
-        execution_time: executionResult.execution_time || 0,
-        memory_usage: executionResult.memory_usage || 0,
-        test_cases_passed: data.total_passed || 0,
-        total_test_cases: data.total_tests || 0,
-        plagiarism_score: 0,
-        plagiarism_details: null,
+        status: data.status === 'success' ? 'completed' : 'error',
+        output: data.test_cases_basic?.[0]?.actual_output || '',
+        error_message: data.error || '',
+        execution_time: executionSummary.runtime_ms || 0,
+        memory_usage: executionSummary.peak_memory_kb || 0,
+        test_cases_passed: executionSummary.passed_test_cases || 0,
+        total_test_cases: executionSummary.total_test_cases || 0,
+        plagiarism_score: plagiarismReport.max_similarity || 0,
+        plagiarism_details: plagiarismReport,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         test_results: {
-          passed: data.total_passed || 0,
-          total: data.total_tests || 0,
-          results: testResults.map((result: any, index: number) => ({
-            test_case_id: index,
-            passed: result.passed || false,
-            input: result.input || '',
-            expected_output: result.expected_output || '',
-            actual_output: result.actual_output || '',
-            error: result.error || '',
-            execution_time: result.execution_time || 0
-          })),
-          success: executionResult.success || false
+          passed: executionSummary.passed_test_cases || 0,
+          total: executionSummary.total_test_cases || 0,
+          results: [
+            ...(data.test_cases_basic || []).map((result: any, index: number) => ({
+              test_case_id: index,
+              passed: result.status === 'passed',
+              input: result.input || '',
+              expected_output: result.expected_output || '',
+              actual_output: result.actual_output || '',
+              error: result.status === 'failed' ? 'Test failed' : '',
+              execution_time: result.runtime_ms || 0
+            })),
+            ...(data.test_cases_custom || []).map((result: any, index: number) => ({
+              test_case_id: index + (data.test_cases_basic?.length || 0),
+              passed: result.status === 'passed',
+              input: 'Hidden',
+              expected_output: 'Hidden',
+              actual_output: 'Hidden',
+              error: result.status === 'failed' ? 'Test failed' : '',
+              execution_time: result.runtime_ms || 0
+            }))
+          ],
+          success: data.status === 'success'
         },
-        plagiarism_flagged: false
+        plagiarism_flagged: plagiarismReport.flagged || false
       };
     } catch (error) {
       console.error('Code execution failed:', error);
@@ -132,6 +146,95 @@ class CodeEditorService {
     }
   }
 
+  // Submit Code to Editor - calls Django backend with question_id for storage and tracking
+  async submitCodeToEditor(request: {
+    code: string;
+    language: string;
+    question_id?: string;
+    test_cases_basic?: any[];
+    test_cases_advanced?: any[];
+    test_cases_custom?: any[];
+    question_submission_type?: 'learn' | 'practice' | 'skill_test' | 'contest' | 'mock_interview';
+    timeout?: number;
+  }): Promise<ExecutionResult> {
+    try {
+      // Call Django backend code editor submit endpoint
+      const data: any = await restApiAuthUtil.post('/code-editor/submit_code/', {
+        code: request.code,
+        language: request.language,
+        question_id: request.question_id,
+        question_submission_type: request.question_submission_type || 'practice',
+        test_cases_basic: request.test_cases_basic || [],
+        test_cases_advanced: request.test_cases_advanced || [],
+        test_cases_custom: request.test_cases_custom || [],
+        peer_submissions: [], // Will be populated by backend
+        timeout: request.timeout || 10
+      });
+
+      const executionSummary = data.execution_summary || {};
+      const plagiarismReport = data.plagiarism_report || {};
+
+      return {
+        id: 0, // Backend doesn't return submission ID for this endpoint
+        question: request.question_id || '',
+        problem_title: 'Code Submission',
+        problem_description: '',
+        code: request.code,
+        language: request.language,
+        status: data.status === 'success' ? 'completed' : 'error',
+        output: data.test_cases_basic?.[0]?.actual_output || '',
+        error_message: data.error || '',
+        execution_time: executionSummary.runtime_ms || 0,
+        memory_usage: executionSummary.peak_memory_kb || 0,
+        test_cases_passed: executionSummary.passed_test_cases || 0,
+        total_test_cases: executionSummary.total_test_cases || 0,
+        plagiarism_score: plagiarismReport.max_similarity || 0,
+        plagiarism_details: plagiarismReport,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        test_results: {
+          passed: executionSummary.passed_test_cases || 0,
+          total: executionSummary.total_test_cases || 0,
+          results: [
+            ...(data.test_cases_basic || []).map((result: any, index: number) => ({
+              test_case_id: index,
+              passed: result.status === 'passed',
+              input: result.input || '',
+              expected_output: result.expected_output || '',
+              actual_output: result.actual_output || '',
+              error: result.status === 'failed' ? 'Test failed' : '',
+              execution_time: result.runtime_ms || 0
+            })),
+            ...(data.test_cases_advanced || []).map((result: any, index: number) => ({
+              test_case_id: index + (data.test_cases_basic?.length || 0),
+              passed: result.status === 'passed',
+              input: 'Hidden',
+              expected_output: 'Hidden',
+              actual_output: 'Hidden',
+              error: result.status === 'failed' ? 'Test failed' : '',
+              execution_time: result.runtime_ms || 0
+            })),
+            ...(data.test_cases_custom || []).map((result: any, index: number) => ({
+              test_case_id: index + (data.test_cases_basic?.length || 0) + (data.test_cases_advanced?.length || 0),
+              passed: result.status === 'passed',
+              input: result.input || '',
+              expected_output: result.expected_output || '',
+              actual_output: result.actual_output || '',
+              error: result.status === 'failed' ? 'Test failed' : '',
+              execution_time: result.runtime_ms || 0
+            }))
+          ],
+          success: data.status === 'success'
+        },
+        plagiarism_flagged: plagiarismReport.flagged || false
+      };
+    } catch (error) {
+      console.error('Code editor submission failed:', error);
+      throw new Error(`Code editor submission failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  // Legacy method for other submission types (learn, practice via different endpoints)
   async submitSolution(request: {
     code: string;
     language: string;
@@ -193,7 +296,7 @@ class CodeEditorService {
 
       return {
         id: response.id || 0,
-        coding_problem: response.coding_problem || '',
+        question: response.question || '',
         problem_title: response.problem_title || 'Code Practice',
         problem_description: response.problem_description || '',
         code: response.code || request.code,
@@ -230,9 +333,9 @@ class CodeEditorService {
     });
   }
 
-  async getSubmissions(codingProblemId?: string, submissionType: string = 'code_practice'): Promise<CodeSubmission[]> {
-    const params = codingProblemId ? { coding_problem_id: codingProblemId } : undefined;
-
+  async getSubmissions(questionId?: string, submissionType: string = 'code_practice'): Promise<CodeSubmission[]> {
+    const params = questionId ? { question_id: questionId } : undefined;
+    
     let endpoint = '';
     switch (submissionType) {
       case 'code_practice':
@@ -275,7 +378,137 @@ class CodeEditorService {
   }
 
   async getSupportedLanguagesAndTemplates(): Promise<any> {
-    return restApiUtilCodeExecuter.get('/supported-languages-and-templates');
+    // Since we removed the languages endpoint, we'll provide a static response
+    // or this could be moved to a configuration file
+    return {
+      languages: ['python', 'javascript', 'java', 'cpp', 'c'],
+      details: {
+        python: {
+          extension: '.py',
+          timeout: 10,
+          template: `class Solution:
+    def solve(self, *args):
+        # Competitive Programming Template - Python
+        # Each line of your test case input is passed as an argument in *args.
+        # Arguments are automatically parsed as JSON/Numbers if possible.
+
+        # Example: If your input lines are: "Hello", 42, [1, 2, 3]
+        # You can access them like this:
+        # input_str = args[0] if len(args) > 0 else ""
+        # num = args[1] if len(args) > 1 else 0
+        # list_data = args[2] if len(args) > 2 else []
+
+        # Start your logic below:
+        return None`
+        },
+        javascript: {
+          extension: '.js',
+          timeout: 10,
+          template: `"use strict";
+
+const fs = require('fs');
+
+/**
+ * Competitive Programming Template - Node.js
+ * Reads stdin and parses lines. Often inputs are JSON strings.
+ */
+function solve() {
+    const lines = fs.readFileSync(0, 'utf8').split('\\n').filter(line => line.trim());
+    if (lines.length === 0) return;
+
+    // Example: parse first line as a JSON array
+    try {
+        const data = JSON.parse(lines[0]);
+        // Your logic here
+    } catch (e) {
+        // Fallback for non-JSON input
+        const data = lines[0];
+    }
+}
+
+solve();`
+        },
+        java: {
+          extension: '.java',
+          timeout: 15,
+          template: `import java.util.*;
+
+/**
+ * Competitive Programming Template - Java
+ */
+public class Solution {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        
+        // For array inputs, the platform provides [count] followed by [elements]
+        if (sc.hasNextInt()) {
+            int n = sc.nextInt();
+            int[] arr = new int[n];
+            for(int i = 0; i < n; i++) {
+                arr[i] = sc.nextInt();
+            }
+            // Your logic here
+        }
+    }
+}`
+        },
+        cpp: {
+          extension: '.cpp',
+          timeout: 15,
+          template: `#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+/**
+ * Competitive Programming Template - C++
+ */
+int main() {
+    // Faster I/O
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int n;
+    // For array inputs, the platform provides [count] followed by [elements]
+    if (cin >> n) {
+        vector<int> arr(n);
+        for(int i = 0; i < n; i++) {
+            cin >> arr[i];
+        }
+        // Your logic here
+    }
+
+    return 0;
+}`
+        },
+        c: {
+          extension: '.c',
+          timeout: 15,
+          template: `#include <stdio.h>
+#include <stdlib.h>
+
+/**
+ * Competitive Programming Template - C
+ */
+int main() {
+    int n;
+    // For array inputs, the platform provides [count] followed by [elements]
+    if (scanf("%d", &n) == 1) {
+        int* arr = (int*)malloc(n * sizeof(int));
+        for(int i = 0; i < n; i++) {
+            scanf("%d", &arr[i]);
+        }
+        
+        // Your logic here
+        
+        free(arr);
+    }
+    return 0;
+}`
+        }
+      }
+    };
   }
 }
 

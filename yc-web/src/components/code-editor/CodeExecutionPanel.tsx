@@ -163,7 +163,7 @@ const CodeExecutionPanel: React.FC<CodeExecutionPanelProps> = ({
         code,
         language,
         test_cases: allTestCases,
-        problem_title: problem?.title || 'Unknown Problem'
+        problem_title: problem?.title || 'Unknown Problem',
       });
       console.log('Run Code Result:', executionResult);
       setResult(executionResult);
@@ -171,7 +171,7 @@ const CodeExecutionPanel: React.FC<CodeExecutionPanelProps> = ({
       console.error('Code execution failed:', error);
       setResult({
         id: 0,
-        coding_problem: '',
+        question: '',
         problem_title: 'Error',
         problem_description: '',
         code,
@@ -213,7 +213,7 @@ const CodeExecutionPanel: React.FC<CodeExecutionPanelProps> = ({
       const request: CodeExecutionRequest & { test_cases: any[] } = {
         code,
         language,
-        coding_problem_id: problem?.id || '',
+        question_id: problem?.id || '',
         test_cases: allTestCases
       };
 
@@ -231,7 +231,7 @@ const CodeExecutionPanel: React.FC<CodeExecutionPanelProps> = ({
       // Set an error result so something shows up
       const errorResult = {
         id: 0,
-        coding_problem: '',
+        question: '',
         problem_title: 'Error',
         problem_description: '',
         code,

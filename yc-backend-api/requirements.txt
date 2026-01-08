@@ -20,6 +20,7 @@ cohere>=4.0.0
 # Code execution dependencies
 psutil==5.9.6
 requests==2.31.0
+httpx==0.25.2
 
 # OpenTelemetry
 opentelemetry-api==1.21.0

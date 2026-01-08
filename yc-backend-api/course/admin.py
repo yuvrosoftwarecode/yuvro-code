@@ -103,7 +103,7 @@ class QuestionAdmin(admin.ModelAdmin):
         "created_at",
     ]
     list_filter = ["type", "level", "difficulty", "categories", "created_at"]
-    search_fields = ["title", "content"]
+    search_fields = ["id", "title", "content"]
     ordering = ["-created_at"]
     readonly_fields = ["id", "created_at", "updated_at"]
 

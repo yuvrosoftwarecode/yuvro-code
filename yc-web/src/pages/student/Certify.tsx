@@ -222,7 +222,14 @@ const Certify: React.FC = () => {
                                                     <Badge variant="secondary" className="bg-blue-50 text-blue-700">
                                                         Certificate Exam
                                                     </Badge>
-                                                    {exam.is_active && <Badge className="bg-green-600">Live</Badge>}
+                                                    <div className="flex flex-col gap-1 items-end">
+                                                        <Badge variant={exam.difficulty === 'hard' ? 'destructive' : exam.difficulty === 'medium' ? 'default' : 'secondary'} className="text-[10px] capitalize px-1.5 py-0.5 h-5">
+                                                            {exam.difficulty || 'Medium'}
+                                                        </Badge>
+                                                        <span className="text-xs font-medium text-gray-500">
+                                                            {exam.my_submissions?.length || 0} / {exam.max_attempts} Attempts
+                                                        </span>
+                                                    </div>
                                                 </div>
                                                 <CardTitle className="line-clamp-2 text-lg">{exam.title}</CardTitle>
                                                 <CardDescription className="line-clamp-2 mt-2">{exam.description}</CardDescription>

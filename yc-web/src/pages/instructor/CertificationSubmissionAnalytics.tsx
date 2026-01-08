@@ -233,47 +233,80 @@ export default function CertificationSubmissionAnalytics() {
                             </CardHeader>
                             <CardContent>
                                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                                    {/* Combine all events that might have images */}
-                                    {([...(submission.proctoring_events || []), ...(submission.general_events || [])]
-                                        .filter((e: any) => e.image_path || (e.activity_type === 'snapshot' && e.image_path))
-                                        .sort((a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
-                                        .map((event: any, i: number) => {
-                                            // Construct URL
-                                            // If path starts with uploads/, prepend API base URL + /media/ (or just match serve logic)
-                                            // Our settings serve /media/ mapped to uploads/
-                                            let imgUrl = event.image_path;
-                                            if (imgUrl && imgUrl.startsWith('uploads')) {
-                                                const relativePath = imgUrl.replace('uploads', '');
-                                                // Ensure clean path join
-                                                const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8001/api';
-                                                // We need root base URL, not /api
-                                                const rootUrl = baseUrl.replace('/api', '');
-                                                imgUrl = `${rootUrl}/media${relativePath}`;
+                                    {/* Combine all events that might have images */
+                                        (() => {
+                                            const allSnapshots = [
+                                                ...(submission.proctoring_events || []),
+                                                ...(submission.general_events || [])
+                                            ];
+
+                                            if (submission.question_activities) {
+                                                submission.question_activities.forEach((qActivity: any) => {
+                                                    if (qActivity.camera_snapshots && Array.isArray(qActivity.camera_snapshots)) {
+                                                        allSnapshots.push(...qActivity.camera_snapshots);
+                                                    }
+                                                });
                                             }
 
-                                            return (
-                                                <div key={`snap-${i}`} className="group relative border rounded-lg overflow-hidden cursor-pointer bg-black">
-                                                    <div className="aspect-video">
-                                                        <img
-                                                            src={imgUrl}
-                                                            alt={`Snapshot ${i + 1}`}
-                                                            className="object-cover w-full h-full opacity-90 group-hover:opacity-100 transition-opacity"
-                                                            onClick={() => window.open(imgUrl, '_blank')}
-                                                        />
+                                            const snapshotsToRender = allSnapshots
+                                                .filter((e: any) => e.image_path || (e.activity_type === 'snapshot' && e.image_path))
+                                                .sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()); // Sort newest first
+
+                                            if (snapshotsToRender.length === 0) {
+                                                return (
+                                                    <div className="col-span-full text-center py-8 text-gray-500 italic">
+                                                        No proctoring snapshots available.
                                                     </div>
-                                                    <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs p-1 truncate">
-                                                        {format(new Date(event.timestamp), 'h:mm:ss a')}
+                                                );
+                                            }
+
+                                            return snapshotsToRender.map((event: any, i: number) => {
+                                                // Construct URL
+                                                // If path starts with uploads/, prepend API base URL + /media/ (or just match serve logic)
+                                                // Our settings serve /media/ mapped to uploads/
+                                                let imgUrl = event.image_path;
+                                                if (imgUrl && !imgUrl.startsWith('http')) {
+                                                    // Normalize backslashes
+                                                    let cleanPath = imgUrl.replace(/\\/g, '/');
+
+                                                    // Remove inputs/uploads prefix if it matches MEDIA_ROOT pattern
+                                                    if (cleanPath.startsWith('uploads/')) {
+                                                        cleanPath = cleanPath.substring('uploads/'.length);
+                                                    } else if (cleanPath.startsWith('/uploads/')) {
+                                                        cleanPath = cleanPath.substring('/uploads/'.length);
+                                                    }
+
+                                                    // Ensure cleanPath doesn't start with /
+                                                    if (cleanPath.startsWith('/')) {
+                                                        cleanPath = cleanPath.substring(1);
+                                                    }
+
+                                                    const baseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8001/api').replace(/\/$/, '');
+                                                    const rootUrl = baseUrl.replace(/\/api\/?$/, ''); // Remove /api or /api/ from end
+
+                                                    imgUrl = `${rootUrl}/media/${cleanPath}`;
+                                                }
+
+                                                return (
+                                                    <div key={`snap-${i}`} className="group relative border rounded-lg overflow-hidden cursor-pointer bg-black">
+                                                        <div className="aspect-video">
+                                                            <img
+                                                                src={imgUrl}
+                                                                alt={`Snapshot ${i + 1}`}
+                                                                className="object-cover w-full h-full opacity-90 group-hover:opacity-100 transition-opacity"
+                                                                onClick={() => window.open(imgUrl, '_blank')}
+                                                                onError={(e) => {
+                                                                    (e.target as HTMLImageElement).src = 'https://placehold.co/600x400?text=Image+Load+Error';
+                                                                }}
+                                                            />
+                                                        </div>
+                                                        <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs p-1 truncate">
+                                                            {format(new Date(event.timestamp), 'h:mm:ss a')}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            )
-                                        })
-                                    )}
-                                    {([...(submission.proctoring_events || []), ...(submission.general_events || [])]
-                                        .filter((e: any) => e.image_path).length === 0 && (
-                                            <div className="col-span-full text-center py-8 text-gray-500 italic">
-                                                No proctoring snapshots available.
-                                            </div>
-                                        ))}
+                                                );
+                                            });
+                                        })()}
                                 </div>
                             </CardContent>
                         </Card>

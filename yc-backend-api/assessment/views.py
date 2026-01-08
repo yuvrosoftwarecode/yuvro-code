@@ -46,6 +46,9 @@ class CertificationExamViewSet(ProctoringMixin, viewsets.ModelViewSet):
     search_fields = ['title', 'course__name']
     ordering_fields = ['created_at']
 
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
     def get_queryset(self):
         qs = super().get_queryset()
         course_id = self.request.query_params.get('course')

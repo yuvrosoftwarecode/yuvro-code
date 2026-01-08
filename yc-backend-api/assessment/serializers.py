@@ -143,10 +143,19 @@ class CertificationSubmissionSerializer(serializers.ModelSerializer):
     exam_title = serializers.CharField(source="certification_exam.title", read_only=True)
     user_name = serializers.CharField(source="user.get_full_name", read_only=True)
     user_email = serializers.EmailField(source="user.email", read_only=True)
+    attempt_number = serializers.SerializerMethodField()
     question_activities = CertificationQuestionActivitySerializer(
         source="certification_question_activities", many=True, read_only=True
     )
     certificate = CertificateSerializer(read_only=True)
+
+    def get_attempt_number(self, obj):
+        # Calculate attempt number based on creation time for this user/exam
+        return CertificationSubmission.objects.filter(
+            certification_exam=obj.certification_exam,
+            user=obj.user,
+            created_at__lte=obj.created_at
+        ).count()
 
     class Meta:
         model = CertificationSubmission
@@ -169,6 +178,7 @@ class CertificationSubmissionSerializer(serializers.ModelSerializer):
             "question_activities",
             "certificate",
             "created_at",
+            "attempt_number",
             "updated_at",
         ]
         read_only_fields = ["id", "created_at", "updated_at"]

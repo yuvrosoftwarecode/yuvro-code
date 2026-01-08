@@ -99,6 +99,13 @@ const sidebarItems: SidebarItem[] = [
     icon: Code,
     path: '/tools/code-editor',
     roles: ['admin', 'instructor', 'recruiter']
+  },
+  {
+    id: 'certifications',
+    label: 'Certifications',
+    icon: Trophy,
+    path: '/instructor/certifications',
+    roles: ['admin', 'instructor', 'recruiter']
   }
 ];
 

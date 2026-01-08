@@ -16,7 +16,7 @@ export const useProctoring = ({ assessmentId, assessmentType, enabled, questionI
 
         try {
             // Dynamic URL based on assessment type
-            const url = `/${assessmentType}/${assessmentId}/log-activity/`;
+            const url = `/assessment/${assessmentType}/${assessmentId}/log-activity/`;
 
             const payload = {
                 activity_type: activityType,
@@ -226,7 +226,8 @@ export const useProctoring = ({ assessmentId, assessmentType, enabled, questionI
                                 formData.append('question_id', questionId);
                             }
 
-                            const url = `${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8001/api'}/${assessmentType}/${assessmentId}/log-activity/`;
+
+                            const url = `${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8001/api'}/assessment/${assessmentType}/${assessmentId}/log-activity/`;
                             const token = restApiAuthUtil.getAuthToken();
 
                             try {

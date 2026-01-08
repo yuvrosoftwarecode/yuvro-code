@@ -317,41 +317,81 @@ class ProctoringMixin:
     def _save_snapshot(self, file_obj, user, submission, question_id=None):
         """
         Save camera snapshot to local uploads folder as requested:
-        local uploads/folder name with student email/ skill test / date/ test_id_timestamp.png
+        uploads/{assessment_type}/{assessment_name}/{attempt_no}/{filename}
         """
         try:
-            # Construct constraints
-            # Pattern: uploads/{student_email}/{assessment_type}/{date}/{test_id}_{timestamp}.png
+            from django.utils.text import slugify
 
-            # 1. Student Email
-            email = user.email if user.email else f"user_{user.id}"
-
-            # 2. Assessment Type (e.g., 'skill_test')
-            # inferred from submission model name
-            assessment_type = self.submission_model.__name__.replace(
-                "Submission", ""
-            ).lower()  # e.g. skill_test
-            assessment_type_spaced = assessment_type.replace(
-                "_", " "
-            )  # Request said "skill test" (space?), assuming snake_case folder is safer but responding to request "skill test"
-
-            # 3. Date
-            today = timezone.now().strftime("%Y-%m-%d")
-
-            # 4. Filename: test_id_timestamp.png
-            # test_id could be submission id or assessment object id. Let's use submission id for uniqueness per attempt
-            # or the assessment id. Request says "test_id".
-            # Assuming test_id = assessment.id
+            # 2. Assessment Type & Hierarchy
+            # Determine type and hierarchical names (Course/Topic)
+            assessment_type = self.submission_model.__name__.replace("Submission", "").lower()
+            
             assessment = getattr(submission, self.submission_lookup_field)
-            test_id = str(assessment.id)
-            ts = str(int(time.time()))
+            
+            # Default values
+            parent_folder = "" # e.g. Course Name or Topic Name
+            exam_folder = "assessment"
+            
+            if assessment_type == "certification": # cleaned type
+                 assessment_type = "certification"
+                 # Hierarchy: certification / course_name / exam_title
+                 if hasattr(assessment, 'course') and assessment.course:
+                      parent_folder = slugify(assessment.course.name)
+                 else:
+                      parent_folder = "general"
+                 exam_folder = slugify(assessment.title)
+                 
+            elif assessment_type == "skilltest": # cleaned type
+                 assessment_type = "skill_test"
+                 # Hierarchy: skill_test / topic_name / test_title
+                 if hasattr(assessment, 'topic') and assessment.topic:
+                      parent_folder = slugify(assessment.topic.name)
+                 elif hasattr(assessment, 'course') and assessment.course:
+                      parent_folder = slugify(assessment.course.name)
+                 else:
+                      parent_folder = "general"
+                 exam_folder = slugify(assessment.title)
+                 
+            elif assessment_type == "mockinterview":
+                 assessment_type = "mock_interview"
+                 # Hierarchy: mock_interview / title (No parent folder requested)
+                 parent_folder = "" 
+                 exam_folder = slugify(assessment.title)
+            
+            else:
+                 # Fallback for any other types
+                 if hasattr(assessment, 'title'):
+                      exam_folder = slugify(assessment.title)
 
-            filename = f"{test_id}_{ts}.png"
+            # 3. Attempt Number
+            # Count previous submissions to determine attempt number
+            lookup_kwargs = {
+                "user": user, 
+                self.submission_lookup_field: assessment,
+                "created_at__lte": submission.created_at
+            }
+            attempt_count = self.submission_model.objects.filter(**lookup_kwargs).count()
+            # If count is 0 (shouldn't happen for existing sub), default to 1
+            attempt_count = attempt_count if attempt_count > 0 else 1
+            attempt_dir = f"attempt-{attempt_count}"
+
+            # 4. Filename
+            ts = str(int(time.time()))
+            filename = f"snapshot_{ts}.png"
+            if question_id:
+                 filename = f"q{question_id}_{ts}.png"
 
             # Directory Structure
-            # Using relative path 'uploads/...'
-            base_dir = "uploads"
-            final_dir = os.path.join(base_dir, email, assessment_type_spaced, today)
+            # uploads/{email}/{type}/{parent}/{exam}/{attempt}/
+            email_safe = user.email if user.email else f"user_{user.id}"
+            
+            paths_components = ["uploads", email_safe, assessment_type]
+            if parent_folder:
+                 paths_components.append(parent_folder)
+            paths_components.append(exam_folder)
+            paths_components.append(attempt_dir)
+            
+            final_dir = os.path.join(*paths_components)
 
             # Create dirs
             os.makedirs(final_dir, exist_ok=True)

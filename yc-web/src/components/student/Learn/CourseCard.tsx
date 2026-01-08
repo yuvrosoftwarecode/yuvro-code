@@ -4,6 +4,7 @@ import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import ProgressBar from "@/components/ui/ProgressBar";
 
+
 interface Props {
   id: string;
   icon: React.ReactNode;
@@ -11,9 +12,20 @@ interface Props {
   description: string;
   progress: number;
   onStartLearning: (id: string) => void;
+  actionLabel?: string;
+  completedActionLabel?: string;
 }
 
-const CourseCard: React.FC<Props> = ({ id, icon, title, description, progress, onStartLearning }) => {
+const CourseCard: React.FC<Props> = ({
+  id,
+  icon,
+  title,
+  description,
+  progress,
+  onStartLearning,
+  actionLabel = "Start Learning",
+  completedActionLabel = "Revisit and Learn"
+}) => {
   const hasStarted = progress > 0;
 
   return (
@@ -54,7 +66,7 @@ const CourseCard: React.FC<Props> = ({ id, icon, title, description, progress, o
               }`}
             onClick={() => onStartLearning(id)}
           >
-            {progress >= 100 ? "Revisit and Learn" : hasStarted ? "Continue Learning" : "Start Learning"}
+            {progress >= 100 ? completedActionLabel : hasStarted ? (actionLabel === "Start Learning" ? "Continue Learning" : actionLabel) : actionLabel}
           </Button>
         </div>
       </CardContent>

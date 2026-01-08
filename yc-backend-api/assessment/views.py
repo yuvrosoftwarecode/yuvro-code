@@ -16,17 +16,241 @@ import logging
 
 from ai_assistant.models import AIAgent, ChatSession, ChatMessage
 from authentication.models import Profile
+from authentication.permissions import IsOwnerOrInstructorOrAdmin
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import (
     Contest, MockInterview, JobTest, SkillTest,
     ContestSubmission, MockInterviewSubmission, 
     JobTestSubmission, SkillTestSubmission,
-    SkillTestQuestionActivity, ContestQuestionActivity, MockInterviewQuestionActivity
+    SkillTestQuestionActivity, ContestQuestionActivity, MockInterviewQuestionActivity,
+    CertificationExam, CertificationSubmission, CertificationQuestionActivity, Certificate
 )
+from .mixins import ProctoringMixin
 from .serializers import (
     ContestSerializer, SkillTestSerializer, MockInterviewSerializer,
-    SkillTestSubmissionSerializer
+    SkillTestSubmissionSerializer, CertificationExamSerializer, CertificationSubmissionSerializer
 )
+
+class CertificationExamViewSet(ProctoringMixin, viewsets.ModelViewSet):
+    queryset = CertificationExam.objects.all()
+    serializer_class = CertificationExamSerializer
+    
+    submission_model = CertificationSubmission
+    question_activity_model = CertificationQuestionActivity
+    submission_lookup_field = 'certification_exam'
+    submission_related_field = 'certification_submission'
+    
+    permission_classes = [IsOwnerOrInstructorOrAdmin]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    
+    search_fields = ['title', 'course__name']
+    ordering_fields = ['created_at']
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        course_id = self.request.query_params.get('course')
+        if course_id:
+            qs = qs.filter(course_id=course_id)
+
+        user = self.request.user
+        if hasattr(user, 'role') and user.role == 'student':
+            now = timezone.now()
+            qs = qs.filter(
+                publish_status='active',
+                # start_datetime__lte=now,
+                # end_datetime__gte=now
+            )
+        return qs
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def start(self, request, pk=None):
+        exam = self.get_object()
+        user = request.user
+        
+        # Check active submission
+        submission = CertificationSubmission.objects.filter(
+            certification_exam=exam,
+            user=user,
+            status=CertificationSubmission.STATUS_STARTED
+        ).first()
+
+        if not submission:
+            # Check max attempts
+            completed_count = CertificationSubmission.objects.filter(
+                certification_exam=exam,
+                user=user,
+                status=CertificationSubmission.STATUS_COMPLETED
+            ).count()
+            
+            if completed_count >= exam.max_attempts:
+                return Response({'error': 'Max attempts reached'}, status=status.HTTP_400_BAD_REQUEST)
+
+            submission = CertificationSubmission.objects.create(
+                certification_exam=exam,
+                user=user,
+                status=CertificationSubmission.STATUS_STARTED
+            )
+            
+        questions_to_send = []
+        # Reuse logic from SkillTest for questions... or simpler if only fixed config
+        # Assuming Certification also uses questions_config / random_config
+        
+        if exam.questions_config:
+            all_ids = []
+            for q_type, ids in exam.questions_config.items():
+                if isinstance(ids, list):
+                    all_ids.extend(ids)
+            if all_ids:
+                 questions_to_send = list(Question.objects.filter(id__in=all_ids).values(
+                    'id', 'title', 'content', 'type', 'mcq_options', 'marks', 'test_cases_basic'
+                ))
+        
+        # Random config logic
+        if exam.questions_random_config:
+            existing_ids = [q['id'] for q in questions_to_send]
+            for q_type, count in exam.questions_random_config.items():
+                if count > 0:
+                   candidates = list(Question.objects.filter(
+                       type=q_type,
+                       course=exam.course
+                   ).exclude(id__in=existing_ids).values('id', 'title', 'content', 'type', 'mcq_options', 'marks', 'test_cases_basic'))
+                   
+                   if len(candidates) >= count:
+                       selected = random.sample(candidates, count)
+                   else:
+                       selected = candidates
+                   questions_to_send.extend(selected)
+
+        random.shuffle(questions_to_send)
+        
+        return Response({
+            'submission_id': submission.id,
+            'status': submission.status,
+            'duration': exam.duration,
+            'questions': questions_to_send
+        })
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def submit(self, request, pk=None):
+        exam = self.get_object()
+        submission_id = request.data.get('submission_id')
+        answers = request.data.get('answers', {})
+        
+        submission = get_object_or_404(
+            CertificationSubmission,
+            id=submission_id,
+            user=request.user,
+            certification_exam=exam
+        )
+        
+        if submission.status == CertificationSubmission.STATUS_COMPLETED:
+             return Response({'error': 'Already submitted'}, status=status.HTTP_400_BAD_REQUEST)
+
+        submission.status = CertificationSubmission.STATUS_COMPLETED
+        submission.submitted_at = timezone.now()
+        submission.completed_at = timezone.now()
+        submission.answer_data = answers
+        
+        total_score = 0
+        
+        # Calculate score (reusing simplified logic for now)
+        question_ids = answers.keys()
+        db_questions = Question.objects.filter(id__in=question_ids)
+        q_map = {str(q.id): q for q in db_questions}
+
+        for q_id, user_ans in answers.items():
+            if q_id not in q_map: continue
+            question = q_map[q_id]
+            
+            is_correct = False
+            marks_obtained = 0
+            
+            if question.type == 'mcq_single':
+                correct_opt = next((opt for opt in question.mcq_options if opt.get('is_correct')), None)
+                if correct_opt and user_ans == correct_opt['text']:
+                    marks_obtained = question.marks
+                    is_correct = True
+            elif question.type == 'mcq_multiple':
+                 correct_opts = set(opt['text'] for opt in question.mcq_options if opt.get('is_correct'))
+                 user_opts = set(user_ans) if isinstance(user_ans, list) else set([user_ans]) if user_ans else set()
+                 if correct_opts == user_opts and correct_opts:
+                     marks_obtained = question.marks
+                     is_correct = True
+            
+            CertificationQuestionActivity.objects.update_or_create(
+                certification_submission=submission,
+                question=question,
+                user=request.user,
+                defaults={
+                    'answer_data': {'answer': user_ans},
+                    'is_final_answer': True,
+                    'is_correct': is_correct,
+                    'marks_obtained': marks_obtained,
+                    'auto_graded': True
+                }
+            )
+            total_score += marks_obtained
+            
+        submission.marks = total_score
+        submission.save()
+        
+        # Check for passing and issue certificate
+        passed = False
+        certificate_id = None
+        if total_score >= exam.passing_marks:
+            passed = True
+            # Check if certificate already exists
+            cert, created = Certificate.objects.get_or_create(
+                user=request.user,
+                course=exam.course,
+                defaults={
+                    'certification_exam': exam,
+                    'submission': submission
+                }
+            )
+            certificate_id = cert.certificate_id
+            
+        return Response({
+            'status': 'submitted',
+            'score': total_score,
+            'passed': passed,
+            'certificate_id': certificate_id
+        })
+
+    @action(detail=True, methods=['get'])
+    def analytics(self, request, pk=None):
+        exam = self.get_object()
+        submissions = exam.certification_submissions.filter(status='completed')
+        
+        total = submissions.count()
+        if total == 0:
+            return Response({'passed_count': 0, 'avg_score': 0})
+            
+        passed_count = submissions.filter(marks__gte=exam.passing_marks).count()
+        avg_score = submissions.aggregate(models.Avg('marks'))['marks__avg'] or 0
+        
+        return Response({
+            'total_attempts': total,
+            'passed_count': passed_count,
+            'pass_rate': round((passed_count / total) * 100, 1),
+            'avg_score': round(avg_score, 1)
+        })
+
+
+class CertificationSubmissionViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = CertificationSubmission.objects.all()
+    serializer_class = CertificationSubmissionSerializer
+    permission_classes = [IsOwnerOrInstructorOrAdmin]
+    
+    def get_queryset(self):
+        qs = super().get_queryset()
+        exam_id = self.request.query_params.get('exam')
+        if exam_id:
+            qs = qs.filter(certification_exam_id=exam_id)
+        return qs
 
 from course.models import Question
 from authentication.permissions import IsOwnerOrInstructorOrAdmin
@@ -678,5 +902,23 @@ class SkillTestSubmissionViewSet(viewsets.ReadOnlyModelViewSet):
         if skill_test_id:
             qs = qs.filter(skill_test_id=skill_test_id)
         return qs
+
+
+class CertificationSubmissionViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = CertificationSubmission.objects.all()
+    serializer_class = CertificationSubmissionSerializer
+    permission_classes = [IsOwnerOrInstructorOrAdmin]
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ['created_at', 'marks']
+    
+    def get_queryset(self):
+        qs = super().get_queryset()
+        exam_id = self.request.query_params.get('certification_exam')
+        if exam_id:
+            qs = qs.filter(certification_exam_id=exam_id)
+        return qs
+
+
+
 
 

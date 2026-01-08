@@ -333,15 +333,9 @@ class CodeEditorService {
     });
   }
 
-<<<<<<< Updated upstream
-  async getSubmissions(codingProblemId?: string, submissionType: string = 'code_practice'): Promise<CodeSubmission[]> {
-    const params = codingProblemId ? { coding_problem_id: codingProblemId } : undefined;
-
-=======
   async getSubmissions(questionId?: string, submissionType: string = 'code_practice'): Promise<CodeSubmission[]> {
     const params = questionId ? { question_id: questionId } : undefined;
     
->>>>>>> Stashed changes
     let endpoint = '';
     switch (submissionType) {
       case 'code_practice':

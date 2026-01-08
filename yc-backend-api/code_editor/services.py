@@ -4,6 +4,7 @@ from django.conf import settings
 from typing import Dict, List, Any
 import logging
 from .models import CodeSubmission
+from course.models import Question
 
 logger = logging.getLogger(__name__)
 
@@ -67,20 +68,9 @@ class CodeExecutorService:
 
 
 class CodeSubmissionService:
-    """Service to handle code submissions"""
-    
     @staticmethod
     def create_submission(user, code: str, language: str, question_id: str = None) -> CodeSubmission:
-        """Create a new code submission"""
-        from course.models import Question
-        
-        question = None
-        if question_id:
-            try:
-                question = Question.objects.get(id=question_id)
-            except Question.DoesNotExist:
-                pass
-        
+        question = Question.objects.get(id=question_id)
         submission = CodeSubmission.objects.create(
             user=user,
             code=code,

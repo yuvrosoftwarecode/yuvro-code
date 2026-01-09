@@ -10,9 +10,178 @@ from .models import (
     JobTestSubmission,
     SkillTestSubmission,
     SkillTestQuestionActivity,
+    CertificationExam,
+    CertificationSubmission,
+    CertificationQuestionActivity,
+    Certificate,
 )
 
 User = get_user_model()
+
+
+class CertificationExamSerializer(serializers.ModelSerializer):
+    participants_count = serializers.SerializerMethodField()
+    total_questions = serializers.SerializerMethodField()
+    my_submissions = serializers.SerializerMethodField()
+    course_name = serializers.CharField(source='course.name', read_only=True)
+    
+    class Meta:
+        model = CertificationExam
+        fields = [
+            "id",
+            "title",
+            "description",
+            "instructions",
+            "difficulty",
+            "duration",
+            "start_datetime",
+            "end_datetime",
+            "total_marks",
+            "passing_marks",
+            "enable_proctoring",
+            "max_attempts",
+            "questions_config",
+            "questions_random_config",
+            "publish_status",
+            "course",
+            "course_name",
+            "participants_count",
+            "total_questions",
+            "my_submissions",
+            "certificate_template",
+            "created_by",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_by", "created_at", "updated_at"]
+
+    def get_participants_count(self, obj):
+        return obj.certification_submissions.count()
+
+    def get_total_questions(self, obj):
+        fixed_count = 0
+        if obj.questions_config:
+            for q_type, ids in obj.questions_config.items():
+                if isinstance(ids, list):
+                    fixed_count += len(ids)
+
+        random_count = 0
+        if obj.questions_random_config:
+            for q_type, count in obj.questions_random_config.items():
+                if isinstance(count, int):
+                    random_count += count
+
+        return fixed_count + random_count
+
+    def get_my_submissions(self, obj):
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return []
+
+        submissions = obj.certification_submissions.filter(user=request.user).order_by(
+            "-created_at"
+        )
+        return SimpleCertificationSubmissionSerializer(submissions, many=True).data
+
+
+class CertificationQuestionActivitySerializer(serializers.ModelSerializer):
+    question_title = serializers.CharField(source="question.title", read_only=True)
+    question_type = serializers.CharField(source="question.type", read_only=True)
+    question_content = serializers.CharField(source="question.content", read_only=True)
+    mcq_options = serializers.JSONField(source="question.mcq_options", read_only=True)
+    marks = serializers.FloatField(source="question.marks", read_only=True)
+    test_cases_basic = serializers.JSONField(
+        source="question.test_cases_basic", read_only=True
+    )
+
+    class Meta:
+        model = CertificationQuestionActivity
+        fields = [
+            "id",
+            "question",
+            "question_title",
+            "question_type",
+            "question_content",
+            "mcq_options",
+            "marks",
+            "test_cases_basic",
+            "question_activities",
+            "navigation_activities",
+            "proctoring_activities",
+            "camera_snapshots",
+            "alert_priority",
+            "answer_data",
+            "is_final_answer",
+            "marks_obtained",
+            "is_correct",
+            "total_question_time",
+            "violation_count",
+            "has_violations",
+            "created_at",
+            "updated_at",
+        ]
+
+
+class CertificateSerializer(serializers.ModelSerializer):
+    course_name = serializers.CharField(source="course.name", read_only=True)
+    user_name = serializers.CharField(source="user.get_full_name", read_only=True)
+    
+    class Meta:
+        model = Certificate
+        fields = [
+            "id",
+            "certificate_id",
+            "user_name",
+            "course_name",
+            "issued_at",
+            "certificate_url",
+        ]
+        read_only_fields = ["id", "certificate_id", "issued_at", "user_name", "course_name"]
+
+
+class CertificationSubmissionSerializer(serializers.ModelSerializer):
+    exam_title = serializers.CharField(source="certification_exam.title", read_only=True)
+    user_name = serializers.CharField(source="user.get_full_name", read_only=True)
+    user_email = serializers.EmailField(source="user.email", read_only=True)
+    attempt_number = serializers.SerializerMethodField()
+    question_activities = CertificationQuestionActivitySerializer(
+        source="certification_question_activities", many=True, read_only=True
+    )
+    certificate = CertificateSerializer(read_only=True)
+
+    def get_attempt_number(self, obj):
+        # Calculate attempt number based on creation time for this user/exam
+        return CertificationSubmission.objects.filter(
+            certification_exam=obj.certification_exam,
+            user=obj.user,
+            created_at__lte=obj.created_at
+        ).count()
+
+    class Meta:
+        model = CertificationSubmission
+        fields = [
+            "id",
+            "certification_exam",
+            "exam_title",
+            "user",
+            "user_name",
+            "user_email",
+            "status",
+            "started_at",
+            "submitted_at",
+            "completed_at",
+            "marks",
+            "proctoring_events",
+            "browser_info",
+            "ip_address",
+            "user_agent",
+            "question_activities",
+            "certificate",
+            "created_at",
+            "attempt_number",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
 
 
 class ContestSerializer(serializers.ModelSerializer):
@@ -127,6 +296,12 @@ class SkillTestSerializer(serializers.ModelSerializer):
         return SimpleSubmissionSerializer(submissions, many=True).data
 
 
+class SimpleCertificationSubmissionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CertificationSubmission
+        fields = ["id", "status", "marks", "started_at", "completed_at", "created_at"]
+
+
 class SimpleSubmissionSerializer(serializers.ModelSerializer):
     class Meta:
         model = SkillTestSubmission
@@ -199,7 +374,7 @@ class JobTestSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_by", "created_at", "updated_at"]
 
     def get_participants_count(self, obj):
-        return obj.job_test_submissions.count()
+        return obj.certification_submissions.count()
 
 
 class ContestSubmissionSerializer(serializers.ModelSerializer):

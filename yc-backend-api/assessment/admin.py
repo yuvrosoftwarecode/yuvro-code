@@ -13,6 +13,10 @@ from .models import (
     ContestQuestionActivity,
     MockInterviewQuestionActivity,
     JobTestQuestionActivity,
+    CertificationExam,
+    CertificationSubmission,
+    CertificationQuestionActivity,
+    Certificate
 )
 
 
@@ -525,3 +529,44 @@ class MockInterviewQuestionActivityAdmin(BaseQuestionActivityAdmin):
 @admin.register(JobTestQuestionActivity)
 class JobTestQuestionActivityAdmin(BaseQuestionActivityAdmin):
     list_display = BaseQuestionActivityAdmin.list_display + ["job_test_submission"]
+
+
+@admin.register(CertificationExam)
+class CertificationExamAdmin(admin.ModelAdmin):
+    list_display = ["title", "course", "publish_status", "created_by", "created_at"]
+    list_filter = ["publish_status", "created_at"]
+    search_fields = ["title", "description", "course__name"]
+    readonly_fields = ["id", "created_at", "updated_at", "total_attempts"]
+    fieldsets = (
+        ("Basic Info", {"fields": ("title", "description", "instructions")}),
+        ("Course", {"fields": ("course", "certificate_template")}),
+        (
+            "Configuration",
+            {
+                "fields": (
+                    "difficulty",
+                    "duration",
+                    "total_marks",
+                    "passing_marks",
+                    "questions_config",
+                    "questions_random_config",
+                )
+            },
+        ),
+        ("Publishing", {"fields": ("publish_status", "enable_proctoring")}),
+        ("Meta", {"fields": ("created_by", "created_at", "updated_at", "total_attempts")}),
+    )
+
+@admin.register(CertificationSubmission)
+class CertificationSubmissionAdmin(admin.ModelAdmin):
+    list_display = ["user", "certification_exam", "status", "marks", "completed_at"]
+    list_filter = ["status", "certification_exam__title"]
+    
+@admin.register(CertificationQuestionActivity)
+class CertificationQuestionActivityAdmin(BaseQuestionActivityAdmin):
+    list_display = BaseQuestionActivityAdmin.list_display + ["certification_submission"]
+
+@admin.register(Certificate)
+class CertificateAdmin(admin.ModelAdmin):
+    list_display = ["certificate_id", "user", "course", "issued_at"]
+    search_fields = ["certificate_id", "user__username", "course__name"]

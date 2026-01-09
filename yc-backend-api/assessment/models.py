@@ -615,3 +615,80 @@ class JobTestQuestionActivity(BaseQuestionActivity):
 
     def __str__(self):
         return f"{self.user.username} - {self.question.title[:30]} - {'Final' if self.is_final_answer else 'Draft'}"
+
+
+class CertificationExam(BaseAssessmentModel):
+    course = models.ForeignKey(
+        "course.Course",
+        on_delete=models.CASCADE,
+        related_name="certification_exams",
+        help_text="Course this certification exam belongs to",
+    )
+    
+    start_datetime = models.DateTimeField(null=True, blank=True, help_text="When the exam becomes available")
+    end_datetime = models.DateTimeField(null=True, blank=True, help_text="When the exam expires")
+    
+    certificate_template = models.CharField(max_length=255, blank=True, help_text="Path to certificate template image/pdf")
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Certification: {self.course.name}"
+
+
+class CertificationSubmission(BaseUserSubmission):
+    certification_exam = models.ForeignKey(
+        CertificationExam,
+        on_delete=models.CASCADE,
+        related_name="certification_submissions",
+    )
+    
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.user.username} - {self.certification_exam.course.name}"
+
+
+class CertificationQuestionActivity(BaseQuestionActivity):
+    certification_submission = models.ForeignKey(
+        CertificationSubmission,
+        on_delete=models.CASCADE,
+        related_name="certification_question_activities",
+    )
+
+    class Meta:
+        ordering = ["-updated_at"]
+        unique_together = ["certification_submission", "question"]
+
+    def __str__(self):
+        return f"{self.user.username} - {self.question.title[:30]}"
+
+
+class Certificate(BaseTimestampedModel):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="certificates")
+    course = models.ForeignKey("course.Course", on_delete=models.CASCADE, related_name="certificates")
+    certification_exam = models.ForeignKey(CertificationExam, on_delete=models.SET_NULL, null=True, related_name="issued_certificates")
+    submission = models.OneToOneField(CertificationSubmission, on_delete=models.SET_NULL, null=True, related_name="certificate")
+    
+    issued_at = models.DateTimeField(auto_now_add=True)
+    certificate_url = models.URLField(blank=True, help_text="URL to downloaded certificate")
+    certificate_id = models.CharField(max_length=50, unique=True, help_text="Unique certificate identifier")
+    
+    class Meta:
+        ordering = ["-issued_at"]
+        
+    def __str__(self):
+        return f"Certificate: {self.user.username} - {self.course.name}"
+
+    def save(self, *args, **kwargs):
+        if not self.certificate_id:
+            # Generate a simple unique ID: YUVRO-YYYY-RANDOM
+            import random
+            import string
+            year = timezone.now().year
+            rand_str = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+            self.certificate_id = f"YUVRO-{year}-{rand_str}"
+        super().save(*args, **kwargs)

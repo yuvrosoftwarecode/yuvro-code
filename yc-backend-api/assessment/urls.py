@@ -5,6 +5,8 @@ from .views import (
     SkillTestViewSet,
     MockInterviewViewSet,
     SkillTestSubmissionViewSet,
+    CertificationExamViewSet,
+    CertificationSubmissionViewSet,
 )
 
 router = DefaultRouter()
@@ -16,6 +18,8 @@ router.register(
     SkillTestSubmissionViewSet,
     basename="skill-test-submissions",
 )
+router.register(r"certification-exams", CertificationExamViewSet)
+router.register(r"certification-submissions", CertificationSubmissionViewSet)
 
 
 urlpatterns = [

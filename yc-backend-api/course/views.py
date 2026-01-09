@@ -6,10 +6,15 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 import os
 import requests
-from django.db.models import Count, Q, F, Case, When, Value, IntegerField, FloatField, OuterRef, Subquery, Sum
+from django.db.models import (
+    Count, Q, F, Case, When, Value, IntegerField, FloatField, 
+    OuterRef, Subquery, Sum, Exists
+)
 from django.db.models.functions import Coalesce
 from authentication.permissions import CanManageCourses, IsAuthenticatedUser
 from .utils import CodeExecutionUtil
+from .gamification_service import GamificationService
+from .gamification_models import UserGamificationProfile, DailyUserActivity
 from .models import (
     Course,
     Topic,
@@ -53,18 +58,7 @@ class CourseViewSet(viewsets.ModelViewSet):
         category = self.request.query_params.get("category")
         if category:
             queryset = queryset.filter(category=category)
-        # Annotate with progress for Code Practice (category='practice', type='coding')
-        from django.db.models import Count, Q, F, Case, When, IntegerField, FloatField, Exists, OuterRef, Subquery
-        
-        # 1. Total Problems: Questions in this course with category='practice' and type='coding'
-        # Since Questions are linked to Topic or Subtopic or Course, we need to check all
-        # But per current structure, most practice questions are likely subtopic level? 
-        # Wait, the structure links Question -> Subtopic -> Topic -> Course
-        # Or Question -> Topic -> Course
-        # Or Question -> Course
-        
-        # Let's count all questions linked to this course (via any path) that are practice coding questions
-        
+
         practice_questions_filter = Q(type='coding') & Q(categories__contains=['practice'])
         
         queryset = queryset.annotate(
@@ -83,26 +77,7 @@ class CourseViewSet(viewsets.ModelViewSet):
             )
         )
 
-        # 2. Solved Problems: StudentCodePractice submissions by this user for practice questions in this course
         if self.request.user.is_authenticated:
-            user_practices = StudentCodePractice.objects.filter(
-                user=self.request.user,
-                course=OuterRef('pk'), # StudentCodePractice has course link directly?
-                # Let's check model... Yes: course = models.ForeignKey(Course...)
-                # And we should filter for status that implies completion.
-                # Assuming 'completed' or 'evaluated' with success.
-                # For simplicity, let's count unique questions solved
-                status__in=['completed', 'evaluated'],
-                # We must ensure the question is a practice coding question
-                question__type='coding',
-                question__categories__contains=['practice']
-            ).values('course') 
-            
-            # Using subquery count to get distinct questions solved
-            # Wait, `StudentCodePractice` is one per user-question usually? 
-            # "unique_together = ['user', 'question']" in model.
-            # So simple count of StudentCodePractice records for this user+course matching criteria is enough.
-
             solved_subquery = StudentCodePractice.objects.filter(
                 user=self.request.user,
                 course=OuterRef('pk'),
@@ -137,7 +112,7 @@ class CourseViewSet(viewsets.ModelViewSet):
                 ai_help_used=Value(0, output_field=IntegerField())
             )
 
-        # 3. Progress Percentage
+        
         queryset = queryset.annotate(
             progress_percentage=Case(
                 When(total_problems__gt=0, then=F('solved_problems') * 100.0 / F('total_problems')),
@@ -216,11 +191,7 @@ class TopicViewSet(viewsets.ModelViewSet):
         if course_id:
             qs = qs.filter(course_id=course_id)
 
-        # Annotate with Code Practice progress
-        from django.db.models import Count, Q, F, Case, When, Value, IntegerField, FloatField, OuterRef, Subquery
-        from django.db.models.functions import Coalesce
-
-        # 1. Total Problems
+        
         qs = qs.annotate(
             total_problems=Count(
                 'questions', 
@@ -233,7 +204,7 @@ class TopicViewSet(viewsets.ModelViewSet):
             )
         )
 
-        # 2. Solved Problems
+        
         if self.request.user.is_authenticated:
             solved_subquery = StudentCodePractice.objects.filter(
                 user=self.request.user,
@@ -249,7 +220,7 @@ class TopicViewSet(viewsets.ModelViewSet):
         else:
             qs = qs.annotate(solved_problems=Value(0, output_field=IntegerField()))
             
-        # 3. Progress Percentage
+        
         qs = qs.annotate(
             progress_percentage=Case(
                 When(total_problems__gt=0, then=F('solved_problems') * 100.0 / F('total_problems')),
@@ -431,10 +402,7 @@ class NoteViewSet(viewsets.ModelViewSet):
                     instructor=user
                 ).values_list("course_id", flat=True)
             )
-        elif user.role == "student":
-            # Students see:
-            # 1. Notes created by themselves (Personal Notes)
-            # 2. Notes created by Instructors/Admins (Materials)
+        if user.role == "student":
             qs = qs.filter(
                 Q(user=user) | 
                 Q(user__role__in=["instructor", "admin"])
@@ -446,7 +414,6 @@ class NoteViewSet(viewsets.ModelViewSet):
         return qs
 
     def create(self, request, *a, **kw):
-        # Allow any authenticated user to create a note (for themselves)
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save(user=request.user)
@@ -457,7 +424,6 @@ class NoteViewSet(viewsets.ModelViewSet):
         note = self.get_object()
         user = request.user
 
-        # Allow if user owns the note OR is an admin/instructor for the course
         is_owner = note.user == user
         course = note.sub_topic.topic.course
         is_instructor = user.role == "instructor" and instructor_assigned(user, course)
@@ -472,7 +438,6 @@ class NoteViewSet(viewsets.ModelViewSet):
         note = self.get_object()
         user = request.user
 
-        # Allow if user owns the note OR is an admin/instructor for the course
         is_owner = note.user == user
         course = note.sub_topic.topic.course
         is_instructor = user.role == "instructor" and instructor_assigned(user, course)
@@ -499,9 +464,7 @@ class QuestionViewSet(viewsets.ModelViewSet):
         )
         user = self.request.user
 
-        # Filter by user role
         if user.role == "instructor":
-            # Instructors can only see questions from courses they're assigned to
             assigned_course_ids = CourseInstructor.objects.filter(
                 instructor=user
             ).values_list("course_id", flat=True)
@@ -512,7 +475,6 @@ class QuestionViewSet(viewsets.ModelViewSet):
                 | models.Q(subtopic__topic__course_id__in=assigned_course_ids)
             )
 
-        # Filter by query parameters
         course_id = self.request.query_params.get("course")
         topic_id = self.request.query_params.get("topic")
         subtopic_id = self.request.query_params.get("subtopic")
@@ -535,10 +497,8 @@ class QuestionViewSet(viewsets.ModelViewSet):
         if level and level != "all":
             qs = qs.filter(level=level)
         if categories:
-            # Filter questions that contain the specified category
             qs = qs.filter(categories__contains=[categories])
         if search:
-            # Search in title and content fields
             qs = qs.filter(
                 models.Q(title__icontains=search) | models.Q(content__icontains=search)
             )
@@ -548,7 +508,6 @@ class QuestionViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         user = request.user
 
-        # Get the course for permission checking
         course = None
         level = request.data.get("level")
 
@@ -581,7 +540,6 @@ class QuestionViewSet(viewsets.ModelViewSet):
         question = self.get_object()
         user = request.user
 
-        # Get the course for permission checking
         course = None
         if question.course:
             course = question.course
@@ -643,14 +601,12 @@ class StudentCourseProgressViewSet(viewsets.GenericViewSet):
 
         subtopic = get_object_or_404(Subtopic, id=subtopic_id)
 
-        # Get or create progress record
         progress, created = UserCourseProgress.objects.get_or_create(
             user=user,
             subtopic=subtopic,
             defaults={"course": subtopic.topic.course, "topic": subtopic.topic},
         )
 
-        # Mark as fully complete
         progress.is_completed = True
         progress.progress_percent = 100.0
         progress.completed_at = timezone.now()
@@ -688,6 +644,10 @@ class StudentCourseProgressViewSet(viewsets.GenericViewSet):
             progress.completed_at = timezone.now()
 
         progress.save()
+
+        # Gamification Hook: Quiz
+        if is_passed:
+            GamificationService.record_activity(user, 'quiz')
 
         return Response(
             {
@@ -845,10 +805,20 @@ class StudentCourseProgressViewSet(viewsets.GenericViewSet):
                 progress.completed_at = timezone.now()
 
             progress.save()
+            
+            # Gamification Hook: Coding
+            if subtopic and progress.coding_score > 0: # Or checks specific question success
+                 # We probably want to award XP per question success, not just overall progress
+                 # But checking question level success is tricky here as 'coding_status' might be partial
+                 # Let's look at the 'question_solved' flag below
+                 pass
         else:
-            # No subtopic, so no progress tracking
-            new_percent = 0
-            coding_score = 0.0
+            # No subtopic
+            pass
+            
+        # Check if current submission was successful to award XP
+        if question_id and test_results.get("passed", 0) == test_results.get("total", 0):
+             GamificationService.record_activity(user, 'coding')
 
         response_data = {
             "message": "Coding progress updated"
@@ -899,22 +869,22 @@ class StudentCourseProgressViewSet(viewsets.GenericViewSet):
 
         subtopic = get_object_or_404(Subtopic, id=subtopic_id)
 
-        # Get or create progress record
         progress, created = UserCourseProgress.objects.get_or_create(
             user=user,
             subtopic=subtopic,
             defaults={"course": subtopic.topic.course, "topic": subtopic.topic},
         )
 
-        # Update video status
         progress.is_videos_watched = True
 
-        # Recalculate total progress
         new_percent = progress.calculate_progress()
         if new_percent >= 100:
             progress.completed_at = timezone.now()
 
         progress.save()
+
+        # Gamification Hook: Video
+        GamificationService.record_activity(user, 'video')
 
         return Response(
             {
@@ -939,10 +909,8 @@ class StudentCourseProgressViewSet(viewsets.GenericViewSet):
 
         course = last_progress.course
 
-        # Calculate stats for banner
         total_lessons = Subtopic.objects.filter(topic__course=course).count()
 
-        # Calculate percent
         user_progress_list = UserCourseProgress.objects.filter(user=user, course=course)
         total_percent_sum = sum(p.progress_percent for p in user_progress_list)
 
@@ -950,7 +918,6 @@ class StudentCourseProgressViewSet(viewsets.GenericViewSet):
         if total_lessons > 0:
             avg_percent = round(total_percent_sum / total_lessons)
 
-        # Return necessary details to navigate
         return Response(
             {
                 "course_id": course.id,
@@ -983,7 +950,6 @@ class StudentCourseProgressViewSet(viewsets.GenericViewSet):
         progress_records = UserCourseProgress.objects.filter(user=user)
 
         if progress_records.exists():
-            # --- Smart Time Estimate ---
             for p in progress_records:
                 total_minutes += 5  # Base
                 if p.is_videos_watched:
@@ -993,8 +959,6 @@ class StudentCourseProgressViewSet(viewsets.GenericViewSet):
                 if p.is_coding_completed:
                     total_minutes += 25
 
-            # --- Accurate Avg Progress ---
-            # 1. Group progress by course
             course_map = {}  # {course_id: sum_of_percentages}
             for p in progress_records:
                 cid = p.course_id
@@ -1003,13 +967,9 @@ class StudentCourseProgressViewSet(viewsets.GenericViewSet):
             # 2. Calculate % for each course
             total_course_pct = 0
             for cid, current_sum in course_map.items():
-                # Count total subtopics in this course
                 total_subs = Subtopic.objects.filter(topic__course_id=cid).count()
                 if total_subs > 0:
-                    # Course % = (Sum of subtopic %) / Count of subtopics
-                    # e.g., 500 / 10 = 50%
                     c_pct = current_sum / total_subs
-                    # Cap at 100%
                     c_pct = min(c_pct, 100.0)
                     total_course_pct += c_pct
 
@@ -1025,13 +985,79 @@ class StudentCourseProgressViewSet(viewsets.GenericViewSet):
         if hours == 0:
             time_spent_str = f"{mins}m"
 
+        # Gamification Data
+        gamification_profile = GamificationService.get_or_create_profile(user)
+        streak = gamification_profile.current_streak
+        xp = gamification_profile.total_xp
+        level = gamification_profile.current_level
+
         return Response(
             {
                 "lessons_completed": completed_count,
                 "time_spent": time_spent_str,
                 "avg_progress": avg_progress,
+                "streak": streak,
+                "xp": xp,
+                "level": level,
             }
         )
+
+    @action(detail=False, methods=["get"])
+    def leaderboard(self, request):
+        """
+        Return top 10 users by XP.
+        """
+        top_profiles = UserGamificationProfile.objects.select_related('user').order_by('-total_xp')[:10]
+        
+        data = []
+        for profile in top_profiles:
+            # Check if user has a profile for avatar
+            # This is inefficient if N is large, but for 10 it's fine. 
+            # Ideally select_related('user__profile')
+            avatar_url = None
+            try:
+                if hasattr(profile.user, 'profile'):
+                     avatar_url = profile.user.profile.profile_image
+            except:
+                pass
+                
+            data.append({
+                "rank": 0, # Filled below
+                "user": profile.user.username,
+                "xp": profile.total_xp,
+                "level": profile.current_level,
+                "avatar": avatar_url
+            })
+            
+        # Add rank
+        for i, item in enumerate(data):
+            item['rank'] = i + 1
+            
+        return Response(data)
+
+    @action(detail=False, methods=["get"])
+    def calendar_activity(self, request):
+        """
+        Get active dates for the current month (or specified).
+        Request: ?year=2025&month=12
+        """
+        user = request.user
+        today = timezone.now().date()
+        year = int(request.query_params.get('year', today.year))
+        month = int(request.query_params.get('month', today.month))
+        
+        activities = DailyUserActivity.objects.filter(
+            user=user,
+            date__year=year,
+            date__month=month,
+            activity_count__gt=0
+        ).values_list('date', flat=True)
+        
+        return Response({
+            "active_dates": [d.isoformat() for d in activities],
+            "year": year,
+            "month": month
+        })
 
     @action(detail=False, methods=["get"])
     def progress(self, request):
@@ -1135,14 +1161,12 @@ class StudentCourseProgressViewSet(viewsets.GenericViewSet):
 
         subtopic = get_object_or_404(Subtopic, id=subtopic_id)
 
-        # Get or create progress record
         progress, created = UserCourseProgress.objects.get_or_create(
             user=user,
             subtopic=subtopic,
             defaults={"course": subtopic.topic.course, "topic": subtopic.topic},
         )
 
-        # Explicitly update timestamps
         progress.last_accessed = timezone.now()
         progress.save(update_fields=["last_accessed", "updated_at"])
 

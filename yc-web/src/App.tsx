@@ -26,6 +26,8 @@ import ContestAttempt from './pages/student/ContestAttempt';
 import CodePractice from './pages/student/CodePractice';
 import StudentQuiz from './components/student/StudentQuiz';
 import StudentCoding from './components/student/StudentCoding';
+import Certify from './pages/student/Certify';
+import CertificationExam from './pages/student/CertificationExam';
 import { Toaster } from "@/components/ui/sonner";
 import ErrorBoundary from './components/ErrorBoundary';
 import DashboardRedirect from './components/DashboardRedirect';
@@ -39,6 +41,11 @@ import InstructorMockInterview from './pages/instructor/MockInterview';
 import MockInterviewForm from './components/instructor/mock-interviews/MockInterviewForm';
 import SkillTestSubmissions from './pages/instructor/SkillTestSubmissions';
 import SubmissionAnalytics from './pages/instructor/SubmissionAnalytics';
+import InstructorCertifications from './pages/instructor/Certifications';
+import CertificationExamForm from './components/instructor/certifications/CertificationExamForm';
+import CertificationExamSubmissions from './pages/instructor/CertificationExamSubmissions';
+import CertificationSubmissionAnalytics from './pages/instructor/CertificationSubmissionAnalytics';
+import InstructorAnalytics from './pages/instructor/Analytics';
 import RecruiterJobs from "./pages/recruiter/Jobs";
 import RecruiterJobsApproval from "./pages/recruiter/JobsApproval";
 import RecruiterJobApplicants from "./pages/recruiter/JobApplicants";
@@ -283,7 +290,7 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-              
+
 
               <Route
                 path="/recruiter/jobs/companies"
@@ -375,6 +382,24 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={["admin", "instructor", "recruiter"]}>
                     <InstructorProfile />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/student/certifications"
+                element={
+                  <ProtectedRoute allowedRoles={["student"]}>
+                    <Certify />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/student/certifications/exam/:examId"
+                element={
+                  <ProtectedRoute allowedRoles={["student"]}>
+                    <CertificationExam />
                   </ProtectedRoute>
                 }
               />
@@ -483,6 +508,59 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={["admin", "instructor", "recruiter"]}>
                     <InstructorMockInterview />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/instructor/certifications"
+                element={
+                  <ProtectedRoute allowedRoles={["admin", "instructor"]}>
+                    <InstructorCertifications />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/instructor/certifications/create"
+                element={
+                  <ProtectedRoute allowedRoles={["admin", "instructor"]}>
+                    <CertificationExamForm />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/instructor/certifications/:examId/edit"
+                element={
+                  <ProtectedRoute allowedRoles={["admin", "instructor"]}>
+                    <CertificationExamForm />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/instructor/analytics"
+                element={
+                  <ProtectedRoute allowedRoles={["admin", "instructor"]}>
+                    <InstructorAnalytics />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/instructor/certifications/:examId/analytics"
+                element={
+                  <ProtectedRoute allowedRoles={["admin", "instructor"]}>
+                    <CertificationExamSubmissions />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/instructor/certifications/submissions/:submissionId"
+                element={
+                  <ProtectedRoute allowedRoles={["admin", "instructor"]}>
+                    <CertificationSubmissionAnalytics />
                   </ProtectedRoute>
                 }
               />

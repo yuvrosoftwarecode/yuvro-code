@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 import { getSkillTestSubmission, getSkillTestSubmissions } from '@/services/skillTestService';
 import { toast } from 'sonner';
-import AIChatContainer from '@/components/student/LearnCertify/AIChatWidget/AIChatContainer';
+import AIChatContainer from '@/components/student/Learn/AIChatWidget/AIChatContainer';
 
 interface Test {
   id: string;
